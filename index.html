@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
+    <title>✦ 社團評選暨觀摩活動 智能客服 ✦</title>
+    <style>
+        html, body { 
+            height: 100%; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f4f6f8; 
+            overflow: hidden; 
+            position: fixed; 
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .chat-container { 
+            width: 100%;
+            height: 100vh;
+            height: calc(var(--vh, 1vh) * 100);
+            background: #f4f6f8; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            box-sizing: border-box; 
+        }
+        
+        .chat-header { 
+            background: linear-gradient(135deg, #1a73e8, #1557b0); 
+            color: white; 
+            padding: 16px; 
+            font-weight: 600; 
+            font-size: 16px; 
+            text-align: center; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            z-index: 10;
+            flex-shrink: 0;
+            padding-top: calc(16px + env(safe-area-inset-top)); 
+        }
+        
+        .chat-messages { 
+            flex: 1; 
+            padding: 16px; 
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            background: #f4f6f8; 
+        }
+        
+        .message { max-width: 82%; padding: 12px 16px; border-radius: 20px; font-size: 16px; line-height: 1.5; word-break: break-all; box-sizing: border-box; }
+        .bot { background: white; color: #202124; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #e8eaed; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+        .user { background: #1a73e8; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        
+        .chat-input-area { 
+            padding: 12px 14px; 
+            border-top: 1px solid #dadce0; 
+            display: flex; 
+            gap: 10px; 
+            background: white; 
+            box-sizing: border-box; 
+            align-items: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
+            flex-shrink: 0; 
+            padding-bottom: calc(12px + env(safe-area-inset-bottom)); 
+        }
+        
+        .chat-input { 
+            flex: 1; 
+            padding: 12px 18px; 
+            border-radius: 24px; 
+            outline: none; 
+            font-size: 16px; 
+            border: 1px solid #dadce0; 
+            background: #f1f3f4; 
+            -webkit-appearance: none; 
+            box-sizing: border-box;
+        }
+        .chat-input:focus { border-color: #1a73e8; background: white; }
+        
+        .send-btn { 
+            background: #1a73e8; 
+            color: white; 
+            border: none; 
+            height: 42px; 
+            padding: 0 22px; 
+            border-radius: 24px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 15px; 
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">✦ 社團評選暨觀摩活動 智能客服 ✦</div>
+    <div id="chatMessages" class="chat-messages">
+        <div class="message bot">哈囉！我是本次活動的線上客服小幫手唷！😊<br>歡迎詢問我任何關於「115學年度第一學期全校學生社團評選暨觀摩活動」的問題！</div>
+    </div>
+    <div class="chat-input-area">
+        <input type="text" id="userInput" class="chat-input" placeholder="請輸入您的問題..." onkeypress="handleKeyPress(event)" style="touch-action: manipulation;">
+        <button class="send-btn" onclick="sendMessage()">發送</button>
+    </div>
+</div>
+
+<script>
+    function resetVH() {
+        let vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    window.addEventListener('resize', resetVH);
+    window.addEventListener('orientationchange', resetVH);
+    resetVH();
+
+    const faqData = [
+        { keywords: ["換", "更換", "解說員", "身分", "代替"], answer: "不可以私自更換解說員身分唷！大會嚴格規定「不允許私自更換解說員身分」。如果有任何特殊或緊急突發狀況，請務必先向主辦單位正式回報並取得同意，絕對不能私下自行更換唷！" },
+        { keywords: ["佈置", "布置", "時間", "幾點結束", "幾點開始"], answer: "請各社團特別注意時間唷！場地佈置時間為當天 10:30 開始，並於 13:00 準時結束。請大家抓緊時間，在規定時間內完成精彩的社團佈置唷！" },
+        { keywords: ["改", "修改", "表單", "Google表單", "內容"], answer: "如果需要更改 Google 表單內容，請不要自己重複填寫唷！請直接聯絡「學生議會法制委員長陳凱翔」，由他來協助你進行修改與調整。" },
+        { keywords: ["觀摩", "多久", "幾分鐘", "觀摩時間"], answer: "這次的重頭戲——觀摩時間為 16:30 - 16:50，共計 20 分鐘！這段時間大家可以互相交流、互相學習，請好好把握這珍貴的 20 分鐘唷！" },
+        { keywords: ["地點", "哪裡", "位置", "毓麟館"], answer: "本次活動的地點在「弘光科技大學 毓麟館」唷！" },
+        { keywords: ["時間", "日期", "幾號"], answer: "活動時間為 2026年12月10日（星期四）10:30 - 17:30 唷！" }
+    ];
+
+    const fallbackAnswer = "抱歉，關於這個部分小幫手手邊目前沒有詳細的公告資料唷！建議您可以直接詢問活動現場的工作人員，或者留意最新的官方公告唷！";
+
+    function sendMessage() {
+        const inputEl = document.getElementById("userInput");
+        const query = inputEl.value.trim();
+        if (!query) return;
+
+        appendMessage(query, "user");
+        inputEl.value = "";
+
+        setTimeout(() => {
+            let matchedAnswer = fallbackAnswer;
+            for (const item of faqData) {
+                if (item.keywords.some(kw => query.includes(kw))) {
+                    matchedAnswer = item.answer;
+                    break;
+                }
+            }
+            appendMessage(matchedAnswer, "bot");
+        }, 250);
+    }
+
+    function appendMessage(text, sender) {
+        const messagesContainer = document.getElementById("chatMessages");
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `message ${sender}`;
+        msgDiv.innerHTML = text;
+        messagesContainer.appendChild(msgDiv);
+        
+        setTimeout(() => {
+            messagesContainer.scrollTo({
+                top: messagesContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }, 50);
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === "Enter") sendMessage();
+    }
+</script>
+
+</body>
+</html>
