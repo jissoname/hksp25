@@ -51,7 +51,7 @@
     z-index: 2; /* 讓對話訊息字體保持在最上層 */
 }
 
-/* 🆕 這是全新加入的固定背景圖設定，徹底解決手機端 fixed 失效問題 */
+/* 🎯 關鍵！就是漏了這一段，請務必一起貼進來 */
 .fixed-bg-container {
     position: fixed;
     top: 50%;
@@ -73,7 +73,7 @@
     content: "";
     position: absolute;
     top: -100vh; left: -100vw; right: -100vw; bottom: -100vh;
-    background: rgba(244, 246, 248, 0.91); /* 0.91 控制遮罩濃度，若Logo太明顯可以調大到0.95 */
+    background: rgba(244, 246, 248, 0.91); /* 0.91 控制遮罩濃度 */
     z-index: -1;
 }
 
