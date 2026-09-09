@@ -38,31 +38,32 @@
             padding-top: calc(16px + env(safe-area-inset-top)); 
         }
         /* 💡 核心優化：訊息對話區置入半透明、不干擾文字閱讀的法槌徽章浮水印 */
-        .chat-messages { 
-            flex: 1; 
-            padding: 16px; 
-            overflow-y: auto; 
-            -webkit-overflow-scrolling: touch; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 12px; 
-            background-color: #f4f6f8; 
-            background-image: url('bg-logo.png');
-            background-repeat: no-repeat;
-            background-position: center center;
-            background-size: 45% auto; /* 控制浮水印大小，在手機上最完美的黃金比例 */
-            background-attachment: local;
-            position: relative;
-        }
+       .chat-messages { 
+    flex: 1; 
+    padding: 16px; 
+    overflow-y: auto; 
+    -webkit-overflow-scrolling: touch; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px; 
+    background-color: #f4f6f8; 
+    background-image: url('bg-logo.png');
+    background-repeat: no-repeat;
+    background-position: center center;    /* 確保絕對置中 */
+    background-size: 65% auto;             /* 調整標誌大小 */
+    background-attachment: fixed;          /* 固定背景不隨訊息滾動 */
+    position: relative;
+}
+
         /* 加上一層微弱白透遮罩，確保黑色 Logo 變淡、完全不吃字，對話依然清晰 */
-        .chat-messages::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(244, 246, 248, 0.88); 
-            z-index: 1;
-            pointer-events: none;
-        }
+       .chat-messages::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(244, 246, 248, 0.91); /* 💡 0.91 代表遮罩的濃度 */
+    z-index: 1;
+    pointer-events: none;
+}
         /* 確保訊息泡泡飄在浮水印和遮罩的上方 */
         .message { 
             max-width: 82%; 
