@@ -55,18 +55,16 @@
         .bot { background: white; color: #202124; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #e8eaed; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
         .user { background: #1a73e8; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
         
-        /* 💡 新增：熱門問題關鍵字點選區 */
         .quick-tags-container {
             padding: 10px 14px 4px 14px;
             background: #f4f6f8;
             display: flex;
             gap: 8px;
-            overflow-x: auto; /* 支援手機橫向滑動點選 */
+            overflow-x: auto; 
             white-space: nowrap;
             flex-shrink: 0;
             -webkit-overflow-scrolling: touch;
         }
-        /* 隱藏滾動條，讓視覺更乾淨 */
         .quick-tags-container::-webkit-scrollbar { display: none; }
         
         .quick-tag {
@@ -128,24 +126,23 @@
 <div class="chat-container">
     <div class="chat-header">✦ 社團評選暨觀摩活動 智能客服 ✦</div>
     
-    <!-- 訊息對話紀錄 -->
     <div id="chatMessages" class="chat-messages">
-        <div class="message bot">哈囉！我是本次活動的線上客服小幫手唷！😊<br>歡迎詢問我任何關於「115學年度第一學期全校學生社團評選暨觀摩活動」的問題！<br><br>💡 <b>您也可以直接點選下方的常見問題快捷鍵唷！</b></div>
+        <div class="message bot">哈囉！我是本次活動的線上客服小幫手唷！😊<br>歡迎詢問我任何關於「115學年度第一學期全校學生社團評選暨觀摩活動」的問題！<br><br>💡 <b>您也可以直接點選下方的常見問題，或是輸入社團名稱查詢它的屬性分類唷！</b></div>
     </div>
     
-    <!-- 💡 新增：常見問題點選按鈕列 (可左右滑動) -->
+    <!-- 快捷按鈕列 -->
     <div class="quick-tags-container">
         <div class="quick-tag" onclick="clickQuickTag('查詢社團屬性')">🔍 查詢社團屬性</div>
         <div class="quick-tag" onclick="clickQuickTag('活動時間與日期')">📅 活動時間</div>
         <div class="quick-tag" onclick="clickQuickTag('活動舉辦地點')">📍 活動地點</div>
         <div class="quick-tag" onclick="clickQuickTag('場地佈置時間')">🔨 佈置時間</div>
-        <div class="quick-tag" onclick="clickQuickTag('觀摩時間')">👀 觀摩時間</div>
-        <div class="quick-tag" onclick="clickQuickTag('修改Google表單')">📝 修改表單</div>
-        <div class="quick-tag" onclick="clickQuickTag('更換解說員嗎')">🙋 更換解說員</div>
+        <div class="quick-tag" onclick="clickQuickTag('觀摩時間多長')">👀 觀摩時間</div>
+        <div class="quick-tag" onclick="clickQuickTag('如何修改Google表單')">📝 修改表單</div>
+        <div class="quick-tag" onclick="clickQuickTag('可以更換解說員嗎')">🙋 更換解說員</div>
     </div>
     
     <div class="chat-input-area">
-        <input type="text" id="userInput" class="chat-input" placeholder="請輸入您的問題..." onkeypress="handleKeyPress(event)" style="touch-action: manipulation;">
+        <input type="text" id="userInput" class="chat-input" placeholder="請輸入問題或社團名稱..." onkeypress="handleKeyPress(event)" style="touch-action: manipulation;">
         <button class="send-btn" onclick="sendMessage()">發送</button>
     </div>
 </div>
@@ -159,17 +156,35 @@
     window.addEventListener('orientationchange', resetVH);
     resetVH();
 
-    // 擴充問答庫，精準對應點選的關鍵字
+    // 💡 基礎問答庫：已精簡，每個問題僅保留第一個最核心的關鍵詞
     const faqData = [
-        { keywords: ["更換解說員嗎"], answer: "不可以私自更換解說員身分唷！大會嚴格規定「不允許私自更換解說員身分」。如果有任何特殊或緊急突發狀況，請務必先向主辦單位正式回報並取得同意，絕對不能私下自行更換唷！" },
-        { keywords: ["場地佈置時間"], answer: "請各社團特別注意時間唷！場地佈置時間為當天 10:30 開始，並於 13:00 準時結束。請大家抓緊時間，在規定時間內完成精彩的社團佈置唷！" },
-        { keywords: ["修改Google表單", ], answer: "如果需要更改 Google 表單內容，請不要自己重複填寫唷！請直接聯絡「學生議會法制委員長陳凱翔」，由他來協助你進行修改與調整。" },
-        { keywords: ["觀摩時間"], answer: "這次的重頭戲——觀摩時間為 16:30 - 16:50，共計 20 分鐘！這段時間大家可以互相交流、互相學習，請好好把握這珍貴的 20 分鐘唷！" },
-        { keywords: ["活動舉辦地點"], answer: "本次活動的地點在「弘光科技大學 毓麟館」唷！" },
-        { keywords: ["活動時間與日期"], answer: "活動時間為 2026年12月10日（星期四）10:30 - 17:30 唷！" }
+        { 
+            keywords: ["活動時間與日期"], 
+            answer: "活動時間為 2026年12月10日（星期四）10:30 - 17:30 唷！" 
+        },
+        { 
+            keywords: ["活動舉辦地點"], 
+            answer: "本次活動的地點在「弘光科技大學 毓麟館」唷！" 
+        },
+        { 
+            keywords: ["場地佈置時間"], 
+            answer: "請各社團特別注意時間唷！場地佈置時間為當天 10:30 開始，並於 13:00 準時結束。請大家抓緊時間，在規定時間內完成精彩的社團佈置唷！" 
+        },
+        { 
+            keywords: ["觀摩時間多長"], 
+            answer: "這次的重頭戲——觀摩時間為 16:30 - 16:50，共計 20 分鐘！這段時間大家可以互相交流、互相學習，請好好把握這珍貴的 20 分鐘唷！" 
+        },
+        { 
+            keywords: ["如何修改Google表單"], 
+            answer: "如果需要更改 Google 表單內容，請不要自己重複填寫唷！請直接聯絡「學生議會法制委員長陳凱翔」，由他來協助你進行修改與調整。" 
+        },
+        { 
+            keywords: ["可以更換解說員嗎"], 
+            answer: "不可以私自更換解說員身分唷！大會嚴格規定「不允許私自更換解說員身分」。如果有任何特殊或緊急突發狀況，請務必先向主辦單位正式回報並取得同意，絕對不能私下自行更換唷！" 
+        }
     ];
-    
- // 💡 完整置入你傳來的社團屬性分類清單
+
+    // 社團屬性分類清單
     const clubDatabase = [
         // 自治綜合性 (20個)
         { name: "護理系學會", type: "自治綜合性" }, { name: "物治系學會", type: "自治綜合性" }, { name: "營養系學會", type: "自治綜合性" },
@@ -206,11 +221,17 @@
         { name: "餐飲服務社", type: "學藝性" }
     ];
 
-    const fallbackAnswer = "抱歉，關於這個部分小幫手手邊目前沒有詳細的公告資料唷！建議您可以直接詢問活動現場的工作人員，或者留意最新的官方公告唷！";
+    const fallbackAnswer = "抱歉，關於這個部分小幫手手邊目前沒有詳細的公告資料唷！若是想查詢社團屬性，請直接輸入完整的社團名稱（例如：熱舞社、吉他社、護理系學會）。";
 
-    // 💡 新增：處理點選快捷鍵的函式
     function clickQuickTag(text) {
-        processMessage(text);
+        if (text === '查詢社團屬性') {
+            appendMessage("🔍 查詢社團屬性", "user");
+            setTimeout(() => {
+                appendMessage("請在下方輸入您的<b>「社團名稱」</b>（例如輸入：熱舞社 或 護理系學會），我就能立刻幫您查詢它屬於哪一個屬性分類唷！", "bot");
+            }, 250);
+        } else {
+            processMessage(text);
+        }
     }
 
     function sendMessage() {
@@ -222,41 +243,10 @@
         inputEl.value = "";
     }
 
-    // 核心對話處理
     function processMessage(query) {
         appendMessage(query, "user");
 
         setTimeout(() => {
-            let matchedAnswer = fallbackAnswer;
+            // 1. 比對基礎問答庫
             for (const item of faqData) {
                 if (item.keywords.some(kw => query.includes(kw))) {
-                    matchedAnswer = item.answer;
-                    break;
-                }
-            }
-            appendMessage(matchedAnswer, "bot");
-        }, 250);
-    }
-
-    function appendMessage(text, sender) {
-        const messagesContainer = document.getElementById("chatMessages");
-        const msgDiv = document.createElement("div");
-        msgDiv.className = `message ${sender}`;
-        msgDiv.innerHTML = text;
-        messagesContainer.appendChild(msgDiv);
-        
-        setTimeout(() => {
-            messagesContainer.scrollTo({
-                top: messagesContainer.scrollHeight,
-                behavior: 'smooth'
-            });
-        }, 50);
-    }
-
-    function handleKeyPress(e) {
-        if (e.key === "Enter") sendMessage();
-    }
-</script>
-
-</body>
-</html>
