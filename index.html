@@ -38,7 +38,7 @@
             padding-top: calc(16px + env(safe-area-inset-top)); 
         }
         /* 💡 核心優化：訊息對話區置入半透明、不干擾文字閱讀的法槌徽章浮水印 */
-       .chat-messages { 
+      .chat-messages { 
     flex: 1; 
     padding: 16px; 
     overflow-y: auto; 
@@ -47,23 +47,36 @@
     flex-direction: column; 
     gap: 12px; 
     background-color: #f4f6f8; 
-    background-image: url('bg-logo.png');
-    background-repeat: no-repeat;
-    background-position: center center;    /* 確保絕對置中 */
-    background-size: 65% auto;             /* 調整標誌大小 */
-    background-attachment: fixed;          /* 固定背景不隨訊息滾動 */
     position: relative;
+    z-index: 2; /* 讓對話訊息字體保持在最上層 */
 }
 
-        /* 加上一層微弱白透遮罩，確保黑色 Logo 變淡、完全不吃字，對話依然清晰 */
-       .chat-messages::before {
+/* 🆕 這是全新加入的固定背景圖設定，徹底解決手機端 fixed 失效問題 */
+.fixed-bg-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 65%; /* 這裡控制您的 Logo 大小 */
+    height: auto;
+    aspect-ratio: 1 / 1; /* 確保正方形徽章比例不變形 */
+    background-image: url('bg-logo.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    z-index: 1; /* 鎖在最底層 */
+    pointer-events: none; /* 確保手指滑動時不會卡到圖片 */
+}
+
+/* 控制半透明白底遮罩，確保不吃字 */
+.fixed-bg-container::before {
     content: "";
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(244, 246, 248, 0.91); /* 💡 0.91 代表遮罩的濃度 */
-    z-index: 1;
-    pointer-events: none;
+    top: -100vh; left: -100vw; right: -100vw; bottom: -100vh;
+    background: rgba(244, 246, 248, 0.91); /* 0.91 控制遮罩濃度，若Logo太明顯可以調大到0.95 */
+    z-index: -1;
 }
+
         /* 確保訊息泡泡飄在浮水印和遮罩的上方 */
         .message { 
             max-width: 82%; 
@@ -152,7 +165,7 @@
 
 <div class="chat-container">
     <div class="chat-header">✦ 社團評選暨觀摩活動 智能客服 ✦</div>
-    
+    <div class="fixed-bg-container"></div>
     <div id="chatMessages" class="chat-messages">
         <div class="message bot">哈囉！我是本次活動的線上客服小幫手唷！😊<br>歡迎詢問我任何關於「115學年度第一學期全校學生社團評選暨觀摩活動」的問題！<br><br>💡 <b>您也可以直接點選下方的常見問題進行快速查詢唷！</b></div>
     </div>
