@@ -26,7 +26,7 @@
             box-sizing: border-box; 
         }
         .chat-header { 
-            background: linear-gradient(135deg, #006241, #004d2a); 
+            background: linear-gradient(135deg, #1a73e8, #1557b0); 
             color: white; 
             padding: 16px; 
             font-weight: 600; 
@@ -37,6 +37,7 @@
             flex-shrink: 0;
             padding-top: calc(16px + env(safe-area-inset-top)); 
         }
+        /* 💡 核心優化：訊息對話區置入半透明、不干擾文字閱讀的法槌徽章浮水印 */
         .chat-messages { 
             flex: 1; 
             padding: 16px; 
@@ -45,11 +46,36 @@
             display: flex; 
             flex-direction: column; 
             gap: 12px; 
-            background: #f4f6f8; 
+            background-color: #f4f6f8; 
+            background-image: url('bg-logo.png');
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: 65% auto; /* 控制浮水印大小，在手機上最完美的黃金比例 */
+            background-attachment: local;
+            position: relative;
         }
-        .message { max-width: 82%; padding: 12px 16px; border-radius: 20px; font-size: 16px; line-height: 1.5; word-break: break-all; box-sizing: border-box; }
+        /* 加上一層微弱白透遮罩，確保黑色 Logo 變淡、完全不吃字，對話依然清晰 */
+        .chat-messages::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(244, 246, 248, 0.88); 
+            z-index: 1;
+            pointer-events: none;
+        }
+        /* 確保訊息泡泡飄在浮水印和遮罩的上方 */
+        .message { 
+            max-width: 82%; 
+            padding: 12px 16px; 
+            border-radius: 20px; 
+            font-size: 16px; 
+            line-height: 1.5; 
+            word-break: break-all; 
+            box-sizing: border-box; 
+            z-index: 2;
+        }
         .bot { background: white; color: #202124; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #e8eaed; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
-        .user { background: #f26522; color: white; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 2px 4px rgba(242,101,34,0.15); }
+        .user { background: #1a73e8; color: white; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 2px 4px rgba(26,115,232,0.15); }
         .quick-tags-container {
             padding: 10px 14px 4px 14px;
             background: #f4f6f8;
@@ -59,12 +85,13 @@
             white-space: nowrap;
             flex-shrink: 0;
             -webkit-overflow-scrolling: touch;
+            z-index: 2;
         }
         .quick-tags-container::-webkit-scrollbar { display: none; }
         .quick-tag {
             background: white;
-            color: #006241;
-            border: 1px solid #006241;
+            color: #1a73e8;
+            border: 1px solid #1a73e8;
             padding: 8px 16px;
             border-radius: 18px;
             font-size: 14px;
@@ -73,7 +100,7 @@
             transition: all 0.2s ease;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        .quick-tag:hover { background: #006241; color: white; }
+        .quick-tag:hover { background: #1a73e8; color: white; }
         .chat-input-area { 
             padding: 12px 14px; 
             border-top: 1px solid #dadce0; 
@@ -85,6 +112,7 @@
             box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
             flex-shrink: 0; 
             padding-bottom: calc(12px + env(safe-area-inset-bottom)); 
+            z-index: 2;
         }
         .chat-input { 
             flex: 1; 
@@ -97,9 +125,9 @@
             -webkit-appearance: none; 
             box-sizing: border-box;
         }
-        .chat-input:focus { border-color: #006241; background: white; }
+        .chat-input:focus { border-color: #1a73e8; background: white; }
         .send-btn { 
-            background: #f26522; 
+            background: #1a73e8; 
             color: white; 
             border: none; 
             height: 42px; 
@@ -109,10 +137,10 @@
             cursor: pointer; 
             font-size: 15px; 
             flex-shrink: 0;
-            box-shadow: 0 2px 4px rgba(242,101,34,0.15);
+            box-shadow: 0 2px 4px rgba(26,115,232,0.15);
         }
         .chat-link {
-            color: #006241 !important;
+            color: #1a73e8 !important;
             text-decoration: underline !important;
             font-weight: bold !important;
             cursor: pointer !important;
@@ -230,9 +258,4 @@
                 top: messagesContainer.scrollHeight,
                 behavior: "smooth"
             });
-        }, 50);
-    }
-</script>
-
-</body>
-</html>
+}, 50);}
