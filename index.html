@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
     <title>✦ 社團評選暨觀摩活動 智能客服 ✦</title>
+    <!-- 引入 LINE LIFF SDK -->
+    <script src="https://line.me"></script>
     <style>
         html, body { 
             height: 100%; 
@@ -37,47 +39,18 @@
             flex-shrink: 0;
             padding-top: calc(16px + env(safe-area-inset-top)); 
         }
-        /* 💡 核心優化：訊息對話區置入半透明、不干擾文字閱讀的法槌徽章浮水印 */
-      .chat-messages { 
-    flex: 1; 
-    padding: 16px; 
-    overflow-y: auto; 
-    -webkit-overflow-scrolling: touch; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 12px; 
-    background-color: #f4f6f8; 
-    position: relative;
-    z-index: 2; /* 讓對話訊息字體保持在最上層 */
-}
-
-/* 🎯 關鍵！就是漏了這一段，請務必一起貼進來 */
-.fixed-bg-container {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 65%; /* 這裡控制您的 Logo 大小 */
-    height: auto;
-    aspect-ratio: 1 / 1; /* 確保正方形徽章比例不變形 */
-    background-image: url('bg-logo.png');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    z-index: 1; /* 鎖在最底層 */
-    pointer-events: none; /* 確保手指滑動時不會卡到圖片 */
-}
-
-/* 控制半透明白底遮罩，確保不吃字 */
-.fixed-bg-container::before {
-    content: "";
-    position: absolute;
-    top: -100vh; left: -100vw; right: -100vw; bottom: -100vh;
-    background: rgba(244, 246, 248, 0.91); /* 0.91 控制遮罩濃度 */
-    z-index: -1;
-}
-
-        /* 確保訊息泡泡飄在浮水印和遮罩的上方 */
+        .chat-messages { 
+            flex: 1; 
+            padding: 16px; 
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            background-color: #f4f6f8; 
+            position: relative;
+            z-index: 2;
+        }
         .message { 
             max-width: 82%; 
             padding: 12px 16px; 
@@ -165,7 +138,7 @@
 
 <div class="chat-container">
     <div class="chat-header">✦ 社團評選暨觀摩活動 智能客服 ✦</div>
-    <div class="fixed-bg-container"></div>
+    
     <div id="chatMessages" class="chat-messages">
         <div class="message bot">哈囉！我是本次活動的線上客服小幫手唷！😊<br>歡迎詢問我任何關於「115學年度第一學期全校學生社團評選暨觀摩活動」的問題！<br><br>💡 <b>您也可以直接點選下方的常見問題進行快速查詢唷！</b></div>
     </div>
@@ -193,7 +166,23 @@
     }
     window.addEventListener('resize', resetVH);
     window.addEventListener('orientationchange', resetVH);
+    
     resetVH();
+
+    // 初始化 LINE LIFF
+    document.addEventListener("DOMContentLoaded", function() {
+        resetVH();
+        
+        if (typeof liff !== 'undefined') {
+            liff.init({
+                liffId: '2011529426-hq8fXduC' 
+            }).then(() => {
+                console.log("LIFF 初始化成功");
+            }).catch((err) => {
+                console.error("LIFF 初始化失敗", err);
+            });
+        }
+    });
 
     const faqData = [
         { keywords: ["聯絡學生議會"], answer: "如果您有更複雜或緊急的個別突發狀況，歡迎直接點擊連結私訊學生議會官方帳號唷！<br><br>🔗 <b>學生議會官方傳送門：</b><span class='chat-link' onclick='openInstagram()'>點我開啟 Instagram 專頁 💬</span>" },
@@ -208,15 +197,16 @@
     const fallbackAnswer = "抱歉，關於這個部分小幫手手邊目前沒有詳細的公告資料唷！建議您可以直接詢問活動現場的工作人員，或者點選快捷鍵「📱 聯絡學生議會」私訊我們的官方專頁唷！";
 
     function openInstagram() {
-        const appUrl = "instagram://user?username=hksp_2002";
-        const webUrl = "https://instagram.com";
-        const startTime = Date.now();
-        window.location.href = appUrl;
-        setTimeout(() => {
-            if (Date.now() - startTime < 2000) {
-                window.open(webUrl, '_blank');
-            }
-        }, 1500);
+        const targetUrl = "https://instagram.com";
+        
+        if (typeof liff !== 'undefined' && (liff.isLoggedIn() || liff.isInClient())) {
+            liff.openWindow({
+                url: targetUrl,
+                external: true
+            });
+        } else {
+            window.open(targetUrl, '_blank');
+        }
     }
 
     function clickQuickTag(text) {
@@ -257,10 +247,6 @@
         }, 250);
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
-        resetVH();
-    });
-
     function appendMessage(text, sender) {
         const messagesContainer = document.getElementById("chatMessages");
         const msgDiv = document.createElement("div");
@@ -272,8 +258,9 @@
                 top: messagesContainer.scrollHeight,
                 behavior: "smooth"
             });
-}, 50);
+        }, 50);
     }
 </script>
+
 </body>
 </html>
