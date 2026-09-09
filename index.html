@@ -138,9 +138,9 @@
         <div class="quick-tag" onclick="clickQuickTag('活動時間與日期')">📅 活動時間</div>
         <div class="quick-tag" onclick="clickQuickTag('活動舉辦地點')">📍 活動地點</div>
         <div class="quick-tag" onclick="clickQuickTag('場地佈置時間')">🔨 佈置時間</div>
-        <div class="quick-tag" onclick="clickQuickTag('觀摩時間多長')">👀 觀摩時間</div>
-        <div class="quick-tag" onclick="clickQuickTag('如何修改Google表單')">📝 修改表單</div>
-        <div class="quick-tag" onclick="clickQuickTag('可以更換解說員嗎')">🙋 更換解說員</div>
+        <div class="quick-tag" onclick="clickQuickTag('觀摩')">👀 觀摩時間</div>
+        <div class="quick-tag" onclick="clickQuickTag('修改Google表單')">📝 修改表單</div>
+        <div class="quick-tag" onclick="clickQuickTag('更換解說員嗎')">🙋 更換解說員</div>
     </div>
     
     <div class="chat-input-area">
@@ -160,12 +160,12 @@
 
     // 擴充問答庫，精準對應點選的關鍵字
     const faqData = [
-        { keywords: ["換", "更換", "解說員", "身分", "代替"], answer: "不可以私自更換解說員身分唷！大會嚴格規定「不允許私自更換解說員身分」。如果有任何特殊或緊急突發狀況，請務必先向主辦單位正式回報並取得同意，絕對不能私下自行更換唷！" },
-        { keywords: ["佈置", "布置", "時間", "幾點結束", "幾點開始"], answer: "請各社團特別注意時間唷！場地佈置時間為當天 10:30 開始，並於 13:00 準時結束。請大家抓緊時間，在規定時間內完成精彩的社團佈置唷！" },
-        { keywords: ["改", "修改", "表單", "Google表單", "內容"], answer: "如果需要更改 Google 表單內容，請不要自己重複填寫唷！請直接聯絡「學生議會法制委員長陳凱翔」，由他來協助你進行修改與調整。" },
-        { keywords: ["觀摩", "多久", "幾分鐘", "觀摩時間"], answer: "這次的重頭戲——觀摩時間為 16:30 - 16:50，共計 20 分鐘！這段時間大家可以互相交流、互相學習，請好好把握這珍貴的 20 分鐘唷！" },
-        { keywords: ["地點", "哪裡", "位置", "毓麟館"], answer: "本次活動的地點在「弘光科技大學 毓麟館」唷！" },
-        { keywords: ["時間", "日期", "幾號"], answer: "活動時間為 2026年12月10日（星期四）10:30 - 17:30 唷！" }
+        { keywords: ["更換解說員嗎"], answer: "不可以私自更換解說員身分唷！大會嚴格規定「不允許私自更換解說員身分」。如果有任何特殊或緊急突發狀況，請務必先向主辦單位正式回報並取得同意，絕對不能私下自行更換唷！" },
+        { keywords: ["場地佈置時間"], answer: "請各社團特別注意時間唷！場地佈置時間為當天 10:30 開始，並於 13:00 準時結束。請大家抓緊時間，在規定時間內完成精彩的社團佈置唷！" },
+        { keywords: ["修改Google表單", ], answer: "如果需要更改 Google 表單內容，請不要自己重複填寫唷！請直接聯絡「學生議會法制委員長陳凱翔」，由他來協助你進行修改與調整。" },
+        { keywords: ["觀摩時間"], answer: "這次的重頭戲——觀摩時間為 16:30 - 16:50，共計 20 分鐘！這段時間大家可以互相交流、互相學習，請好好把握這珍貴的 20 分鐘唷！" },
+        { keywords: ["活動舉辦地點"], answer: "本次活動的地點在「弘光科技大學 毓麟館」唷！" },
+        { keywords: ["活動時間與日期"], answer: "活動時間為 2026年12月10日（星期四）10:30 - 17:30 唷！" }
     ];
 
     const fallbackAnswer = "抱歉，關於這個部分小幫手手邊目前沒有詳細的公告資料唷！建議您可以直接詢問活動現場的工作人員，或者留意最新的官方公告唷！";
