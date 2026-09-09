@@ -135,6 +135,7 @@
     
     <!-- 💡 新增：常見問題點選按鈕列 (可左右滑動) -->
     <div class="quick-tags-container">
+        <div class="quick-tag" onclick="clickQuickTag('查詢社團屬性')">🔍 查詢社團屬性</div>
         <div class="quick-tag" onclick="clickQuickTag('活動時間與日期')">📅 活動時間</div>
         <div class="quick-tag" onclick="clickQuickTag('活動舉辦地點')">📍 活動地點</div>
         <div class="quick-tag" onclick="clickQuickTag('場地佈置時間')">🔨 佈置時間</div>
@@ -166,6 +167,43 @@
         { keywords: ["觀摩時間"], answer: "這次的重頭戲——觀摩時間為 16:30 - 16:50，共計 20 分鐘！這段時間大家可以互相交流、互相學習，請好好把握這珍貴的 20 分鐘唷！" },
         { keywords: ["活動舉辦地點"], answer: "本次活動的地點在「弘光科技大學 毓麟館」唷！" },
         { keywords: ["活動時間與日期"], answer: "活動時間為 2026年12月10日（星期四）10:30 - 17:30 唷！" }
+    ];
+    
+ // 💡 完整置入你傳來的社團屬性分類清單
+    const clubDatabase = [
+        // 自治綜合性 (20個)
+        { name: "護理系學會", type: "自治綜合性" }, { name: "物治系學會", type: "自治綜合性" }, { name: "營養系學會", type: "自治綜合性" },
+        { name: "動保系學會", type: "自治綜合性" }, { name: "語聽系學會", type: "自治綜合性" }, { name: "老福系學會", type: "自治綜合性" },
+        { name: "健管系學會", type: "自治綜合性" }, { name: "醫材系學會", type: "自治綜合性" }, { name: "妝品系學會", type: "自治綜合性" },
+        { name: "美髮系學會", type: "自治綜合性" }, { name: "幼保系學會", type: "自治綜合性" }, { name: "文化設計系學會", type: "自治綜合性" },
+        { name: "運休系學會", type: "自治綜合性" }, { name: "多遊系學會", type: "自治綜合性" }, { name: "環安系學會", type: "自治綜合性" },
+        { name: "智科系學會", type: "自治綜合性" }, { name: "餐旅系學會", type: "自治綜合性" }, { name: "食科系學會", type: "自治綜合性" },
+        { name: "國際語言系學會", type: "自治綜合性" }, { name: "畢聯會", type: "自治綜合性" },
+
+        // 康樂性 (9個)
+        { name: "熱舞社", type: "康樂性" }, { name: "火舞藝術社", type: "康樂性" }, { name: "穿趣炸雞社", type: "康樂性" },
+        { name: "國際學生聯誼社", type: "康樂性" }, { name: "弘韻國樂社", type: "康樂性" }, { name: "鋼琴音樂社", type: "康樂性" },
+        { name: "弘櫻吉他社", type: "康樂性" }, { name: "熱門音樂社", type: "康樂性" }, { name: "管樂社", type: "康樂性" },
+
+        // 服務性 (10個)
+        { name: "佳音社", type: "服務性" }, { name: "崇德文化青年社", type: "服務性" }, { name: "慈濟青年社", type: "服務性" },
+        { name: "春暉社", type: "服務性" }, { name: "弘櫻志工隊", type: "服務性" }, { name: "原住民文化推廣社", type: "服務性" },
+        { name: "交通服務隊", type: "服務性" }, { name: "健康天使服務隊", type: "服務性" }, { name: "諮輔志工隊", type: "服務性" },
+        { name: "住宿志工隊", type: "服務性" },
+
+        // 體能性 (11個)
+        { name: "翔風羽球社", type: "體能性" }, { name: "跆拳道社", type: "體能性" }, { name: "棒壘社", type: "體能性" },
+        { name: "居合劍道社", type: "體能性" }, { name: "空手道社", type: "體能性" }, { name: "傳統射箭社", type: "體能性" },
+        { name: "急速銀籃社", type: "體能性" }, { name: "健身運動指導社", type: "體能性" }, { name: "LET'S GO SUP 水上休閒社", type: "體能性" },
+        { name: "撞球社", type: "體能性" }, { name: "戶外探索社", type: "體能性" },
+
+        // 學藝性 (16個)
+        { name: "動漫畫研習社", type: "學藝性" }, { name: "企業研習社", type: "學藝性" }, { name: "桌遊社", type: "學藝性" },
+        { name: "品酒社", type: "學藝性" }, { name: "生命探索社", type: "學藝性" }, { name: "弘光攝影社", type: "學藝性" },
+        { name: "調香社", type: "學藝性" }, { name: "創意飲調社", type: "學藝性" }, { name: "日本茶道社", type: "學藝性" },
+        { name: "國際餐旅青年學習社", type: "學藝性" }, { name: "西餐廚藝社", type: "學藝性" }, { name: "創藝蔬食崇德社", type: "學藝性" },
+        { name: "時尚甜點社", type: "學藝性" }, { name: "原住民食育研究社", type: "學藝性" }, { name: "餐旅競賽技藝研習社", type: "學藝性" },
+        { name: "餐飲服務社", type: "學藝性" }
     ];
 
     const fallbackAnswer = "抱歉，關於這個部分小幫手手邊目前沒有詳細的公告資料唷！建議您可以直接詢問活動現場的工作人員，或者留意最新的官方公告唷！";
