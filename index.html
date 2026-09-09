@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
-    <title>✦ 社團評選暨觀摩活動Q A ✦</title>
+    <title>✦ 社團評選暨觀摩活動 智能客服 ✦</title>
     <style>
-        /* 基礎滿版外框鎖定，防止手機橡皮筋回彈跑版 */
         html, body { 
             height: 100%; 
             margin: 0; 
@@ -16,7 +15,6 @@
             width: 100%;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-        
         .chat-container { 
             width: 100%;
             height: 100vh;
@@ -27,7 +25,6 @@
             overflow: hidden; 
             box-sizing: border-box; 
         }
-        
         .chat-header { 
             background: linear-gradient(135deg, #1a73e8, #1557b0); 
             color: white; 
@@ -40,7 +37,6 @@
             flex-shrink: 0;
             padding-top: calc(16px + env(safe-area-inset-top)); 
         }
-        
         .chat-messages { 
             flex: 1; 
             padding: 16px; 
@@ -51,12 +47,9 @@
             gap: 12px; 
             background: #f4f6f8; 
         }
-        
         .message { max-width: 82%; padding: 12px 16px; border-radius: 20px; font-size: 16px; line-height: 1.5; word-break: break-all; box-sizing: border-box; }
         .bot { background: white; color: #202124; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #e8eaed; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
         .user { background: #1a73e8; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-        
-        /* 橫向滑動快捷鍵按鈕區 */
         .quick-tags-container {
             padding: 10px 14px 4px 14px;
             background: #f4f6f8;
@@ -68,7 +61,6 @@
             -webkit-overflow-scrolling: touch;
         }
         .quick-tags-container::-webkit-scrollbar { display: none; }
-        
         .quick-tag {
             background: white;
             color: #1a73e8;
@@ -82,7 +74,6 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .quick-tag:hover { background: #1a73e8; color: white; }
-        
         .chat-input-area { 
             padding: 12px 14px; 
             border-top: 1px solid #dadce0; 
@@ -95,7 +86,6 @@
             flex-shrink: 0; 
             padding-bottom: calc(12px + env(safe-area-inset-bottom)); 
         }
-        
         .chat-input { 
             flex: 1; 
             padding: 12px 18px; 
@@ -108,19 +98,6 @@
             box-sizing: border-box;
         }
         .chat-input:focus { border-color: #1a73e8; background: white; }
-        
-        .send-btn { 
-            background: #1a73e8; 
-            color: white; 
-            border: none; 
-            height: 42px; 
-            padding: 0 22px; 
-            border-radius: 24px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            font-size: 15px; 
-            flex-shrink: 0;
-        }
     </style>
 </head>
 <body>
@@ -129,13 +106,12 @@
     <div class="chat-header">✦ 社團評選暨觀摩活動 智能客服 ✦</div>
     
     <div id="chatMessages" class="chat-messages">
-        <div class="message bot">哈囉！我是本次活動的線上客服小幫手唷！😊<br>歡迎詢問我任何關於「115學年度第一學期全校學生社團評選暨觀摩活動」的問題！<br><br>💡 <b>您也可以直接點選下方的常見問題，或是輸入社團名稱查詢它的屬性分類唷！</b></div>
+        <div class="message bot">哈囉！我是本次活動的線上客服小幫手唷！😊<br>歡迎詢問我任何關於「115學年度第一學期全校學生社團評選暨觀摩活動」的問題！<br><br>💡 <b>您也可以直接點選下方的常見問題進行快速查詢唷！</b></div>
     </div>
     
-    <!-- 快捷按鈕列 -->
     <div class="quick-tags-container">
-        <div class="quick-tag" onclick="clickQuickTag('🔍 查詢社團屬性')">🔍 查詢社團屬性</div>
-        <div class="quick-tag" onclick="clickQuickTag('📅 活動時間')">📅 活動時間</div>
+        <div class="quick-tag" onclick="clickQuickTag('📱 聯絡學生議會')">📱 聯絡學生議會</div>
+        <div class="quick-tag" onclick="clickQuickTag('📅 活動時間與日期')">📅 活動時間</div>
         <div class="quick-tag" onclick="clickQuickTag('📍 活動地點')">📍 活動地點</div>
         <div class="quick-tag" onclick="clickQuickTag('🔨 佈置時間')">🔨 佈置時間</div>
         <div class="quick-tag" onclick="clickQuickTag('👀 觀摩時間')">👀 觀摩時間</div>
@@ -143,15 +119,13 @@
         <div class="quick-tag" onclick="clickQuickTag('🙋 更換解說員')">🙋 更換解說員</div>
     </div>
     
-    <!-- 輸入工具列（使用表單 + 鍵盤按鍵雙重防禦，確保迴車 100% 發送） -->
     <form class="chat-input-area" onsubmit="handleFormSubmit(event)">
-        <input type="text" id="userInput" class="chat-input" placeholder="請輸入問題或社團名稱..." onkeypress="handleKeyPress(event)" autocomplete="off" style="touch-action: manipulation;">
-        <button type="submit" class="send-btn">發送</button>
+        <input type="text" id="userInput" class="chat-input" placeholder="請輸入您的問題..." onkeypress="handleKeyPress(event)" autocomplete="off" style="touch-action: manipulation;">
+        <button type="submit" style="background: #1a73e8; color: white; border: none; height: 42px; padding: 0 22px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 15px; flex-shrink: 0;">發送</button>
     </form>
 </div>
 
 <script>
-    // 動態手機高度計算
     function resetVH() {
         let vh = window.innerHeight * 0.01;
         document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -160,119 +134,70 @@
     window.addEventListener('orientationchange', resetVH);
     resetVH();
 
-    // 基礎問答庫（已恢復最原始、最包容的手動打字模糊搜尋關鍵字）
     const faqData = [
-        { keywords: ["活動時間與日期", "時間", "日期", "幾號", "星期幾", "哪一天"], answer: "活動時間為 2026年12月10日（星期四）10:30 - 17:30 唷！" },
-        { keywords: ["活動舉辦地點", "地點", "哪裡", "位置", "毓麟館", "體育館"], answer: "本次活動的地點在「弘光科技大學 毓麟館」唷！" },
-        { keywords: ["場地佈置時間", "佈置", "布置", "時間", "幾點結束", "幾點開始", "進場"], answer: "請各社團特別注意時間唷！場地佈置時間為當天 10:30 開始，並於 13:00 準時結束。請大家抓緊時間，在規定時間內完成精彩的社團佈置唷！" },
-        { keywords: ["觀摩時間多長", "觀摩", "多久", "幾分鐘", "觀摩時間"], answer: "這次的重頭戲——觀摩時間為 16:30 - 16:50，共計 20 分鐘！這段時間大家可以互相交流、互相學習，請好好把握這珍貴的 20 分鐘唷！" },
-        { keywords: ["如何修改Google表單", "改", "修改", "表單", "Google表單", "內容", "填錯", "陳凱翔"], answer: "如果需要更改 Google 表單內容，請不要自己重複填寫唷！請直接聯絡「學生議會法制委員長陳凱翔」，由他來協助你進行修改與調整。" },
-        { keywords: ["可以更換解說員嗎", "換", "更換", "解說員", "身分", "代替", "代打", "換人"], answer: "不可以私自更換解說員身分唷！大會嚴格規定「不允許私自更換解說員身分」。如果有任何特殊或緊急突發狀況，請務必先向主辦單位正式回報並取得同意，絕對不能私下自行更換唷！" }
+        { keywords: ["聯絡學生議會"], answer: "如果您有更複雜或緊急的個別突發狀況，歡迎直接點擊連結私訊學生議會官方帳號唷！<br><br>🔗 <b>學生議會官方傳送門：</b><a class='chat-link' href='https://instagram.com' target='_blank'>點我開啟 Instagram 專頁 💬</a>" },
+        { keywords: ["活動時間與日期"], answer: "活動時間為 2026年12月10日（星期四）10:30 - 17:30 唷！" },
+        { keywords: ["活動地點"], answer: "本次活動的地點在「弘光科技大學 毓麟館」唷！"} ,
+        { keywords: ["佈置時間"], answer: "請各社團特別注意時間唷！場地佈置時間為當天 10:30 開始，並於 13:00 準時結束。請大家抓緊時間，在規定時間內完成精彩的社團佈置唷！" },
+        { keywords: ["觀摩時間"], answer: "觀摩時間為 16:30 - 16:50，共計 20 分鐘！這段時間大家可以互相交流、互相學習，請好好把握這珍貴的 20 分鐘唷！" },
+        { keywords: ["修改表單"], answer: "如需更改表單內容，請勿重複填寫唷！請直接聯絡「學生議會IG」，協助你進行修改與調整。" },
+        { keywords: ["更換解說員"], answer: "不可私自更換解說員！嚴格規定「不允許私自更換解說員身分」。如果有任何特殊或緊急突發狀況，請務必先向主辦單位正式回報並取得同意，絕不能私下自行更換！" }
     ];
 
-    // 完整社團對應資料庫
-    const clubDatabase = [
-        // 自治綜合性
-        { name: "護理系學會", type: "自治綜合性" }, { name: "物治系學會", type: "自治綜合性" }, { name: "營養系學會", type: "自治綜合性" },
-        { name: "動保系學會", type: "自治綜合性" }, { name: "語聽系學會", type: "自治綜合性" }, { name: "老福系學會", type: "自治綜合性" },
-        { name: "健管系學會", type: "自治綜合性" }, { name: "醫材系學會", type: "自治綜合性" }, { name: "妝品系學會", type: "自治綜合性" },
-        { name: "美髮系學會", type: "自治綜合性" }, { name: "幼保系學會", type: "自治綜合性" }, { name: "文化設計系學會", type: "自治綜合性" },
-        { name: "運休系學會", type: "自治綜合性" }, { name: "多遊系學會", type: "自治綜合性" }, { name: "環安系學會", type: "自治綜合性" },
-        { name: "智科系學會", type: "自治綜合性" }, { name: "餐旅系學會", type: "自治綜合性" }, { name: "食科系學會", type: "自治綜合性" },
-        { name: "國際語言系學會", type: "自治綜合性" }, { name: "畢聯會", type: "自治綜合性" },
-        // 康樂性
-        { name: "熱舞社", type: "康樂性" }, { name: "火舞藝術社", type: "康樂性" }, { name: "穿趣炸雞社", type: "康樂性" },
-        { name: "國際學生聯誼社", type: "康樂性" }, { name: "弘韻國樂社", type: "康樂性" }, { name: "鋼琴音樂社", type: "康樂性" },
-        { name: "弘櫻吉他社", type: "康樂性" }, { name: "熱門音樂社", type: "康樂性" }, { name: "管樂社", type: "康樂性" },
-        // 服務性
-        { name: "佳音社", type: "服務性" }, { name: "崇德文化青年社", type: "服務性" }, { name: "慈濟青年社", type: "服務性" },
-        { name: "春暉社", type: "服務性" }, { name: "弘櫻志工隊", type: "服務性" }, { name: "原住民文化推廣社", type: "服務性" },
-        { name: "交通服務隊", type: "服務性" }, { name: "健康天使服務隊", type: "服務性" }, { name: "諮輔志工隊", type: "服務性" },
-        { name: "住宿志工隊", type: "服務性" },
-        // 體能性
-        { name: "翔風羽球社", type: "體能性" }, { name: "跆拳道社", type: "體能性" }, { name: "棒壘社", type: "體能性" },
-        { name: "居合劍道社", type: "體能性" }, { name: "空手道社", type: "體能性" }, { name: "傳統射箭社", type: "體能性" },
-        { name: "急速銀籃社", type: "體能性" }, { name: "健身運動指導社", type: "體能性" }, { name: "LET'S GO SUP 水上休閒社", type: "體能性" },
-        { name: "撞球社", type: "體能性" }, { name: "戶外探索社", type: "體能性" },
-        // 学藝性
-        { name: "動漫畫研習社", type: "學藝性" }, { name: "企業研習社", type: "學藝性" }, { name: "桌遊社", type: "學藝性" },
-        { name: "品酒社", type: "學藝性" }, { name: "生命探索社", type: "學藝性" }, { name: "弘光攝影社", type: "學藝性" },
-        { name: "調香社", type: "學藝性" }, { name: "創意飲調社", type: "學藝性" }, { name: "日本茶道社", type: "學藝性" },
-        { name: "國際餐旅青年學習社", type: "學藝性" }, { name: "西餐廚藝社", type: "學藝性" }, { name: "創藝蔬食崇德社", type: "學藝性" },
-        { name: "時尚甜點社", type: "學藝性" }, { name: "原住民食育研究社", type: "學藝性" }, { name: "餐旅競賽技藝研習社", type: "學藝性" },
-        { name: "餐飲服務社", type: "學藝性" }
-    ];
+    const fallbackAnswer = "抱歉，關於這個部分小幫手手邊目前沒有詳細的公告資料唷！建議您可以直接詢問活動現場的工作人員，或者留意最新的官方公告唷！";
 
-    const fallbackAnswer = "抱歉，關於這個部分小幫手手邊目前沒有詳細的公告資料唷！若是想查詢社團屬性，請直接輸入您的社團名稱（例如：熱舞社、吉他社、護理系學會）。";
-
-    // 處理快捷按鈕點擊
     function clickQuickTag(text) {
-        if (text === '🔍 查詢社團屬性') {
-            appendMessage("🔍 查詢社團屬性", "user");
-            setTimeout(() => {
-                appendMessage("請在下方輸入您的<b>「社團名稱」</b>（例如輸入：熱舞社 或 護理系學會），我就能立刻幫您查詢它屬於哪一個屬性分類唷！", "bot");
-            }, 250);
-        } else {
-            // 移除快捷鍵名稱上的 Emoji 後發送進行模糊比對
-            const cleanText = text.replace(/[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]/g, "").trim();
-            processMessage(cleanText);
+        const cleanText = text.replace(/[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]/g, "").trim();
+        processMessage(cleanText);
+    }
+
+    function handleFormSubmit(e) {
+        if (e) e.preventDefault();
+        const inputEl = document.getElementById("userInput");
+        const query = inputEl.value.trim();
+        if (!query) return;
+        processMessage(query);
+        inputEl.value = "";
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === "Enter" || e.keyCode === 13) {
+            if (e) e.preventDefault();
+            const inputEl = document.getElementById("userInput");
+            const query = inputEl.value.trim();
+            if (!query) return;
+            processMessage(query);
+            inputEl.value = "";
         }
     }
 
-function handleFormSubmit(e) {
-    if (e) e.preventDefault(); 
-    const inputEl = document.getElementById("userInput");
-    const query = inputEl.value.trim();
-    if (!query) return;
-
-    processMessage(query);
-    inputEl.value = ""; 
-    }
-    // 對話核心引擎（已完美補上 setTimeout 的結尾括號與時間）
     function processMessage(query) {
         appendMessage(query, "user");
-
         setTimeout(() => {
-            // 1. 優先比對基礎常問問答庫
             for (const item of faqData) {
                 if (item.keywords.some(kw => query.includes(kw) || kw.includes(query))) {
                     appendMessage(item.answer, "bot");
                     return;
                 }
             }
-
-            // 2. 比對社團屬性資料庫（支援模糊與包含搜尋）
-            let matchedClubs = [];
-            for (const club of clubDatabase) {
-                if (club.name.includes(query) || query.includes(club.name)) {
-                    matchedClubs.push(club);
-                }
-            }
-
-            if (matchedClubs.length > 0) {
-                let answerText = "🎉 幫您查詢到相關社團屬性如下：<br><br>";
-                matchedClubs.forEach(c => {
-                    answerText += `• <b>【${c.name}】</b> ➔ 屬於 <b>${c.type}</b><br>`;
-                });
-                answerText += "<br>請對應您所屬的屬性類別來準備這次的社團評選唷！💪";
-                appendMessage(answerText, "bot");
-            } else {
-                // 3. 都沒中則跳出罐頭回覆
-                appendMessage(fallbackAnswer, "bot");
-            }
-        }, 250); // 👈 之前就是漏掉了這行結尾！
+            appendMessage(fallbackAnswer, "bot");
+        }, 250);
     }
-function appendMessage(text, sender) {
-    const messagesContainer = document.getElementById("chatMessages");
-    const msgDiv = document.createElement("div");
-    msgDiv.className = `message ${sender}`;
-    msgDiv.innerHTML = text;
-    messagesContainer.appendChild(msgDiv);
-    
-    setTimeout(() => {
-        messagesContainer.scrollTo({
-            top: messagesContainer.scrollHeight,
-            behavior: 'smooth'
-        });
-    }, 50);
-}
+
+    function appendMessage(text, sender) {
+        const messagesContainer = document.getElementById("chatMessages");
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "message " + sender;
+        msgDiv.innerHTML = text;
+        messagesContainer.appendChild(msgDiv);
+        setTimeout(() => {
+            messagesContainer.scrollTo({
+                top: messagesContainer.scrollHeight,
+                behavior: "smooth"
+            });
+        }, 50);
+    }
+</script>
+
+</body>
+</html>
