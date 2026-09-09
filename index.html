@@ -98,6 +98,24 @@
             box-sizing: border-box;
         }
         .chat-input:focus { border-color: #1a73e8; background: white; }
+        .send-btn { 
+            background: #1a73e8; 
+            color: white; 
+            border: none; 
+            height: 42px; 
+            padding: 0 22px; 
+            border-radius: 24px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 15px; 
+            flex-shrink: 0;
+        }
+        .chat-link {
+            color: #1a73e8 !important;
+            text-decoration: underline !important;
+            font-weight: bold !important;
+            cursor: pointer !important;
+        }
     </style>
 </head>
 <body>
@@ -111,7 +129,7 @@
     
     <div class="quick-tags-container">
         <div class="quick-tag" onclick="clickQuickTag('📱 聯絡學生議會')">📱 聯絡學生議會</div>
-        <div class="quick-tag" onclick="clickQuickTag('📅 活動時間與日期')">📅 活動時間</div>
+        <div class="quick-tag" onclick="clickQuickTag('📅 活動時間')">📅 活動時間</div>
         <div class="quick-tag" onclick="clickQuickTag('📍 活動地點')">📍 活動地點</div>
         <div class="quick-tag" onclick="clickQuickTag('🔨 佈置時間')">🔨 佈置時間</div>
         <div class="quick-tag" onclick="clickQuickTag('👀 觀摩時間')">👀 觀摩時間</div>
@@ -121,7 +139,7 @@
     
     <form class="chat-input-area" onsubmit="handleFormSubmit(event)">
         <input type="text" id="userInput" class="chat-input" placeholder="請輸入您的問題..." onkeypress="handleKeyPress(event)" autocomplete="off" style="touch-action: manipulation;">
-        <button type="submit" style="background: #1a73e8; color: white; border: none; height: 42px; padding: 0 22px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 15px; flex-shrink: 0;">發送</button>
+        <button type="submit" class="send-btn">發送</button>
     </form>
 </div>
 
@@ -134,17 +152,30 @@
     window.addEventListener('orientationchange', resetVH);
     resetVH();
 
+    // 💡 核心優化：每個問題只保留一個精準的關鍵詞，完全對應上方快捷按鈕的中文文字（不含 emoji）
     const faqData = [
-       { keywords: ["聯絡學生議會"], answer: "如果您有更複雜或緊急的個別突發狀況，歡迎直接點擊連結私訊學生議會官方帳號唷！<br><br>🔗 <b>學生議會官方傳送門：</b><span class='chat-link' onclick='openInstagram()'>點我開啟 Instagram 專頁 💬</span>" },
-        { keywords: ["活動時間與日期"], answer: "活動時間為 2026年12月10日（星期四）10:30 - 17:30 唷！" },
-        { keywords: ["活動地點"], answer: "本次活動的地點在「弘光科技大學 毓麟館」唷！"} ,
+        { keywords: ["聯絡學生議會"], answer: "如果您有更複雜或緊急的個別突發狀況，歡迎直接點擊連結私訊學生議會官方帳號唷！<br><br>🔗 <b>學生議會官方傳送門：</b><span class='chat-link' onclick='openInstagram()'>點我開啟 Instagram 專頁 💬</span>" },
+        { keywords: ["活動時間"], answer: "活動時間為 2026年12月10日（星期四）10:30 - 17:30 唷！" },
+        { keywords: ["活動地點"], answer: "本次活動的地點在「弘光科技大學 毓麟館」唷！" },
         { keywords: ["佈置時間"], answer: "請各社團特別注意時間唷！場地佈置時間為當天 10:30 開始，並於 13:00 準時結束。請大家抓緊時間，在規定時間內完成精彩的社團佈置唷！" },
-        { keywords: ["觀摩時間"], answer: "觀摩時間為 16:30 - 16:50，共計 20 分鐘！這段時間大家可以互相交流、互相學習，請好好把握這珍貴的 20 分鐘唷！" },
-        { keywords: ["修改表單"], answer: "如需更改表單內容，請勿重複填寫唷！請直接聯絡「學生議會IG」，協助你進行修改與調整。" },
-        { keywords: ["更換解說員"], answer: "不可私自更換解說員！嚴格規定「不允許私自更換解說員身分」。如果有任何特殊或緊急突發狀況，請務必先向主辦單位正式回報並取得同意，絕不能私下自行更換！" }
+        { keywords: ["觀摩時間"], answer: "這次的重頭戲——觀摩時間為 16:30 - 16:50，共計 20 分鐘！這段時間大家可以互相交流、互相學習，請好好把握這珍貴的 20 分鐘唷！" },
+        { keywords: ["修改表單"], answer: "如果需要更改 Google 表單內容，請不要自己重複填寫唷！請直接點擊下方連結聯絡學生議會官方 IG，由相關人員來協助你進行修改與調整。<br><br>🔗 <b>議會 IG 傳送門：</b><span class='chat-link' onclick='openInstagram()'>點我開啟 Instagram 專頁 💬</span>" },
+        { keywords: ["更換解說員"], answer: "不可私自更換解說員！大會嚴格規定「不允許私自更換解說員身分」。如果有任何特殊或緊急突發狀況，請務必先向主辦單位正式回報並取得同意，絕對不能私下自行更換唷！" }
     ];
 
-    const fallbackAnswer = "抱歉，關於這個部分小幫手手邊目前沒有詳細的公告資料唷！建議您可以直接詢問活動現場的工作人員，或者留意最新的官方公告唷！";
+    const fallbackAnswer = "抱歉，關於這個部分小幫手手邊目前沒有詳細的公告資料唷！建議您可以直接詢問活動現場的工作人員，或者點選快捷鍵「📱 聯絡學生議會」私訊我們的官方專頁唷！";
+
+    function openInstagram() {
+        const appUrl = "instagram://user?username=hksp_2002";
+        const webUrl = "https://instagram.com";
+        const startTime = Date.now();
+        window.location.href = appUrl;
+        setTimeout(() => {
+            if (Date.now() - startTime < 2000) {
+                window.open(webUrl, '_blank');
+            }
+        }, 1500);
+    }
 
     function clickQuickTag(text) {
         const cleanText = text.replace(/[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]/g, "").trim();
@@ -183,6 +214,10 @@
             appendMessage(fallbackAnswer, "bot");
         }, 250);
     }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        resetVH();
+    });
 
     function appendMessage(text, sender) {
         const messagesContainer = document.getElementById("chatMessages");
