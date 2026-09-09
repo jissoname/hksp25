@@ -26,7 +26,7 @@
             box-sizing: border-box; 
         }
         .chat-header { 
-            background: linear-gradient(135deg, #1a73e8, #1557b0); 
+            background: linear-gradient(135deg, #006241, #004d2a); 
             color: white; 
             padding: 16px; 
             font-weight: 600; 
@@ -49,7 +49,7 @@
         }
         .message { max-width: 82%; padding: 12px 16px; border-radius: 20px; font-size: 16px; line-height: 1.5; word-break: break-all; box-sizing: border-box; }
         .bot { background: white; color: #202124; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #e8eaed; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
-        .user { background: #1a73e8; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .user { background: #f26522; color: white; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 2px 4px rgba(242,101,34,0.15); }
         .quick-tags-container {
             padding: 10px 14px 4px 14px;
             background: #f4f6f8;
@@ -63,8 +63,8 @@
         .quick-tags-container::-webkit-scrollbar { display: none; }
         .quick-tag {
             background: white;
-            color: #1a73e8;
-            border: 1px solid #1a73e8;
+            color: #006241;
+            border: 1px solid #006241;
             padding: 8px 16px;
             border-radius: 18px;
             font-size: 14px;
@@ -73,7 +73,7 @@
             transition: all 0.2s ease;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        .quick-tag:hover { background: #1a73e8; color: white; }
+        .quick-tag:hover { background: #006241; color: white; }
         .chat-input-area { 
             padding: 12px 14px; 
             border-top: 1px solid #dadce0; 
@@ -97,9 +97,9 @@
             -webkit-appearance: none; 
             box-sizing: border-box;
         }
-        .chat-input:focus { border-color: #1a73e8; background: white; }
+        .chat-input:focus { border-color: #006241; background: white; }
         .send-btn { 
-            background: #1a73e8; 
+            background: #f26522; 
             color: white; 
             border: none; 
             height: 42px; 
@@ -109,9 +109,10 @@
             cursor: pointer; 
             font-size: 15px; 
             flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(242,101,34,0.15);
         }
         .chat-link {
-            color: #1a73e8 !important;
+            color: #006241 !important;
             text-decoration: underline !important;
             font-weight: bold !important;
             cursor: pointer !important;
@@ -152,14 +153,13 @@
     window.addEventListener('orientationchange', resetVH);
     resetVH();
 
-    // 💡 核心優化：每個問題只保留一個精準的關鍵詞，完全對應上方快捷按鈕的中文文字（不含 emoji）
     const faqData = [
         { keywords: ["聯絡學生議會"], answer: "如果您有更複雜或緊急的個別突發狀況，歡迎直接點擊連結私訊學生議會官方帳號唷！<br><br>🔗 <b>學生議會官方傳送門：</b><span class='chat-link' onclick='openInstagram()'>點我開啟 Instagram 專頁 💬</span>" },
         { keywords: ["活動時間"], answer: "活動時間為 2026年12月10日（星期四）10:30 - 17:30 唷！" },
         { keywords: ["活動地點"], answer: "本次活動的地點在「弘光科技大學 毓麟館」唷！" },
         { keywords: ["佈置時間"], answer: "請各社團特別注意時間唷！場地佈置時間為當天 10:30 開始，並於 13:00 準時結束。請大家抓緊時間，在規定時間內完成精彩的社團佈置唷！" },
         { keywords: ["觀摩時間"], answer: "這次的重頭戲——觀摩時間為 16:30 - 16:50，共計 20 分鐘！這段時間大家可以互相交流、互相學習，請好好把握這珍貴的 20 分鐘唷！" },
-        { keywords: ["修改表單"], answer: "如果需要更改 Google 表單內容，請不要自己重複填寫唷！請直接點擊下方連結聯絡學生議會官方 IG，由相關人員來協助你進行修改與調整。<br><br>🔗 <b>議會 IG 傳送門：</b><span class='chat-link' onclick='openInstagram()'>點我開啟 Instagram 專頁 💬</span>" },
+        { keywords: ["修改表單"], answer: "如果需要更改 Google 表單內容，請不要自己重複填寫唷！請直接聯絡「學生議會官方填單或IG」，由相關人員來協助你進行修改與調整。<br><br>🔗 <b>議會 IG 傳送門：</b><span class='chat-link' onclick='openInstagram()'>點我開啟 Instagram 專頁 💬</span>" },
         { keywords: ["更換解說員"], answer: "不可私自更換解說員！大會嚴格規定「不允許私自更換解說員身分」。如果有任何特殊或緊急突發狀況，請務必先向主辦單位正式回報並取得同意，絕對不能私下自行更換唷！" }
     ];
 
