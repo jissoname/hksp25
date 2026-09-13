@@ -20,7 +20,6 @@
     <!-- LINE LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-
     <style>
 
         html,
@@ -28,9 +27,13 @@
             height: 100%;
             margin: 0;
             padding: 0;
+
             background-color: #f4f6f8;
+
             overflow: hidden;
+
             position: fixed;
+
             width: 100%;
 
             font-family:
@@ -41,6 +44,10 @@
                 sans-serif;
         }
 
+
+        /* ======================================
+           主畫面
+           ====================================== */
 
         .chat-container {
 
@@ -60,8 +67,55 @@
             overflow: hidden;
 
             box-sizing: border-box;
+
+            position: relative;
         }
 
+
+        /* ======================================
+           背景浮水印
+           ====================================== */
+
+        .chat-container::before {
+
+            content: "";
+
+            position: absolute;
+
+            top: 50%;
+
+            left: 50%;
+
+            transform:
+                translate(-50%, -50%);
+
+            width: 240px;
+
+            height: 240px;
+
+            background-image:
+                url("./bg-logo.png");
+
+            background-repeat:
+                no-repeat;
+
+            background-position:
+                center;
+
+            background-size:
+                contain;
+
+            opacity: 0.08;
+
+            pointer-events: none;
+
+            z-index: 1;
+        }
+
+
+        /* ======================================
+           上方標題
+           ====================================== */
 
         .chat-header {
 
@@ -98,6 +152,10 @@
         }
 
 
+        /* ======================================
+           聊天區
+           ====================================== */
+
         .chat-messages {
 
             flex: 1;
@@ -115,7 +173,9 @@
 
             gap: 12px;
 
-            background-color: #f4f6f8;
+            /* 透明才能看見浮水印 */
+            background-color:
+                transparent;
 
             position: relative;
 
@@ -127,17 +187,23 @@
 
             max-width: 82%;
 
-            padding: 12px 16px;
+            padding:
+                12px 16px;
 
-            border-radius: 20px;
+            border-radius:
+                20px;
 
-            font-size: 16px;
+            font-size:
+                16px;
 
-            line-height: 1.5;
+            line-height:
+                1.5;
 
-            word-break: break-word;
+            word-break:
+                break-word;
 
-            box-sizing: border-box;
+            box-sizing:
+                border-box;
 
             z-index: 2;
         }
@@ -149,9 +215,11 @@
 
             color: #202124;
 
-            align-self: flex-start;
+            align-self:
+                flex-start;
 
-            border-bottom-left-radius: 4px;
+            border-bottom-left-radius:
+                4px;
 
             border:
                 1px solid #e8eaed;
@@ -164,13 +232,16 @@
 
         .user {
 
-            background: #1a73e8;
+            background:
+                #1a73e8;
 
             color: white;
 
-            align-self: flex-end;
+            align-self:
+                flex-end;
 
-            border-bottom-right-radius: 4px;
+            border-bottom-right-radius:
+                4px;
 
             box-shadow:
                 0 2px 4px
@@ -178,16 +249,17 @@
         }
 
 
-        /* ================================
-           快捷鍵
-           ================================ */
+        /* ======================================
+           下方快捷鍵
+           ====================================== */
 
         .quick-tags-container {
 
             padding:
                 10px 14px 4px 14px;
 
-            background: #f4f6f8;
+            background:
+                #f4f6f8;
 
             display: flex;
 
@@ -195,27 +267,33 @@
 
             overflow-x: auto;
 
-            white-space: nowrap;
+            white-space:
+                nowrap;
 
             flex-shrink: 0;
 
             -webkit-overflow-scrolling:
                 touch;
 
-            z-index: 2;
+            position: relative;
+
+            z-index: 3;
         }
 
 
         .quick-tags-container::-webkit-scrollbar {
+
             display: none;
         }
 
 
         .quick-tag {
 
-            background: white;
+            background:
+                white;
 
-            color: #1a73e8;
+            color:
+                #1a73e8;
 
             border:
                 1px solid #1a73e8;
@@ -223,13 +301,17 @@
             padding:
                 8px 16px;
 
-            border-radius: 18px;
+            border-radius:
+                18px;
 
-            font-size: 14px;
+            font-size:
+                14px;
 
-            font-weight: 500;
+            font-weight:
+                500;
 
-            cursor: pointer;
+            cursor:
+                pointer;
 
             transition:
                 all 0.2s ease;
@@ -244,47 +326,57 @@
 
         .quick-tag:hover {
 
-            background: #1a73e8;
+            background:
+                #1a73e8;
 
-            color: white;
+            color:
+                white;
         }
 
 
-        /* ================================
-           社團分類
-           ================================ */
+        /* ======================================
+           社團分類按鈕
+           ====================================== */
 
         .club-category-container {
 
             display: flex;
 
-            flex-wrap: wrap;
+            flex-wrap:
+                wrap;
 
             gap: 8px;
 
-            margin-top: 8px;
+            margin-top:
+                8px;
         }
 
 
         .club-category-btn {
 
-            background: white;
+            background:
+                white;
 
-            color: #1a73e8;
+            color:
+                #1a73e8;
 
             border:
                 1px solid #1a73e8;
 
-            border-radius: 18px;
+            border-radius:
+                18px;
 
             padding:
                 8px 14px;
 
-            font-size: 14px;
+            font-size:
+                14px;
 
-            font-weight: 600;
+            font-weight:
+                600;
 
-            cursor: pointer;
+            cursor:
+                pointer;
 
             -webkit-tap-highlight-color:
                 transparent;
@@ -293,50 +385,63 @@
 
         .club-category-btn:hover {
 
-            background: #1a73e8;
+            background:
+                #1a73e8;
 
-            color: white;
+            color:
+                white;
         }
 
 
         .club-category-btn:active {
 
-            background: #1557b0;
+            background:
+                #1557b0;
 
-            color: white;
+            color:
+                white;
         }
 
 
-        /* ================================
-           社團名單
-           ================================ */
+        /* ======================================
+           社團清單
+           ====================================== */
 
         .club-list {
 
-            margin-top: 12px;
+            margin-top:
+                12px;
 
-            display: flex;
+            display:
+                flex;
 
-            flex-direction: column;
+            flex-direction:
+                column;
 
-            gap: 7px;
+            gap:
+                7px;
         }
 
 
         .club-list-item {
 
-            display: flex;
+            display:
+                flex;
 
-            align-items: center;
+            align-items:
+                center;
 
-            gap: 9px;
+            gap:
+                9px;
 
-            background: #f8f9fa;
+            background:
+                #f8f9fa;
 
             border:
                 1px solid #e8eaed;
 
-            border-radius: 10px;
+            border-radius:
+                10px;
 
             padding:
                 8px 10px;
@@ -345,31 +450,41 @@
 
         .club-number {
 
-            display: flex;
+            display:
+                flex;
 
-            align-items: center;
+            align-items:
+                center;
 
-            justify-content: center;
+            justify-content:
+                center;
 
-            min-width: 26px;
+            min-width:
+                26px;
 
-            height: 26px;
+            height:
+                26px;
 
-            border-radius: 50%;
+            border-radius:
+                50%;
 
-            background: #e8f0fe;
+            background:
+                #e8f0fe;
 
-            color: #1a73e8;
+            color:
+                #1a73e8;
 
-            font-size: 13px;
+            font-size:
+                13px;
 
-            font-weight: bold;
+            font-weight:
+                bold;
         }
 
 
-        /* ================================
+        /* ======================================
            輸入區
-           ================================ */
+           ====================================== */
 
         .chat-input-area {
 
@@ -379,21 +494,27 @@
             border-top:
                 1px solid #dadce0;
 
-            display: flex;
+            display:
+                flex;
 
-            gap: 10px;
+            gap:
+                10px;
 
-            background: white;
+            background:
+                white;
 
-            box-sizing: border-box;
+            box-sizing:
+                border-box;
 
-            align-items: center;
+            align-items:
+                center;
 
             box-shadow:
                 0 -2px 10px
                 rgba(0,0,0,0.02);
 
-            flex-shrink: 0;
+            flex-shrink:
+                0;
 
             padding-bottom:
                 calc(
@@ -401,7 +522,11 @@
                     env(safe-area-inset-bottom)
                 );
 
-            z-index: 2;
+            position:
+                relative;
+
+            z-index:
+                3;
         }
 
 
@@ -412,16 +537,20 @@
             padding:
                 12px 18px;
 
-            border-radius: 24px;
+            border-radius:
+                24px;
 
-            outline: none;
+            outline:
+                none;
 
-            font-size: 16px;
+            font-size:
+                16px;
 
             border:
                 1px solid #dadce0;
 
-            background: #f1f3f4;
+            background:
+                #f1f3f4;
 
             -webkit-appearance:
                 none;
@@ -433,34 +562,45 @@
 
         .chat-input:focus {
 
-            border-color: #1a73e8;
+            border-color:
+                #1a73e8;
 
-            background: white;
+            background:
+                white;
         }
 
 
         .send-btn {
 
-            background: #1a73e8;
+            background:
+                #1a73e8;
 
-            color: white;
+            color:
+                white;
 
-            border: none;
+            border:
+                none;
 
-            height: 42px;
+            height:
+                42px;
 
             padding:
                 0 22px;
 
-            border-radius: 24px;
+            border-radius:
+                24px;
 
-            font-weight: bold;
+            font-weight:
+                bold;
 
-            cursor: pointer;
+            cursor:
+                pointer;
 
-            font-size: 15px;
+            font-size:
+                15px;
 
-            flex-shrink: 0;
+            flex-shrink:
+                0;
 
             box-shadow:
                 0 2px 4px
@@ -494,6 +634,10 @@
 <div class="chat-container">
 
 
+    <!-- =================================
+         標題
+         ================================= -->
+
     <div class="chat-header">
 
         ✦ 社團評選暨觀摩活動 智能客服 ✦
@@ -502,10 +646,17 @@
 
 
 
+    <!-- =================================
+         聊天畫面
+         ================================= -->
+
     <div
         id="chatMessages"
         class="chat-messages"
     >
+
+
+        <!-- 歡迎公告 -->
 
         <div class="message bot">
 
@@ -519,18 +670,62 @@
 
             <br><br>
 
+
+            📌
+            <b>
+                社團查詢提醒：
+            </b>
+
+            <br>
+
+            若要查詢社團屬性，
+            請輸入
+
+            <b>
+                「社團完整名稱（全稱）」
+            </b>
+
+            進行查詢。
+
+
+            <br><br>
+
+
+            例如：
+
+            <b>
+                火舞藝術社
+            </b>
+
+            ✅
+
+
+            <br>
+
+            請避免只輸入
+            「火舞」等簡稱，
+            以免查詢不到資料。
+
+
+            <br><br>
+
+
             💡
+
             <b>
                 您也可以直接點選下方的常見問題進行快速查詢唷！
             </b>
 
         </div>
 
+
     </div>
 
 
 
-    <!-- 快捷鍵 -->
+    <!-- =================================
+         快捷鍵
+         ================================= -->
 
     <div class="quick-tags-container">
 
@@ -539,7 +734,9 @@
             class="quick-tag"
             onclick="clickQuickTag('社團總攬')"
         >
+
             📚 社團總攬
+
         </div>
 
 
@@ -547,7 +744,9 @@
             class="quick-tag"
             onclick="clickQuickTag('聯絡學生議會')"
         >
+
             📱 聯絡學生議會
+
         </div>
 
 
@@ -555,7 +754,9 @@
             class="quick-tag"
             onclick="clickQuickTag('活動時間')"
         >
+
             📅 活動時間
+
         </div>
 
 
@@ -563,7 +764,9 @@
             class="quick-tag"
             onclick="clickQuickTag('活動地點')"
         >
+
             📍 活動地點
+
         </div>
 
 
@@ -571,7 +774,9 @@
             class="quick-tag"
             onclick="clickQuickTag('佈置時間')"
         >
+
             🔨 佈置時間
+
         </div>
 
 
@@ -579,7 +784,9 @@
             class="quick-tag"
             onclick="clickQuickTag('觀摩時間')"
         >
+
             👀 觀摩時間
+
         </div>
 
 
@@ -587,7 +794,9 @@
             class="quick-tag"
             onclick="clickQuickTag('修改表單')"
         >
+
             📝 修改表單
+
         </div>
 
 
@@ -595,13 +804,19 @@
             class="quick-tag"
             onclick="clickQuickTag('更換解說員')"
         >
+
             🙋 更換解說員
+
         </div>
 
 
     </div>
 
 
+
+    <!-- =================================
+         輸入區
+         ================================= -->
 
     <form
         class="chat-input-area"
@@ -623,7 +838,9 @@
             type="submit"
             class="send-btn"
         >
+
             發送
+
         </button>
 
 
@@ -637,14 +854,15 @@
 <script>
 
 
-    /* ================================
+    /* ======================================
        手機高度
-       ================================ */
+       ====================================== */
 
     function resetVH() {
 
         let vh =
             window.innerHeight * 0.01;
+
 
         document.documentElement
             .style
@@ -672,15 +890,16 @@
 
 
 
-    /* ================================
+    /* ======================================
        LIFF 初始化
-       ================================ */
+       ====================================== */
 
     document.addEventListener(
 
         "DOMContentLoaded",
 
         function () {
+
 
             resetVH();
 
@@ -690,12 +909,14 @@
                 "undefined"
             ) {
 
+
                 liff.init({
 
                     liffId:
                         "2011529426-hq8fXduC"
 
                 })
+
 
                 .then(() => {
 
@@ -704,6 +925,7 @@
                     );
 
                 })
+
 
                 .catch((err) => {
 
@@ -722,9 +944,9 @@
 
 
 
-    /* ==================================================
-       社團資料庫
-       ================================================== */
+    /* ======================================
+       社團資料
+       ====================================== */
 
     const clubData = {
 
@@ -747,81 +969,133 @@
             "多遊系學會",
             "環安系學會",
             "智科系學會",
+
             "餐旅系學會（日間部）",
+
             "餐旅系學會（夜間部）",
+
             "食科系學會（日間部）",
+
             "食科系學會（夜間部）",
+
             "國際語言系學會",
+
             "畢聯會（日、夜）"
 
         ],
 
 
+
         "康樂性": [
 
             "熱舞社",
+
             "火舞藝術社",
+
             "穿越炸雞社",
+
             "國際學生聯誼社",
+
             "弘韻國樂社",
+
             "鋼琴音樂社",
+
             "弘櫻吉他社",
+
             "熱門音樂社",
+
             "管樂社"
 
         ],
 
 
+
         "服務性": [
 
             "佳音社",
+
             "崇德文化青年社",
+
             "慈濟青年社",
+
             "春暉社",
+
             "弘櫻志工隊",
+
             "原住民文化推廣社",
+
             "交通服務隊",
+
             "健康天使服務隊",
+
             "諮輔志工隊",
+
             "住宿志工隊"
 
         ],
 
 
+
         "體能性": [
 
             "翔風羽球社",
+
             "跆拳道社",
+
             "棒壘社",
+
             "居合劍道社",
+
             "空手道社",
+
             "傳統射箭社",
+
             "急速銀籃社",
+
             "健身運動指導社",
+
             "LET'S GO SUP 水上休閒社",
+
             "撞球社",
+
             "戶外探索社"
 
         ],
 
 
+
         "學藝性": [
 
             "動漫畫研習社",
+
             "企業研習社",
+
             "桌遊社",
+
             "品酒社",
+
             "生命探索社",
+
             "弘光攝影社",
+
             "調香社",
+
             "創意飲調社",
+
             "日本茶道社",
+
             "國際餐旅青年學習社",
+
             "西餐廚藝社",
+
             "創藝蔬食崇德社",
+
             "時尚甜點社",
+
             "原住民食育研究社",
+
             "餐旅競賽技藝研習社",
+
             "餐飲服務社"
 
         ]
@@ -830,9 +1104,9 @@
 
 
 
-    /* ==================================================
+    /* ======================================
        FAQ
-       ================================================== */
+       ====================================== */
 
     const faqData = [
 
@@ -840,14 +1114,21 @@
         {
 
             keywords: [
+
                 "社團總攬",
+
                 "社團一覽",
+
                 "社團名單"
+
             ],
+
 
             answer: `
 
-                <b>📚 社團總攬</b>
+                <b>
+                    📚 社團總攬
+                </b>
 
                 <br><br>
 
@@ -855,13 +1136,17 @@
 
                 <br><br>
 
+
                 <div class="club-category-container">
+
 
                     <button
                         class="club-category-btn"
                         onclick="showClubCategory('自治綜合性')"
                     >
+
                         自治綜合性
+
                     </button>
 
 
@@ -869,7 +1154,9 @@
                         class="club-category-btn"
                         onclick="showClubCategory('康樂性')"
                     >
+
                         康樂性
+
                     </button>
 
 
@@ -877,7 +1164,9 @@
                         class="club-category-btn"
                         onclick="showClubCategory('服務性')"
                     >
+
                         服務性
+
                     </button>
 
 
@@ -885,7 +1174,9 @@
                         class="club-category-btn"
                         onclick="showClubCategory('體能性')"
                     >
+
                         體能性
+
                     </button>
 
 
@@ -893,8 +1184,11 @@
                         class="club-category-btn"
                         onclick="showClubCategory('學藝性')"
                     >
+
                         學藝性
+
                     </button>
+
 
                 </div>
 
@@ -903,11 +1197,15 @@
         },
 
 
+
         {
 
             keywords: [
+
                 "聯絡學生議會"
+
             ],
+
 
             answer:
 
@@ -936,59 +1234,83 @@
         },
 
 
+
         {
 
             keywords: [
+
                 "活動時間"
+
             ],
 
+
             answer:
+
                 "活動時間為 2026年12月10日（星期四）10:30 - 17:30 唷！"
 
         },
 
 
+
         {
 
             keywords: [
+
                 "活動地點"
+
             ],
 
+
             answer:
+
                 "本次活動的地點在「弘光科技大學 毓麟館」唷！"
 
         },
 
 
+
         {
 
             keywords: [
+
                 "佈置時間"
+
             ],
 
+
             answer:
+
                 "請各社團特別注意時間唷！場地佈置時間為當天 10:30 開始，並於 13:00 準時結束。請大家抓緊時間，在規定時間內完成精彩的社團佈置唷！"
 
         },
 
 
+
         {
 
             keywords: [
+
                 "觀摩時間"
+
             ],
 
+
             answer:
+
                 "這次的重頭戲——觀摩時間為 16:30 - 16:50，共計 20 分鐘！這段時間大家可以互相交流、互相學習，請好好把握這珍貴的 20 分鐘唷！"
 
         },
 
 
+
         {
 
             keywords: [
+
                 "修改表單"
+
             ],
+
 
             answer:
 
@@ -1017,20 +1339,30 @@
         },
 
 
+
         {
 
             keywords: [
+
                 "更換解說員"
+
             ],
 
+
             answer:
+
                 "不可私自更換解說員！大會嚴格規定「不允許私自更換解說員身分」。如果有任何特殊或緊急突發狀況，請務必先向主辦單位正式回報並取得同意，絕對不能私下自行更換唷！"
 
         }
 
+
     ];
 
 
+
+    /* ======================================
+       找不到答案
+       ====================================== */
 
     const fallbackAnswer =
 
@@ -1038,21 +1370,29 @@
 
 
 
-    /* ==================================================
+    /* ======================================
        Instagram
-       ================================================== */
+       ====================================== */
 
     function openInstagram() {
 
+
         const targetUrl =
+
             "https://www.instagram.com/hksp_2002/";
 
 
         if (
-            typeof liff !== "undefined"
+
+            typeof liff !==
+            "undefined"
+
             &&
+
             liff.isInClient()
+
         ) {
+
 
             liff.openWindow({
 
@@ -1064,9 +1404,12 @@
 
             });
 
+
         }
 
+
         else {
+
 
             window.open(
 
@@ -1078,34 +1421,44 @@
 
             );
 
+
         }
 
     }
 
 
 
-    /* ==================================================
-       ★ 新增
-       搜尋社團名稱所屬分類
-       ================================================== */
+    /* ======================================
+       搜尋社團屬性
+       ====================================== */
 
-    function findClubCategory(clubName) {
+    function findClubCategory(
+        clubName
+    ) {
 
 
         const searchName =
+
             clubName.trim();
 
 
         for (
+
             const [category, clubs]
-            of Object.entries(clubData)
+
+            of Object.entries(
+                clubData
+            )
+
         ) {
 
 
             const foundClub =
+
                 clubs.find(
 
                     club =>
+
                         club
                             .toLowerCase()
                             .trim()
@@ -1121,6 +1474,7 @@
 
             if (foundClub) {
 
+
                 return {
 
                     name:
@@ -1130,6 +1484,7 @@
                         category
 
                 };
+
 
             }
 
@@ -1142,11 +1497,13 @@
 
 
 
-    /* ==================================================
-       顯示社團分類
-       ================================================== */
+    /* ======================================
+       社團分類
+       ====================================== */
 
-    function showClubCategory(category) {
+    function showClubCategory(
+        category
+    ) {
 
 
         appendMessage(
@@ -1159,21 +1516,29 @@
 
 
         showClubCategoryAnswer(
+
             category
+
         );
 
     }
 
 
 
-    function showClubCategoryAnswer(category) {
+    function showClubCategoryAnswer(
+        category
+    ) {
 
 
         const clubs =
-            clubData[category];
+
+            clubData[
+                category
+            ];
 
 
         if (!clubs) {
+
 
             appendMessage(
 
@@ -1183,12 +1548,14 @@
 
             );
 
+
             return;
 
         }
 
 
-        let clubListHTML = "";
+        let clubListHTML =
+            "";
 
 
         clubs.forEach(
@@ -1206,6 +1573,7 @@
 
                         </span>
 
+
                         <span>
 
                             ${club}
@@ -1215,6 +1583,7 @@
                     </div>
 
                 `;
+
 
             }
 
@@ -1226,10 +1595,14 @@
             `
 
                 <b>
+
                     📂 ${category}
+
                 </b>
 
+
                 <br>
+
 
                 <div class="club-list">
 
@@ -1247,23 +1620,30 @@
 
 
 
-    /* ==================================================
+    /* ======================================
        快捷鍵
-       ================================================== */
+       ====================================== */
 
-    function clickQuickTag(text) {
+    function clickQuickTag(
+        text
+    ) {
 
-        processMessage(text);
+
+        processMessage(
+            text
+        );
 
     }
 
 
 
-    /* ==================================================
-       發送
-       ================================================== */
+    /* ======================================
+       發送訊息
+       ====================================== */
 
-    function handleFormSubmit(event) {
+    function handleFormSubmit(
+        event
+    ) {
 
 
         if (event) {
@@ -1299,17 +1679,20 @@
         );
 
 
-        inputEl.value = "";
+        inputEl.value =
+            "";
 
     }
 
 
 
-    /* ==================================================
-       核心訊息判斷
-       ================================================== */
+    /* ======================================
+       判斷訊息
+       ====================================== */
 
-    function processMessage(query) {
+    function processMessage(
+        query
+    ) {
 
 
         appendMessage(
@@ -1324,11 +1707,15 @@
         setTimeout(() => {
 
 
-            /* =================================
-               1. 搜尋社團名稱
-               ================================= */
+            /*
+            =============================
+            1. 社團名稱搜尋
+            =============================
+            */
+
 
             const clubResult =
+
                 findClubCategory(
                     query
                 );
@@ -1341,13 +1728,21 @@
 
                     `
 
-                    🔎 <b>${clubResult.name}</b>
+                        🔎
 
-                    <br><br>
+                        <b>
+                            ${clubResult.name}
+                        </b>
 
-                    屬於
-                    「<b>${clubResult.category}</b>」
-                    社團。
+                        <br><br>
+
+                        屬於
+
+                        「<b>
+                            ${clubResult.category}
+                        </b>」
+
+                        社團。
 
                     `,
 
@@ -1362,12 +1757,17 @@
 
 
 
-            /* =================================
-               2. 搜尋社團屬性
-               ================================= */
+            /*
+            =============================
+            2. 社團分類搜尋
+            =============================
+            */
+
 
             if (
-                clubData[query]
+                clubData[
+                    query
+                ]
             ) {
 
 
@@ -1382,13 +1782,19 @@
 
 
 
-            /* =================================
-               3. FAQ
-               ================================= */
+            /*
+            =============================
+            3. FAQ
+            =============================
+            */
+
 
             for (
+
                 const item
+
                 of faqData
+
             ) {
 
 
@@ -1430,9 +1836,12 @@
 
 
 
-            /* =================================
-               4. 找不到
-               ================================= */
+            /*
+            =============================
+            4. 找不到
+            =============================
+            */
+
 
             appendMessage(
 
@@ -1449,9 +1858,9 @@
 
 
 
-    /* ==================================================
+    /* ======================================
        顯示訊息
-       ================================================== */
+       ====================================== */
 
     function appendMessage(
         text,
@@ -1494,10 +1903,12 @@
             messagesContainer.scrollTo({
 
                 top:
+
                     messagesContainer
                         .scrollHeight,
 
                 behavior:
+
                     "smooth"
 
             });
