@@ -1504,6 +1504,9 @@ const APP_STATE = {
         null,
 
     bindingRequestRunning:
+        false,
+
+    cloudRequestRunning:
         false
 
 };
@@ -3337,6 +3340,15 @@ function showLockedBinding(
 
 async function showCloudPanel() {
 
+    if (
+        APP_STATE.cloudRequestRunning
+    ) {
+
+        return;
+
+    }
+
+
     const ready =
 
         await prepareProtectedFeature();
@@ -3368,9 +3380,7 @@ async function showCloudPanel() {
             <br><br>
 
             您必須先完成社團綁定，
-
             才能使用
-
             <b>
                 「社團專屬雲端」
             </b>。
@@ -3378,17 +3388,11 @@ async function showCloudPanel() {
             <div class="action-row">
 
                 <button
-
                     type="button"
-
                     class="action-btn action-primary"
-
                     onclick="showBindingPanel()"
-
                 >
-
                     🔗 前往社團綁定
-
                 </button>
 
             </div>
@@ -3407,164 +3411,341 @@ async function showCloudPanel() {
     }
 
 
-    appendMessage(
+    try {
 
-        `
-
-        <span class="status-badge status-success">
-
-            ✓ LINE 身分驗證完成
-
-        </span>
+        APP_STATE.cloudRequestRunning =
+            true;
 
 
-        <br><br>
+        const result =
+
+            await callBackend(
+                "getMyCloudLink"
+            );
 
 
-        <b>
-            ☁️ 社團專屬雲端
-        </b>
+        /*
+         * 管理員若剛解除綁定，
+         * 後端會以最新資料為準。
+         */
+        if (
+            result.error ===
+            "NOT_BOUND"
+        ) {
+
+            APP_STATE.currentBinding =
+                null;
 
 
-        <div class="info-card">
+            appendMessage(
+
+                `
+
+                ⚠️
+                <b>
+                    目前尚未綁定社團
+                </b>
+
+                <br><br>
+
+                您的社團綁定資料目前不存在，
+                請先完成社團綁定。
+
+                <div class="action-row">
+
+                    <button
+                        type="button"
+                        class="action-btn action-primary"
+                        onclick="showBindingPanel()"
+                    >
+                        🔗 前往社團綁定
+                    </button>
+
+                </div>
+
+                `,
+
+                "bot",
+
+                true
+
+            );
 
 
-            <div class="info-row">
+            return;
 
-                <span class="info-label">
+        }
 
-                    已綁定社團
 
+        /*
+         * 已綁定，但管理員尚未設定該社團雲端。
+         */
+        if (
+            result.error ===
+            "CLOUD_NOT_CONFIGURED"
+        ) {
+
+            const clubName =
+
+                result.club &&
+                result.club.name
+
+                ? result.club.name
+                : binding.club;
+
+
+            const category =
+
+                result.club &&
+                result.club.category
+
+                ? result.club.category
+                : binding.category;
+
+
+            appendMessage(
+
+                `
+
+                <span class="status-badge status-warning">
+                    ☁️ 尚未設定
                 </span>
 
-                <span class="info-value">
+                <br><br>
 
-                    ${escapeHtml(binding.club)}
+                <b>
+                    ${escapeHtml(clubName)} 專屬雲端
+                </b>
 
-                </span>
+                <div class="info-card">
+
+                    <div class="info-row">
+
+                        <span class="info-label">
+                            社團名稱
+                        </span>
+
+                        <span class="info-value">
+                            ${escapeHtml(clubName)}
+                        </span>
+
+                    </div>
+
+                    <div class="info-row">
+
+                        <span class="info-label">
+                            社團屬性
+                        </span>
+
+                        <span class="info-value">
+                            ${escapeHtml(category)}
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="mini-note">
+                    ℹ️ 管理員目前尚未設定此社團的專屬雲端連結，
+                    請稍後再試或聯絡活動管理單位。
+                </div>
+
+                `,
+
+                "bot",
+
+                true
+
+            );
+
+
+            return;
+
+        }
+
+
+        if (
+            !result.success ||
+            !result.cloud ||
+            !result.cloud.url
+        ) {
+
+            throw new Error(
+
+                result.message ||
+                "無法取得社團專屬雲端"
+
+            );
+
+        }
+
+
+        const cloud =
+
+            result.cloud;
+
+
+        APP_STATE.currentBinding = {
+
+            club:
+                cloud.club ||
+                binding.club,
+
+            category:
+                cloud.category ||
+                binding.category,
+
+            createdAt:
+                binding.createdAt
+
+        };
+
+
+        /*
+         * cloud.url 來自管理員後台設定，
+         * 仍先轉義後才放入 href。
+         */
+        const safeCloudUrl =
+
+            escapeHtml(
+                cloud.url
+            );
+
+
+        appendMessage(
+
+            `
+
+            <span class="status-badge status-success">
+                ✓ LINE 身分與社團驗證完成
+            </span>
+
+            <br><br>
+
+            <b>
+                ☁️ 社團專屬雲端
+            </b>
+
+            <div class="info-card">
+
+                <div class="info-row">
+
+                    <span class="info-label">
+                        已綁定社團
+                    </span>
+
+                    <span class="info-value">
+                        ${escapeHtml(APP_STATE.currentBinding.club)}
+                    </span>
+
+                </div>
+
+                <div class="info-row">
+
+                    <span class="info-label">
+                        社團屬性
+                    </span>
+
+                    <span class="info-value">
+                        ${escapeHtml(APP_STATE.currentBinding.category)}
+                    </span>
+
+                </div>
 
             </div>
 
+            <div class="mini-note">
+                🔐 系統只會向後端取得您目前綁定社團的專屬雲端。
+            </div>
 
-            <div class="info-row">
+            <div class="action-row">
 
-                <span class="info-label">
-
-                    社團屬性
-
-                </span>
-
-                <span class="info-value">
-
-                    ${escapeHtml(binding.category)}
-
-                </span>
+                <a
+                    href="${safeCloudUrl}"
+                    class="action-btn action-primary"
+                    style="text-decoration:none; display:inline-flex; align-items:center;"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onclick="event.preventDefault(); openExternalUrl(this.href);"
+                >
+                    ☁️ 開啟 ${escapeHtml(APP_STATE.currentBinding.club)} 雲端
+                </a>
 
             </div>
 
+            `,
 
-        </div>
+            "bot",
+
+            true
+
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "取得社團雲端失敗：",
+            error
+        );
 
 
-        <div class="mini-note">
+        appendMessage(
 
-            🔐
-            系統已確認您的綁定社團。
+            `
 
-            <br>
+            ❌
+            <b>
+                無法取得社團專屬雲端
+            </b>
 
-            「社團專屬雲端」連結功能將在下一階段接上後端。
+            <br><br>
 
-        </div>
+            ${escapeHtml(
+                error.message ||
+                "請稍後再試"
+            )}
 
+            <div class="action-row">
 
-        <div class="action-row">
+                <button
+                    type="button"
+                    class="action-btn action-primary"
+                    onclick="showCloudPanel()"
+                >
+                    🔄 重新取得
+                </button>
 
-            <button
+            </div>
 
-                type="button"
+            `,
 
-                class="action-btn action-primary"
+            "bot",
 
-                onclick="openBoundClubCloud()"
+            true
 
-            >
+        );
 
-                ☁️ 開啟社團雲端
+    }
 
-            </button>
+    finally {
 
-        </div>
+        APP_STATE.cloudRequestRunning =
+            false;
 
-        `,
-
-        "bot",
-
-        true
-
-    );
+    }
 
 }
 
 
 /* ============================================================
-   專屬雲端目前尚未接 API
+   舊按鈕相容
    ============================================================ */
 
-function openBoundClubCloud() {
+async function openBoundClubCloud() {
 
-    const binding =
-
-        APP_STATE.currentBinding;
-
-
-    if (!binding) {
-
-        appendMessage(
-
-            "無法驗證社團身分。",
-
-            "bot"
-
-        );
-
-
-        return;
-
-    }
-
-
-    appendMessage(
-
-        `
-
-        <b>
-            📂 ${escapeHtml(binding.club)} 專屬雲端
-        </b>
-
-        <br><br>
-
-        ✅ 已完成 LINE 帳號與社團身分驗證。
-
-        <br><br>
-
-        下一階段接上雲端管理功能後，
-
-        這裡將只取得
-
-        <b>
-            ${escapeHtml(binding.club)}
-        </b>
-
-        的專屬雲端連結。
-
-        `,
-
-        "bot",
-
-        true
-
-    );
+    await showCloudPanel();
 
 }
 
