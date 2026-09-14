@@ -1248,6 +1248,172 @@ tbody tr:hover {
 
 
 /* =========================================================
+   活動時程管理
+   ========================================================= */
+
+.event-panel-body {
+
+    padding: 20px;
+
+}
+
+.event-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 14px;
+
+}
+
+.event-field {
+
+    padding: 15px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 12px;
+
+    background: #fcfcfd;
+
+}
+
+.event-field-title {
+
+    margin-bottom: 5px;
+
+    font-size: 14px;
+
+    font-weight: 800;
+
+}
+
+.event-field-note {
+
+    margin-bottom: 11px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+}
+
+.event-input-row {
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        130px;
+
+    gap: 8px;
+
+}
+
+.event-input {
+
+    width: 100%;
+    height: 42px;
+
+    padding: 0 11px;
+
+    border:
+        1px solid #d0d5dd;
+
+    border-radius: 9px;
+
+    outline: none;
+
+    background: white;
+
+    font-size: 14px;
+
+}
+
+.event-input:focus {
+
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(26,115,232,0.08);
+
+}
+
+.event-footer {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-top: 16px;
+
+    padding-top: 16px;
+
+    border-top:
+        1px solid var(--border);
+
+}
+
+.event-meta {
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+    line-height: 1.7;
+
+}
+
+.event-save-btn {
+
+    flex-shrink: 0;
+
+    min-width: 130px;
+    height: 42px;
+
+    padding: 0 16px;
+
+    border: none;
+
+    border-radius: 9px;
+
+    background: var(--primary);
+
+    color: white;
+
+    font-size: 13px;
+    font-weight: 800;
+
+}
+
+.event-save-btn:disabled {
+
+    opacity: 0.55;
+
+    cursor: not-allowed;
+
+}
+
+.event-error {
+
+    min-height: 18px;
+
+    margin-top: 10px;
+
+    color: var(--danger);
+
+    font-size: 12px;
+
+}
+
+/* =========================================================
    Responsive
    ========================================================= */
 
@@ -1333,6 +1499,33 @@ tbody tr:hover {
         padding:
             13px
             16px;
+
+    }
+
+    .event-grid {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+    .event-input-row {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+    .event-footer {
+
+        align-items: stretch;
+        flex-direction: column;
+
+    }
+
+    .event-save-btn {
+
+        width: 100%;
 
     }
 
@@ -1500,7 +1693,7 @@ tbody tr:hover {
     </h1>
 
     <div class="page-description">
-        管理 LINE 社團綁定與各社團專屬雲端連結。
+        管理 LINE 社團綁定、各社團專屬雲端與活動重要時程。
     </div>
 
 </div>
@@ -1578,6 +1771,197 @@ tbody tr:hover {
 
 </section>
 
+
+
+<!-- ======================================================
+     活動時程管理
+     ====================================================== -->
+
+<section class="panel">
+
+<div class="panel-header">
+
+    <div class="panel-title">
+        ⏰ 活動時程管理
+    </div>
+
+    <div
+        id="eventConfigStatus"
+        class="result-count"
+    >
+        載入中...
+    </div>
+
+</div>
+
+
+<div
+    id="eventConfigState"
+    class="state-box"
+>
+
+    <div class="spinner"></div>
+
+    正在讀取活動時程...
+
+</div>
+
+
+<div
+    id="eventConfigForm"
+    class="event-panel-body"
+    style="display:none;"
+>
+
+    <div class="event-grid">
+
+        <div class="event-field">
+
+            <div class="event-field-title">
+                📂 資料繳交截止
+            </div>
+
+            <div class="event-field-note">
+                社團資料最後繳交時間
+            </div>
+
+            <div class="event-input-row">
+
+                <input
+                    id="dataDeadlineDate"
+                    class="event-input"
+                    type="date"
+                >
+
+                <input
+                    id="dataDeadlineTime"
+                    class="event-input"
+                    type="time"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="event-field">
+
+            <div class="event-field-title">
+                📝 表單填寫截止
+            </div>
+
+            <div class="event-field-note">
+                活動表單最後填寫時間
+            </div>
+
+            <div class="event-input-row">
+
+                <input
+                    id="formDeadlineDate"
+                    class="event-input"
+                    type="date"
+                >
+
+                <input
+                    id="formDeadlineTime"
+                    class="event-input"
+                    type="time"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="event-field">
+
+            <div class="event-field-title">
+                🎯 活動開始
+            </div>
+
+            <div class="event-field-note">
+                社團評選暨觀摩活動開始時間
+            </div>
+
+            <div class="event-input-row">
+
+                <input
+                    id="eventStartDate"
+                    class="event-input"
+                    type="date"
+                >
+
+                <input
+                    id="eventStartTime"
+                    class="event-input"
+                    type="time"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="event-field">
+
+            <div class="event-field-title">
+                🏁 活動結束
+            </div>
+
+            <div class="event-field-note">
+                社團評選暨觀摩活動結束時間
+            </div>
+
+            <div class="event-input-row">
+
+                <input
+                    id="eventEndDate"
+                    class="event-input"
+                    type="date"
+                >
+
+                <input
+                    id="eventEndTime"
+                    class="event-input"
+                    type="time"
+                >
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div
+        id="eventConfigError"
+        class="event-error"
+    ></div>
+
+
+    <div class="event-footer">
+
+        <div
+            id="eventConfigMeta"
+            class="event-meta"
+        >
+            時區：Asia/Taipei
+        </div>
+
+        <button
+            id="saveEventConfigBtn"
+            type="button"
+            class="event-save-btn"
+            onclick="saveEventConfig()"
+        >
+            儲存時程設定
+        </button>
+
+    </div>
+
+</div>
+
+</section>
 
 
 <!-- ======================================================
@@ -2052,6 +2436,9 @@ const ADMIN_STATE = {
     filteredClouds:
         [],
 
+    eventConfig:
+        null,
+
     pendingUnbind:
         null,
 
@@ -2452,6 +2839,9 @@ function clearAdminSession() {
     ADMIN_STATE.clouds =
         [];
 
+    ADMIN_STATE.eventConfig =
+        null;
+
     ADMIN_STATE.pendingUnbind =
         null;
 
@@ -2502,9 +2892,567 @@ async function refreshAllData() {
 
         loadBindings(),
 
-        loadCloudLinks()
+        loadCloudLinks(),
+
+        loadEventConfig()
 
     ]);
+
+}
+
+
+/* ============================================================
+   活動時程資料
+   ============================================================ */
+
+async function loadEventConfig() {
+
+    showEventConfigLoading();
+
+
+    try {
+
+        const result =
+
+            await callAdminBackend(
+
+                "getEventConfig"
+
+            );
+
+
+        if (!result.success) {
+
+            throw new Error(
+
+                result.message ||
+                "無法取得活動時程"
+
+            );
+
+        }
+
+
+        if (!result.config) {
+
+            throw new Error(
+                "後端沒有回傳活動時程設定"
+            );
+
+        }
+
+
+        ADMIN_STATE.eventConfig =
+            result.config;
+
+
+        renderEventConfig(
+            result.config
+        );
+
+    }
+
+    catch (error) {
+
+        showEventConfigError(
+            error.message
+        );
+
+    }
+
+}
+
+
+function parseEventDateTimeParts(
+    value
+) {
+
+    const text =
+        String(
+            value || ""
+        );
+
+
+    const match =
+
+        text.match(
+            /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/
+        );
+
+
+    if (match) {
+
+        return {
+
+            date:
+                match[1],
+
+            time:
+                match[2]
+
+        };
+
+    }
+
+
+    return {
+
+        date:
+            "",
+
+        time:
+            ""
+
+    };
+
+}
+
+
+function setEventDateTimeInputs(
+    prefix,
+    value
+) {
+
+    const parts =
+        parseEventDateTimeParts(
+            value
+        );
+
+
+    document.getElementById(
+        prefix + "Date"
+    ).value =
+        parts.date;
+
+
+    document.getElementById(
+        prefix + "Time"
+    ).value =
+        parts.time;
+
+}
+
+
+function renderEventConfig(
+    config
+) {
+
+    document.getElementById(
+        "eventConfigState"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "eventConfigForm"
+    ).style.display =
+        "block";
+
+
+    setEventDateTimeInputs(
+        "dataDeadline",
+        config.dataDeadline
+    );
+
+
+    setEventDateTimeInputs(
+        "formDeadline",
+        config.formDeadline
+    );
+
+
+    setEventDateTimeInputs(
+        "eventStart",
+        config.eventStart
+    );
+
+
+    setEventDateTimeInputs(
+        "eventEnd",
+        config.eventEnd
+    );
+
+
+    document.getElementById(
+        "eventConfigStatus"
+    ).textContent =
+        "已同步";
+
+
+    document.getElementById(
+        "eventConfigError"
+    ).textContent =
+        "";
+
+
+    document.getElementById(
+        "eventConfigMeta"
+    ).innerHTML =
+
+        `時區：<b>Asia/Taipei</b>` +
+
+        (
+            config.updatedAt
+
+            ? `<br>最後更新：${escapeHtml(formatDate(config.updatedAt))}`
+
+            : "<br>目前使用系統預設時程"
+        );
+
+}
+
+
+function getEventInputValue(
+    prefix
+) {
+
+    const date =
+
+        document.getElementById(
+            prefix + "Date"
+        ).value;
+
+
+    const time =
+
+        document.getElementById(
+            prefix + "Time"
+        ).value;
+
+
+    if (
+        !date ||
+        !time
+    ) {
+
+        return null;
+
+    }
+
+
+    return (
+        date +
+        "T" +
+        time +
+        ":00+08:00"
+    );
+
+}
+
+
+async function saveEventConfig() {
+
+    if (
+        ADMIN_STATE.requestRunning
+    ) {
+
+        return;
+
+    }
+
+
+    const button =
+
+        document.getElementById(
+            "saveEventConfigBtn"
+        );
+
+
+    const errorBox =
+
+        document.getElementById(
+            "eventConfigError"
+        );
+
+
+    const dataDeadline =
+        getEventInputValue(
+            "dataDeadline"
+        );
+
+
+    const formDeadline =
+        getEventInputValue(
+            "formDeadline"
+        );
+
+
+    const eventStart =
+        getEventInputValue(
+            "eventStart"
+        );
+
+
+    const eventEnd =
+        getEventInputValue(
+            "eventEnd"
+        );
+
+
+    if (
+        !dataDeadline ||
+        !formDeadline ||
+        !eventStart ||
+        !eventEnd
+    ) {
+
+        errorBox.textContent =
+            "請完整設定四個日期與時間。";
+
+        return;
+
+    }
+
+
+    const dataTime =
+        Date.parse(
+            dataDeadline
+        );
+
+
+    const formTime =
+        Date.parse(
+            formDeadline
+        );
+
+
+    const startTime =
+        Date.parse(
+            eventStart
+        );
+
+
+    const endTime =
+        Date.parse(
+            eventEnd
+        );
+
+
+    if (
+        endTime <=
+        startTime
+    ) {
+
+        errorBox.textContent =
+            "活動結束時間必須晚於活動開始時間。";
+
+        return;
+
+    }
+
+
+    if (
+        dataTime >=
+        startTime
+    ) {
+
+        errorBox.textContent =
+            "資料繳交截止時間必須早於活動開始時間。";
+
+        return;
+
+    }
+
+
+    if (
+        formTime >=
+        startTime
+    ) {
+
+        errorBox.textContent =
+            "表單填寫截止時間必須早於活動開始時間。";
+
+        return;
+
+    }
+
+
+    try {
+
+        ADMIN_STATE.requestRunning =
+            true;
+
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "儲存中...";
+
+
+        errorBox.textContent =
+            "";
+
+
+        const result =
+
+            await callAdminBackend(
+
+                "adminSaveEventConfig",
+
+                {
+
+                    sessionToken:
+                        ADMIN_STATE.sessionToken,
+
+                    dataDeadline:
+                        dataDeadline,
+
+                    formDeadline:
+                        formDeadline,
+
+                    eventStart:
+                        eventStart,
+
+                    eventEnd:
+                        eventEnd
+
+                }
+
+            );
+
+
+        if (
+            result.error ===
+            "ADMIN_UNAUTHORIZED"
+        ) {
+
+            handleUnauthorized();
+
+            return;
+
+        }
+
+
+        if (!result.success) {
+
+            throw new Error(
+
+                result.message ||
+                "活動時程儲存失敗"
+
+            );
+
+        }
+
+
+        ADMIN_STATE.eventConfig =
+            result.config;
+
+
+        renderEventConfig(
+            result.config
+        );
+
+
+        showToast(
+            "✅ 活動時程設定已儲存"
+        );
+
+    }
+
+    catch (error) {
+
+        errorBox.textContent =
+            error.message;
+
+    }
+
+    finally {
+
+        ADMIN_STATE.requestRunning =
+            false;
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "儲存時程設定";
+
+    }
+
+}
+
+
+function showEventConfigLoading() {
+
+    document.getElementById(
+        "eventConfigForm"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "eventConfigStatus"
+    ).textContent =
+        "載入中...";
+
+
+    const box =
+
+        document.getElementById(
+            "eventConfigState"
+        );
+
+
+    box.style.display =
+        "block";
+
+
+    box.innerHTML =
+
+        `
+
+        <div class="spinner"></div>
+
+        正在讀取活動時程...
+
+        `;
+
+}
+
+
+function showEventConfigError(
+    message
+) {
+
+    document.getElementById(
+        "eventConfigForm"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "eventConfigStatus"
+    ).textContent =
+        "讀取失敗";
+
+
+    const box =
+
+        document.getElementById(
+            "eventConfigState"
+        );
+
+
+    box.style.display =
+        "block";
+
+
+    box.innerHTML =
+
+        `
+
+        <div class="state-icon">
+            ⚠️
+        </div>
+
+        ${escapeHtml(message)}
+
+        `;
 
 }
 
