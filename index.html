@@ -2,874 +2,487 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,shrink-to-fit=no,viewport-fit=cover"
->
-
-<title>
-    ✦ 社團評選暨觀摩活動 智能客服 ✦
-</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,shrink-to-fit=no,viewport-fit=cover">
+<title>✦ 社團評選暨觀摩活動 智能客服 ✦</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
-
-*{
-    box-sizing:border-box;
-}
-
-html,
-body{
+*{box-sizing:border-box}
+html,body{
     width:100%;
     height:100%;
-
     margin:0;
     padding:0;
-
     background:#f4f6f8;
-
     overflow:hidden;
-
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        "Noto Sans TC",
-        Roboto,
-        sans-serif;
-
-    color:#202124;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,sans-serif;
+    color:#202124
 }
-
-button,
-input{
-    font-family:inherit;
-}
-
-button{
-    -webkit-tap-highlight-color:transparent;
-}
-
-
-/* =========================================================
-   主容器
-   ========================================================= */
+button,input{font-family:inherit}
+button{-webkit-tap-highlight-color:transparent}
 
 .chat-container{
     position:relative;
-
     width:100%;
-
     height:100vh;
-    height:calc(var(--vh,1vh) * 100);
-
+    height:calc(var(--vh,1vh)*100);
     display:flex;
     flex-direction:column;
-
     background:#f4f6f8;
-
-    overflow:hidden;
+    overflow:hidden
 }
-
-
-/* =========================================================
-   浮水印
-   ========================================================= */
 
 .chat-container::before{
     content:"";
-
     position:absolute;
-
     top:50%;
     left:50%;
-
-    transform:
-        translate(-50%,-50%);
-
+    transform:translate(-50%,-50%);
     width:260px;
     height:260px;
-
-    background:
-        url("./bg-logo.png")
-        no-repeat
-        center /
-        contain;
-
+    background:url("./bg-logo.png") no-repeat center/contain;
     opacity:.07;
-
     pointer-events:none;
-
-    z-index:0;
+    z-index:0
 }
-
-
-/* =========================================================
-   Header
-   ========================================================= */
 
 .chat-header{
     position:relative;
-
     z-index:20;
-
     flex-shrink:0;
-
-    padding:
-        calc(14px + env(safe-area-inset-top))
-        16px
-        12px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #1a73e8,
-            #1557b0
-        );
-
+    padding:calc(14px + env(safe-area-inset-top)) 16px 12px;
+    background:linear-gradient(135deg,#1a73e8,#1557b0);
     color:#fff;
-
     text-align:center;
-
-    box-shadow:
-        0 2px 8px
-        rgba(0,0,0,.08);
+    box-shadow:0 2px 8px rgba(0,0,0,.08)
 }
 
 .header-title{
     font-size:16px;
-
     font-weight:700;
-
-    letter-spacing:.3px;
+    letter-spacing:.3px
 }
 
 .identity-chip{
     display:inline-block;
-
     margin-top:6px;
-
-    padding:
-        3px
-        9px;
-
+    padding:3px 9px;
     border-radius:999px;
-
-    background:
-        rgba(255,255,255,.16);
-
+    background:rgba(255,255,255,.16);
     font-size:11px;
-
-    color:
-        rgba(255,255,255,.95);
+    color:rgba(255,255,255,.95)
 }
-
-
-/* =========================================================
-   聊天區
-   ========================================================= */
 
 .chat-messages{
     position:relative;
-
     z-index:2;
-
     flex:1;
-
     display:flex;
     flex-direction:column;
-
     gap:12px;
-
     padding:16px;
-
     overflow-y:auto;
-
     -webkit-overflow-scrolling:touch;
-
     background:transparent;
-
-    scroll-behavior:smooth;
+    scroll-behavior:smooth
 }
 
 .message{
     max-width:88%;
-
-    padding:
-        12px
-        15px;
-
+    padding:12px 15px;
     border-radius:18px;
-
     font-size:15px;
-
     line-height:1.6;
-
-    word-break:break-word;
+    word-break:break-word
 }
 
 .message.bot{
     align-self:flex-start;
-
-    background:
-        rgba(255,255,255,.96);
-
+    background:rgba(255,255,255,.96);
     color:#202124;
-
-    border:
-        1px solid #e8eaed;
-
+    border:1px solid #e8eaed;
     border-bottom-left-radius:5px;
-
-    box-shadow:
-        0 2px 5px
-        rgba(0,0,0,.04);
+    box-shadow:0 2px 5px rgba(0,0,0,.04)
 }
 
 .message.user{
     align-self:flex-end;
-
     background:#1a73e8;
-
     color:#fff;
-
     border-bottom-right-radius:5px;
-
-    box-shadow:
-        0 2px 5px
-        rgba(26,115,232,.18);
+    box-shadow:0 2px 5px rgba(26,115,232,.18)
 }
-
-
-/* =========================================================
-   快捷按鈕
-   ========================================================= */
 
 .quick-tags-container{
     position:relative;
-
     z-index:10;
-
     flex-shrink:0;
-
     display:flex;
-
     gap:8px;
-
-    padding:
-        9px
-        13px
-        5px;
-
+    padding:9px 13px 5px;
     overflow-x:auto;
-
     white-space:nowrap;
-
-    background:
-        rgba(244,246,248,.96);
-
-    -webkit-overflow-scrolling:touch;
+    background:rgba(244,246,248,.96);
+    -webkit-overflow-scrolling:touch
 }
 
 .quick-tags-container::-webkit-scrollbar{
-    display:none;
+    display:none
 }
 
 .quick-tag{
     flex-shrink:0;
-
-    border:
-        1px solid #1a73e8;
-
+    border:1px solid #1a73e8;
     border-radius:18px;
-
-    padding:
-        8px
-        14px;
-
+    padding:8px 14px;
     background:#fff;
-
     color:#1a73e8;
-
     font-size:13px;
-
     font-weight:600;
-
     cursor:pointer;
-
-    transition:.2s;
+    transition:.2s
 }
 
 .quick-tag:active{
-    transform:
-        scale(.97);
-
+    transform:scale(.97);
     background:#1a73e8;
-
-    color:#fff;
+    color:#fff
 }
-
-
-/* =========================================================
-   輸入區
-   ========================================================= */
 
 .chat-input-area{
     position:relative;
-
     z-index:20;
-
     flex-shrink:0;
-
     display:flex;
-
     align-items:center;
-
     gap:9px;
-
-    padding:
-        11px
-        13px
-        calc(11px + env(safe-area-inset-bottom));
-
+    padding:11px 13px calc(11px + env(safe-area-inset-bottom));
     background:#fff;
-
-    border-top:
-        1px solid #dadce0;
-
-    box-shadow:
-        0 -2px 10px
-        rgba(0,0,0,.025);
+    border-top:1px solid #dadce0;
+    box-shadow:0 -2px 10px rgba(0,0,0,.025)
 }
 
 .chat-input{
     flex:1;
-
     min-width:0;
-
     height:43px;
-
-    padding:
-        0
-        17px;
-
-    border:
-        1px solid #dadce0;
-
+    padding:0 17px;
+    border:1px solid #dadce0;
     border-radius:23px;
-
     outline:none;
-
     background:#f1f3f4;
-
     font-size:16px;
-
-    -webkit-appearance:none;
+    -webkit-appearance:none
 }
 
 .chat-input:focus{
     background:#fff;
-
     border-color:#1a73e8;
-
-    box-shadow:
-        0 0 0 2px
-        rgba(26,115,232,.08);
+    box-shadow:0 0 0 2px rgba(26,115,232,.08)
 }
 
 .send-btn{
     flex-shrink:0;
-
     height:43px;
-
-    padding:
-        0
-        20px;
-
+    padding:0 20px;
     border:none;
-
     border-radius:23px;
-
     background:#1a73e8;
-
     color:#fff;
-
     font-size:14px;
-
     font-weight:700;
-
-    cursor:pointer;
+    cursor:pointer
 }
-
-
-/* =========================================================
-   社團屬性
-   ========================================================= */
 
 .club-category-container{
     display:flex;
-
     flex-wrap:wrap;
-
     gap:8px;
-
-    margin-top:10px;
+    margin-top:10px
 }
 
 .club-category-btn{
-    border:
-        1px solid #1a73e8;
-
+    border:1px solid #1a73e8;
     border-radius:18px;
-
-    padding:
-        7px
-        12px;
-
+    padding:7px 12px;
     background:#fff;
-
     color:#1a73e8;
-
     font-size:13px;
-
     font-weight:650;
-
-    cursor:pointer;
+    cursor:pointer
 }
 
 .club-list{
     display:flex;
-
     flex-direction:column;
-
     gap:7px;
-
-    margin-top:11px;
+    margin-top:11px
 }
 
 .club-list-item{
     display:flex;
-
     align-items:center;
-
     gap:9px;
-
-    padding:
-        8px
-        10px;
-
-    border:
-        1px solid #e4e7eb;
-
+    padding:8px 10px;
+    border:1px solid #e4e7eb;
     border-radius:10px;
-
-    background:#f8f9fa;
+    background:#f8f9fa
 }
 
 .club-number{
     flex-shrink:0;
-
     display:flex;
-
     align-items:center;
     justify-content:center;
-
     width:26px;
     height:26px;
-
     border-radius:50%;
-
     background:#e8f0fe;
-
     color:#1a73e8;
-
     font-size:12px;
-
-    font-weight:800;
+    font-weight:800
 }
-
-
-/* =========================================================
-   綁定
-   ========================================================= */
 
 .binding-card{
     margin-top:8px;
-
     padding:13px;
-
-    border:
-        1px solid #e4e7eb;
-
+    border:1px solid #e4e7eb;
     border-radius:13px;
-
-    background:#f8f9fa;
+    background:#f8f9fa
 }
 
 .binding-title{
     margin-bottom:4px;
-
     font-size:16px;
-
-    font-weight:800;
+    font-weight:800
 }
 
 .binding-description{
     margin-bottom:11px;
-
     color:#5f6368;
-
-    font-size:13px;
+    font-size:13px
 }
 
 .binding-input{
     width:100%;
-
     height:42px;
-
-    padding:
-        0
-        13px;
-
-    border:
-        1px solid #cdd2d7;
-
+    padding:0 13px;
+    border:1px solid #cdd2d7;
     border-radius:10px;
-
     outline:none;
-
     background:#fff;
-
-    font-size:15px;
+    font-size:15px
 }
 
 .binding-feedback{
     margin-top:8px;
-
-    font-size:13px;
+    font-size:13px
 }
 
 .error-text{
-    color:#b42318;
+    color:#b42318
 }
 
 .success-text{
-    color:#167542;
+    color:#167542
 }
-
-
-/* =========================================================
-   Action
-   ========================================================= */
 
 .action-row{
     display:flex;
-
     flex-wrap:wrap;
-
     gap:8px;
-
-    margin-top:12px;
+    margin-top:12px
 }
 
 .action-btn{
     border:none;
-
     border-radius:10px;
-
-    padding:
-        9px
-        14px;
-
+    padding:9px 14px;
     font-size:13px;
-
     font-weight:700;
-
-    cursor:pointer;
+    cursor:pointer
 }
 
 .action-btn:disabled{
     opacity:.55;
-
-    cursor:not-allowed;
+    cursor:not-allowed
 }
 
 .action-primary{
     background:#1a73e8;
-
-    color:#fff;
+    color:#fff
 }
 
 .action-secondary{
     background:#e8f0fe;
-
-    color:#1557b0;
+    color:#1557b0
 }
-
-
-/* =========================================================
-   Info
-   ========================================================= */
 
 .info-card{
     margin-top:10px;
-
     padding:12px;
-
     border-radius:12px;
-
-    border:
-        1px solid #e4e7eb;
-
-    background:#f8f9fa;
+    border:1px solid #e4e7eb;
+    background:#f8f9fa
 }
 
 .info-row{
     display:flex;
-
     justify-content:space-between;
-
     gap:10px;
-
-    padding:
-        6px
-        0;
-
-    border-bottom:
-        1px solid #eceff1;
+    padding:6px 0;
+    border-bottom:1px solid #eceff1
 }
 
 .info-row:last-child{
-    border-bottom:none;
+    border-bottom:none
 }
 
 .info-label{
     color:#5f6368;
-
-    font-size:13px;
+    font-size:13px
 }
 
 .info-value{
     text-align:right;
-
     font-size:13px;
-
-    font-weight:750;
+    font-weight:750
 }
 
 .status-badge{
     display:inline-block;
-
-    padding:
-        4px
-        9px;
-
+    padding:4px 9px;
     border-radius:999px;
-
     font-size:12px;
-
-    font-weight:750;
+    font-weight:750
 }
 
 .status-success{
     background:#e7f6ec;
-
-    color:#167542;
+    color:#167542
 }
 
 .status-warning{
     background:#fff4dd;
-
-    color:#9a6700;
+    color:#9a6700
 }
 
 .status-locked{
     background:#e8f0fe;
-
-    color:#1557b0;
+    color:#1557b0
 }
 
 .chat-link{
     color:#1a73e8;
-
     text-decoration:underline;
-
     font-weight:700;
-
-    cursor:pointer;
+    cursor:pointer
 }
 
 .mini-note{
     margin-top:9px;
-
-    padding:
-        9px
-        10px;
-
-    border-left:
-        3px solid #f9ab00;
-
+    padding:9px 10px;
+    border-left:3px solid #f9ab00;
     border-radius:6px;
-
     background:#fff8e1;
-
     color:#5f4b00;
-
-    font-size:12px;
+    font-size:12px
 }
 
-
-/* =========================================================
-   活動倒數
-   ========================================================= */
-
 .event-announcement{
-    margin:
-        14px
-        0
-        4px;
-
+    margin:14px 0 4px;
     padding:13px;
-
-    border:
-        1px solid #d8e6ff;
-
+    border:1px solid #d8e6ff;
     border-radius:13px;
-
-    background:#f7faff;
+    background:#f7faff
 }
 
 .event-announcement-title{
     margin-bottom:10px;
-
     color:#1557b0;
-
     font-size:15px;
-
-    font-weight:800;
+    font-weight:800
 }
 
 .event-countdown-main{
     margin-bottom:10px;
-
     padding:10px;
-
     border-radius:10px;
-
     background:#e8f0fe;
-
-    text-align:center;
+    text-align:center
 }
 
 .event-countdown-value{
     color:#1557b0;
-
     font-size:17px;
-
     font-weight:850;
-
-    line-height:1.65;
+    line-height:1.65
 }
 
 .event-deadline-row{
-    padding:
-        8px
-        0;
-
-    border-bottom:
-        1px solid #e5eaf0;
+    padding:8px 0;
+    border-bottom:1px solid #e5eaf0
 }
 
 .event-deadline-name{
     font-size:13px;
-
-    font-weight:800;
+    font-weight:800
 }
 
 .event-deadline-date{
     margin-top:2px;
-
     color:#5f6368;
-
-    font-size:12px;
+    font-size:12px
 }
 
 .event-deadline-status{
     display:inline-block;
-
     margin-top:5px;
-
-    padding:
-        3px
-        8px;
-
+    padding:3px 8px;
     border-radius:999px;
-
     font-size:11px;
-
-    font-weight:800;
+    font-weight:800
 }
 
 .deadline-green{
     background:#e7f6ec;
-
-    color:#167542;
+    color:#167542
 }
 
 .deadline-yellow{
     background:#fff4dd;
-
-    color:#9a6700;
+    color:#9a6700
 }
 
 .deadline-warning{
     background:#fff0e8;
-
-    color:#b54708;
+    color:#b54708
 }
 
 .deadline-today{
     background:#ffe4e8;
-
-    color:#b42318;
+    color:#b42318
 }
 
 .deadline-over{
     background:#f2f4f7;
-
-    color:#667085;
+    color:#667085
 }
 
 .event-time-line{
     margin-top:10px;
-
     padding-top:9px;
-
-    border-top:
-        1px solid #d8e6ff;
-
+    border-top:1px solid #d8e6ff;
     color:#344054;
-
     font-size:12px;
-
-    line-height:1.7;
+    line-height:1.7
 }
-
-
-/* =========================================================
-   手機
-   ========================================================= */
 
 @media(max-width:420px){
-
     .message{
-        max-width:92%;
+        max-width:92%
     }
-
 }
-
 </style>
 
 </head>
@@ -878,13 +491,9 @@ button{
 
 <div class="chat-container">
 
-
 <header class="chat-header">
-
     <div class="header-title">
-
         ✦ 社團評選暨觀摩活動 智能客服 ✦
-
     </div>
 
     <div
@@ -893,7 +502,6 @@ button{
     >
         LINE 身分確認中...
     </div>
-
 </header>
 
 
@@ -904,51 +512,44 @@ button{
 
 <div class="message bot">
 
-    哈囉！我是本次活動的線上客服小幫手唷！😊
+哈囉！我是本次活動的線上客服小幫手唷！😊
 
-    <br>
+<br>
 
-    歡迎詢問我任何關於「115學年度第一學期全校學生社團評選暨觀摩活動」的問題！
+歡迎詢問我任何關於「115學年度第一學期全校學生社團評選暨觀摩活動」的問題！
 
+<div class="event-announcement">
 
-    <div class="event-announcement">
-
-        <div class="event-announcement-title">
-
-            ⏰ 活動重要時程
-
-        </div>
-
-        <div id="eventAnnouncementContent">
-
-            正在讀取活動倒數...
-
-        </div>
-
+    <div class="event-announcement-title">
+        ⏰ 活動重要時程
     </div>
 
+    <div id="eventAnnouncementContent">
+        正在讀取活動倒數...
+    </div>
 
-    <br>
+</div>
 
-    📌 <b>社團查詢提醒：</b>
+<br>
 
-    <br>
+📌 <b>社團查詢提醒：</b>
 
-    若要查詢社團屬性或進行社團綁定，請輸入
-    <b>「社團完整名稱（全稱）」</b>。
+<br>
 
-    <br><br>
+若要查詢社團屬性或進行社團綁定，請輸入
+<b>「社團完整名稱（全稱）」</b>。
 
-    例如：
-    <b>火舞藝術社</b> ✅
+<br><br>
 
-    <br>
+例如：<b>火舞藝術社</b> ✅
 
-    請避免只輸入「火舞」等簡稱。
+<br>
 
-    <br><br>
+請避免只輸入「火舞」等簡稱。
 
-    💡 <b>您也可以直接點選下方快捷功能進行查詢。</b>
+<br><br>
+
+💡 <b>您也可以直接點選下方快捷功能進行查詢。</b>
 
 </div>
 
@@ -957,94 +558,85 @@ button{
 
 <div class="quick-tags-container">
 
-    <button
-        type="button"
-        class="quick-tag"
-        onclick="clickQuickTag('社團總覽')"
-    >
-        📚 社團總覽
-    </button>
+<button
+    type="button"
+    class="quick-tag"
+    onclick="clickQuickTag('社團總覽')"
+>
+    📚 社團總覽
+</button>
 
+<button
+    type="button"
+    class="quick-tag"
+    onclick="clickQuickTag('社團綁定')"
+>
+    🔗 社團綁定
+</button>
 
-    <button
-        type="button"
-        class="quick-tag"
-        onclick="clickQuickTag('社團綁定')"
-    >
-        🔗 社團綁定
-    </button>
+<button
+    type="button"
+    class="quick-tag"
+    onclick="clickQuickTag('社團專屬雲端')"
+>
+    ☁️ 社團雲端
+</button>
 
+<button
+    type="button"
+    class="quick-tag"
+    onclick="clickQuickTag('活動時間')"
+>
+    📅 活動時間
+</button>
 
-    <button
-        type="button"
-        class="quick-tag"
-        onclick="clickQuickTag('社團專屬雲端')"
-    >
-        ☁️ 社團雲端
-    </button>
+<button
+    type="button"
+    class="quick-tag"
+    onclick="clickQuickTag('活動地點')"
+>
+    📍 活動地點
+</button>
 
+<button
+    type="button"
+    class="quick-tag"
+    onclick="clickQuickTag('佈置時間')"
+>
+    🔨 佈置時間
+</button>
 
-    <button
-        type="button"
-        class="quick-tag"
-        onclick="clickQuickTag('活動時間')"
-    >
-        📅 活動時間
-    </button>
+<button
+    type="button"
+    class="quick-tag"
+    onclick="clickQuickTag('觀摩時間')"
+>
+    👀 觀摩時間
+</button>
 
+<button
+    type="button"
+    class="quick-tag"
+    onclick="clickQuickTag('修改表單')"
+>
+    📝 修改表單
+</button>
 
-    <button
-        type="button"
-        class="quick-tag"
-        onclick="clickQuickTag('活動地點')"
-    >
-        📍 活動地點
-    </button>
+<button
+    type="button"
+    class="quick-tag"
+    onclick="clickQuickTag('更換解說員')"
+>
+    🙋 更換解說員
+</button>
 
-
-    <button
-        type="button"
-        class="quick-tag"
-        onclick="clickQuickTag('佈置時間')"
-    >
-        🔨 佈置時間
-    </button>
-
-
-    <button
-        type="button"
-        class="quick-tag"
-        onclick="clickQuickTag('觀摩時間')"
-    >
-        👀 觀摩時間
-    </button>
-
-
-    <button
-        type="button"
-        class="quick-tag"
-        onclick="clickQuickTag('修改表單')"
-    >
-        📝 修改表單
-    </button>
-
-
-    <button
-        type="button"
-        class="quick-tag"
-        onclick="clickQuickTag('更換解說員')"
-    >
-        🙋 更換解說員
-    </button>
-
-
-    <button
-        type="button"
-        class="quick-tag"
-        onclick="clickQuickTag('聯絡學生議會')"
-    >
-        📱 聯絡學生議會
-    </button>
+<button
+    type="button"
+    class="quick-tag"
+    onclick="clickQuickTag('聯絡學生議會')"
+>
+    📱 聯絡學生議會
+</button>
 
 </div>
 
@@ -1054,20 +646,20 @@ button{
     onsubmit="handleFormSubmit(event)"
 >
 
-    <input
-        id="userInput"
-        class="chat-input"
-        type="text"
-        placeholder="請輸入您的問題..."
-        autocomplete="off"
-    >
+<input
+    id="userInput"
+    class="chat-input"
+    type="text"
+    placeholder="請輸入您的問題..."
+    autocomplete="off"
+>
 
-    <button
-        type="submit"
-        class="send-btn"
-    >
-        發送
-    </button>
+<button
+    type="submit"
+    class="send-btn"
+>
+    發送
+</button>
 
 </form>
 
@@ -1076,57 +668,44 @@ button{
 
 <script>
 
-/* ============================================================
-   基本設定
-   ============================================================ */
-
-const LIFF_ID =
+const LIFF_ID=
     "2011529426-hq8fXduC";
 
 
-const BACKEND_URL =
+const BACKEND_URL=
     "https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
 
 
-const CLUB_DATA_CACHE_KEY =
+const CLUB_DATA_CACHE_KEY=
     "HKSP_CLUB_DATA_V1";
 
 
 /* ============================================================
-   社團屬性
-
-   v1.5.1
-   新增「全校自治性」
+   ★ v1.5.1
+   新增第六屬性：全校自治性
    ============================================================ */
 
-const CLUB_CATEGORIES = [
-
+const CLUB_CATEGORIES=[
     "全校自治性",
-
     "自治綜合性",
-
     "康樂性",
-
     "服務性",
-
     "體能性",
-
     "學藝性"
-
 ];
 
 
-let CLUB_DATA =
+let CLUB_DATA=
     loadCachedClubData();
 
 
-let CLUB_DATA_READY =
+let CLUB_DATA_READY=
     hasClubData(
         CLUB_DATA
     );
 
 
-let CLUB_DATA_LOADING_PROMISE =
+let CLUB_DATA_LOADING_PROMISE=
     null;
 
 
@@ -1134,139 +713,61 @@ let CLUB_DATA_LOADING_PROMISE =
    FAQ
    ============================================================ */
 
-const FAQ_DATA = [
+const FAQ_DATA=[
 
-    {
+{
+    keywords:[
+        "活動地點"
+    ],
 
-        keywords:[
-            "活動地點"
-        ],
+    answer:
+        "📍 <b>活動地點</b><br><br>弘光科技大學<br><b>毓麟館</b>"
+},
 
-        answer:
+{
+    keywords:[
+        "佈置時間"
+    ],
 
-            "📍 <b>活動地點</b>" +
+    answer:
+        "🔨 <b>場地佈置時間</b><br><br>當日 <b>10:30 開始</b>，並於 <b>13:00 準時結束</b>。<br><br>請各社團務必於規定時間內完成佈置。"
+},
 
-            "<br><br>" +
+{
+    keywords:[
+        "觀摩時間"
+    ],
 
-            "弘光科技大學" +
+    answer:
+        "👀 <b>社團觀摩時間</b><br><br><b>16:30 - 16:50</b><br>共計 20 分鐘。"
+},
 
-            "<br>" +
+{
+    keywords:[
+        "修改表單"
+    ],
 
-            "<b>毓麟館</b>"
+    answer:
+        "📝 <b>修改表單資料</b><br><br>若需要修改已填寫的 Google 表單內容，請勿重複填寫。<br><br>請直接聯絡學生議會協助修改。<br><br><span class='chat-link' onclick='openInstagram()'>點我前往學生議會 Instagram 💬</span>"
+},
 
-    },
+{
+    keywords:[
+        "更換解說員"
+    ],
 
-    {
+    answer:
+        "🙋 <b>更換解說員</b><br><br>不可私自更換解說員。<br><br>若發生特殊或緊急狀況，請先向主辦單位回報並取得同意。"
+},
 
-        keywords:[
-            "佈置時間"
-        ],
+{
+    keywords:[
+        "聯絡學生議會"
+    ],
 
-        answer:
-
-            "🔨 <b>場地佈置時間</b>" +
-
-            "<br><br>" +
-
-            "當日 <b>10:30 開始</b>，並於 <b>13:00 準時結束</b>。" +
-
-            "<br><br>" +
-
-            "請各社團務必於規定時間內完成佈置。"
-
-    },
-
-    {
-
-        keywords:[
-            "觀摩時間"
-        ],
-
-        answer:
-
-            "👀 <b>社團觀摩時間</b>" +
-
-            "<br><br>" +
-
-            "<b>16:30 - 16:50</b>" +
-
-            "<br>" +
-
-            "共計 20 分鐘。"
-
-    },
-
-    {
-
-        keywords:[
-            "修改表單"
-        ],
-
-        answer:
-
-            "📝 <b>修改表單資料</b>" +
-
-            "<br><br>" +
-
-            "若需要修改已填寫的 Google 表單內容，請勿重複填寫。" +
-
-            "<br><br>" +
-
-            "請直接聯絡學生議會協助修改。" +
-
-            "<br><br>" +
-
-            "<span class='chat-link' onclick='openInstagram()'>" +
-
-                "點我前往學生議會 Instagram 💬" +
-
-            "</span>"
-
-    },
-
-    {
-
-        keywords:[
-            "更換解說員"
-        ],
-
-        answer:
-
-            "🙋 <b>更換解說員</b>" +
-
-            "<br><br>" +
-
-            "不可私自更換解說員。" +
-
-            "<br><br>" +
-
-            "若發生特殊或緊急狀況，請先向主辦單位回報並取得同意。"
-
-    },
-
-    {
-
-        keywords:[
-            "聯絡學生議會"
-        ],
-
-        answer:
-
-            "📱 <b>聯絡學生議會</b>" +
-
-            "<br><br>" +
-
-            "若有個別或緊急狀況，歡迎直接私訊學生議會。" +
-
-            "<br><br>" +
-
-            "<span class='chat-link' onclick='openInstagram()'>" +
-
-                "點我開啟 Instagram 專頁 💬" +
-
-            "</span>"
-
-    }
+    answer:
+        "📱 <b>聯絡學生議會</b><br><br>若有個別或緊急狀況，歡迎直接私訊學生議會。<br><br><span class='chat-link' onclick='openInstagram()'>點我開啟 Instagram 專頁 💬</span>"
+}
 
 ];
 
@@ -1275,52 +776,40 @@ const FAQ_DATA = [
    APP STATE
    ============================================================ */
 
-const APP_STATE = {
+const APP_STATE={
 
-    identityReady:
-        false,
+    identityReady:false,
 
-    backendReady:
-        false,
+    backendReady:false,
 
-    bindingChecked:
-        false,
+    bindingChecked:false,
 
-    displayName:
-        null,
+    displayName:null,
 
-    pendingBinding:
-        null,
+    pendingBinding:null,
 
-    currentBinding:
-        null,
+    currentBinding:null,
 
-    bindingRequestRunning:
-        false,
+    bindingRequestRunning:false,
 
-    cloudRequestRunning:
-        false,
+    cloudRequestRunning:false,
 
-    eventConfig:
-        null,
+    eventConfig:null,
 
-    serverTimeOffset:
-        0,
+    serverTimeOffset:0,
 
-    eventCountdownTimer:
-        null,
+    eventCountdownTimer:null,
 
-    eventRequestRunning:
-        false
+    eventRequestRunning:false
 
 };
 
 
 /* ============================================================
-   活動時程備援
+   活動時間備援
    ============================================================ */
 
-const FALLBACK_EVENT_CONFIG = {
+const FALLBACK_EVENT_CONFIG={
 
     timezone:
         "Asia/Taipei",
@@ -1341,7 +830,7 @@ const FALLBACK_EVENT_CONFIG = {
 
 
 /* ============================================================
-   高度
+   Viewport
    ============================================================ */
 
 function resetVH(){
@@ -1349,11 +838,8 @@ function resetVH(){
     document.documentElement
         .style
         .setProperty(
-
             "--vh",
-
-            `${window.innerHeight * .01}px`
-
+            `${window.innerHeight*.01}px`
         );
 
 }
@@ -1382,33 +868,21 @@ document.addEventListener(
 
     "DOMContentLoaded",
 
-    async () => {
+    async()=>{
 
         resetVH();
 
-
         loadEventAnnouncement();
 
-
-        /*
-         * 社團名單與 LINE 初始化同時執行，
-         * 不互相等待。
-         */
-
-        const clubPromise =
+        const clubPromise=
             loadClubData();
 
-
-        const appPromise =
+        const appPromise=
             initializeApp();
 
-
         await Promise.allSettled([
-
             clubPromise,
-
             appPromise
-
         ]);
 
     }
@@ -1417,21 +891,17 @@ document.addEventListener(
 
 
 /* ============================================================
-   LIFF
+   LINE LIFF
    ============================================================ */
 
 async function initializeApp(){
 
-    const ok =
+    const ok=
         await initializeIdentity();
 
-
-    if (!ok){
-
+    if(!ok){
         return;
-
     }
-
 
     await syncBindingFromBackend(
         true
@@ -1442,17 +912,15 @@ async function initializeApp(){
 
 async function initializeIdentity(){
 
-    const chip =
-
+    const chip=
         document.getElementById(
             "identityChip"
         );
 
-
     try{
 
         if(
-            typeof liff ===
+            typeof liff===
             "undefined"
         ){
 
@@ -1475,7 +943,7 @@ async function initializeIdentity(){
             !liff.isLoggedIn()
         ){
 
-            chip.textContent =
+            chip.textContent=
                 "正在前往 LINE 登入...";
 
 
@@ -1492,24 +960,21 @@ async function initializeIdentity(){
         }
 
 
-        const profile =
+        const profile=
             await liff.getProfile();
 
 
-        APP_STATE.displayName =
+        APP_STATE.displayName=
             profile.displayName;
 
 
-        APP_STATE.identityReady =
+        APP_STATE.identityReady=
             true;
 
 
-        chip.textContent =
-
-            "LINE：" +
-
-            profile.displayName +
-
+        chip.textContent=
+            "LINE："+
+            profile.displayName+
             " · 同步中";
 
 
@@ -1525,11 +990,11 @@ async function initializeIdentity(){
         );
 
 
-        chip.textContent =
+        chip.textContent=
             "LINE 身分驗證失敗";
 
 
-        APP_STATE.identityReady =
+        APP_STATE.identityReady=
             false;
 
 
@@ -1577,33 +1042,27 @@ function getLineIDToken(){
 
 
 /* ============================================================
-   Backend
+   API
    ============================================================ */
 
 async function postBackend(
     payload
 ){
 
-    const controller =
+    const controller=
         new AbortController();
 
 
-    const timeout =
-
+    const timeout=
         setTimeout(
-
-            () =>
-                controller.abort(),
-
+            ()=>controller.abort(),
             15000
-
         );
 
 
     try{
 
-        const response =
-
+        const response=
             await fetch(
 
                 BACKEND_URL,
@@ -1634,16 +1093,14 @@ async function postBackend(
         ){
 
             throw new Error(
-
-                "HTTP " +
+                "HTTP "+
                 response.status
-
             );
 
         }
 
 
-        const text =
+        const text=
             await response.text();
 
 
@@ -1684,10 +1141,10 @@ async function postBackend(
 
 async function callBackend(
     action,
-    extraData = {}
+    extraData={}
 ){
 
-    const idToken =
+    const idToken=
         getLineIDToken();
 
 
@@ -1702,11 +1159,9 @@ async function callBackend(
 
     return postBackend({
 
-        action:
-            action,
+        action,
 
-        idToken:
-            idToken,
+        idToken,
 
         ...extraData
 
@@ -1717,13 +1172,12 @@ async function callBackend(
 
 async function callPublicBackend(
     action,
-    extraData = {}
+    extraData={}
 ){
 
     return postBackend({
 
-        action:
-            action,
+        action,
 
         ...extraData
 
@@ -1733,27 +1187,23 @@ async function callPublicBackend(
 
 
 /* ============================================================
-   社團名單
+   社團資料
    ============================================================ */
 
 function emptyClubData(){
 
-    const result =
-        {};
+    const result={};
 
 
-    CLUB_CATEGORIES
-        .forEach(
+    CLUB_CATEGORIES.forEach(
+        category=>{
 
-            category => {
+            result[
+                category
+            ]=[];
 
-                result[
-                    category
-                ] = [];
-
-            }
-
-        );
+        }
+    );
 
 
     return result;
@@ -1765,14 +1215,13 @@ function normalizeClubData(
     input
 ){
 
-    const result =
+    const result=
         emptyClubData();
 
 
     if(
         !input ||
-        typeof input !==
-        "object"
+        typeof input!=="object"
     ){
 
         return result;
@@ -1780,48 +1229,44 @@ function normalizeClubData(
     }
 
 
-    CLUB_CATEGORIES
-        .forEach(
+    CLUB_CATEGORIES.forEach(
 
-            category => {
+        category=>{
 
-                if(
-                    Array.isArray(
-                        input[
-                            category
-                        ]
-                    )
-                ){
-
-                    result[
+            if(
+                Array.isArray(
+                    input[
                         category
-                    ] =
+                    ]
+                )
+            ){
 
-                        input[
-                            category
-                        ]
+                result[
+                    category
+                ]=
 
-                        .map(
+                    input[
+                        category
+                    ]
 
-                            value =>
+                    .map(
+                        value=>
+                            String(
+                                value||
+                                ""
+                            )
+                            .trim()
+                    )
 
-                                String(
-                                    value ||
-                                    ""
-                                )
-                                .trim()
-
-                        )
-
-                        .filter(
-                            Boolean
-                        );
-
-                }
+                    .filter(
+                        Boolean
+                    );
 
             }
 
-        );
+        }
+
+    );
 
 
     return result;
@@ -1839,24 +1284,23 @@ function hasClubData(
 
         &&
 
-        CLUB_CATEGORIES
-            .some(
+        CLUB_CATEGORIES.some(
 
-                category =>
+            category=>
 
-                    Array.isArray(
-                        data[
-                            category
-                        ]
-                    )
-
-                    &&
-
+                Array.isArray(
                     data[
                         category
-                    ].length > 0
+                    ]
+                )
 
-            )
+                &&
+
+                data[
+                    category
+                ].length>0
+
+        )
 
     );
 
@@ -1867,8 +1311,7 @@ function loadCachedClubData(){
 
     try{
 
-        const raw =
-
+        const raw=
             localStorage.getItem(
                 CLUB_DATA_CACHE_KEY
             );
@@ -1882,11 +1325,9 @@ function loadCachedClubData(){
 
 
         return normalizeClubData(
-
             JSON.parse(
                 raw
             )
-
         );
 
     }
@@ -1894,11 +1335,8 @@ function loadCachedClubData(){
     catch(error){
 
         console.warn(
-
             "讀取社團名單快取失敗：",
-
             error
-
         );
 
 
@@ -1930,11 +1368,8 @@ function saveClubDataCache(
     catch(error){
 
         console.warn(
-
             "儲存社團名單快取失敗：",
-
             error
-
         );
 
     }
@@ -1943,12 +1378,11 @@ function saveClubDataCache(
 
 
 async function loadClubData(
-    force = false
+    force=false
 ){
 
     if(
-        CLUB_DATA_LOADING_PROMISE
-        &&
+        CLUB_DATA_LOADING_PROMISE &&
         !force
     ){
 
@@ -1957,39 +1391,32 @@ async function loadClubData(
     }
 
 
-    CLUB_DATA_LOADING_PROMISE =
-
+    CLUB_DATA_LOADING_PROMISE=
         (
-            async () => {
+            async()=>{
 
                 try{
 
-                    const result =
-
+                    const result=
                         await callPublicBackend(
                             "getClubData"
                         );
 
 
                     if(
-                        !result.success
-                        ||
+                        !result.success ||
                         !result.categories
                     ){
 
                         throw new Error(
-
-                            result.message
-                            ||
+                            result.message||
                             "無法取得社團名單"
-
                         );
 
                     }
 
 
-                    const normalized =
-
+                    const normalized=
                         normalizeClubData(
                             result.categories
                         );
@@ -2008,11 +1435,11 @@ async function loadClubData(
                     }
 
 
-                    CLUB_DATA =
+                    CLUB_DATA=
                         normalized;
 
 
-                    CLUB_DATA_READY =
+                    CLUB_DATA_READY=
                         true;
 
 
@@ -2028,21 +1455,12 @@ async function loadClubData(
                 catch(error){
 
                     console.error(
-
                         "社團名單載入失敗：",
-
                         error
-
                     );
 
 
-                    /*
-                     * 如果後端暫時失敗，
-                     * 保留 localStorage 快取。
-                     */
-
-                    CLUB_DATA_READY =
-
+                    CLUB_DATA_READY=
                         hasClubData(
                             CLUB_DATA
                         );
@@ -2054,7 +1472,7 @@ async function loadClubData(
 
                 finally{
 
-                    CLUB_DATA_LOADING_PROMISE =
+                    CLUB_DATA_LOADING_PROMISE=
                         null;
 
                 }
@@ -2085,15 +1503,14 @@ async function ensureClubDataReady(){
 
 
 /* ============================================================
-   後端綁定同步
+   綁定同步
    ============================================================ */
 
 async function syncBindingFromBackend(
-    silent = false
+    silent=false
 ){
 
-    const chip =
-
+    const chip=
         document.getElementById(
             "identityChip"
         );
@@ -2101,8 +1518,7 @@ async function syncBindingFromBackend(
 
     try{
 
-        const result =
-
+        const result=
             await callBackend(
                 "checkBinding"
             );
@@ -2113,30 +1529,27 @@ async function syncBindingFromBackend(
         ){
 
             throw new Error(
-
-                result.message
-                ||
+                result.message||
                 "查詢綁定失敗"
-
             );
 
         }
 
 
-        APP_STATE.backendReady =
+        APP_STATE.backendReady=
             true;
 
 
-        APP_STATE.bindingChecked =
+        APP_STATE.bindingChecked=
             true;
 
 
-        APP_STATE.currentBinding =
+        APP_STATE.currentBinding=
 
             result.bound &&
             result.binding
 
-                ? {
+                ?{
 
                     club:
                         result.binding.club,
@@ -2149,13 +1562,11 @@ async function syncBindingFromBackend(
 
                 }
 
-                : null;
+                :null;
 
 
-        chip.textContent =
-
-            "LINE：" +
-
+        chip.textContent=
+            "LINE："+
             APP_STATE.displayName;
 
 
@@ -2166,34 +1577,25 @@ async function syncBindingFromBackend(
     catch(error){
 
         console.error(
-
             "後端同步失敗：",
-
             error
-
         );
 
 
-        APP_STATE.backendReady =
+        APP_STATE.backendReady=
             false;
 
 
-        APP_STATE.bindingChecked =
+        APP_STATE.bindingChecked=
             false;
 
 
-        chip.textContent =
-
-            "LINE：" +
-
+        chip.textContent=
+            "LINE："+
             (
-                APP_STATE.displayName
-                ||
+                APP_STATE.displayName||
                 "使用者"
-            )
-
-            +
-
+            )+
             " · 同步失敗";
 
 
@@ -2201,26 +1603,7 @@ async function syncBindingFromBackend(
 
             appendMessage(
 
-                `
-                ⚠️ <b>無法連線至綁定系統</b>
-
-                <br><br>
-
-                目前一般活動資訊仍可正常查詢，
-                但社團綁定與專屬功能暫時無法使用。
-
-                <div class="action-row">
-
-                    <button
-                        type="button"
-                        class="action-btn action-primary"
-                        onclick="retryBackendSync()"
-                    >
-                        重新連線
-                    </button>
-
-                </div>
-                `,
+                `⚠️ <b>無法連線至綁定系統</b><br><br>目前一般活動資訊仍可正常查詢，但社團綁定與專屬功能暫時無法使用。<div class="action-row"><button type="button" class="action-btn action-primary" onclick="retryBackendSync()">重新連線</button></div>`,
 
                 "bot",
 
@@ -2241,11 +1624,8 @@ async function syncBindingFromBackend(
 async function retryBackendSync(){
 
     appendMessage(
-
         "重新連線",
-
         "user"
-
     );
 
 
@@ -2256,11 +1636,8 @@ async function retryBackendSync(){
     ){
 
         appendMessage(
-
             "✅ 已成功連線至社團綁定系統。",
-
             "bot"
-
         );
 
     }
@@ -2269,7 +1646,7 @@ async function retryBackendSync(){
 
 
 /* ============================================================
-   工具
+   Escape
    ============================================================ */
 
 function escapeHtml(
@@ -2308,41 +1685,43 @@ function escapeHtml(
 }
 
 
+/* ============================================================
+   訊息
+   ============================================================ */
+
 function appendMessage(
     content,
     sender,
-    useHTML = false
+    useHTML=false
 ){
 
-    const container =
-
+    const container=
         document.getElementById(
             "chatMessages"
         );
 
 
-    const message =
+    const message=
         document.createElement(
             "div"
         );
 
 
-    message.className =
-
-        "message " +
+    message.className=
+        "message "+
         sender;
 
 
     if(useHTML){
 
-        message.innerHTML =
+        message.innerHTML=
             content;
 
     }
 
     else{
 
-        message.textContent =
+        message.textContent=
             content;
 
     }
@@ -2355,17 +1734,15 @@ function appendMessage(
 
     setTimeout(
 
-        () =>
+        ()=>container.scrollTo({
 
-            container.scrollTo({
+            top:
+                container.scrollHeight,
 
-                top:
-                    container.scrollHeight,
+            behavior:
+                "smooth"
 
-                behavior:
-                    "smooth"
-
-            }),
+        }),
 
         30
 
@@ -2375,17 +1752,16 @@ function appendMessage(
 
 
 /* ============================================================
-   精準查詢社團
+   精準社團搜尋
    ============================================================ */
 
 function findExactClub(
     inputName
 ){
 
-    const searchName =
-
+    const searchName=
         String(
-            inputName ||
+            inputName||
             ""
         )
         .trim();
@@ -2396,22 +1772,17 @@ function findExactClub(
         of CLUB_CATEGORIES
     ){
 
-        const clubs =
-
+        const clubs=
             CLUB_DATA[
                 category
-            ]
-
-            ||
-
+            ]||
             [];
 
 
-        const club =
-
+        const club=
             clubs.find(
 
-                item =>
+                item=>
 
                     String(
                         item
@@ -2427,7 +1798,7 @@ function findExactClub(
 
         if(club){
 
-            return {
+            return{
 
                 name:
                     club,
@@ -2453,69 +1824,25 @@ function findExactClub(
 
 async function showClubOverview(){
 
-    const ready =
-
+    const ready=
         await ensureClubDataReady();
 
 
     if(!ready){
 
         appendMessage(
-
             "⚠️ 目前無法取得最新社團名單，請稍後再試。",
-
             "bot"
-
         );
-
 
         return;
 
     }
 
 
-    const buttons =
-
-        CLUB_CATEGORIES
-            .map(
-
-                category =>
-
-                    `
-
-                    <button
-                        type="button"
-                        class="club-category-btn"
-                        onclick="selectClubCategory('${category}')"
-                    >
-
-                        ${escapeHtml(category)}
-
-                    </button>
-
-                    `
-
-            )
-            .join("");
-
-
     appendMessage(
 
-        `
-
-        <b>📚 社團總覽</b>
-
-        <br><br>
-
-        請選擇想查看的社團屬性：
-
-        <div class="club-category-container">
-
-            ${buttons}
-
-        </div>
-
-        `,
+        `<b>📚 社團總覽</b><br><br>請選擇想查看的社團屬性：<div class="club-category-container">${CLUB_CATEGORIES.map(category=>`<button type="button" class="club-category-btn" onclick="selectClubCategory('${category}')">${escapeHtml(category)}</button>`).join("")}</div>`,
 
         "bot",
 
@@ -2531,11 +1858,8 @@ async function selectClubCategory(
 ){
 
     appendMessage(
-
         category,
-
         "user"
-
     );
 
 
@@ -2550,29 +1874,23 @@ async function showClubCategory(
     category
 ){
 
-    const ready =
-
+    const ready=
         await ensureClubDataReady();
 
 
     if(!ready){
 
         appendMessage(
-
             "⚠️ 目前無法取得最新社團名單，請稍後再試。",
-
             "bot"
-
         );
-
 
         return;
 
     }
 
 
-    const clubs =
-
+    const clubs=
         CLUB_DATA[
             category
         ];
@@ -2585,31 +1903,12 @@ async function showClubCategory(
     }
 
 
-    const list =
-
+    const list=
         clubs.map(
 
-            (club,index) =>
+            (club,index)=>
 
-                `
-
-                <div class="club-list-item">
-
-                    <div class="club-number">
-
-                        ${index + 1}
-
-                    </div>
-
-                    <div>
-
-                        ${escapeHtml(club)}
-
-                    </div>
-
-                </div>
-
-                `
+                `<div class="club-list-item"><div class="club-number">${index+1}</div><div>${escapeHtml(club)}</div></div>`
 
         )
         .join("");
@@ -2617,19 +1916,7 @@ async function showClubCategory(
 
     appendMessage(
 
-        `
-
-        <b>
-            📂 ${escapeHtml(category)}
-        </b>
-
-        <div class="club-list">
-
-            ${list}
-
-        </div>
-
-        `,
+        `<b>📂 ${escapeHtml(category)}</b><div class="club-list">${list}</div>`,
 
         "bot",
 
@@ -2651,13 +1938,9 @@ async function showBindingPanel(){
     ){
 
         appendMessage(
-
             "⚠️ 尚未完成 LINE 身分驗證。",
-
             "bot"
-
         );
-
 
         return;
 
@@ -2672,95 +1955,19 @@ async function showBindingPanel(){
             APP_STATE.currentBinding
         );
 
-
         return;
 
     }
 
 
-    const id =
-
-        "bind_" +
+    const id=
+        "bind_"+
         Date.now();
 
 
     appendMessage(
 
-        `
-
-        <b>🔗 社團帳號綁定</b>
-
-        <br><br>
-
-        請輸入您的
-        <b>「社團完整名稱」</b>。
-
-        <div class="mini-note">
-
-            ⚠️ 請勿輸入簡稱。
-
-            <br>
-
-            例如：
-
-            火舞藝術社 ✅
-
-            <br>
-
-            火舞 ❌
-
-        </div>
-
-        <div class="binding-card">
-
-            <div class="binding-title">
-
-                社團名稱
-
-            </div>
-
-            <div class="binding-description">
-
-                請輸入與社團總覽完全相同的名稱。
-
-            </div>
-
-            <input
-                id="${id}"
-                class="binding-input"
-                type="text"
-                placeholder="例如：火舞藝術社"
-                autocomplete="off"
-            >
-
-            <div
-                id="${id}_feedback"
-                class="binding-feedback"
-            ></div>
-
-            <div class="action-row">
-
-                <button
-                    type="button"
-                    class="action-btn action-primary"
-                    onclick="lookupBindingClub('${id}')"
-                >
-                    查詢社團
-                </button>
-
-                <button
-                    type="button"
-                    class="action-btn action-secondary"
-                    onclick="showClubOverview()"
-                >
-                    📚 查看社團總覽
-                </button>
-
-            </div>
-
-        </div>
-
-        `,
+        `<b>🔗 社團帳號綁定</b><br><br>請輸入您的 <b>「社團完整名稱」</b>。<div class="mini-note">⚠️ 請勿輸入簡稱。<br>例如：火舞藝術社 ✅<br>火舞 ❌</div><div class="binding-card"><div class="binding-title">社團名稱</div><div class="binding-description">請輸入與社團總覽完全相同的名稱。</div><input id="${id}" class="binding-input" type="text" placeholder="例如：火舞藝術社" autocomplete="off"><div id="${id}_feedback" class="binding-feedback"></div><div class="action-row"><button type="button" class="action-btn action-primary" onclick="lookupBindingClub('${id}')">查詢社團</button><button type="button" class="action-btn action-secondary" onclick="showClubOverview()">📚 查看社團總覽</button></div></div>`,
 
         "bot",
 
@@ -2775,18 +1982,15 @@ async function lookupBindingClub(
     id
 ){
 
-    const input =
+    const input=
         document.getElementById(
             id
         );
 
 
-    const feedback =
+    const feedback=
         document.getElementById(
-
-            id +
-            "_feedback"
-
+            id+"_feedback"
         );
 
 
@@ -2800,17 +2004,17 @@ async function lookupBindingClub(
     }
 
 
-    const value =
+    const value=
         input.value.trim();
 
 
     if(!value){
 
-        feedback.className =
+        feedback.className=
             "binding-feedback error-text";
 
 
-        feedback.textContent =
+        feedback.textContent=
             "請先輸入社團完整名稱。";
 
 
@@ -2823,11 +2027,11 @@ async function lookupBindingClub(
         APP_STATE.currentBinding
     ){
 
-        feedback.className =
+        feedback.className=
             "binding-feedback error-text";
 
 
-        feedback.textContent =
+        feedback.textContent=
             "此帳號已完成社團綁定。";
 
 
@@ -2836,18 +2040,17 @@ async function lookupBindingClub(
     }
 
 
-    const ready =
-
+    const ready=
         await ensureClubDataReady();
 
 
     if(!ready){
 
-        feedback.className =
+        feedback.className=
             "binding-feedback error-text";
 
 
-        feedback.textContent =
+        feedback.textContent=
             "目前無法取得最新社團名單，請稍後再試。";
 
 
@@ -2856,7 +2059,7 @@ async function lookupBindingClub(
     }
 
 
-    const result =
+    const result=
         findExactClub(
             value
         );
@@ -2864,21 +2067,16 @@ async function lookupBindingClub(
 
     if(!result){
 
-        APP_STATE.pendingBinding =
+        APP_STATE.pendingBinding=
             null;
 
 
-        feedback.className =
+        feedback.className=
             "binding-feedback error-text";
 
 
-        feedback.innerHTML =
-
-            "❌ 查無此社團。" +
-
-            "<br>" +
-
-            "請確認是否輸入完整正式名稱。";
+        feedback.innerHTML=
+            "❌ 查無此社團。<br>請確認是否輸入完整正式名稱。";
 
 
         return;
@@ -2886,15 +2084,15 @@ async function lookupBindingClub(
     }
 
 
-    feedback.className =
+    feedback.className=
         "binding-feedback success-text";
 
 
-    feedback.textContent =
+    feedback.textContent=
         "✅ 已找到社團。";
 
 
-    APP_STATE.pendingBinding =
+    APP_STATE.pendingBinding=
         result;
 
 
@@ -2906,7 +2104,7 @@ async function lookupBindingClub(
 
 
 /* ============================================================
-   綁定確認
+   綁定二次確認
    ============================================================ */
 
 function showBindingConfirmation(
@@ -2915,77 +2113,7 @@ function showBindingConfirmation(
 
     appendMessage(
 
-        `
-
-        <b>✅ 已找到社團</b>
-
-        <div class="info-card">
-
-            <div class="info-row">
-
-                <span class="info-label">
-                    社團名稱
-                </span>
-
-                <span class="info-value">
-                    ${escapeHtml(club.name)}
-                </span>
-
-            </div>
-
-            <div class="info-row">
-
-                <span class="info-label">
-                    社團屬性
-                </span>
-
-                <span class="info-value">
-                    ${escapeHtml(club.category)}
-                </span>
-
-            </div>
-
-        </div>
-
-
-        <div class="mini-note">
-
-            ⚠️ <b>重要提醒</b>
-
-            <br>
-
-            綁定完成後，
-            <b>使用者無法自行重新綁定或更換社團。</b>
-
-            <br>
-
-            請再次確認社團名稱是否正確。
-
-        </div>
-
-
-        <div class="action-row">
-
-            <button
-                type="button"
-                class="action-btn action-secondary"
-                onclick="cancelBindingConfirmation()"
-            >
-                返回修改
-            </button>
-
-            <button
-                id="confirmBindingBtn"
-                type="button"
-                class="action-btn action-primary"
-                onclick="confirmClubBinding()"
-            >
-                確認綁定
-            </button>
-
-        </div>
-
-        `,
+        `<b>✅ 已找到社團</b><div class="info-card"><div class="info-row"><span class="info-label">社團名稱</span><span class="info-value">${escapeHtml(club.name)}</span></div><div class="info-row"><span class="info-label">社團屬性</span><span class="info-value">${escapeHtml(club.category)}</span></div></div><div class="mini-note">⚠️ <b>重要提醒</b><br>綁定完成後，<b>使用者無法自行重新綁定或更換社團。</b><br>請再次確認社團名稱是否正確。</div><div class="action-row"><button type="button" class="action-btn action-secondary" onclick="cancelBindingConfirmation()">返回修改</button><button id="confirmBindingBtn" type="button" class="action-btn action-primary" onclick="confirmClubBinding()">確認綁定</button></div>`,
 
         "bot",
 
@@ -2998,16 +2126,13 @@ function showBindingConfirmation(
 
 async function cancelBindingConfirmation(){
 
-    APP_STATE.pendingBinding =
+    APP_STATE.pendingBinding=
         null;
 
 
     appendMessage(
-
         "返回修改",
-
         "user"
-
     );
 
 
@@ -3027,28 +2152,23 @@ async function confirmClubBinding(){
     }
 
 
-    const club =
+    const club=
         APP_STATE.pendingBinding;
 
 
     if(!club){
 
         appendMessage(
-
             "綁定資料已失效，請重新輸入社團名稱。",
-
             "bot"
-
         );
-
 
         return;
 
     }
 
 
-    const button =
-
+    const button=
         document.getElementById(
             "confirmBindingBtn"
         );
@@ -3056,24 +2176,23 @@ async function confirmClubBinding(){
 
     try{
 
-        APP_STATE.bindingRequestRunning =
+        APP_STATE.bindingRequestRunning=
             true;
 
 
         if(button){
 
-            button.disabled =
+            button.disabled=
                 true;
 
 
-            button.textContent =
+            button.textContent=
                 "綁定中...";
 
         }
 
 
-        const result =
-
+        const result=
             await callBackend(
 
                 "bindClub",
@@ -3089,7 +2208,7 @@ async function confirmClubBinding(){
 
 
         if(
-            result.error ===
+            result.error===
             "ALREADY_BOUND"
         ){
 
@@ -3097,7 +2216,7 @@ async function confirmClubBinding(){
                 result.binding
             ){
 
-                APP_STATE.currentBinding = {
+                APP_STATE.currentBinding={
 
                     club:
                         result.binding.club,
@@ -3110,7 +2229,7 @@ async function confirmClubBinding(){
             }
 
 
-            APP_STATE.pendingBinding =
+            APP_STATE.pendingBinding=
                 null;
 
 
@@ -3129,17 +2248,14 @@ async function confirmClubBinding(){
         ){
 
             throw new Error(
-
-                result.message
-                ||
+                result.message||
                 "綁定失敗"
-
             );
 
         }
 
 
-        APP_STATE.currentBinding = {
+        APP_STATE.currentBinding={
 
             club:
                 result.binding.club,
@@ -3153,91 +2269,13 @@ async function confirmClubBinding(){
         };
 
 
-        APP_STATE.pendingBinding =
+        APP_STATE.pendingBinding=
             null;
 
 
         appendMessage(
 
-            `
-
-            <span class="status-badge status-success">
-
-                ✓ 綁定成功
-
-            </span>
-
-            <br><br>
-
-            <b>🎉 社團綁定完成</b>
-
-
-            <div class="info-card">
-
-                <div class="info-row">
-
-                    <span class="info-label">
-                        社團
-                    </span>
-
-                    <span class="info-value">
-
-                        ${escapeHtml(
-                            APP_STATE
-                                .currentBinding
-                                .club
-                        )}
-
-                    </span>
-
-                </div>
-
-
-                <div class="info-row">
-
-                    <span class="info-label">
-                        屬性
-                    </span>
-
-                    <span class="info-value">
-
-                        ${escapeHtml(
-                            APP_STATE
-                                .currentBinding
-                                .category
-                        )}
-
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div class="mini-note">
-
-                🔒 此 LINE 帳號已完成社團綁定。
-
-                <br>
-
-                使用者無法自行重新綁定或更換社團。
-
-            </div>
-
-
-            <div class="action-row">
-
-                <button
-                    type="button"
-                    class="action-btn action-primary"
-                    onclick="showCloudPanel()"
-                >
-                    ☁️ 查看社團專屬雲端
-                </button>
-
-            </div>
-
-            `,
+            `<span class="status-badge status-success">✓ 綁定成功</span><br><br><b>🎉 社團綁定完成</b><div class="info-card"><div class="info-row"><span class="info-label">社團</span><span class="info-value">${escapeHtml(APP_STATE.currentBinding.club)}</span></div><div class="info-row"><span class="info-label">屬性</span><span class="info-value">${escapeHtml(APP_STATE.currentBinding.category)}</span></div></div><div class="mini-note">🔒 此 LINE 帳號已完成社團綁定。<br>使用者無法自行重新綁定或更換社團。</div><div class="action-row"><button type="button" class="action-btn action-primary" onclick="showCloudPanel()">☁️ 查看社團專屬雲端</button></div>`,
 
             "bot",
 
@@ -3256,19 +2294,7 @@ async function confirmClubBinding(){
 
         appendMessage(
 
-            `
-
-            ❌ <b>社團綁定失敗</b>
-
-            <br><br>
-
-            ${escapeHtml(
-                error.message
-                ||
-                "請稍後再試"
-            )}
-
-            `,
+            `❌ <b>社團綁定失敗</b><br><br>${escapeHtml(error.message||"請稍後再試")}`,
 
             "bot",
 
@@ -3280,17 +2306,17 @@ async function confirmClubBinding(){
 
     finally{
 
-        APP_STATE.bindingRequestRunning =
+        APP_STATE.bindingRequestRunning=
             false;
 
 
         if(button){
 
-            button.disabled =
+            button.disabled=
                 false;
 
 
-            button.textContent =
+            button.textContent=
                 "確認綁定";
 
         }
@@ -3317,71 +2343,7 @@ function showLockedBinding(
 
     appendMessage(
 
-        `
-
-        <span class="status-badge status-locked">
-
-            🔒 已鎖定
-
-        </span>
-
-        <br><br>
-
-        <b>
-            此 LINE 帳號已完成社團綁定
-        </b>
-
-
-        <div class="info-card">
-
-            <div class="info-row">
-
-                <span class="info-label">
-
-                    社團名稱
-
-                </span>
-
-                <span class="info-value">
-
-                    ${escapeHtml(
-                        binding.club
-                    )}
-
-                </span>
-
-            </div>
-
-
-            <div class="info-row">
-
-                <span class="info-label">
-
-                    社團屬性
-
-                </span>
-
-                <span class="info-value">
-
-                    ${escapeHtml(
-                        binding.category
-                    )}
-
-                </span>
-
-            </div>
-
-        </div>
-
-
-        <div class="mini-note">
-
-            若綁定資料有誤，
-            請聯絡活動管理單位協助解除綁定。
-
-        </div>
-
-        `,
+        `<span class="status-badge status-locked">🔒 已鎖定</span><br><br><b>此 LINE 帳號已完成社團綁定</b><div class="info-card"><div class="info-row"><span class="info-label">社團名稱</span><span class="info-value">${escapeHtml(binding.club)}</span></div><div class="info-row"><span class="info-label">社團屬性</span><span class="info-value">${escapeHtml(binding.category)}</span></div></div><div class="mini-note">若綁定資料有誤，請聯絡活動管理單位協助解除綁定。</div>`,
 
         "bot",
 
@@ -3393,7 +2355,7 @@ function showLockedBinding(
 
 
 /* ============================================================
-   專屬雲端
+   社團雲端
    ============================================================ */
 
 async function showCloudPanel(){
@@ -3412,13 +2374,9 @@ async function showCloudPanel(){
     ){
 
         appendMessage(
-
             "⚠️ 尚未完成 LINE 身分驗證。",
-
             "bot"
-
         );
-
 
         return;
 
@@ -3427,52 +2385,28 @@ async function showCloudPanel(){
 
     try{
 
-        APP_STATE.cloudRequestRunning =
+        APP_STATE.cloudRequestRunning=
             true;
 
 
-        const result =
-
+        const result=
             await callBackend(
                 "getMyCloudLink"
             );
 
 
         if(
-            result.error ===
+            result.error===
             "NOT_BOUND"
         ){
 
-            APP_STATE.currentBinding =
+            APP_STATE.currentBinding=
                 null;
 
 
             appendMessage(
 
-                `
-
-                ⚠️ <b>目前尚未綁定社團</b>
-
-                <br><br>
-
-                您必須先完成社團綁定，
-                才能使用
-                <b>「社團專屬雲端」</b>。
-
-
-                <div class="action-row">
-
-                    <button
-                        type="button"
-                        class="action-btn action-primary"
-                        onclick="showBindingPanel()"
-                    >
-                        🔗 前往社團綁定
-                    </button>
-
-                </div>
-
-                `,
+                `⚠️ <b>目前尚未綁定社團</b><br><br>您必須先完成社團綁定，才能使用 <b>「社團專屬雲端」</b>。<div class="action-row"><button type="button" class="action-btn action-primary" onclick="showBindingPanel()">🔗 前往社團綁定</button></div>`,
 
                 "bot",
 
@@ -3487,56 +2421,45 @@ async function showCloudPanel(){
 
 
         if(
-            result.error ===
+            result.error===
             "CLOUD_NOT_CONFIGURED"
         ){
 
-            const clubName =
+            const clubName=
 
                 result.club?.name
 
                 ||
 
-                APP_STATE
-                    .currentBinding
-                    ?.club
+                APP_STATE.currentBinding?.club
 
                 ||
 
                 "目前綁定社團";
 
 
-            const category =
+            const category=
 
                 result.club?.category
 
                 ||
 
-                APP_STATE
-                    .currentBinding
-                    ?.category
+                APP_STATE.currentBinding?.category
 
                 ||
 
                 "-";
 
 
-            APP_STATE.currentBinding = {
+            APP_STATE.currentBinding={
 
                 club:
                     clubName,
 
-                category:
-                    category,
+                category,
 
                 createdAt:
-
-                    APP_STATE
-                        .currentBinding
-                        ?.createdAt
-
-                    ||
-
+                    APP_STATE.currentBinding?.createdAt||
                     null
 
             };
@@ -3544,70 +2467,7 @@ async function showCloudPanel(){
 
             appendMessage(
 
-                `
-
-                <span class="status-badge status-warning">
-
-                    ☁️ 尚未設定
-
-                </span>
-
-                <br><br>
-
-                <b>
-
-                    ${escapeHtml(clubName)}
-                    專屬雲端
-
-                </b>
-
-
-                <div class="info-card">
-
-                    <div class="info-row">
-
-                        <span class="info-label">
-
-                            社團名稱
-
-                        </span>
-
-                        <span class="info-value">
-
-                            ${escapeHtml(clubName)}
-
-                        </span>
-
-                    </div>
-
-
-                    <div class="info-row">
-
-                        <span class="info-label">
-
-                            社團屬性
-
-                        </span>
-
-                        <span class="info-value">
-
-                            ${escapeHtml(category)}
-
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="mini-note">
-
-                    ℹ️ 管理員目前尚未設定此社團的專屬雲端連結，
-                    請稍後再試或聯絡活動管理單位。
-
-                </div>
-
-                `,
+                `<span class="status-badge status-warning">☁️ 尚未設定</span><br><br><b>${escapeHtml(clubName)} 專屬雲端</b><div class="info-card"><div class="info-row"><span class="info-label">社團名稱</span><span class="info-value">${escapeHtml(clubName)}</span></div><div class="info-row"><span class="info-label">社團屬性</span><span class="info-value">${escapeHtml(category)}</span></div></div><div class="mini-note">ℹ️ 管理員目前尚未設定此社團的專屬雲端連結，請稍後再試或聯絡活動管理單位。</div>`,
 
                 "bot",
 
@@ -3622,73 +2482,43 @@ async function showCloudPanel(){
 
 
         if(
-            !result.success
-            ||
-            !result.cloud
-            ||
+            !result.success ||
+            !result.cloud ||
             !result.cloud.url
         ){
 
             throw new Error(
-
-                result.message
-                ||
+                result.message||
                 "無法取得社團專屬雲端"
-
             );
 
         }
 
 
-        const cloud =
+        const cloud=
             result.cloud;
 
 
-        APP_STATE.currentBinding = {
+        APP_STATE.currentBinding={
 
             club:
-
-                cloud.club
-
-                ||
-
-                APP_STATE
-                    .currentBinding
-                    ?.club
-
-                ||
-
+                cloud.club||
+                APP_STATE.currentBinding?.club||
                 "",
 
             category:
-
-                cloud.category
-
-                ||
-
-                APP_STATE
-                    .currentBinding
-                    ?.category
-
-                ||
-
+                cloud.category||
+                APP_STATE.currentBinding?.category||
                 "",
 
             createdAt:
-
-                APP_STATE
-                    .currentBinding
-                    ?.createdAt
-
-                ||
-
+                APP_STATE.currentBinding?.createdAt||
                 null
 
         };
 
 
-        const safe =
-
+        const safe=
             escapeHtml(
                 cloud.url
             );
@@ -3696,100 +2526,7 @@ async function showCloudPanel(){
 
         appendMessage(
 
-            `
-
-            <span class="status-badge status-success">
-
-                ✓ LINE 身分與社團驗證完成
-
-            </span>
-
-            <br><br>
-
-            <b>
-                ☁️ 社團專屬雲端
-            </b>
-
-
-            <div class="info-card">
-
-                <div class="info-row">
-
-                    <span class="info-label">
-
-                        已綁定社團
-
-                    </span>
-
-                    <span class="info-value">
-
-                        ${escapeHtml(
-                            APP_STATE
-                                .currentBinding
-                                .club
-                        )}
-
-                    </span>
-
-                </div>
-
-
-                <div class="info-row">
-
-                    <span class="info-label">
-
-                        社團屬性
-
-                    </span>
-
-                    <span class="info-value">
-
-                        ${escapeHtml(
-                            APP_STATE
-                                .currentBinding
-                                .category
-                        )}
-
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div class="mini-note">
-
-                🔐 系統只會向後端取得您目前綁定社團的專屬雲端。
-
-            </div>
-
-
-            <div class="action-row">
-
-                <a
-                    href="${safe}"
-                    class="action-btn action-primary"
-                    style="text-decoration:none;display:inline-flex;align-items:center"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onclick="event.preventDefault();openExternalUrl(this.href)"
-                >
-
-                    ☁️ 開啟
-
-                    ${escapeHtml(
-                        APP_STATE
-                            .currentBinding
-                            .club
-                    )}
-
-                    雲端
-
-                </a>
-
-            </div>
-
-            `,
+            `<span class="status-badge status-success">✓ LINE 身分與社團驗證完成</span><br><br><b>☁️ 社團專屬雲端</b><div class="info-card"><div class="info-row"><span class="info-label">已綁定社團</span><span class="info-value">${escapeHtml(APP_STATE.currentBinding.club)}</span></div><div class="info-row"><span class="info-label">社團屬性</span><span class="info-value">${escapeHtml(APP_STATE.currentBinding.category)}</span></div></div><div class="mini-note">🔐 系統只會向後端取得您目前綁定社團的專屬雲端。</div><div class="action-row"><a href="${safe}" class="action-btn action-primary" style="text-decoration:none;display:inline-flex;align-items:center" target="_blank" rel="noopener noreferrer" onclick="event.preventDefault();openExternalUrl(this.href)">☁️ 開啟 ${escapeHtml(APP_STATE.currentBinding.club)} 雲端</a></div>`,
 
             "bot",
 
@@ -3802,42 +2539,14 @@ async function showCloudPanel(){
     catch(error){
 
         console.error(
-
             "取得社團雲端失敗：",
-
             error
-
         );
 
 
         appendMessage(
 
-            `
-
-            ❌ <b>無法取得社團專屬雲端</b>
-
-            <br><br>
-
-            ${escapeHtml(
-                error.message
-                ||
-                "請稍後再試"
-            )}
-
-
-            <div class="action-row">
-
-                <button
-                    type="button"
-                    class="action-btn action-primary"
-                    onclick="showCloudPanel()"
-                >
-                    🔄 重新取得
-                </button>
-
-            </div>
-
-            `,
+            `❌ <b>無法取得社團專屬雲端</b><br><br>${escapeHtml(error.message||"請稍後再試")}<div class="action-row"><button type="button" class="action-btn action-primary" onclick="showCloudPanel()">🔄 重新取得</button></div>`,
 
             "bot",
 
@@ -3849,7 +2558,7 @@ async function showCloudPanel(){
 
     finally{
 
-        APP_STATE.cloudRequestRunning =
+        APP_STATE.cloudRequestRunning=
             false;
 
     }
@@ -3870,16 +2579,8 @@ async function openBoundClubCloud(){
 
 function getNowMs(){
 
-    return (
-
-        Date.now()
-
-        +
-
-        APP_STATE
-            .serverTimeOffset
-
-    );
+    return Date.now()+
+        APP_STATE.serverTimeOffset;
 
 }
 
@@ -3888,8 +2589,7 @@ function taipeiDateKey(
     ms
 ){
 
-    const parts =
-
+    const parts=
         new Intl.DateTimeFormat(
 
             "en-CA",
@@ -3916,33 +2616,15 @@ function taipeiDateKey(
         );
 
 
-    const values =
-        {};
+    const o={};
 
 
     parts.forEach(
-
-        part => {
-
-            values[
-                part.type
-            ] =
-                part.value;
-
-        }
-
+        p=>o[p.type]=p.value
     );
 
 
-    return (
-
-        values.year +
-        "-" +
-        values.month +
-        "-" +
-        values.day
-
-    );
+    return `${o.year}-${o.month}-${o.day}`;
 
 }
 
@@ -3951,7 +2633,7 @@ function formatTaipeiDateTime(
     value
 ){
 
-    const date =
+    const d=
         new Date(
             value
         );
@@ -3959,7 +2641,7 @@ function formatTaipeiDateTime(
 
     if(
         Number.isNaN(
-            date.getTime()
+            d.getTime()
         )
     ){
 
@@ -3999,7 +2681,7 @@ function formatTaipeiDateTime(
 
     )
     .format(
-        date
+        d
     );
 
 }
@@ -4009,7 +2691,7 @@ function formatTaipeiDate(
     value
 ){
 
-    const date =
+    const d=
         new Date(
             value
         );
@@ -4017,7 +2699,7 @@ function formatTaipeiDate(
 
     if(
         Number.isNaN(
-            date.getTime()
+            d.getTime()
         )
     ){
 
@@ -4026,8 +2708,7 @@ function formatTaipeiDate(
     }
 
 
-    const dateText =
-
+    const date=
         new Intl.DateTimeFormat(
 
             "zh-TW",
@@ -4050,12 +2731,11 @@ function formatTaipeiDate(
 
         )
         .format(
-            date
+            d
         );
 
 
-    const weekday =
-
+    const weekday=
         new Intl.DateTimeFormat(
 
             "zh-TW",
@@ -4072,7 +2752,7 @@ function formatTaipeiDate(
 
         )
         .format(
-            date
+            d
         )
         .replace(
             "週",
@@ -4080,14 +2760,7 @@ function formatTaipeiDate(
         );
 
 
-    return (
-
-        dateText +
-        "（" +
-        weekday +
-        "）"
-
-    );
+    return `${date}（${weekday}）`;
 
 }
 
@@ -4096,7 +2769,7 @@ function formatTaipeiTime(
     value
 ){
 
-    const date =
+    const d=
         new Date(
             value
         );
@@ -4104,7 +2777,7 @@ function formatTaipeiTime(
 
     if(
         Number.isNaN(
-            date.getTime()
+            d.getTime()
         )
     ){
 
@@ -4135,7 +2808,7 @@ function formatTaipeiTime(
 
     )
     .format(
-        date
+        d
     );
 
 }
@@ -4146,55 +2819,51 @@ function countdownParts(
     now
 ){
 
-    let diff =
-
+    let diff=
         Math.max(
             0,
-            target - now
+            target-now
         );
 
 
-    const days =
+    const days=
         Math.floor(
-            diff /
+            diff/
             86400000
         );
 
 
-    diff -=
-        days *
+    diff-=
+        days*
         86400000;
 
 
-    const hours =
+    const hours=
         Math.floor(
-            diff /
+            diff/
             3600000
         );
 
 
-    diff -=
-        hours *
+    diff-=
+        hours*
         3600000;
 
 
-    const minutes =
+    const minutes=
         Math.floor(
-            diff /
+            diff/
             60000
         );
 
 
-    return {
+    return{
 
-        days:
-            days,
+        days,
 
-        hours:
-            hours,
+        hours,
 
-        minutes:
-            minutes
+        minutes
 
     };
 
@@ -4210,8 +2879,7 @@ function deadlineStatus(
     now
 ){
 
-    const ms =
-
+    const ms=
         new Date(
             value
         )
@@ -4224,7 +2892,7 @@ function deadlineStatus(
         )
     ){
 
-        return {
+        return{
 
             text:
                 "時間格式錯誤",
@@ -4237,15 +2905,15 @@ function deadlineStatus(
     }
 
 
-    const diff =
-        ms - now;
+    const diff=
+        ms-now;
 
 
     if(
-        diff <= 0
+        diff<=0
     ){
 
-        return {
+        return{
 
             text:
                 "🔴 已截止",
@@ -4259,32 +2927,21 @@ function deadlineStatus(
 
 
     if(
-        taipeiDateKey(ms)
-        ===
+        taipeiDateKey(ms)===
         taipeiDateKey(now)
     ){
 
-        const parts =
-
+        const p=
             countdownParts(
                 ms,
                 now
             );
 
 
-        return {
+        return{
 
             text:
-
-                "🔥 今天截止・剩餘 " +
-
-                parts.hours +
-
-                " 小時 " +
-
-                parts.minutes +
-
-                " 分",
+                `🔥 今天截止・剩餘 ${p.hours} 小時 ${p.minutes} 分`,
 
             className:
                 "deadline-today"
@@ -4294,25 +2951,21 @@ function deadlineStatus(
     }
 
 
-    const days =
-
+    const d=
         Math.ceil(
-            diff /
+            diff/
             86400000
         );
 
 
     if(
-        days > 7
+        d>7
     ){
 
-        return {
+        return{
 
             text:
-
-                "🟢 剩餘 " +
-                days +
-                " 天",
+                `🟢 剩餘 ${d} 天`,
 
             className:
                 "deadline-green"
@@ -4323,16 +2976,13 @@ function deadlineStatus(
 
 
     if(
-        days > 3
+        d>3
     ){
 
-        return {
+        return{
 
             text:
-
-                "🟡 剩餘 " +
-                days +
-                " 天",
+                `🟡 剩餘 ${d} 天`,
 
             className:
                 "deadline-yellow"
@@ -4342,13 +2992,10 @@ function deadlineStatus(
     }
 
 
-    return {
+    return{
 
         text:
-
-            "⚠️ 剩餘 " +
-            days +
-            " 天",
+            `⚠️ 剩餘 ${d} 天`,
 
         className:
             "deadline-warning"
@@ -4359,7 +3006,7 @@ function deadlineStatus(
 
 
 /* ============================================================
-   活動主倒數
+   活動狀態
    ============================================================ */
 
 function eventMainStatus(
@@ -4367,16 +3014,14 @@ function eventMainStatus(
     now
 ){
 
-    const start =
-
+    const start=
         new Date(
             config.eventStart
         )
         .getTime();
 
 
-    const end =
-
+    const end=
         new Date(
             config.eventEnd
         )
@@ -4384,8 +3029,7 @@ function eventMainStatus(
 
 
     if(
-        !Number.isFinite(start)
-        ||
+        !Number.isFinite(start) ||
         !Number.isFinite(end)
     ){
 
@@ -4395,7 +3039,7 @@ function eventMainStatus(
 
 
     if(
-        now >= end
+        now>=end
     ){
 
         return "✅ 本次活動已結束";
@@ -4404,7 +3048,7 @@ function eventMainStatus(
 
 
     if(
-        now >= start
+        now>=start
     ){
 
         return "🟢 活動進行中";
@@ -4412,8 +3056,7 @@ function eventMainStatus(
     }
 
 
-    const parts =
-
+    const p=
         countdownParts(
             start,
             now
@@ -4421,65 +3064,27 @@ function eventMainStatus(
 
 
     if(
-        taipeiDateKey(start)
-        ===
+        taipeiDateKey(start)===
         taipeiDateKey(now)
     ){
 
-        return (
-
-            "🎉 活動就是今天！" +
-
-            "<br>" +
-
-            "距離開始還有 " +
-
-            parts.hours +
-
-            " 小時 " +
-
-            parts.minutes +
-
-            " 分"
-
-        );
+        return `🎉 活動就是今天！<br>距離開始還有 ${p.hours} 小時 ${p.minutes} 分`;
 
     }
 
 
-    return (
-
-        "🎯 距離社團評選" +
-
-        "<br>" +
-
-        "還有 " +
-
-        parts.days +
-
-        " 天 " +
-
-        parts.hours +
-
-        " 小時 " +
-
-        parts.minutes +
-
-        " 分"
-
-    );
+    return `🎯 距離社團評選<br>還有 ${p.days} 天 ${p.hours} 小時 ${p.minutes} 分`;
 
 }
 
 
 /* ============================================================
-   顯示倒數
+   活動公告
    ============================================================ */
 
 function renderEventAnnouncement(){
 
-    const box =
-
+    const box=
         document.getElementById(
             "eventAnnouncementContent"
         );
@@ -4492,166 +3097,37 @@ function renderEventAnnouncement(){
     }
 
 
-    const config =
-
-        APP_STATE.eventConfig
-
-        ||
-
+    const config=
+        APP_STATE.eventConfig||
         FALLBACK_EVENT_CONFIG;
 
 
-    const now =
+    const now=
         getNowMs();
 
 
-    const dataStatus =
-
+    const data=
         deadlineStatus(
-
             config.dataDeadline,
-
             now
-
         );
 
 
-    const formStatus =
-
+    const form=
         deadlineStatus(
-
             config.formDeadline,
-
             now
-
         );
 
 
-    box.innerHTML =
-
-        `
-
-        <div class="event-countdown-main">
-
-            <div class="event-countdown-value">
-
-                ${eventMainStatus(
-                    config,
-                    now
-                )}
-
-            </div>
-
-        </div>
-
-
-        <div class="event-deadline-row">
-
-            <div class="event-deadline-name">
-
-                📂 資料繳交截止
-
-            </div>
-
-            <div class="event-deadline-date">
-
-                ${escapeHtml(
-                    formatTaipeiDateTime(
-                        config.dataDeadline
-                    )
-                )}
-
-            </div>
-
-            <span
-                class="event-deadline-status ${dataStatus.className}"
-            >
-
-                ${escapeHtml(
-                    dataStatus.text
-                )}
-
-            </span>
-
-        </div>
-
-
-        <div class="event-deadline-row">
-
-            <div class="event-deadline-name">
-
-                📝 表單填寫截止
-
-            </div>
-
-            <div class="event-deadline-date">
-
-                ${escapeHtml(
-                    formatTaipeiDateTime(
-                        config.formDeadline
-                    )
-                )}
-
-            </div>
-
-            <span
-                class="event-deadline-status ${formStatus.className}"
-            >
-
-                ${escapeHtml(
-                    formStatus.text
-                )}
-
-            </span>
-
-        </div>
-
-
-        <div class="event-time-line">
-
-            📅
-
-            <b>
-
-                ${escapeHtml(
-                    formatTaipeiDate(
-                        config.eventStart
-                    )
-                )}
-
-            </b>
-
-            <br>
-
-            ⏰
-
-            ${escapeHtml(
-                formatTaipeiTime(
-                    config.eventStart
-                )
-            )}
-
-            -
-
-            ${escapeHtml(
-                formatTaipeiTime(
-                    config.eventEnd
-                )
-            )}
-
-            <br>
-
-            📍 弘光科技大學 毓麟館
-
-        </div>
-
-        `;
+    box.innerHTML=
+        `<div class="event-countdown-main"><div class="event-countdown-value">${eventMainStatus(config,now)}</div></div><div class="event-deadline-row"><div class="event-deadline-name">📂 資料繳交截止</div><div class="event-deadline-date">${escapeHtml(formatTaipeiDateTime(config.dataDeadline))}</div><span class="event-deadline-status ${data.className}">${escapeHtml(data.text)}</span></div><div class="event-deadline-row"><div class="event-deadline-name">📝 表單填寫截止</div><div class="event-deadline-date">${escapeHtml(formatTaipeiDateTime(config.formDeadline))}</div><span class="event-deadline-status ${form.className}">${escapeHtml(form.text)}</span></div><div class="event-time-line">📅 <b>${escapeHtml(formatTaipeiDate(config.eventStart))}</b><br>⏰ ${escapeHtml(formatTaipeiTime(config.eventStart))} - ${escapeHtml(formatTaipeiTime(config.eventEnd))}<br>📍 弘光科技大學 毓麟館</div>`;
 
 }
 
 
 /* ============================================================
-   載入活動時程
+   載入時程
    ============================================================ */
 
 async function loadEventAnnouncement(){
@@ -4667,35 +3143,30 @@ async function loadEventAnnouncement(){
 
     try{
 
-        APP_STATE.eventRequestRunning =
+        APP_STATE.eventRequestRunning=
             true;
 
 
-        const result =
-
+        const result=
             await callPublicBackend(
                 "getEventConfig"
             );
 
 
         if(
-            !result.success
-            ||
+            !result.success ||
             !result.config
         ){
 
             throw new Error(
-
-                result.message
-                ||
+                result.message||
                 "無法取得活動時程"
-
             );
 
         }
 
 
-        APP_STATE.eventConfig = {
+        APP_STATE.eventConfig={
 
             ...FALLBACK_EVENT_CONFIG,
 
@@ -4704,8 +3175,7 @@ async function loadEventAnnouncement(){
         };
 
 
-        const server =
-
+        const server=
             new Date(
                 result.serverNow
             )
@@ -4718,9 +3188,8 @@ async function loadEventAnnouncement(){
             )
         ){
 
-            APP_STATE.serverTimeOffset =
-
-                server -
+            APP_STATE.serverTimeOffset=
+                server-
                 Date.now();
 
         }
@@ -4730,29 +3199,26 @@ async function loadEventAnnouncement(){
     catch(error){
 
         console.error(
-
             "活動時程載入失敗：",
-
             error
-
         );
 
 
-        APP_STATE.eventConfig = {
+        APP_STATE.eventConfig={
 
             ...FALLBACK_EVENT_CONFIG
 
         };
 
 
-        APP_STATE.serverTimeOffset =
+        APP_STATE.serverTimeOffset=
             0;
 
     }
 
     finally{
 
-        APP_STATE.eventRequestRunning =
+        APP_STATE.eventRequestRunning=
             false;
 
     }
@@ -4772,21 +3238,17 @@ async function loadEventAnnouncement(){
     }
 
 
-    APP_STATE.eventCountdownTimer =
-
+    APP_STATE.eventCountdownTimer=
         setInterval(
-
             renderEventAnnouncement,
-
             30000
-
         );
 
 }
 
 
 /* ============================================================
-   活動時間
+   顯示活動時間
    ============================================================ */
 
 async function showDynamicEventTime(){
@@ -4800,50 +3262,14 @@ async function showDynamicEventTime(){
     }
 
 
-    const config =
-
-        APP_STATE.eventConfig
-
-        ||
-
+    const c=
+        APP_STATE.eventConfig||
         FALLBACK_EVENT_CONFIG;
 
 
     appendMessage(
 
-        `
-
-        📅 <b>活動時間</b>
-
-        <br><br>
-
-        ${escapeHtml(
-            formatTaipeiDate(
-                config.eventStart
-            )
-        )}
-
-        <br>
-
-        <b>
-
-            ${escapeHtml(
-                formatTaipeiTime(
-                    config.eventStart
-                )
-            )}
-
-            -
-
-            ${escapeHtml(
-                formatTaipeiTime(
-                    config.eventEnd
-                )
-            )}
-
-        </b>
-
-        `,
+        `📅 <b>活動時間</b><br><br>${escapeHtml(formatTaipeiDate(c.eventStart))}<br><b>${escapeHtml(formatTaipeiTime(c.eventStart))} - ${escapeHtml(formatTaipeiTime(c.eventEnd))}</b>`,
 
         "bot",
 
@@ -4874,21 +3300,15 @@ function openExternalUrl(
     try{
 
         if(
-            typeof liff !==
-            "undefined"
-
-            &&
-
+            typeof liff!=="undefined" &&
             liff.isInClient()
         ){
 
             liff.openWindow({
 
-                url:
-                    url,
+                url,
 
-                external:
-                    true
+                external:true
 
             });
 
@@ -4909,20 +3329,16 @@ function openExternalUrl(
 
 
     window.open(
-
         url,
-
         "_blank",
-
         "noopener,noreferrer"
-
     );
 
 }
 
 
 /* ============================================================
-   快捷
+   快捷按鈕
    ============================================================ */
 
 function clickQuickTag(
@@ -4937,7 +3353,7 @@ function clickQuickTag(
 
 
 /* ============================================================
-   輸入
+   送出訊息
    ============================================================ */
 
 function handleFormSubmit(
@@ -4947,14 +3363,13 @@ function handleFormSubmit(
     event.preventDefault();
 
 
-    const input =
-
+    const input=
         document.getElementById(
             "userInput"
         );
 
 
-    const query =
+    const query=
         input.value.trim();
 
 
@@ -4965,7 +3380,7 @@ function handleFormSubmit(
     }
 
 
-    input.value =
+    input.value=
         "";
 
 
@@ -4977,14 +3392,14 @@ function handleFormSubmit(
 
 
 /* ============================================================
-   問答主邏輯
+   客服主邏輯
    ============================================================ */
 
 async function processMessage(
     rawQuery
 ){
 
-    const query =
+    const query=
         rawQuery.trim();
 
 
@@ -4996,11 +3411,8 @@ async function processMessage(
 
 
     appendMessage(
-
         query,
-
         "user"
-
     );
 
 
@@ -5019,12 +3431,10 @@ async function processMessage(
 
     if(
         [
-
             "社團總覽",
             "社團總攬",
             "社團一覽",
             "社團名單"
-
         ]
         .includes(
             query
@@ -5040,10 +3450,8 @@ async function processMessage(
 
     if(
         [
-
             "社團綁定",
             "綁定社團"
-
         ]
         .includes(
             query
@@ -5059,11 +3467,9 @@ async function processMessage(
 
     if(
         [
-
             "社團專屬雲端",
             "社團雲端",
             "雲端"
-
         ]
         .includes(
             query
@@ -5078,10 +3484,9 @@ async function processMessage(
 
 
     if(
-        CLUB_CATEGORIES
-            .includes(
-                query
-            )
+        CLUB_CATEGORIES.includes(
+            query
+        )
     ){
 
         await showClubCategory(
@@ -5117,7 +3522,7 @@ async function processMessage(
     }
 
 
-    const exact =
+    const exact=
         findExactClub(
             query
         );
@@ -5127,29 +3532,7 @@ async function processMessage(
 
         appendMessage(
 
-            `
-
-            🔎 <b>
-
-                ${escapeHtml(
-                    exact.name
-                )}
-
-            </b>
-
-            <br><br>
-
-            社團屬性：
-
-            <b>
-
-                ${escapeHtml(
-                    exact.category
-                )}
-
-            </b>
-
-            `,
+            `🔎 <b>${escapeHtml(exact.name)}</b><br><br>社團屬性：<b>${escapeHtml(exact.category)}</b>`,
 
             "bot",
 
@@ -5170,24 +3553,17 @@ async function processMessage(
 
         if(
             item.keywords.some(
-
-                keyword =>
-
+                keyword=>
                     query.includes(
                         keyword
                     )
-
             )
         ){
 
             appendMessage(
-
                 item.answer,
-
                 "bot",
-
                 true
-
             );
 
 
@@ -5200,23 +3576,7 @@ async function processMessage(
 
     appendMessage(
 
-        `
-
-        抱歉，目前找不到符合的資料。
-
-        <br><br>
-
-        📌 若您正在查詢社團，
-        請輸入 <b>「社團完整名稱」</b>。
-
-        <br><br>
-
-        也可以使用下方
-        <b>「📚 社團總覽」</b>
-        查看完整名單，
-        或聯絡學生議會協助確認。
-
-        `,
+        `抱歉，目前找不到符合的資料。<br><br>📌 若您正在查詢社團，請輸入 <b>「社團完整名稱」</b>。<br><br>也可以使用下方 <b>「📚 社團總覽」</b> 查看完整名單，或聯絡學生議會協助確認。`,
 
         "bot",
 
