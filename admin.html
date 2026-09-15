@@ -14,9 +14,7 @@ html,
 body{
     margin:0;
     min-height:100%;
-
     background:#f5f7fb;
-
     color:#202124;
 
     font-family:
@@ -42,7 +40,7 @@ button{
     --p:#1a73e8;
     --pd:#1557b0;
 
-    --card:#ffffff;
+    --card:#fff;
     --border:#e4e7ec;
 
     --text:#202124;
@@ -54,8 +52,8 @@ button{
     --success:#167542;
     --successbg:#e7f6ec;
 
-    --warning:#9a6700;
-    --warningbg:#fff4dd;
+    --warning:#b54708;
+    --warningbg:#fff0e8;
 
     --shadow:
         0 8px 24px
@@ -149,11 +147,6 @@ button{
     gap:8px;
 }
 
-
-/* =========================================================
-   共用欄位
-   ========================================================= */
-
 .field{
     width:100%;
     height:44px;
@@ -213,7 +206,8 @@ button{
 }
 
 .login-btn:disabled,
-.btn:disabled{
+.btn:disabled,
+.top-btn:disabled{
     opacity:.55;
 
     cursor:not-allowed;
@@ -373,7 +367,7 @@ button{
 
 
 /* =========================================================
-   統計
+   統計卡
    ========================================================= */
 
 .stats-grid{
@@ -619,7 +613,7 @@ button{
 
 
 /* =========================================================
-   區塊工具
+   工具列
    ========================================================= */
 
 .panel-note{
@@ -674,7 +668,7 @@ button{
 }
 
 .filter{
-    width:180px;
+    width:190px;
 }
 
 
@@ -804,7 +798,7 @@ button{
 
 
 /* =========================================================
-   Tables
+   Table
    ========================================================= */
 
 .table-scroll{
@@ -921,6 +915,12 @@ button{
     color:var(--warning);
 }
 
+.chip-danger{
+    background:#ffe4e8;
+
+    color:#b42318;
+}
+
 .link{
     display:block;
 
@@ -1001,7 +1001,7 @@ button{
 
 
 /* =========================================================
-   表單摘要
+   Form summary
    ========================================================= */
 
 .summary-grid{
@@ -1009,7 +1009,7 @@ button{
 
     grid-template-columns:
         repeat(
-            4,
+            5,
             minmax(0,1fr)
         );
 
@@ -1046,6 +1046,37 @@ button{
     font-size:21px;
 
     font-weight:900;
+}
+
+.sync-meta{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    gap:12px;
+
+    padding:
+        12px
+        18px;
+
+    background:#fff;
+
+    border-bottom:
+        1px solid var(--border);
+}
+
+.sync-meta-text{
+    color:var(--muted);
+
+    font-size:12px;
+
+    line-height:1.7;
+}
+
+.sync-warning{
+    color:#b54708;
+
+    font-weight:750;
 }
 
 
@@ -1332,8 +1363,20 @@ button{
 
 
 /* =========================================================
-   Responsive
+   RWD
    ========================================================= */
+
+@media(max-width:1000px){
+
+    .summary-grid{
+        grid-template-columns:
+            repeat(
+                3,
+                1fr
+            );
+    }
+
+}
 
 @media(max-width:900px){
 
@@ -1346,7 +1389,6 @@ button{
     }
 
 }
-
 
 @media(max-width:760px){
 
@@ -1437,6 +1479,16 @@ button{
             12px
             14px
             0;
+    }
+
+    .sync-meta{
+        align-items:stretch;
+
+        flex-direction:column;
+    }
+
+    .sync-meta .btn{
+        width:100%;
     }
 
     .event-body{
@@ -1543,7 +1595,7 @@ button{
 
 
 <!-- ======================================================
-     管理後台
+     主後台
      ====================================================== -->
 
 <div
@@ -1569,11 +1621,12 @@ button{
     <div class="top-actions">
 
         <button
+            id="topSyncBtn"
             class="top-btn"
-            onclick="refreshAllData()"
+            onclick="syncAndRefreshAllData()"
         >
             🔄
-            <span>重新整理</span>
+            <span>同步並重新整理</span>
         </button>
 
         <button
@@ -1591,8 +1644,6 @@ button{
 
 <main class="main">
 
-
-<!-- 頁首 -->
 
 <div class="hero">
 
@@ -1619,7 +1670,7 @@ button{
 
 
 <!-- ======================================================
-     統計
+     頂端統計
      ====================================================== -->
 
 <section class="stats-grid">
@@ -1698,17 +1749,13 @@ button{
         </div>
 
         <div class="stat-foot">
-            目前填寫進度
+            只計算正常單筆填寫
         </div>
 
     </div>
 
 </section>
 
-
-<!-- ======================================================
-     Accordion
-     ====================================================== -->
 
 <div class="accordion-stack">
 
@@ -2129,7 +2176,7 @@ button{
             </div>
 
             <div class="accordion-sub">
-                查看各社團目前填寫狀態
+                0 筆未填寫／1 筆完成／2 筆以上重複填寫
             </div>
 
         </span>
@@ -2216,6 +2263,22 @@ button{
 <div class="summary-card">
 
     <div class="summary-label">
+        ⚠️ 重複填寫
+    </div>
+
+    <div
+        id="formDuplicate"
+        class="summary-value"
+    >
+        -
+    </div>
+
+</div>
+
+
+<div class="summary-card">
+
+    <div class="summary-label">
         完成率
     </div>
 
@@ -2228,6 +2291,26 @@ button{
 
 </div>
 
+
+</div>
+
+
+<div class="sync-meta">
+
+    <div
+        id="formSyncMeta"
+        class="sync-meta-text"
+    >
+        最後同步：尚未同步
+    </div>
+
+    <button
+        id="formSyncBtn"
+        class="btn btn-primary"
+        onclick="syncFormNow()"
+    >
+        🔄 立即同步 Google Form
+    </button>
 
 </div>
 
@@ -2269,6 +2352,10 @@ button{
             ❌ 未填寫
         </option>
 
+        <option value="duplicate">
+            ⚠️ 重複填寫
+        </option>
+
     </select>
 
 </div>
@@ -2303,6 +2390,8 @@ button{
     <th>屬性</th>
 
     <th>狀態</th>
+
+    <th>回覆筆數</th>
 
     <th>最後填寫時間</th>
 
@@ -2476,7 +2565,7 @@ button{
 
 
 <!-- ======================================================
-     雲端
+     專屬雲端
      ====================================================== -->
 
 <section
@@ -3053,6 +3142,9 @@ const S = {
         null,
 
     busy:
+        false,
+
+    formSyncRunning:
         false
 
 };
@@ -3281,7 +3373,7 @@ function unauthorized(
         showLogin();
 
 
-        document.getElementById(
+        get(
             "loginError"
         ).textContent =
             "管理員登入已失效，請重新登入。";
@@ -3318,19 +3410,19 @@ async function handleLogin(
 
 
     const input =
-        document.getElementById(
+        get(
             "adminPassword"
         );
 
 
     const button =
-        document.getElementById(
+        get(
             "loginBtn"
         );
 
 
     const errorBox =
-        document.getElementById(
+        get(
             "loginError"
         );
 
@@ -3496,14 +3588,14 @@ async function logoutAdmin() {
 
 
 /* ============================================================
-   密碼顯示
+   密碼
    ============================================================ */
 
 function togglePassword() {
 
     const input =
 
-        document.getElementById(
+        get(
             "adminPassword"
         );
 
@@ -3526,13 +3618,13 @@ function togglePassword() {
 
 function showLogin() {
 
-    document.getElementById(
+    get(
         "loginScreen"
     ).style.display =
         "flex";
 
 
-    document.getElementById(
+    get(
         "adminApp"
     ).style.display =
         "none";
@@ -3542,13 +3634,13 @@ function showLogin() {
 
 function showAdmin() {
 
-    document.getElementById(
+    get(
         "loginScreen"
     ).style.display =
         "none";
 
 
-    document.getElementById(
+    get(
         "adminApp"
     ).style.display =
         "block";
@@ -3566,7 +3658,7 @@ function toggleAccordion(
 
     const target =
 
-        document.getElementById(
+        get(
             "acc-" +
             name
         );
@@ -3658,14 +3750,14 @@ function restoreAccordion() {
 
     const element =
 
-        document.getElementById(
+        get(
             "acc-" +
             saved
         )
 
         ||
 
-        document.getElementById(
+        get(
             "acc-clubs"
         );
 
@@ -3684,41 +3776,12 @@ function restoreAccordion() {
 
 
 /* ============================================================
-   全部更新
+   更新時間
    ============================================================ */
 
-async function refreshAllData() {
+function updateLastRefresh() {
 
-    if (
-        !S.token
-    ) {
-
-        return;
-
-    }
-
-
-    toast(
-        "🔄 正在更新資料..."
-    );
-
-
-    await Promise.allSettled([
-
-        loadClubs(),
-
-        loadEvent(),
-
-        loadForms(),
-
-        loadBindings(),
-
-        loadClouds()
-
-    ]);
-
-
-    document.getElementById(
+    get(
         "lastRefresh"
     ).textContent =
 
@@ -3741,20 +3804,184 @@ async function refreshAllData() {
 
             }
 
-        ).format(
+        )
+        .format(
             new Date()
         );
-
-
-    toast(
-        "✅ 資料已更新"
-    );
 
 }
 
 
 /* ============================================================
-   社團
+   一般重新讀取
+
+   注意：
+   F5 / 登入只會讀取目前後端資料。
+   不會強制掃 Google Form。
+   ============================================================ */
+
+async function refreshAllData() {
+
+    if (
+        !S.token
+    ) {
+
+        return;
+
+    }
+
+
+    await Promise.allSettled([
+
+        loadClubs(),
+
+        loadEvent(),
+
+        loadForms(),
+
+        loadBindings(),
+
+        loadClouds()
+
+    ]);
+
+
+    updateLastRefresh();
+
+}
+
+
+/* ============================================================
+   同步 Google Form + 更新全部後台
+   ============================================================ */
+
+async function syncAndRefreshAllData() {
+
+    if (
+        !S.token ||
+        S.formSyncRunning
+    ) {
+
+        return;
+
+    }
+
+
+    const button =
+        get(
+            "topSyncBtn"
+        );
+
+
+    try {
+
+        S.formSyncRunning =
+            true;
+
+
+        button.disabled =
+            true;
+
+
+        button.innerHTML =
+            "⏳ <span>同步中...</span>";
+
+
+        toast(
+            "🔄 正在同步 Google Form 並更新後台..."
+        );
+
+
+        const result =
+
+            await admin(
+                "adminSyncFormSubmissions"
+            );
+
+
+        if (
+            unauthorized(
+                result
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message ||
+                "Google Form 同步失敗"
+
+            );
+
+        }
+
+
+        applyFormResult(
+            result
+        );
+
+
+        await Promise.allSettled([
+
+            loadClubs(),
+
+            loadEvent(),
+
+            loadBindings(),
+
+            loadClouds()
+
+        ]);
+
+
+        updateLastRefresh();
+
+
+        toast(
+            "✅ Google Form 與後台資料已更新"
+        );
+
+    }
+
+    catch (error) {
+
+        toast(
+
+            "❌ " +
+            error.message
+
+        );
+
+    }
+
+    finally {
+
+        S.formSyncRunning =
+            false;
+
+
+        button.disabled =
+            false;
+
+
+        button.innerHTML =
+            "🔄 <span>同步並重新整理</span>";
+
+    }
+
+}
+
+
+/* ============================================================
+   社團資料
    ============================================================ */
 
 async function loadClubs() {
@@ -3835,7 +4062,7 @@ async function loadClubs() {
         ];
 
 
-        document.getElementById(
+        get(
             "statClubs"
         ).textContent =
 
@@ -3843,7 +4070,7 @@ async function loadClubs() {
             S.clubs.length;
 
 
-        document.getElementById(
+        get(
             "clubCountPill"
         ).textContent =
 
@@ -4032,7 +4259,8 @@ function renderClubs() {
 
                 `
 
-        ).join("");
+        )
+        .join("");
 
 
     mobile.innerHTML =
@@ -4083,13 +4311,14 @@ function renderClubs() {
 
                 `
 
-        ).join("");
+        )
+        .join("");
 
 }
 
 
 /* ============================================================
-   屬性
+   社團屬性
    ============================================================ */
 
 function fillCategories(
@@ -4130,7 +4359,8 @@ function fillCategories(
 
                 `
 
-        ).join("");
+        )
+        .join("");
 
 
     if (
@@ -4831,7 +5061,8 @@ async function loadEvent() {
 
             "eventEnd"
 
-        ].forEach(
+        ]
+        .forEach(
 
             key => {
 
@@ -5163,7 +5394,190 @@ function makeIso(
 
 
 /* ============================================================
-   表單進度
+   表單結果套用
+   ============================================================ */
+
+function applyFormResult(
+    result
+) {
+
+    S.forms =
+
+        Array.isArray(
+            result.clubs
+        )
+
+            ? result.clubs
+
+            : [];
+
+
+    S.fForms = [
+        ...S.forms
+    ];
+
+
+    get(
+        "formTotal"
+    ).textContent =
+
+        result.total ??
+        S.forms.length;
+
+
+    get(
+        "formSubmitted"
+    ).textContent =
+
+        result.submittedCount ??
+        0;
+
+
+    get(
+        "formPending"
+    ).textContent =
+
+        result.pendingCount ??
+        0;
+
+
+    get(
+        "formDuplicate"
+    ).textContent =
+
+        result.duplicateCount ??
+        0;
+
+
+    get(
+        "formRate"
+    ).textContent =
+
+        (
+            result.completionRate ??
+            0
+        )
+
+        +
+
+        "%";
+
+
+    get(
+        "statFormRate"
+    ).textContent =
+
+        (
+            result.completionRate ??
+            0
+        )
+
+        +
+
+        "%";
+
+
+    get(
+        "formCountPill"
+    ).textContent =
+
+        (
+            result.submittedCount ??
+            0
+        )
+
+        +
+
+        "/"
+
+        +
+
+        (
+            result.total ??
+            S.forms.length
+        )
+
+        +
+
+        (
+            result.duplicateCount
+
+                ? " · ⚠ " +
+                  result.duplicateCount
+
+                : ""
+        );
+
+
+    const syncText =
+
+        result.lastSyncAtTaipei
+
+        ||
+
+        (
+            result.lastSyncAt
+
+                ? formatDate(
+                    result.lastSyncAt
+                  )
+
+                : "尚未同步"
+        );
+
+
+    const invalidResponses =
+
+        Number(
+            result.invalidResponseCount ||
+            0
+        );
+
+
+    get(
+        "formSyncMeta"
+    ).innerHTML =
+
+        `
+
+        最後同步：
+
+        <b>
+
+            ${escapeHtml(
+                syncText
+            )}
+
+        </b>
+
+        ${
+            invalidResponses > 0
+
+                ? `
+
+                  <br>
+
+                  <span class="sync-warning">
+
+                      ⚠️ 另有 ${invalidResponses} 筆回覆無法辨識社團名稱
+
+                  </span>
+
+                  `
+
+                : ""
+        }
+
+        `;
+
+
+    filterForms();
+
+}
+
+
+/* ============================================================
+   讀取表單
    ============================================================ */
 
 async function loadForms() {
@@ -5213,96 +5627,9 @@ async function loadForms() {
         }
 
 
-        S.forms =
-
-            Array.isArray(
-                result.clubs
-            )
-
-                ? result.clubs
-
-                : [];
-
-
-        S.fForms = [
-            ...S.forms
-        ];
-
-
-        get(
-            "formTotal"
-        ).textContent =
-
-            result.total ??
-            S.forms.length;
-
-
-        get(
-            "formSubmitted"
-        ).textContent =
-
-            result.submittedCount ??
-            0;
-
-
-        get(
-            "formPending"
-        ).textContent =
-
-            result.pendingCount ??
-            0;
-
-
-        get(
-            "formRate"
-        ).textContent =
-
-            (
-                result.completionRate ??
-                0
-            )
-
-            +
-
-            "%";
-
-
-        get(
-            "statFormRate"
-        ).textContent =
-
-            (
-                result.completionRate ??
-                0
-            )
-
-            +
-
-            "%";
-
-
-        get(
-            "formCountPill"
-        ).textContent =
-
-            (
-                result.submittedCount ??
-                0
-            )
-
-            +
-
-            "/"
-
-            +
-
-            (
-                result.total ??
-                S.forms.length
-            );
-
-
-        renderForms();
+        applyFormResult(
+            result
+        );
 
     }
 
@@ -5320,6 +5647,121 @@ async function loadForms() {
 
 }
 
+
+/* ============================================================
+   立即同步 Google Form
+   ============================================================ */
+
+async function syncFormNow() {
+
+    if (
+        S.formSyncRunning
+    ) {
+
+        return;
+
+    }
+
+
+    const button =
+
+        get(
+            "formSyncBtn"
+        );
+
+
+    try {
+
+        S.formSyncRunning =
+            true;
+
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "⏳ 同步中...";
+
+
+        const result =
+
+            await admin(
+                "adminSyncFormSubmissions"
+            );
+
+
+        if (
+            unauthorized(
+                result
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message ||
+                "Google Form 同步失敗"
+
+            );
+
+        }
+
+
+        applyFormResult(
+            result
+        );
+
+
+        updateLastRefresh();
+
+
+        toast(
+            "✅ Google Form 已立即同步"
+        );
+
+    }
+
+    catch (error) {
+
+        toast(
+
+            "❌ " +
+            error.message
+
+        );
+
+    }
+
+    finally {
+
+        S.formSyncRunning =
+            false;
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "🔄 立即同步 Google Form";
+
+    }
+
+}
+
+
+/* ============================================================
+   表單篩選
+   ============================================================ */
 
 function filterForms() {
 
@@ -5351,13 +5793,44 @@ function filterForms() {
                     ||
 
                     (
-                        item.club +
-                        " " +
-                        item.category
+                        String(
+                            item.club ||
+                            ""
+                        )
+
+                        +
+
+                        " "
+
+                        +
+
+                        String(
+                            item.category ||
+                            ""
+                        )
                     )
                     .toLowerCase()
                     .includes(
                         query
+                    );
+
+
+                const itemStatus =
+
+                    String(
+
+                        item.status
+
+                        ||
+
+                        (
+                            item.submitted
+
+                                ? "submitted"
+
+                                : "pending"
+                        )
+
                     );
 
 
@@ -5368,25 +5841,8 @@ function filterForms() {
 
                     ||
 
-                    (
-                        filter ===
-                        "submitted"
-
-                        &&
-
-                        item.submitted
-                    )
-
-                    ||
-
-                    (
-                        filter ===
-                        "pending"
-
-                        &&
-
-                        !item.submitted
-                    );
+                    itemStatus ===
+                    filter;
 
 
                 return (
@@ -5405,6 +5861,93 @@ function filterForms() {
 
 }
 
+
+/* ============================================================
+   表單狀態 UI
+   ============================================================ */
+
+function formStatusUi(
+    item
+) {
+
+    const status =
+
+        String(
+            item.status ||
+            ""
+        );
+
+
+    if (
+        status ===
+        "duplicate"
+    ) {
+
+        return {
+
+            label:
+                "⚠️ 重複填寫",
+
+            cls:
+                "chip-warning"
+
+        };
+
+    }
+
+
+    if (
+        status ===
+        "submitted"
+    ) {
+
+        return {
+
+            label:
+                "✅ 已填寫",
+
+            cls:
+                "chip-success"
+
+        };
+
+    }
+
+
+    if (
+        status ===
+        "invalid"
+    ) {
+
+        return {
+
+            label:
+                "⚠️ 資料異常",
+
+            cls:
+                "chip-danger"
+
+        };
+
+    }
+
+
+    return {
+
+        label:
+            "❌ 未填寫",
+
+        cls:
+            "chip-muted"
+
+    };
+
+}
+
+
+/* ============================================================
+   顯示表單
+   ============================================================ */
 
 function renderForms() {
 
@@ -5469,9 +6012,44 @@ function renderForms() {
 
         rows.map(
 
-            item =>
+            item => {
 
-                `
+                const ui =
+                    formStatusUi(
+                        item
+                    );
+
+
+                const count =
+
+                    Number(
+                        item.responseCount ||
+                        0
+                    );
+
+
+                const time =
+
+                    item.latestSubmittedAtTaipei
+
+                    ||
+
+                    item.submittedAtTaipei
+
+                    ||
+
+                    formatDate(
+
+                        item.latestSubmittedAt
+
+                        ||
+
+                        item.submittedAt
+
+                    );
+
+
+                return `
 
                 <tr>
 
@@ -5497,39 +6075,27 @@ function renderForms() {
 
                     <td>
 
-                        ${
-                            item.submitted
+                        <span class="chip ${ui.cls}">
 
-                                ? `
-                                  <span class="chip chip-success">
-                                      ✅ 已填寫
-                                  </span>
-                                  `
+                            ${ui.label}
 
-                                : `
-                                  <span class="chip chip-warning">
-                                      ❌ 未填寫
-                                  </span>
-                                  `
-                        }
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        ${count}
 
                     </td>
 
                     <td class="muted">
 
                         ${
-                            item.submitted
+                            time
 
                                 ? escapeHtml(
-
-                                    item.submittedAtTaipei
-
-                                    ||
-
-                                    formatDate(
-                                        item.submittedAt
-                                    )
-
+                                    time
                                   )
 
                                 : "-"
@@ -5539,18 +6105,56 @@ function renderForms() {
 
                 </tr>
 
-                `
+                `;
 
-        ).join("");
+            }
+
+        )
+        .join("");
 
 
     mobile.innerHTML =
 
         rows.map(
 
-            item =>
+            item => {
 
-                `
+                const ui =
+                    formStatusUi(
+                        item
+                    );
+
+
+                const count =
+
+                    Number(
+                        item.responseCount ||
+                        0
+                    );
+
+
+                const time =
+
+                    item.latestSubmittedAtTaipei
+
+                    ||
+
+                    item.submittedAtTaipei
+
+                    ||
+
+                    formatDate(
+
+                        item.latestSubmittedAt
+
+                        ||
+
+                        item.submittedAt
+
+                    );
+
+
+                return `
 
                 <div class="mobile-card">
 
@@ -5574,13 +6178,19 @@ function renderForms() {
 
                         <div>
 
-                            ${
-                                item.submitted
+                            <span class="chip ${ui.cls}">
 
-                                    ? "✅ 已填寫"
+                                ${ui.label}
 
-                                    : "❌ 未填寫"
-                            }
+                            </span>
+
+                        </div>
+
+                        <div>
+
+                            回覆筆數：
+
+                            ${count}
 
                         </div>
 
@@ -5589,18 +6199,10 @@ function renderForms() {
                             最後填寫：
 
                             ${
-                                item.submitted
+                                time
 
                                     ? escapeHtml(
-
-                                        item.submittedAtTaipei
-
-                                        ||
-
-                                        formatDate(
-                                            item.submittedAt
-                                        )
-
+                                        time
                                       )
 
                                     : "-"
@@ -5612,9 +6214,12 @@ function renderForms() {
 
                 </div>
 
-                `
+                `;
 
-        ).join("");
+            }
+
+        )
+        .join("");
 
 }
 
@@ -5896,7 +6501,8 @@ function renderBindings() {
 
                 `
 
-        ).join("");
+        )
+        .join("");
 
 
     mobile.innerHTML =
@@ -5973,7 +6579,8 @@ function renderBindings() {
 
                 `
 
-        ).join("");
+        )
+        .join("");
 
 }
 
@@ -6464,7 +7071,7 @@ function renderClouds() {
                                   `
 
                                 : `
-                                  <span class="chip chip-warning">
+                                  <span class="chip chip-muted">
                                       尚未設定
                                   </span>
                                   `
@@ -6552,7 +7159,8 @@ function renderClouds() {
 
                 `
 
-        ).join("");
+        )
+        .join("");
 
 
     mobile.innerHTML =
@@ -6648,7 +7256,8 @@ function renderClouds() {
 
                 `
 
-        ).join("");
+        )
+        .join("");
 
 }
 
@@ -7467,7 +8076,8 @@ function toast(
 
     "unbindModal"
 
-].forEach(
+]
+.forEach(
 
     modalId => {
 
@@ -7535,7 +8145,8 @@ document.addEventListener(
 
                 "unbindModal"
 
-            ].forEach(
+            ]
+            .forEach(
                 closeModal
             );
 
