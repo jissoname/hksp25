@@ -2,491 +2,650 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>社團評選｜管理員後台</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+    box-sizing:border-box;
+}
 
 :root{
-    --p:#1a73e8;
-    --pd:#1557b0;
+    --primary:#1a73e8;
+    --primary-dark:#1557b0;
     --bg:#f4f6f9;
-    --bd:#e4e7ec;
-    --tx:#202124;
-    --mut:#667085;
-    --ok:#167542;
-    --okbg:#e7f6ec;
-    --bad:#d92d20;
-    --badbg:#fff1f0;
-    --warn:#9a6700;
-    --warnbg:#fff4dd
+    --card:#fff;
+    --border:#e4e7ec;
+    --text:#202124;
+    --muted:#667085;
+
+    --danger:#d92d20;
+    --danger-bg:#fff1f0;
+
+    --success:#167542;
+    --success-bg:#e7f6ec;
+
+    --warning:#9a6700;
+    --warning-bg:#fff4dd;
 }
 
 html,
 body{
     margin:0;
     min-height:100%;
+
     background:var(--bg);
-    color:var(--tx);
+
     font-family:
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
         "Noto Sans TC",
         Roboto,
-        sans-serif
+        sans-serif;
+
+    color:var(--text);
 }
 
 button,
 input,
 select{
-    font:inherit
+    font:inherit;
 }
 
 button{
-    cursor:pointer
+    cursor:pointer;
 }
 
 
-/* =========================
+/* =========================================================
    登入
-   ========================= */
+   ========================================================= */
 
-.login{
+.login-screen{
     min-height:100vh;
+
     display:flex;
     align-items:center;
     justify-content:center;
-    padding:24px
+
+    padding:24px;
 }
 
 .login-card{
-    width:min(420px,100%);
+    width:100%;
+    max-width:420px;
+
+    padding:32px;
+
     background:#fff;
-    border:1px solid var(--bd);
-    border-radius:18px;
-    padding:30px;
-    box-shadow:0 12px 40px #10182814
+
+    border:1px solid var(--border);
+    border-radius:20px;
+
+    box-shadow:
+        0 12px 40px
+        rgba(16,24,40,.08);
 }
 
 .login-icon{
-    font-size:30px
+    width:58px;
+    height:58px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    margin-bottom:18px;
+
+    border-radius:16px;
+
+    background:#e8f0fe;
+
+    font-size:28px;
 }
 
-.login h1{
-    margin:10px 0 6px;
-    font-size:24px
+.login-title{
+    margin:0 0 7px;
+
+    font-size:24px;
+    font-weight:800;
 }
 
-.muted{
-    color:var(--mut)
+.login-description{
+    margin-bottom:24px;
+
+    color:var(--muted);
+
+    font-size:14px;
+    line-height:1.7;
 }
 
-.input{
+.form-label{
+    display:block;
+
+    margin-bottom:7px;
+
+    font-size:13px;
+    font-weight:700;
+}
+
+.password-wrap{
+    display:flex;
+
+    gap:8px;
+}
+
+.form-input,
+.modal-input,
+.modal-select,
+.search-input,
+.event-input,
+.filter-select{
     width:100%;
     height:44px;
+
+    padding:0 13px;
+
     border:1px solid #d0d5dd;
-    border-radius:9px;
-    padding:0 12px;
+    border-radius:10px;
+
     outline:none;
-    background:#fff
+
+    background:#fff;
+
+    font-size:14px;
 }
 
-.input:focus{
-    border-color:var(--p);
-    box-shadow:0 0 0 3px #1a73e814
+.form-input:focus,
+.modal-input:focus,
+.modal-select:focus,
+.search-input:focus,
+.event-input:focus,
+.filter-select:focus{
+    border-color:var(--primary);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(26,115,232,.08);
 }
 
-.login-btn,
-.primary{
-    border:0;
-    background:var(--p);
-    color:#fff;
-    border-radius:9px;
-    font-weight:750
+.password-toggle{
+    flex-shrink:0;
+
+    width:46px;
+
+    border:1px solid #d0d5dd;
+    border-radius:10px;
+
+    background:#fff;
 }
 
 .login-btn{
     width:100%;
-    height:44px;
-    margin-top:12px
+    height:46px;
+
+    margin-top:16px;
+
+    border:0;
+    border-radius:10px;
+
+    background:var(--primary);
+
+    color:#fff;
+
+    font-weight:750;
 }
 
-.error{
+.login-btn:disabled,
+.btn:disabled{
+    opacity:.55;
+
+    cursor:not-allowed;
+}
+
+.login-error,
+.modal-error,
+.event-error{
     min-height:18px;
-    color:var(--bad);
+
+    margin-top:9px;
+
+    color:var(--danger);
+
     font-size:12px;
-    margin-top:8px
 }
 
 
-/* =========================
+/* =========================================================
    主畫面
-   ========================= */
+   ========================================================= */
 
-#adminApp{
-    display:none
+.admin-app{
+    display:none;
+
+    min-height:100vh;
 }
 
 .topbar{
     position:sticky;
     top:0;
-    z-index:20;
+
+    z-index:50;
+
     display:flex;
     align-items:center;
     justify-content:space-between;
-    gap:14px;
+
+    gap:20px;
+
     padding:
-        14px
+        15px
         max(
-            16px,
-            calc((100vw - 1180px)/2)
+            20px,
+            calc((100vw - 1180px) / 2)
         );
-    background:#ffffffed;
-    border-bottom:1px solid var(--bd);
-    backdrop-filter:blur(10px)
+
+    background:
+        rgba(255,255,255,.96);
+
+    border-bottom:
+        1px solid var(--border);
+
+    backdrop-filter:
+        blur(10px);
 }
 
-.brand{
-    font-weight:850
+.brand-title{
+    font-size:18px;
+
+    font-weight:800;
 }
 
-.brand small{
-    display:block;
-    color:var(--mut);
-    font-weight:500;
-    margin-top:2px
+.brand-subtitle{
+    margin-top:2px;
+
+    color:var(--muted);
+
+    font-size:12px;
 }
 
-.top-actions{
+.topbar-actions{
     display:flex;
-    gap:8px
+
+    gap:8px;
 }
 
-.btn{
+.top-btn{
     height:38px;
-    padding:0 13px;
-    border:1px solid var(--bd);
-    border-radius:8px;
+
+    padding:0 14px;
+
+    border:1px solid var(--border);
+    border-radius:9px;
+
     background:#fff;
+
     color:#344054;
-    font-weight:700
+
+    font-size:13px;
+    font-weight:700;
 }
 
-.btn-danger{
-    color:var(--bad);
+.logout-btn{
+    color:var(--danger);
+
     border-color:#f5c7c4;
-    background:var(--badbg)
-}
-
-.btn-edit{
-    color:var(--pd);
-    border-color:#bdd5ff;
-    background:#e8f0fe
-}
-
-.btn-ok{
-    color:var(--ok);
-    border-color:#cfe8d7;
-    background:var(--okbg)
 }
 
 .main{
-    width:min(
-        1180px,
-        calc(100% - 28px)
-    );
+    width:
+        min(
+            1180px,
+            calc(100% - 32px)
+        );
 
     margin:auto;
 
     padding:
-        25px
+        28px
         0
-        50px
+        50px;
 }
 
-.heading{
-    margin-bottom:18px
+.page-heading{
+    margin-bottom:22px;
 }
 
-.heading h1{
+.page-title{
     margin:0;
-    font-size:25px
+
+    font-size:25px;
+
+    font-weight:850;
 }
 
-.heading p{
-    margin:5px 0 0;
-    color:var(--mut);
-    font-size:14px
+.page-description{
+    margin-top:6px;
+
+    color:var(--muted);
+
+    font-size:14px;
 }
 
 
-/* =========================
+/* =========================================================
    統計
-   ========================= */
+   ========================================================= */
 
-.stats{
+.stats-grid{
     display:grid;
+
     grid-template-columns:
         repeat(
             4,
-            1fr
+            minmax(0,1fr)
         );
 
-    gap:12px;
+    gap:15px;
 
-    margin-bottom:18px
+    margin-bottom:22px;
 }
 
-.stat{
+.stat-card{
+    padding:20px;
+
     background:#fff;
-    border:1px solid var(--bd);
-    border-radius:13px;
-    padding:18px
-}
 
-.stat .label{
-    font-size:12px;
-    color:var(--mut);
-    font-weight:700
-}
-
-.stat .value{
-    font-size:27px;
-    font-weight:850;
-    margin-top:6px
-}
-
-
-/* =========================
-   Panel
-   ========================= */
-
-.panel{
-    background:#fff;
-    border:1px solid var(--bd);
+    border:1px solid var(--border);
     border-radius:14px;
-    margin-bottom:18px;
-    overflow:hidden;
+
     box-shadow:
         0 3px 12px
-        #10182809
+        rgba(16,24,40,.035);
 }
 
-.panel-head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
+.stat-label{
+    color:var(--muted);
 
-    padding:
-        16px
-        18px;
-
-    border-bottom:
-        1px solid
-        var(--bd)
+    font-size:13px;
+    font-weight:650;
 }
 
-.panel-title{
-    font-weight:850
+.stat-number{
+    margin-top:9px;
+
+    font-size:28px;
+
+    font-weight:850;
 }
 
-.count{
-    font-size:12px;
-    color:var(--mut)
-}
-
-.note{
-    padding:
-        10px
-        18px;
-
-    background:#f8fbff;
-
-    color:#475467;
-
-    font-size:12px;
-    line-height:1.65;
-
-    border-bottom:
-        1px solid
-        var(--bd)
-}
-
-.toolbar{
-    display:flex;
-    gap:10px;
-
-    padding:
-        13px
-        18px;
-
-    background:#fcfcfd;
-
-    border-bottom:
-        1px solid
-        var(--bd)
-}
-
-.toolbar .input{
-    flex:1
-}
-
-.toolbar select{
-    max-width:180px
-}
-
-.add-btn{
-    height:44px;
-    padding:0 15px
-}
-
-.state{
-    padding:
-        35px
-        18px;
-
-    text-align:center;
-    color:var(--mut)
-}
-
-.spinner{
-    width:26px;
-    height:26px;
-
-    margin:
-        0 auto
-        10px;
-
-    border:
-        3px solid
-        #e8eef7;
-
-    border-top-color:
-        var(--p);
-
-    border-radius:50%;
-
-    animation:
-        spin
-        .8s
-        linear
-        infinite
-}
-
-@keyframes spin{
-
-    to{
-        transform:
-            rotate(
-                360deg
-            )
-    }
-
-}
-
-
-/* =========================
-   Table
-   ========================= */
-
-.table-wrap{
-    overflow:auto
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    min-width:760px
-}
-
-th,
-td{
-    padding:
-        12px
-        14px;
-
-    border-bottom:
-        1px solid
-        #eaecf0;
-
-    text-align:left;
-    vertical-align:middle;
-
-    font-size:13px
-}
-
-th{
-    background:#f9fafb;
-    color:#667085;
-    font-size:12px;
-    white-space:nowrap
-}
-
-.name{
-    font-weight:800
+.stat-text{
+    margin-top:10px;
 }
 
 .chip{
     display:inline-block;
 
     padding:
-        4px
-        8px;
+        5px
+        9px;
 
     border-radius:999px;
 
-    background:#f2f4f7;
-    color:#475467;
-
     font-size:11px;
-    font-weight:750
+
+    font-weight:750;
 }
 
-.chip-ok{
-    background:var(--okbg);
-    color:var(--ok)
+.chip-success{
+    background:var(--success-bg);
+
+    color:var(--success);
 }
 
-.chip-bad{
-    background:var(--badbg);
-    color:var(--bad)
+.chip-warning{
+    background:var(--warning-bg);
+
+    color:var(--warning);
 }
 
-.chip-warn{
-    background:var(--warnbg);
-    color:var(--warn)
+.chip-muted{
+    background:#f2f4f7;
+
+    color:#475467;
 }
 
-.actions{
-    display:flex;
-    gap:6px;
-    flex-wrap:wrap
-}
 
-.mini{
-    height:32px;
-    padding:0 10px;
-    font-size:12px;
-    border-radius:7px
-}
+/* =========================================================
+   Panel
+   ========================================================= */
 
-.link{
-    display:block;
-    max-width:300px;
+.panel{
+    margin-bottom:22px;
+
+    background:#fff;
+
+    border:1px solid var(--border);
+    border-radius:15px;
 
     overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
 
-    color:var(--p);
-    text-decoration:none
+    box-shadow:
+        0 3px 12px
+        rgba(16,24,40,.035);
 }
 
-.link:hover{
-    text-decoration:underline
+.panel-header{
+    display:flex;
+
+    align-items:center;
+    justify-content:space-between;
+
+    gap:15px;
+
+    padding:
+        18px
+        20px;
+
+    border-bottom:
+        1px solid var(--border);
+}
+
+.panel-title{
+    font-size:16px;
+
+    font-weight:800;
+}
+
+.result-count{
+    color:var(--muted);
+
+    font-size:13px;
+}
+
+.panel-note{
+    padding:
+        12px
+        20px;
+
+    border-bottom:
+        1px solid var(--border);
+
+    background:#f8fbff;
+
+    color:#475467;
+
+    font-size:12px;
+    line-height:1.7;
+}
+
+.toolbar{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    padding:
+        16px
+        20px;
+
+    border-bottom:
+        1px solid var(--border);
+
+    background:#fcfcfd;
+}
+
+.toolbar .search-box{
+    flex:1;
+}
+
+.search-box{
+    position:relative;
+}
+
+.search-icon{
+    position:absolute;
+
+    left:14px;
+    top:50%;
+
+    transform:
+        translateY(-50%);
+}
+
+.search-input{
+    padding-left:42px;
+}
+
+
+/* =========================================================
+   Buttons
+   ========================================================= */
+
+.btn{
+    height:40px;
+
+    padding:0 14px;
+
+    border:1px solid var(--border);
+    border-radius:9px;
+
+    background:#fff;
+
+    font-size:13px;
+    font-weight:750;
+}
+
+.btn-primary{
+    border-color:var(--primary);
+
+    background:var(--primary);
+
+    color:#fff;
+}
+
+.btn-danger{
+    border-color:#f5c7c4;
+
+    background:var(--danger-bg);
+
+    color:var(--danger);
+}
+
+.btn-edit{
+    border-color:#bdd5ff;
+
+    background:#e8f0fe;
+
+    color:var(--primary-dark);
+}
+
+.btn-success{
+    border-color:#cfe8d7;
+
+    background:var(--success-bg);
+
+    color:var(--success);
+}
+
+.action-group{
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:6px;
+}
+
+.small-btn{
+    height:34px;
+
+    padding:0 10px;
+
+    font-size:12px;
+}
+
+
+/* =========================================================
+   Table
+   ========================================================= */
+
+.table-wrap{
+    width:100%;
+
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+
+    border-collapse:collapse;
+
+    min-width:760px;
+}
+
+th,
+td{
+    padding:
+        14px
+        16px;
+
+    border-bottom:
+        1px solid #eaecf0;
+
+    text-align:left;
+
+    vertical-align:middle;
+}
+
+th{
+    background:#f9fafb;
+
+    color:#667085;
+
+    font-size:12px;
+
+    font-weight:750;
+
+    white-space:nowrap;
+}
+
+td{
+    font-size:13px;
+}
+
+tbody tr:hover{
+    background:#fafcff;
+}
+
+.club-name,
+.line-name{
+    font-weight:750;
+}
+
+.muted{
+    color:var(--muted);
 }
 
 .mono{
@@ -499,106 +658,191 @@ th{
 
     font-size:11px;
 
-    color:var(--mut);
+    word-break:break-all;
+}
 
-    word-break:
-        break-all
+.link{
+    display:block;
+
+    max-width:280px;
+
+    color:var(--primary);
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+    text-decoration:none;
+}
+
+.link:hover{
+    text-decoration:underline;
 }
 
 
-/* =========================
-   手機版
-   ========================= */
+/* =========================================================
+   Loading
+   ========================================================= */
+
+.state-box{
+    padding:
+        42px
+        20px;
+
+    text-align:center;
+
+    color:var(--muted);
+}
+
+.spinner{
+    width:30px;
+    height:30px;
+
+    margin:
+        0
+        auto
+        12px;
+
+    border:
+        3px solid #e8eef7;
+
+    border-top-color:
+        var(--primary);
+
+    border-radius:50%;
+
+    animation:
+        spin
+        .8s
+        linear
+        infinite;
+}
+
+@keyframes spin{
+    to{
+        transform:
+            rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   Mobile
+   ========================================================= */
 
 .mobile-list{
-    display:none
+    display:none;
 }
 
 .mobile-card{
-    padding:
-        15px
-        16px;
+    padding:16px;
 
     border-bottom:
-        1px solid
-        var(--bd)
+        1px solid var(--border);
 }
 
 .mobile-card:last-child{
-    border-bottom:0
+    border-bottom:0;
 }
 
 .mobile-title{
-    font-weight:850
+    font-size:15px;
+
+    font-weight:800;
 }
 
-.mobile-sub{
+.mobile-subtitle{
     margin-top:4px;
-    color:var(--mut);
-    font-size:12px
+
+    color:var(--primary);
+
+    font-size:13px;
+
+    font-weight:750;
+}
+
+.mobile-info{
+    display:grid;
+
+    gap:7px;
+
+    margin-top:12px;
+
+    color:var(--muted);
+
+    font-size:12px;
 }
 
 .mobile-actions{
-    margin-top:10px;
     display:flex;
-    gap:6px;
-    flex-wrap:wrap
+
+    flex-wrap:wrap;
+
+    gap:7px;
+
+    margin-top:12px;
 }
 
 
-/* =========================
-   表單統計
-   ========================= */
+/* =========================================================
+   表單摘要
+   ========================================================= */
 
-.summary{
+.summary-grid{
     display:grid;
 
     grid-template-columns:
         repeat(
             4,
-            1fr
+            minmax(0,1fr)
         );
 
-    gap:10px;
+    gap:12px;
 
     padding:
-        15px
         18px
-        0
+        20px
+        0;
 }
 
 .summary-card{
-    border:
-        1px solid
-        var(--bd);
+    padding:14px;
 
-    border-radius:10px;
+    border:1px solid var(--border);
+    border-radius:12px;
 
-    padding:12px;
-
-    background:#fcfcfd
+    background:#fcfcfd;
 }
 
-.summary-card small{
-    color:var(--mut);
-    font-weight:700
+.summary-label{
+    color:var(--muted);
+
+    font-size:12px;
+
+    font-weight:700;
 }
 
-.summary-card b{
-    display:block;
-    font-size:22px;
-    margin-top:4px
+.summary-value{
+    margin-top:6px;
+
+    font-size:23px;
+
+    font-weight:850;
+}
+
+.filter-select{
+    width:180px;
 }
 
 
-/* =========================
-   活動時程
-   ========================= */
+/* =========================================================
+   活動時間
+   ========================================================= */
 
 .event-body{
-    padding:
-        16px
-        18px
+    padding:20px;
 }
 
 .event-grid{
@@ -607,252 +851,387 @@ th{
     grid-template-columns:
         repeat(
             2,
-            1fr
+            minmax(0,1fr)
         );
 
-    gap:12px
+    gap:14px;
 }
 
 .event-field{
-    padding:13px;
+    padding:15px;
 
     border:
-        1px solid
-        var(--bd);
+        1px solid var(--border);
 
-    border-radius:10px;
+    border-radius:12px;
 
-    background:#fcfcfd
+    background:#fcfcfd;
 }
 
-.event-field b{
-    font-size:13px
+.event-title{
+    margin-bottom:5px;
+
+    font-size:14px;
+
+    font-weight:800;
 }
 
-.event-field small{
-    display:block;
-    color:var(--mut);
+.event-note{
+    margin-bottom:11px;
 
-    margin:
-        4px
-        0
-        9px
+    color:var(--muted);
+
+    font-size:12px;
 }
 
 .event-row{
     display:grid;
 
     grid-template-columns:
-        1fr
-        125px;
+        minmax(0,1fr)
+        130px;
 
-    gap:7px
+    gap:8px;
 }
 
-.event-save{
+.event-footer{
     display:flex;
 
-    justify-content:flex-end;
     align-items:center;
+    justify-content:space-between;
 
-    gap:10px;
+    gap:12px;
 
-    margin-top:12px
+    margin-top:16px;
+
+    padding-top:16px;
+
+    border-top:
+        1px solid var(--border);
 }
 
-.event-save .error{
-    flex:1;
-    margin:0
+.event-meta{
+    color:var(--muted);
+
+    font-size:12px;
+
+    line-height:1.7;
 }
 
 
-/* =========================
+/* =========================================================
    Modal
-   ========================= */
+   ========================================================= */
 
-.modal-bg{
+.modal-backdrop{
     position:fixed;
+
     inset:0;
 
-    z-index:100;
+    z-index:1000;
 
     display:none;
 
     align-items:center;
     justify-content:center;
 
-    padding:18px;
+    padding:20px;
 
-    background:#1018288c
+    background:
+        rgba(16,24,40,.55);
 }
 
 .modal{
-    width:min(
-        470px,
-        100%
-    );
+    width:100%;
+    max-width:470px;
 
     background:#fff;
 
-    border-radius:15px;
+    border-radius:17px;
 
-    overflow:hidden
+    overflow:hidden;
+
+    box-shadow:
+        0 24px 60px
+        rgba(16,24,40,.22);
 }
 
 .modal-body{
-    padding:22px
+    padding:24px;
 }
 
-.modal h2{
-    margin:
-        0 0 8px;
+.modal-icon{
+    display:flex;
 
-    font-size:19px
+    align-items:center;
+    justify-content:center;
+
+    width:45px;
+    height:45px;
+
+    margin-bottom:15px;
+
+    border-radius:50%;
+
+    background:#e8f0fe;
+
+    font-size:22px;
 }
 
-.modal label{
+.modal-icon-danger{
+    background:var(--danger-bg);
+}
+
+.modal-title{
+    margin:0;
+
+    font-size:18px;
+
+    font-weight:850;
+}
+
+.modal-description{
+    margin-top:8px;
+
+    color:var(--muted);
+
+    font-size:13px;
+
+    line-height:1.7;
+}
+
+.modal-info{
+    margin-top:16px;
+
+    padding:13px;
+
+    border-radius:10px;
+
+    background:#f9fafb;
+
+    font-size:13px;
+
+    line-height:1.8;
+}
+
+.modal-label{
     display:block;
 
-    font-size:12px;
-    font-weight:750;
-
     margin:
-        14px
+        18px
         0
-        6px
+        7px;
+
+    font-size:13px;
+
+    font-weight:750;
 }
 
-.modal-foot{
+.modal-footer{
     display:flex;
+
     justify-content:flex-end;
-    gap:8px;
+
+    gap:9px;
 
     padding:
-        14px
-        22px;
-
-    background:#fcfcfd;
+        16px
+        24px;
 
     border-top:
-        1px solid
-        var(--bd)
+        1px solid var(--border);
+
+    background:#fcfcfd;
 }
 
-.modal-foot button{
-    height:38px;
-    padding:0 15px;
-    border-radius:8px;
-    font-weight:750
+.warning-box{
+    margin-top:14px;
+
+    padding:
+        12px
+        13px;
+
+    border:
+        1px solid #f5c7c4;
+
+    border-radius:10px;
+
+    background:var(--danger-bg);
+
+    color:#7a271a;
+
+    font-size:12px;
+
+    line-height:1.7;
 }
 
 
-/* =========================
+/* =========================================================
    Toast
-   ========================= */
+   ========================================================= */
 
 .toast{
     position:fixed;
 
-    right:18px;
-    bottom:18px;
+    right:20px;
+    bottom:20px;
 
-    z-index:200;
+    z-index:2000;
 
-    background:#101828;
-    color:#fff;
-
-    border-radius:9px;
+    max-width:
+        min(
+            380px,
+            calc(100% - 40px)
+        );
 
     padding:
-        11px
-        14px;
+        12px
+        16px;
 
-    max-width:360px;
+    border-radius:10px;
+
+    background:#101828;
+
+    color:#fff;
+
+    font-size:13px;
+
+    box-shadow:
+        0 10px 35px
+        rgba(16,24,40,.2);
 
     opacity:0;
 
     transform:
-        translateY(
-            8px
-        );
+        translateY(12px);
 
     pointer-events:none;
 
-    transition:.2s
+    transition:.25s;
 }
 
 .toast.show{
     opacity:1;
-    transform:none
+
+    transform:
+        translateY(0);
 }
 
 
-/* =========================
+/* =========================================================
    Responsive
-   ========================= */
+   ========================================================= */
 
-@media(max-width:800px){
+@media(max-width:900px){
 
-    .stats{
+    .stats-grid{
         grid-template-columns:
-            1fr
-            1fr
+            repeat(
+                2,
+                1fr
+            );
     }
 
-    .desktop{
-        display:none!important
+}
+
+@media(max-width:760px){
+
+    .topbar{
+        padding:
+            13px
+            15px;
     }
 
-    .mobile-list{
-        display:block
-    }
-
-    .summary{
-        grid-template-columns:
-            1fr
-            1fr
-    }
-
-    .event-grid{
-        grid-template-columns:
-            1fr
-    }
-
-    .event-row{
-        grid-template-columns:
-            1fr
-    }
-
-    .toolbar{
-        flex-direction:column
-    }
-
-    .toolbar select{
-        max-width:none
-    }
-
-    .topbar small{
-        display:none
+    .brand-subtitle,
+    .top-btn span{
+        display:none;
     }
 
     .main{
         width:
-            calc(
-                100% - 20px
-            );
+            calc(100% - 22px);
 
-        padding-top:16px
+        padding:
+            18px
+            0
+            35px;
+    }
+
+    .page-title{
+        font-size:21px;
+    }
+
+    .desktop-table{
+        display:none !important;
+    }
+
+    .mobile-list{
+        display:block;
+    }
+
+    .panel-header{
+        padding:16px;
+    }
+
+    .toolbar{
+        padding:
+            13px
+            16px;
+
+        align-items:stretch;
+
+        flex-direction:column;
+    }
+
+    .toolbar .btn{
+        width:100%;
+    }
+
+    .summary-grid{
+        grid-template-columns:
+            1fr
+            1fr;
+
+        padding:
+            14px
+            16px
+            0;
+    }
+
+    .filter-select{
+        width:100%;
+    }
+
+    .event-grid,
+    .event-row{
+        grid-template-columns:1fr;
+    }
+
+    .event-footer{
+        align-items:stretch;
+
+        flex-direction:column;
+    }
+
+    .event-footer .btn{
+        width:100%;
     }
 
 }
 </style>
+
 </head>
 
 <body>
 
+
+<!-- ======================================================
+     登入
+     ====================================================== -->
+
 <section
     id="loginScreen"
-    class="login"
+    class="login-screen"
 >
 
 <div class="login-card">
@@ -861,26 +1240,51 @@ th{
         🛠️
     </div>
 
-    <h1>
+    <h1 class="login-title">
         管理員後台
     </h1>
 
-    <p class="muted">
+    <div class="login-description">
+
         社團評選暨觀摩活動管理系統
-    </p>
+
+        <br>
+
+        請輸入管理員密碼。
+
+    </div>
 
     <form
-        onsubmit="adminLogin(event)"
+        onsubmit="handleAdminLogin(event)"
     >
 
-        <input
-            id="adminPassword"
-            class="input"
-            type="password"
-            placeholder="請輸入管理員密碼"
-            autocomplete="current-password"
-            required
+        <label
+            class="form-label"
+            for="adminPassword"
         >
+            管理員密碼
+        </label>
+
+        <div class="password-wrap">
+
+            <input
+                id="adminPassword"
+                class="form-input"
+                type="password"
+                placeholder="請輸入管理員密碼"
+                autocomplete="current-password"
+                required
+            >
+
+            <button
+                type="button"
+                class="password-toggle"
+                onclick="togglePassword()"
+            >
+                👁️
+            </button>
+
+        </div>
 
         <button
             id="loginBtn"
@@ -892,7 +1296,7 @@ th{
 
         <div
             id="loginError"
-            class="error"
+            class="login-error"
         ></div>
 
     </form>
@@ -902,24 +1306,34 @@ th{
 </section>
 
 
-<div id="adminApp">
+<!-- ======================================================
+     管理後台
+     ====================================================== -->
+
+<div
+    id="adminApp"
+    class="admin-app"
+>
 
 <header class="topbar">
 
-    <div class="brand">
+    <div>
 
-        🛠️ 社團評選管理後台
+        <div class="brand-title">
+            🛠️ 社團評選管理後台
+        </div>
 
-        <small>
+        <div class="brand-subtitle">
             115學年度第一學期全校學生社團評選暨觀摩活動
-        </small>
+        </div>
 
     </div>
 
-    <div class="top-actions">
+    <div class="topbar-actions">
 
         <button
-            class="btn"
+            class="top-btn"
+            type="button"
             onclick="refreshAllData()"
         >
             🔄
@@ -929,8 +1343,9 @@ th{
         </button>
 
         <button
-            class="btn btn-danger"
-            onclick="adminLogout()"
+            class="top-btn logout-btn"
+            type="button"
+            onclick="logoutAdmin()"
         >
             🚪
             <span>
@@ -945,34 +1360,34 @@ th{
 
 <main class="main">
 
-<div class="heading">
+<div class="page-heading">
 
-    <h1>
+    <h1 class="page-title">
         社團管理中心
     </h1>
 
-    <p>
-        管理社團名單、LINE 綁定、專屬雲端、Google 表單進度與活動時程。
-    </p>
+    <div class="page-description">
+        管理社團名單、LINE 社團綁定、專屬雲端、表單進度與活動重要時程。
+    </div>
 
 </div>
 
 
-<!-- =========================
+<!-- ======================================================
      統計
-     ========================= -->
+     ====================================================== -->
 
-<section class="stats">
+<section class="stats-grid">
 
-    <div class="stat">
+    <div class="stat-card">
 
-        <div class="label">
+        <div class="stat-label">
             已綁定帳號
         </div>
 
         <div
             id="bindingCount"
-            class="value"
+            class="stat-number"
         >
             -
         </div>
@@ -980,15 +1395,15 @@ th{
     </div>
 
 
-    <div class="stat">
+    <div class="stat-card">
 
-        <div class="label">
+        <div class="stat-label">
             社團總數
         </div>
 
         <div
             id="clubTotalCount"
-            class="value"
+            class="stat-number"
         >
             -
         </div>
@@ -996,15 +1411,15 @@ th{
     </div>
 
 
-    <div class="stat">
+    <div class="stat-card">
 
-        <div class="label">
+        <div class="stat-label">
             已設定雲端
         </div>
 
         <div
             id="cloudConfiguredCount"
-            class="value"
+            class="stat-number"
         >
             -
         </div>
@@ -1012,17 +1427,18 @@ th{
     </div>
 
 
-    <div class="stat">
+    <div class="stat-card">
 
-        <div class="label">
+        <div class="stat-label">
             綁定模式
         </div>
 
-        <div
-            class="value"
-            style="font-size:16px"
-        >
-            🔒 單次綁定
+        <div class="stat-text">
+
+            <span class="chip chip-success">
+                🔒 單次綁定
+            </span>
+
         </div>
 
     </div>
@@ -1030,21 +1446,21 @@ th{
 </section>
 
 
-<!-- =========================
+<!-- ======================================================
      社團名單管理
-     ========================= -->
+     ====================================================== -->
 
 <section class="panel">
 
-<div class="panel-head">
+<div class="panel-header">
 
     <div class="panel-title">
         🏫 社團名單管理
     </div>
 
     <div
-        id="clubCount"
-        class="count"
+        id="clubResultCount"
+        class="result-count"
     >
         載入中...
     </div>
@@ -1052,29 +1468,39 @@ th{
 </div>
 
 
-<div class="note">
+<div class="panel-note">
 
-    這裡是系統正式社團名單。
-    新增、修改或刪除後，
-    其他功能會使用最新名單。
-    修改名稱時，
-    後端會同步搬移綁定、雲端與表單紀錄。
+    這裡是系統唯一的正式社團名單。
+
+    新增、修改名稱或屬性、刪除後，
+
+    LINE 前端、雲端管理與 Google 表單進度都會使用最新名單。
 
 </div>
 
 
 <div class="toolbar">
 
-    <input
-        id="clubSearch"
-        class="input"
-        placeholder="搜尋社團名稱或屬性"
-        oninput="renderClubs()"
-    >
+    <div class="search-box">
+
+        <span class="search-icon">
+            🔎
+        </span>
+
+        <input
+            id="clubSearch"
+            class="search-input"
+            type="search"
+            placeholder="搜尋社團名稱或社團屬性"
+            oninput="filterClubs()"
+        >
+
+    </div>
 
     <button
-        class="primary add-btn"
-        onclick="openClubModal()"
+        class="btn btn-primary"
+        type="button"
+        onclick="openAddClubModal()"
     >
         ＋ 新增社團
     </button>
@@ -1084,7 +1510,7 @@ th{
 
 <div
     id="clubState"
-    class="state"
+    class="state-box"
 >
 
     <div class="spinner"></div>
@@ -1095,8 +1521,8 @@ th{
 
 
 <div
-    id="clubTable"
-    class="table-wrap desktop"
+    id="clubDesktop"
+    class="table-wrap desktop-table"
     style="display:none"
 >
 
@@ -1122,9 +1548,8 @@ th{
 
 </thead>
 
-
 <tbody
-    id="clubBody"
+    id="clubTableBody"
 ></tbody>
 
 </table>
@@ -1140,13 +1565,13 @@ th{
 </section>
 
 
-<!-- =========================
+<!-- ======================================================
      活動時程
-     ========================= -->
+     ====================================================== -->
 
 <section class="panel">
 
-<div class="panel-head">
+<div class="panel-header">
 
     <div class="panel-title">
         ⏰ 活動時程管理
@@ -1154,7 +1579,7 @@ th{
 
     <div
         id="eventStatus"
-        class="count"
+        class="result-count"
     >
         載入中...
     </div>
@@ -1164,7 +1589,7 @@ th{
 
 <div
     id="eventState"
-    class="state"
+    class="state-box"
 >
 
     <div class="spinner"></div>
@@ -1175,7 +1600,7 @@ th{
 
 
 <div
-    id="eventBody"
+    id="eventForm"
     class="event-body"
     style="display:none"
 >
@@ -1183,134 +1608,143 @@ th{
 <div class="event-grid">
 
 
-<div class="event-field">
+    <div class="event-field">
 
-    <b>
-        📂 資料繳交截止
-    </b>
+        <div class="event-title">
+            📂 資料繳交截止
+        </div>
 
-    <small>
-        社團資料最後繳交時間
-    </small>
+        <div class="event-note">
+            社團資料最後繳交時間
+        </div>
 
-    <div class="event-row">
+        <div class="event-row">
 
-        <input
-            id="dataDate"
-            class="input"
-            type="date"
-        >
+            <input
+                id="dataDeadlineDate"
+                class="event-input"
+                type="date"
+            >
 
-        <input
-            id="dataTime"
-            class="input"
-            type="time"
-        >
+            <input
+                id="dataDeadlineTime"
+                class="event-input"
+                type="time"
+            >
+
+        </div>
+
+    </div>
+
+
+    <div class="event-field">
+
+        <div class="event-title">
+            📝 表單填寫截止
+        </div>
+
+        <div class="event-note">
+            活動表單最後填寫時間
+        </div>
+
+        <div class="event-row">
+
+            <input
+                id="formDeadlineDate"
+                class="event-input"
+                type="date"
+            >
+
+            <input
+                id="formDeadlineTime"
+                class="event-input"
+                type="time"
+            >
+
+        </div>
+
+    </div>
+
+
+    <div class="event-field">
+
+        <div class="event-title">
+            🎯 活動開始
+        </div>
+
+        <div class="event-note">
+            社團評選暨觀摩活動開始時間
+        </div>
+
+        <div class="event-row">
+
+            <input
+                id="eventStartDate"
+                class="event-input"
+                type="date"
+            >
+
+            <input
+                id="eventStartTime"
+                class="event-input"
+                type="time"
+            >
+
+        </div>
+
+    </div>
+
+
+    <div class="event-field">
+
+        <div class="event-title">
+            🏁 活動結束
+        </div>
+
+        <div class="event-note">
+            社團評選暨觀摩活動結束時間
+        </div>
+
+        <div class="event-row">
+
+            <input
+                id="eventEndDate"
+                class="event-input"
+                type="date"
+            >
+
+            <input
+                id="eventEndTime"
+                class="event-input"
+                type="time"
+            >
+
+        </div>
 
     </div>
 
 </div>
 
 
-<div class="event-field">
-
-    <b>
-        📝 表單填寫截止
-    </b>
-
-    <small>
-        活動表單最後填寫時間
-    </small>
-
-    <div class="event-row">
-
-        <input
-            id="formDate"
-            class="input"
-            type="date"
-        >
-
-        <input
-            id="formTime"
-            class="input"
-            type="time"
-        >
-
-    </div>
-
-</div>
+<div
+    id="eventError"
+    class="event-error"
+></div>
 
 
-<div class="event-field">
-
-    <b>
-        🎯 活動開始
-    </b>
-
-    <small>
-        評選暨觀摩活動開始時間
-    </small>
-
-    <div class="event-row">
-
-        <input
-            id="startDate"
-            class="input"
-            type="date"
-        >
-
-        <input
-            id="startTime"
-            class="input"
-            type="time"
-        >
-
-    </div>
-
-</div>
-
-
-<div class="event-field">
-
-    <b>
-        🏁 活動結束
-    </b>
-
-    <small>
-        評選暨觀摩活動結束時間
-    </small>
-
-    <div class="event-row">
-
-        <input
-            id="endDate"
-            class="input"
-            type="date"
-        >
-
-        <input
-            id="endTime"
-            class="input"
-            type="time"
-        >
-
-    </div>
-
-</div>
-
-</div>
-
-
-<div class="event-save">
+<div class="event-footer">
 
     <div
-        id="eventError"
-        class="error"
-    ></div>
+        id="eventMeta"
+        class="event-meta"
+    >
+        時區：Asia/Taipei
+    </div>
 
     <button
         id="saveEventBtn"
-        class="primary btn"
+        class="btn btn-primary"
+        type="button"
         onclick="saveEventConfig()"
     >
         儲存時程設定
@@ -1323,21 +1757,21 @@ th{
 </section>
 
 
-<!-- =========================
+<!-- ======================================================
      Google 表單填寫進度
-     ========================= -->
+     ====================================================== -->
 
 <section class="panel">
 
-<div class="panel-head">
+<div class="panel-header">
 
     <div class="panel-title">
         📋 Google 表單填寫進度
     </div>
 
     <div
-        id="formCount"
-        class="count"
+        id="formResultCount"
+        class="result-count"
     >
         載入中...
     </div>
@@ -1345,75 +1779,99 @@ th{
 </div>
 
 
-<div class="summary">
+<div class="summary-grid">
+
 
     <div class="summary-card">
 
-        <small>
+        <div class="summary-label">
             社團總數
-        </small>
+        </div>
 
-        <b id="formTotal">
+        <div
+            id="formTotal"
+            class="summary-value"
+        >
             -
-        </b>
+        </div>
 
     </div>
 
 
     <div class="summary-card">
 
-        <small>
+        <div class="summary-label">
             ✅ 已填寫
-        </small>
+        </div>
 
-        <b id="formSubmitted">
+        <div
+            id="formSubmitted"
+            class="summary-value"
+        >
             -
-        </b>
+        </div>
 
     </div>
 
 
     <div class="summary-card">
 
-        <small>
+        <div class="summary-label">
             ❌ 未填寫
-        </small>
+        </div>
 
-        <b id="formPending">
+        <div
+            id="formPending"
+            class="summary-value"
+        >
             -
-        </b>
+        </div>
 
     </div>
 
 
     <div class="summary-card">
 
-        <small>
+        <div class="summary-label">
             完成率
-        </small>
+        </div>
 
-        <b id="formRate">
+        <div
+            id="formRate"
+            class="summary-value"
+        >
             -
-        </b>
+        </div>
 
     </div>
+
 
 </div>
 
 
 <div class="toolbar">
 
-    <input
-        id="formSearch"
-        class="input"
-        placeholder="搜尋社團名稱或屬性"
-        oninput="renderForms()"
-    >
+    <div class="search-box">
+
+        <span class="search-icon">
+            🔎
+        </span>
+
+        <input
+            id="formSearch"
+            class="search-input"
+            type="search"
+            placeholder="搜尋社團名稱或社團屬性"
+            oninput="filterForms()"
+        >
+
+    </div>
+
 
     <select
         id="formFilter"
-        class="input"
-        onchange="renderForms()"
+        class="filter-select"
+        onchange="filterForms()"
     >
 
         <option value="all">
@@ -1435,19 +1893,19 @@ th{
 
 <div
     id="formState"
-    class="state"
+    class="state-box"
 >
 
     <div class="spinner"></div>
 
-    正在讀取填寫進度...
+    正在讀取表單填寫進度...
 
 </div>
 
 
 <div
-    id="formTable"
-    class="table-wrap desktop"
+    id="formDesktop"
+    class="table-wrap desktop-table"
     style="display:none"
 >
 
@@ -1462,11 +1920,11 @@ th{
     </th>
 
     <th>
-        屬性
+        社團屬性
     </th>
 
     <th>
-        狀態
+        填寫狀態
     </th>
 
     <th>
@@ -1477,9 +1935,8 @@ th{
 
 </thead>
 
-
 <tbody
-    id="formBody"
+    id="formTableBody"
 ></tbody>
 
 </table>
@@ -1495,21 +1952,21 @@ th{
 </section>
 
 
-<!-- =========================
+<!-- ======================================================
      LINE 綁定
-     ========================= -->
+     ====================================================== -->
 
 <section class="panel">
 
-<div class="panel-head">
+<div class="panel-header">
 
     <div class="panel-title">
         👥 LINE 帳號綁定資料
     </div>
 
     <div
-        id="bindingResult"
-        class="count"
+        id="bindingResultCount"
+        class="result-count"
     >
         載入中...
     </div>
@@ -1519,19 +1976,28 @@ th{
 
 <div class="toolbar">
 
-    <input
-        id="bindingSearch"
-        class="input"
-        placeholder="搜尋 LINE 名稱、社團、屬性或 User ID"
-        oninput="renderBindings()"
-    >
+    <div class="search-box">
+
+        <span class="search-icon">
+            🔎
+        </span>
+
+        <input
+            id="bindingSearch"
+            class="search-input"
+            type="search"
+            placeholder="搜尋 LINE 名稱、社團、屬性或 User ID"
+            oninput="filterBindings()"
+        >
+
+    </div>
 
 </div>
 
 
 <div
     id="bindingState"
-    class="state"
+    class="state-box"
 >
 
     <div class="spinner"></div>
@@ -1542,8 +2008,8 @@ th{
 
 
 <div
-    id="bindingTable"
-    class="table-wrap desktop"
+    id="bindingDesktop"
+    class="table-wrap desktop-table"
     style="display:none"
 >
 
@@ -1558,7 +2024,7 @@ th{
     </th>
 
     <th>
-        User ID
+        LINE User ID
     </th>
 
     <th>
@@ -1581,9 +2047,8 @@ th{
 
 </thead>
 
-
 <tbody
-    id="bindingBody"
+    id="bindingTableBody"
 ></tbody>
 
 </table>
@@ -1599,21 +2064,21 @@ th{
 </section>
 
 
-<!-- =========================
-     雲端管理
-     ========================= -->
+<!-- ======================================================
+     雲端
+     ====================================================== -->
 
 <section class="panel">
 
-<div class="panel-head">
+<div class="panel-header">
 
     <div class="panel-title">
         ☁️ 社團專屬雲端管理
     </div>
 
     <div
-        id="cloudCount"
-        class="count"
+        id="cloudResultCount"
+        class="result-count"
     >
         載入中...
     </div>
@@ -1623,31 +2088,40 @@ th{
 
 <div class="toolbar">
 
-    <input
-        id="cloudSearch"
-        class="input"
-        placeholder="搜尋社團名稱或屬性"
-        oninput="renderClouds()"
-    >
+    <div class="search-box">
+
+        <span class="search-icon">
+            🔎
+        </span>
+
+        <input
+            id="cloudSearch"
+            class="search-input"
+            type="search"
+            placeholder="搜尋社團名稱或社團屬性"
+            oninput="filterClouds()"
+        >
+
+    </div>
 
 </div>
 
 
 <div
     id="cloudState"
-    class="state"
+    class="state-box"
 >
 
     <div class="spinner"></div>
 
-    正在讀取雲端資料...
+    正在讀取社團雲端資料...
 
 </div>
 
 
 <div
-    id="cloudTable"
-    class="table-wrap desktop"
+    id="cloudDesktop"
+    class="table-wrap desktop-table"
     style="display:none"
 >
 
@@ -1662,7 +2136,7 @@ th{
     </th>
 
     <th>
-        屬性
+        社團屬性
     </th>
 
     <th>
@@ -1670,7 +2144,7 @@ th{
     </th>
 
     <th>
-        連結
+        雲端連結
     </th>
 
     <th>
@@ -1685,9 +2159,8 @@ th{
 
 </thead>
 
-
 <tbody
-    id="cloudBody"
+    id="cloudTableBody"
 ></tbody>
 
 </table>
@@ -1702,82 +2175,382 @@ th{
 
 </section>
 
+
 </main>
 
 </div>
 
 
-<!-- =========================
+<!-- ======================================================
      新增 / 修改社團
-     ========================= -->
+     ====================================================== -->
 
 <div
-    id="clubModalBg"
-    class="modal-bg"
+    id="clubEditModal"
+    class="modal-backdrop"
 >
 
 <div class="modal">
 
 <div class="modal-body">
 
-    <h2 id="clubModalTitle">
+    <div class="modal-icon">
+        🏫
+    </div>
+
+    <h2
+        id="clubModalTitle"
+        class="modal-title"
+    >
         新增社團
     </h2>
 
     <div
-        id="clubModalNote"
-        class="muted"
-        style="font-size:13px"
+        id="clubModalDesc"
+        class="modal-description"
     >
-        新增後會立即成為正式社團。
+        新增後會立即成為系統正式社團名單。
     </div>
 
 
-    <label>
+    <label
+        class="modal-label"
+        for="clubNameInput"
+    >
         社團名稱
     </label>
 
     <input
-        id="clubName"
-        class="input"
+        id="clubNameInput"
+        class="modal-input"
+        type="text"
         maxlength="100"
         placeholder="請輸入完整社團名稱"
+        autocomplete="off"
     >
 
 
-    <label>
+    <label
+        class="modal-label"
+        for="clubCategorySelect"
+    >
         社團屬性
     </label>
 
+    <!--
+        注意：
+        這裡不再寫死五個屬性。
+        JavaScript 會直接從 Code.gs 的
+        adminListClubs.categories 建立選項。
+
+        現在後端會包含：
+        全校自治性
+        自治綜合性
+        康樂性
+        服務性
+        體能性
+        學藝性
+    -->
+
     <select
-        id="clubCategory"
-        class="input"
+        id="clubCategorySelect"
+        class="modal-select"
     ></select>
 
 
     <div
-        id="clubModalError"
-        class="error"
+        id="clubEditError"
+        class="modal-error"
     ></div>
 
 </div>
 
 
-<div class="modal-foot">
+<div class="modal-footer">
 
     <button
         class="btn"
-        onclick="closeClubModal()"
+        type="button"
+        onclick="closeClubEditModal()"
     >
         取消
     </button>
 
     <button
-        id="clubSaveBtn"
-        class="primary"
+        id="saveClubBtn"
+        class="btn btn-primary"
+        type="button"
         onclick="saveClub()"
     >
         儲存
+    </button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ======================================================
+     刪除社團
+     ====================================================== -->
+
+<div
+    id="clubDeleteModal"
+    class="modal-backdrop"
+>
+
+<div class="modal">
+
+<div class="modal-body">
+
+    <div class="modal-icon modal-icon-danger">
+        🗑️
+    </div>
+
+    <h2 class="modal-title">
+        刪除社團？
+    </h2>
+
+    <div class="modal-description">
+        刪除後，該社團會從正式社團名單中移除。
+    </div>
+
+    <div
+        id="clubDeleteInfo"
+        class="modal-info"
+    ></div>
+
+    <div class="warning-box">
+
+        ⚠️ 刪除社團時會同步清除該社團的 LINE 綁定、
+        專屬雲端與 Google 表單填寫紀錄。
+
+        此動作無法由使用者自行復原。
+
+    </div>
+
+    <div
+        id="clubDeleteError"
+        class="modal-error"
+    ></div>
+
+</div>
+
+
+<div class="modal-footer">
+
+    <button
+        class="btn"
+        type="button"
+        onclick="closeClubDeleteModal()"
+    >
+        取消
+    </button>
+
+    <button
+        id="deleteClubBtn"
+        class="btn btn-danger"
+        type="button"
+        onclick="confirmDeleteClub()"
+    >
+        確認刪除
+    </button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ======================================================
+     設定雲端
+     ====================================================== -->
+
+<div
+    id="cloudModal"
+    class="modal-backdrop"
+>
+
+<div class="modal">
+
+<div class="modal-body">
+
+    <div class="modal-icon">
+        ☁️
+    </div>
+
+    <h2 class="modal-title">
+        設定社團專屬雲端
+    </h2>
+
+    <div
+        id="cloudModalInfo"
+        class="modal-info"
+    ></div>
+
+
+    <label
+        class="modal-label"
+        for="cloudUrlInput"
+    >
+        雲端網址
+    </label>
+
+    <input
+        id="cloudUrlInput"
+        class="modal-input"
+        type="url"
+        placeholder="https://drive.google.com/..."
+        autocomplete="off"
+    >
+
+
+    <div
+        id="cloudModalError"
+        class="modal-error"
+    ></div>
+
+</div>
+
+
+<div class="modal-footer">
+
+    <button
+        class="btn"
+        type="button"
+        onclick="closeCloudModal()"
+    >
+        取消
+    </button>
+
+    <button
+        id="saveCloudBtn"
+        class="btn btn-primary"
+        type="button"
+        onclick="saveCloudLink()"
+    >
+        儲存連結
+    </button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ======================================================
+     清除雲端
+     ====================================================== -->
+
+<div
+    id="clearCloudModal"
+    class="modal-backdrop"
+>
+
+<div class="modal">
+
+<div class="modal-body">
+
+    <div class="modal-icon modal-icon-danger">
+        🗑️
+    </div>
+
+    <h2 class="modal-title">
+        清除社團雲端？
+    </h2>
+
+    <div class="modal-description">
+        清除後，該社團使用者將暫時無法取得專屬雲端連結。
+    </div>
+
+    <div
+        id="clearCloudInfo"
+        class="modal-info"
+    ></div>
+
+</div>
+
+
+<div class="modal-footer">
+
+    <button
+        class="btn"
+        type="button"
+        onclick="closeClearCloudModal()"
+    >
+        取消
+    </button>
+
+    <button
+        id="clearCloudBtn"
+        class="btn btn-danger"
+        type="button"
+        onclick="confirmClearCloud()"
+    >
+        確認清除
+    </button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ======================================================
+     解除綁定
+     ====================================================== -->
+
+<div
+    id="unbindModal"
+    class="modal-backdrop"
+>
+
+<div class="modal">
+
+<div class="modal-body">
+
+    <div class="modal-icon modal-icon-danger">
+        ⚠️
+    </div>
+
+    <h2 class="modal-title">
+        確定解除綁定？
+    </h2>
+
+    <div class="modal-description">
+        解除後，此 LINE 帳號可重新選擇社團綁定。
+    </div>
+
+    <div
+        id="unbindInfo"
+        class="modal-info"
+    ></div>
+
+</div>
+
+
+<div class="modal-footer">
+
+    <button
+        class="btn"
+        type="button"
+        onclick="closeUnbindModal()"
+    >
+        取消
+    </button>
+
+    <button
+        id="unbindBtn"
+        class="btn btn-danger"
+        type="button"
+        onclick="confirmUnbind()"
+    >
+        確認解除
     </button>
 
 </div>
@@ -1796,274 +2569,124 @@ th{
 <script>
 
 /* ============================================================
-   系統設定
+   後端
    ============================================================ */
 
 const BACKEND_URL =
     "https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
 
 
-const SESSION_KEY =
+const ADMIN_SESSION_STORAGE_KEY =
     "HKSP_ADMIN_SESSION";
 
 
-const S = {
+/* ============================================================
+   狀態
+   ============================================================ */
 
-    token:
+const STATE = {
+
+    sessionToken:
         null,
+
+    categories:
+        [],
 
     clubs:
         [],
 
-    categories: [
-        "自治綜合性",
-        "康樂性",
-        "服務性",
-        "體能性",
-        "學藝性"
-    ],
-
-    editing:
-        null,
+    filteredClubs:
+        [],
 
     bindings:
+        [],
+
+    filteredBindings:
         [],
 
     clouds:
         [],
 
+    filteredClouds:
+        [],
+
     forms:
         [],
 
-    event:
-        null
+    filteredForms:
+        [],
+
+    eventConfig:
+        null,
+
+    pendingClub:
+        null,
+
+    pendingDeleteClub:
+        null,
+
+    pendingCloud:
+        null,
+
+    pendingClearCloud:
+        null,
+
+    pendingUnbind:
+        null,
+
+    requestRunning:
+        false
 
 };
 
 
-const $ =
-    id =>
-        document.getElementById(
-            id
-        );
-
-
 /* ============================================================
-   工具
+   初始化
    ============================================================ */
 
-const esc =
-    value =>
+document.addEventListener(
 
-        String(
-            value ??
-            ""
-        )
-        .replace(
+    "DOMContentLoaded",
 
-            /[&<>'"]/g,
+    async () => {
 
-            character => ({
+        const saved =
 
-                "&":
-                    "&amp;",
-
-                "<":
-                    "&lt;",
-
-                ">":
-                    "&gt;",
-
-                "'":
-                    "&#39;",
-
-                "\"":
-                    "&quot;"
-
-            })[
-                character
-            ]
-
-        );
-
-
-const enc =
-    value =>
-        encodeURIComponent(
-            String(
-                value ??
-                ""
-            )
-        );
-
-
-const dec =
-    value =>
-        decodeURIComponent(
-            String(
-                value ??
-                ""
-            )
-        );
-
-
-function toast(
-    message
-) {
-
-    const element =
-        $("toast");
-
-
-    element.textContent =
-        message;
-
-
-    element.classList.add(
-        "show"
-    );
-
-
-    clearTimeout(
-        toast.timer
-    );
-
-
-    toast.timer =
-        setTimeout(
-            () =>
-                element
-                    .classList
-                    .remove(
-                        "show"
-                    ),
-            2300
-        );
-
-}
-
-
-function fmt(
-    iso
-) {
-
-    if (!iso) {
-
-        return "-";
-
-    }
-
-
-    try {
-
-        return new Date(
-            iso
-        )
-        .toLocaleString(
-            "zh-TW",
-            {
-                timeZone:
-                    "Asia/Taipei",
-
-                hour12:
-                    false
-            }
-        );
-
-    }
-
-    catch {
-
-        return String(
-            iso
-        );
-
-    }
-
-}
-
-
-function showLogin(
-    message = ""
-) {
-
-    $("loginScreen")
-        .style
-        .display =
-        "flex";
-
-
-    $("adminApp")
-        .style
-        .display =
-        "none";
-
-
-    $("loginError")
-        .textContent =
-        message;
-
-}
-
-
-function showApp() {
-
-    $("loginScreen")
-        .style
-        .display =
-        "none";
-
-
-    $("adminApp")
-        .style
-        .display =
-        "block";
-
-}
-
-
-function unauth(
-    result
-) {
-
-    if (
-        result &&
-        result.error ===
-        "ADMIN_UNAUTHORIZED"
-    ) {
-
-        sessionStorage
-            .removeItem(
-                SESSION_KEY
+            sessionStorage.getItem(
+                ADMIN_SESSION_STORAGE_KEY
             );
 
 
-        S.token =
-            null;
+        if (saved) {
+
+            STATE.sessionToken =
+                saved;
 
 
-        showLogin(
-            "管理員登入已失效，請重新登入。"
-        );
+            showAdminApp();
 
 
-        return true;
+            await refreshAllData();
+
+        }
+
+        else {
+
+            showLoginScreen();
+
+        }
 
     }
 
-
-    return false;
-
-}
+);
 
 
 /* ============================================================
    API
    ============================================================ */
 
-async function api(
-    action,
-    data = {}
+async function postBackend(
+    payload
 ) {
 
     const controller =
@@ -2072,15 +2695,18 @@ async function api(
 
     const timer =
         setTimeout(
+
             () =>
                 controller.abort(),
+
             15000
+
         );
 
 
     try {
 
-        const response =
+        const res =
 
             await fetch(
 
@@ -2092,14 +2718,9 @@ async function api(
                         "POST",
 
                     body:
-                        JSON.stringify({
-
-                            action:
-                                action,
-
-                            ...data
-
-                        }),
+                        JSON.stringify(
+                            payload
+                        ),
 
                     redirect:
                         "follow",
@@ -2112,12 +2733,12 @@ async function api(
             );
 
 
-        if (!response.ok) {
+        if (!res.ok) {
 
             throw new Error(
 
                 "HTTP " +
-                response.status
+                res.status
 
             );
 
@@ -2125,7 +2746,7 @@ async function api(
 
 
         const text =
-            await response.text();
+            await res.text();
 
 
         try {
@@ -2146,9 +2767,7 @@ async function api(
 
     }
 
-    catch (
-        error
-    ) {
+    catch (error) {
 
         if (
             error.name ===
@@ -2177,66 +2796,112 @@ async function api(
 }
 
 
-/* ============================================================
-   啟動
-   ============================================================ */
+async function adminCall(
+    action,
+    data = {}
+) {
 
-document.addEventListener(
+    return postBackend({
 
-    "DOMContentLoaded",
+        action:
+            action,
 
-    async () => {
+        sessionToken:
+            STATE.sessionToken,
 
-        S.token =
+        ...data
 
-            sessionStorage
-                .getItem(
-                    SESSION_KEY
-                );
+    });
+
+}
 
 
-        if (
-            S.token
-        ) {
+async function publicCall(
+    action,
+    data = {}
+) {
 
-            showApp();
+    return postBackend({
 
-            await refreshAllData();
+        action:
+            action,
 
-        }
+        ...data
 
-        else {
+    });
 
-            showLogin();
-
-        }
-
-    }
-
-);
+}
 
 
 /* ============================================================
-   登入 / 登出
+   Session
    ============================================================ */
 
-async function adminLogin(
+function handleUnauthorized() {
+
+    sessionStorage.removeItem(
+        ADMIN_SESSION_STORAGE_KEY
+    );
+
+
+    STATE.sessionToken =
+        null;
+
+
+    showLoginScreen();
+
+
+    showToast(
+        "⚠️ 管理員登入已失效，請重新登入"
+    );
+
+}
+
+
+/* ============================================================
+   管理員登入
+   ============================================================ */
+
+async function handleAdminLogin(
     event
 ) {
 
     event.preventDefault();
 
 
-    const password =
-        $("adminPassword")
-            .value;
+    if (
+        STATE.requestRunning
+    ) {
+
+        return;
+
+    }
 
 
-    const button =
-        $("loginBtn");
+    const input =
+
+        document.getElementById(
+            "adminPassword"
+        );
 
 
-    if (!password) {
+    const btn =
+
+        document.getElementById(
+            "loginBtn"
+        );
+
+
+    const errorBox =
+
+        document.getElementById(
+            "loginError"
+        );
+
+
+    if (
+        !input.value
+    ) {
 
         return;
 
@@ -2245,31 +2910,37 @@ async function adminLogin(
 
     try {
 
-        button.disabled =
+        STATE.requestRunning =
             true;
 
 
-        button.textContent =
+        btn.disabled =
+            true;
+
+
+        btn.textContent =
             "登入中...";
 
 
-        $("loginError")
-            .textContent =
+        errorBox.textContent =
             "";
 
 
         const result =
 
-            await api(
+            await postBackend({
 
-                "adminLogin",
+                action:
+                    "adminLogin",
 
-                {
-                    password:
-                        password
-                }
+                password:
+                    input.value
 
-            );
+            });
+
+
+        input.value =
+            "";
 
 
         if (
@@ -2277,64 +2948,62 @@ async function adminLogin(
             !result.sessionToken
         ) {
 
-            throw new Error(
+            errorBox.textContent =
 
                 result.message ||
-                "登入失敗"
+                "登入失敗。";
 
-            );
+
+            return;
 
         }
 
 
-        S.token =
+        STATE.sessionToken =
             result.sessionToken;
 
 
-        sessionStorage
-            .setItem(
+        sessionStorage.setItem(
 
-                SESSION_KEY,
+            ADMIN_SESSION_STORAGE_KEY,
 
-                S.token
+            result.sessionToken
 
-            );
-
-
-        $("adminPassword")
-            .value =
-            "";
+        );
 
 
-        showApp();
+        showAdminApp();
 
 
         await refreshAllData();
 
 
-        toast(
+        showToast(
             "✅ 管理員登入成功"
         );
 
     }
 
-    catch (
-        error
-    ) {
+    catch (error) {
 
-        $("loginError")
-            .textContent =
+        errorBox.textContent =
+
+            "無法登入：" +
             error.message;
 
     }
 
     finally {
 
-        button.disabled =
+        STATE.requestRunning =
             false;
 
 
-        button.textContent =
+        btn.disabled =
+            false;
+
+
+        btn.textContent =
             "登入管理後台";
 
     }
@@ -2342,51 +3011,56 @@ async function adminLogin(
 }
 
 
-async function adminLogout() {
+/* ============================================================
+   登出
+   ============================================================ */
+
+async function logoutAdmin() {
+
+    const token =
+        STATE.sessionToken;
+
 
     try {
 
-        if (
-            S.token
-        ) {
+        if (token) {
 
-            await api(
+            await postBackend({
 
-                "adminLogout",
+                action:
+                    "adminLogout",
 
-                {
-                    sessionToken:
-                        S.token
-                }
+                sessionToken:
+                    token
 
-            );
+            });
 
         }
 
     }
 
-    catch {
+    catch (error) {
 
-        // 即使後端登出失敗，
-        // 前端仍清除 Session。
+        console.warn(
+            error
+        );
 
     }
 
 
-    sessionStorage
-        .removeItem(
-            SESSION_KEY
-        );
+    sessionStorage.removeItem(
+        ADMIN_SESSION_STORAGE_KEY
+    );
 
 
-    S.token =
+    STATE.sessionToken =
         null;
 
 
-    showLogin();
+    showLoginScreen();
 
 
-    toast(
+    showToast(
         "已登出"
     );
 
@@ -2394,13 +3068,13 @@ async function adminLogout() {
 
 
 /* ============================================================
-   重新整理全部
+   全部重新整理
    ============================================================ */
 
 async function refreshAllData() {
 
     if (
-        !S.token
+        !STATE.sessionToken
     ) {
 
         return;
@@ -2408,11 +3082,16 @@ async function refreshAllData() {
     }
 
 
-    await Promise.all([
+    showToast(
+        "🔄 正在重新整理..."
+    );
+
+
+    await Promise.allSettled([
 
         loadClubs(),
 
-        loadEvent(),
+        loadEventConfig(),
 
         loadForms(),
 
@@ -2422,18 +3101,28 @@ async function refreshAllData() {
 
     ]);
 
+
+    showToast(
+        "✅ 資料已更新"
+    );
+
 }
 
 
 /* ============================================================
-   社團名單管理
+   社團名單
    ============================================================ */
 
 async function loadClubs() {
 
-    setState(
-        "club",
+    setLoading(
+
+        "clubState",
+
+        "clubDesktop",
+
         "正在讀取社團名單..."
+
     );
 
 
@@ -2441,25 +3130,17 @@ async function loadClubs() {
 
         const result =
 
-            await api(
-
-                "adminListClubs",
-
-                {
-                    sessionToken:
-                        S.token
-                }
-
+            await adminCall(
+                "adminListClubs"
             );
 
 
         if (
-            unauth(
-                result
-            )
+            result.error ===
+            "ADMIN_UNAUTHORIZED"
         ) {
 
-            return;
+            return handleUnauthorized();
 
         }
 
@@ -2471,14 +3152,25 @@ async function loadClubs() {
             throw new Error(
 
                 result.message ||
-                "無法取得社團名單"
+                "讀取社團名單失敗"
 
             );
 
         }
 
 
-        S.clubs =
+        STATE.categories =
+
+            Array.isArray(
+                result.categories
+            )
+
+                ? result.categories
+
+                : [];
+
+
+        STATE.clubs =
 
             Array.isArray(
                 result.clubs
@@ -2489,43 +3181,35 @@ async function loadClubs() {
                 : [];
 
 
-        if (
-
-            Array.isArray(
-                result.categories
-            )
-
-            &&
-
-            result.categories.length
-
-        ) {
-
-            S.categories =
-                result.categories;
-
-        }
+        STATE.filteredClubs =
+            [
+                ...STATE.clubs
+            ];
 
 
-        $("clubTotalCount")
-            .textContent =
+        document.getElementById(
+            "clubTotalCount"
+        ).textContent =
 
             result.total ??
-
-            S.clubs.length;
+            STATE.clubs.length;
 
 
         renderClubs();
 
+
+        populateCategorySelect();
+
     }
 
-    catch (
-        error
-    ) {
+    catch (error) {
 
-        setError(
-            "club",
+        showError(
+
+            "clubState",
+
             error.message
+
         );
 
     }
@@ -2533,19 +3217,22 @@ async function loadClubs() {
 }
 
 
-function renderClubs() {
+function filterClubs() {
 
     const query =
 
-        $("clubSearch")
+        document
+            .getElementById(
+                "clubSearch"
+            )
             .value
             .trim()
             .toLowerCase();
 
 
-    const list =
+    STATE.filteredClubs =
 
-        S.clubs.filter(
+        STATE.clubs.filter(
 
             item =>
 
@@ -2553,9 +3240,17 @@ function renderClubs() {
 
                 ||
 
-                (
-                    item.name +
-                    " " +
+                String(
+                    item.name
+                )
+                .toLowerCase()
+                .includes(
+                    query
+                )
+
+                ||
+
+                String(
                     item.category
                 )
                 .toLowerCase()
@@ -2566,20 +3261,63 @@ function renderClubs() {
         );
 
 
-    $("clubCount")
-        .textContent =
+    renderClubs();
 
-        `顯示 ${list.length} / ${S.clubs.length} 個社團`;
+}
+
+
+function renderClubs() {
+
+    const rows =
+        STATE.filteredClubs;
+
+
+    document.getElementById(
+        "clubResultCount"
+    ).textContent =
+
+        `顯示 ${rows.length} / ${STATE.clubs.length} 個社團`;
+
+
+    const state =
+
+        document.getElementById(
+            "clubState"
+        );
+
+
+    const desktop =
+
+        document.getElementById(
+            "clubDesktop"
+        );
+
+
+    const mobile =
+
+        document.getElementById(
+            "clubMobile"
+        );
 
 
     if (
-        !list.length
+        !rows.length
     ) {
 
-        empty(
-            "club",
-            "找不到符合條件的社團。"
-        );
+        state.style.display =
+            "block";
+
+
+        state.innerHTML =
+            "目前沒有符合的社團資料。";
+
+
+        desktop.style.display =
+            "none";
+
+
+        mobile.innerHTML =
+            "";
 
 
         return;
@@ -2587,43 +3325,37 @@ function renderClubs() {
     }
 
 
-    $("clubState")
-        .style
-        .display =
+    state.style.display =
         "none";
 
 
-    $("clubTable")
-        .style
-        .display =
+    desktop.style.display =
         "block";
 
 
-    $("clubBody")
-        .innerHTML =
+    document.getElementById(
+        "clubTableBody"
+    ).innerHTML =
 
-        list.map(
-            item => {
+        rows.map(
 
-                return `
+            (item,index) =>
+
+                `
 
                 <tr>
 
-                    <td class="name">
+                    <td class="club-name">
 
-                        ${esc(
-                            item.name
-                        )}
+                        ${esc(item.name)}
 
                     </td>
 
                     <td>
 
-                        <span class="chip">
+                        <span class="chip chip-muted">
 
-                            ${esc(
-                                item.category
-                            )}
+                            ${esc(item.category)}
 
                         </span>
 
@@ -2631,20 +3363,20 @@ function renderClubs() {
 
                     <td>
 
-                        <div class="actions">
+                        <div class="action-group">
 
                             <button
-                                class="btn btn-edit mini"
-                                onclick="openClubModal('${enc(item.name)}')"
+                                class="btn btn-edit small-btn"
+                                onclick="openEditClubModal(${index})"
                             >
-                                ✏️ 修改
+                                修改
                             </button>
 
                             <button
-                                class="btn btn-danger mini"
-                                onclick="deleteClub('${enc(item.name)}')"
+                                class="btn btn-danger small-btn"
+                                onclick="openDeleteClubModal(${index})"
                             >
-                                🗑️ 刪除
+                                刪除
                             </button>
 
                         </div>
@@ -2653,183 +3385,207 @@ function renderClubs() {
 
                 </tr>
 
-                `;
+                `
 
-            }
-        )
-        .join(
-            ""
-        );
+        ).join("");
 
 
-    $("clubMobile")
-        .innerHTML =
+    mobile.innerHTML =
 
-        list.map(
-            item => {
+        rows.map(
 
-                return `
+            (item,index) =>
+
+                `
 
                 <div class="mobile-card">
 
                     <div class="mobile-title">
 
-                        ${esc(
-                            item.name
-                        )}
+                        ${esc(item.name)}
 
                     </div>
 
-                    <div class="mobile-sub">
+                    <div class="mobile-subtitle">
 
-                        ${esc(
-                            item.category
-                        )}
+                        ${esc(item.category)}
 
                     </div>
 
                     <div class="mobile-actions">
 
                         <button
-                            class="btn btn-edit mini"
-                            onclick="openClubModal('${enc(item.name)}')"
+                            class="btn btn-edit small-btn"
+                            onclick="openEditClubModal(${index})"
                         >
-                            ✏️ 修改
+                            修改
                         </button>
 
                         <button
-                            class="btn btn-danger mini"
-                            onclick="deleteClub('${enc(item.name)}')"
+                            class="btn btn-danger small-btn"
+                            onclick="openDeleteClubModal(${index})"
                         >
-                            🗑️ 刪除
+                            刪除
                         </button>
 
                     </div>
 
                 </div>
 
-                `;
+                `
 
-            }
-        )
-        .join(
-            ""
-        );
+        ).join("");
 
 }
 
 
-function openClubModal(
-    encoded = ""
+/* ============================================================
+   社團屬性
+
+   ★ 改成後端動態取得
+   ============================================================ */
+
+function populateCategorySelect(
+    selected = ""
 ) {
 
-    const name =
+    const select =
 
-        encoded
-
-            ? dec(
-                encoded
-            )
-
-            : "";
-
-
-    const club =
-
-        S.clubs.find(
-
-            item =>
-                item.name ===
-                name
-
+        document.getElementById(
+            "clubCategorySelect"
         );
 
 
-    S.editing =
+    /*
+     * 正常情況直接使用 Code.gs 回傳的屬性。
+     *
+     * 如果暫時無法取得，
+     * 才使用六個目前正式屬性作為備援。
+     */
 
-        club
+    const categories =
 
-            ? {
-                oldName:
-                    club.name
-            }
+        STATE.categories.length
 
-            : null;
+            ? STATE.categories
 
+            : [
 
-    $("clubModalTitle")
-        .textContent =
+                "全校自治性",
+                "自治綜合性",
+                "康樂性",
+                "服務性",
+                "體能性",
+                "學藝性"
 
-        club
-
-            ? "修改社團"
-
-            : "新增社團";
-
-
-    $("clubModalNote")
-        .textContent =
-
-        club
-
-            ? "修改名稱時會同步搬移 LINE 綁定、雲端與 Google 表單紀錄。"
-
-            : "新增後會立即成為系統正式社團名單。";
-
-
-    $("clubName")
-        .value =
-
-        club
-
-            ? club.name
-
-            : "";
-
-
-    $("clubCategory")
-        .innerHTML =
-
-        S.categories
-            .map(
-
-                category =>
-
-                    `<option value="${esc(category)}">${esc(category)}</option>`
-
-            )
-            .join(
-                ""
-            );
-
-
-    $("clubCategory")
-        .value =
-
-        club
-
-            ? club.category
-
-            : S.categories[
-                0
             ];
 
 
-    $("clubModalError")
-        .textContent =
+    select.innerHTML =
+
+        categories.map(
+
+            category =>
+
+                `
+
+                <option
+                    value="${attr(category)}"
+                >
+                    ${esc(category)}
+                </option>
+
+                `
+
+        ).join("");
+
+
+    if (
+        selected &&
+        categories.includes(
+            selected
+        )
+    ) {
+
+        select.value =
+            selected;
+
+    }
+
+    else if (
+        categories.includes(
+            "自治綜合性"
+        )
+    ) {
+
+        select.value =
+            "自治綜合性";
+
+    }
+
+}
+
+
+/* ============================================================
+   新增社團
+   ============================================================ */
+
+function openAddClubModal() {
+
+    STATE.pendingClub = {
+
+        mode:
+            "add"
+
+    };
+
+
+    document.getElementById(
+        "clubModalTitle"
+    ).textContent =
+        "新增社團";
+
+
+    document.getElementById(
+        "clubModalDesc"
+    ).textContent =
+        "新增後會立即成為系統正式社團名單。";
+
+
+    document.getElementById(
+        "clubNameInput"
+    ).value =
         "";
 
 
-    $("clubModalBg")
-        .style
-        .display =
-        "flex";
+    populateCategorySelect();
+
+
+    document.getElementById(
+        "clubEditError"
+    ).textContent =
+        "";
+
+
+    document.getElementById(
+        "saveClubBtn"
+    ).textContent =
+        "新增社團";
+
+
+    openModal(
+        "clubEditModal"
+    );
 
 
     setTimeout(
 
         () =>
-            $("clubName")
+
+            document
+                .getElementById(
+                    "clubNameInput"
+                )
                 .focus(),
 
         50
@@ -2839,43 +3595,151 @@ function openClubModal(
 }
 
 
-function closeClubModal() {
+/* ============================================================
+   修改社團
+   ============================================================ */
 
-    $("clubModalBg")
-        .style
-        .display =
-        "none";
+function openEditClubModal(
+    index
+) {
+
+    const item =
+
+        STATE.filteredClubs[
+            index
+        ];
 
 
-    S.editing =
+    if (!item) {
+
+        return;
+
+    }
+
+
+    STATE.pendingClub = {
+
+        mode:
+            "edit",
+
+        oldName:
+            item.name
+
+    };
+
+
+    document.getElementById(
+        "clubModalTitle"
+    ).textContent =
+        "修改社團";
+
+
+    document.getElementById(
+        "clubModalDesc"
+    ).textContent =
+        "若修改社團名稱，系統會同步搬移 LINE 綁定、專屬雲端與 Google 表單填寫紀錄。";
+
+
+    document.getElementById(
+        "clubNameInput"
+    ).value =
+        item.name;
+
+
+    populateCategorySelect(
+        item.category
+    );
+
+
+    document.getElementById(
+        "clubEditError"
+    ).textContent =
+        "";
+
+
+    document.getElementById(
+        "saveClubBtn"
+    ).textContent =
+        "儲存修改";
+
+
+    openModal(
+        "clubEditModal"
+    );
+
+}
+
+
+function closeClubEditModal() {
+
+    if (
+        STATE.requestRunning
+    ) {
+
+        return;
+
+    }
+
+
+    STATE.pendingClub =
         null;
+
+
+    closeModal(
+        "clubEditModal"
+    );
 
 }
 
 
 async function saveClub() {
 
+    if (
+        STATE.requestRunning ||
+        !STATE.pendingClub
+    ) {
+
+        return;
+
+    }
+
+
     const name =
 
-        $("clubName")
+        document
+            .getElementById(
+                "clubNameInput"
+            )
             .value
             .trim();
 
 
     const category =
 
-        $("clubCategory")
+        document
+            .getElementById(
+                "clubCategorySelect"
+            )
             .value;
 
 
+    const errorBox =
+
+        document.getElementById(
+            "clubEditError"
+        );
+
+
     const button =
-        $("clubSaveBtn");
+
+        document.getElementById(
+            "saveClubBtn"
+        );
 
 
     if (!name) {
 
-        $("clubModalError")
-            .textContent =
+        errorBox.textContent =
             "請輸入社團名稱。";
 
 
@@ -2884,31 +3748,31 @@ async function saveClub() {
     }
 
 
-    const isEdit =
-        Boolean(
-            S.editing
-        );
-
-
     try {
+
+        STATE.requestRunning =
+            true;
+
 
         button.disabled =
             true;
 
 
+        button.textContent =
+            "儲存中...";
+
+
         const action =
 
-            isEdit
+            STATE.pendingClub.mode ===
+            "add"
 
-                ? "adminUpdateClub"
+                ? "adminAddClub"
 
-                : "adminAddClub";
+                : "adminUpdateClub";
 
 
         const payload = {
-
-            sessionToken:
-                S.token,
 
             clubName:
                 name,
@@ -2920,30 +3784,33 @@ async function saveClub() {
 
 
         if (
-            isEdit
+            STATE.pendingClub.mode ===
+            "edit"
         ) {
 
             payload.oldName =
-                S.editing.oldName;
+                STATE.pendingClub.oldName;
 
         }
 
 
         const result =
 
-            await api(
+            await adminCall(
+
                 action,
+
                 payload
+
             );
 
 
         if (
-            unauth(
-                result
-            )
+            result.error ===
+            "ADMIN_UNAUTHORIZED"
         ) {
 
-            return;
+            return handleUnauthorized();
 
         }
 
@@ -2952,105 +3819,141 @@ async function saveClub() {
             !result.success
         ) {
 
-            throw new Error(
+            errorBox.textContent =
 
                 result.message ||
-                "儲存失敗"
+                "儲存失敗";
 
-            );
+
+            return;
 
         }
 
 
-        closeClubModal();
-
-
-        toast(
-
-            isEdit
-
-                ? "✅ 社團修改成功"
-
-                : "✅ 社團新增成功"
-
+        closeModal(
+            "clubEditModal"
         );
 
 
-        await Promise.all([
+        STATE.pendingClub =
+            null;
+
+
+        await Promise.allSettled([
 
             loadClubs(),
 
-            loadForms(),
-
             loadBindings(),
 
-            loadClouds()
+            loadClouds(),
+
+            loadForms()
 
         ]);
 
+
+        showToast(
+
+            "✅ " +
+
+            (
+                action ===
+                "adminAddClub"
+
+                    ? "社團新增成功"
+
+                    : "社團修改成功"
+            )
+
+        );
+
     }
 
-    catch (
-        error
-    ) {
+    catch (error) {
 
-        $("clubModalError")
-            .textContent =
+        errorBox.textContent =
             error.message;
 
     }
 
     finally {
 
+        STATE.requestRunning =
+            false;
+
+
         button.disabled =
             false;
+
+
+        button.textContent =
+            "儲存";
 
     }
 
 }
 
 
-async function deleteClub(
-    encoded
+/* ============================================================
+   刪除社團
+   ============================================================ */
+
+function openDeleteClubModal(
+    index
 ) {
 
-    const name =
-        dec(
-            encoded
-        );
+    const item =
+
+        STATE.filteredClubs[
+            index
+        ];
 
 
-    const club =
-
-        S.clubs.find(
-
-            item =>
-                item.name ===
-                name
-
-        );
-
-
-    if (!club) {
+    if (!item) {
 
         return;
 
     }
 
 
-    const confirmed =
+    STATE.pendingDeleteClub =
+        item;
 
-        confirm(
 
-            `確定刪除「${club.name}」？\n\n` +
+    document.getElementById(
+        "clubDeleteInfo"
+    ).innerHTML =
 
-            `會同步清除該社團的 LINE 綁定、雲端設定與 Google 表單填寫紀錄。`
+        `
 
-        );
+        <b>社團：</b>
+        ${esc(item.name)}
 
+        <br>
+
+        <b>屬性：</b>
+        ${esc(item.category)}
+
+        `;
+
+
+    document.getElementById(
+        "clubDeleteError"
+    ).textContent =
+        "";
+
+
+    openModal(
+        "clubDeleteModal"
+    );
+
+}
+
+
+function closeClubDeleteModal() {
 
     if (
-        !confirmed
+        STATE.requestRunning
     ) {
 
         return;
@@ -3058,32 +3961,83 @@ async function deleteClub(
     }
 
 
+    STATE.pendingDeleteClub =
+        null;
+
+
+    closeModal(
+        "clubDeleteModal"
+    );
+
+}
+
+
+async function confirmDeleteClub() {
+
+    if (
+        STATE.requestRunning ||
+        !STATE.pendingDeleteClub
+    ) {
+
+        return;
+
+    }
+
+
+    const item =
+        STATE.pendingDeleteClub;
+
+
+    const button =
+
+        document.getElementById(
+            "deleteClubBtn"
+        );
+
+
+    const errorBox =
+
+        document.getElementById(
+            "clubDeleteError"
+        );
+
+
     try {
+
+        STATE.requestRunning =
+            true;
+
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "刪除中...";
+
 
         const result =
 
-            await api(
+            await adminCall(
 
                 "adminDeleteClub",
 
                 {
-                    sessionToken:
-                        S.token,
 
                     clubName:
-                        club.name
+                        item.name
+
                 }
 
             );
 
 
         if (
-            unauth(
-                result
-            )
+            result.error ===
+            "ADMIN_UNAUTHORIZED"
         ) {
 
-            return;
+            return handleUnauthorized();
 
         }
 
@@ -3092,42 +4046,66 @@ async function deleteClub(
             !result.success
         ) {
 
-            throw new Error(
+            errorBox.textContent =
 
                 result.message ||
-                "刪除失敗"
+                "刪除失敗";
 
-            );
+
+            return;
 
         }
 
 
-        toast(
-            "✅ 社團已刪除"
+        closeModal(
+            "clubDeleteModal"
         );
 
 
-        await Promise.all([
+        STATE.pendingDeleteClub =
+            null;
+
+
+        await Promise.allSettled([
 
             loadClubs(),
 
-            loadForms(),
-
             loadBindings(),
 
-            loadClouds()
+            loadClouds(),
+
+            loadForms()
 
         ]);
 
+
+        showToast(
+
+            `✅ 已刪除 ${item.name}`
+
+        );
+
     }
 
-    catch (
-        error
-    ) {
+    catch (error) {
 
-        alert(
-            error.message
-        );
+        errorBox.textContent =
+            error.message;
+
+    }
+
+    finally {
+
+        STATE.requestRunning =
+            false;
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "確認刪除";
 
     }
 
@@ -3138,19 +4116,30 @@ async function deleteClub(
    活動時程
    ============================================================ */
 
-async function loadEvent() {
+async function loadEventConfig() {
 
-    setState(
-        "event",
+    setLoading(
+
+        "eventState",
+
+        null,
+
         "正在讀取活動時程..."
+
     );
+
+
+    document.getElementById(
+        "eventForm"
+    ).style.display =
+        "none";
 
 
     try {
 
         const result =
 
-            await api(
+            await publicCall(
                 "getEventConfig"
             );
 
@@ -3163,140 +4152,360 @@ async function loadEvent() {
             throw new Error(
 
                 result.message ||
-                "無法取得活動時程"
+                "讀取活動時程失敗"
 
             );
 
         }
 
 
-        S.event =
+        STATE.eventConfig =
             result.config;
 
 
-        fillDT(
-            "data",
+        setDateTime(
+
+            "dataDeadline",
+
             result.config.dataDeadline
+
         );
 
 
-        fillDT(
-            "form",
+        setDateTime(
+
+            "formDeadline",
+
             result.config.formDeadline
+
         );
 
 
-        fillDT(
-            "start",
+        setDateTime(
+
+            "eventStart",
+
             result.config.eventStart
+
         );
 
 
-        fillDT(
-            "end",
+        setDateTime(
+
+            "eventEnd",
+
             result.config.eventEnd
+
         );
 
 
-        $("eventState")
-            .style
-            .display =
+        document.getElementById(
+            "eventState"
+        ).style.display =
             "none";
 
 
-        $("eventBody")
-            .style
-            .display =
+        document.getElementById(
+            "eventForm"
+        ).style.display =
             "block";
 
 
-        $("eventStatus")
-            .textContent =
+        document.getElementById(
+            "eventStatus"
+        ).textContent =
+            "已載入";
 
-            result.config.updatedAt
 
-                ? "已載入設定"
+        document.getElementById(
+            "eventMeta"
+        ).textContent =
 
-                : "使用預設設定";
+            "時區：Asia/Taipei"
+
+            +
+
+            (
+                result.config.updatedAt
+
+                    ? "｜最後更新：" +
+                      formatDate(
+                          result.config.updatedAt
+                      )
+
+                    : ""
+            );
 
     }
 
-    catch (
-        error
-    ) {
+    catch (error) {
 
-        $("eventStatus")
-            .textContent =
+        showError(
+
+            "eventState",
+
+            error.message
+
+        );
+
+
+        document.getElementById(
+            "eventStatus"
+        ).textContent =
             "讀取失敗";
 
+    }
 
-        $("eventState")
-            .innerHTML =
+}
 
-            `⚠️ ${esc(error.message)}`;
+
+async function saveEventConfig() {
+
+    if (
+        STATE.requestRunning
+    ) {
+
+        return;
+
+    }
+
+
+    const button =
+
+        document.getElementById(
+            "saveEventBtn"
+        );
+
+
+    const errorBox =
+
+        document.getElementById(
+            "eventError"
+        );
+
+
+    const dataDeadline =
+        buildTaipeiIso(
+            "dataDeadline"
+        );
+
+
+    const formDeadline =
+        buildTaipeiIso(
+            "formDeadline"
+        );
+
+
+    const eventStart =
+        buildTaipeiIso(
+            "eventStart"
+        );
+
+
+    const eventEnd =
+        buildTaipeiIso(
+            "eventEnd"
+        );
+
+
+    if (
+        !dataDeadline ||
+        !formDeadline ||
+        !eventStart ||
+        !eventEnd
+    ) {
+
+        errorBox.textContent =
+            "請完整填寫日期與時間。";
+
+
+        return;
+
+    }
+
+
+    try {
+
+        STATE.requestRunning =
+            true;
+
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "儲存中...";
+
+
+        errorBox.textContent =
+            "";
+
+
+        const result =
+
+            await adminCall(
+
+                "adminSaveEventConfig",
+
+                {
+
+                    dataDeadline:
+                        dataDeadline,
+
+                    formDeadline:
+                        formDeadline,
+
+                    eventStart:
+                        eventStart,
+
+                    eventEnd:
+                        eventEnd
+
+                }
+
+            );
+
+
+        if (
+            result.error ===
+            "ADMIN_UNAUTHORIZED"
+        ) {
+
+            return handleUnauthorized();
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            errorBox.textContent =
+
+                result.message ||
+                "儲存失敗";
+
+
+            return;
+
+        }
+
+
+        STATE.eventConfig =
+            result.config;
+
+
+        document.getElementById(
+            "eventMeta"
+        ).textContent =
+
+            "時區：Asia/Taipei｜最後更新：" +
+
+            formatDate(
+                result.config.updatedAt
+            );
+
+
+        showToast(
+            "✅ 活動時程已更新"
+        );
+
+    }
+
+    catch (error) {
+
+        errorBox.textContent =
+            error.message;
+
+    }
+
+    finally {
+
+        STATE.requestRunning =
+            false;
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "儲存時程設定";
 
     }
 
 }
 
 
-function fillDT(
+function setDateTime(
     prefix,
-    value
+    iso
 ) {
 
-    const string =
+    if (!iso) {
+
+        return;
+
+    }
+
+
+    const match =
 
         String(
-            value ||
-            ""
+            iso
+        ).match(
+
+            /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/
+
         );
 
 
-    $(
+    if (!match) {
+
+        return;
+
+    }
+
+
+    document.getElementById(
         prefix +
         "Date"
-    )
-    .value =
-        string.slice(
-            0,
-            10
-        );
+    ).value =
+        match[1];
 
 
-    $(
+    document.getElementById(
         prefix +
         "Time"
-    )
-    .value =
-        string.slice(
-            11,
-            16
-        );
+    ).value =
+        match[2];
 
 }
 
 
-function buildDT(
+function buildTaipeiIso(
     prefix
 ) {
 
     const date =
 
-        $(
+        document.getElementById(
+
             prefix +
             "Date"
-        )
-        .value;
+
+        ).value;
 
 
     const time =
 
-        $(
+        document.getElementById(
+
             prefix +
             "Time"
-        )
-        .value;
+
+        ).value;
 
 
     if (
@@ -3312,11 +4521,8 @@ function buildDT(
     return (
 
         date +
-
         "T" +
-
         time +
-
         ":00+08:00"
 
     );
@@ -3324,122 +4530,20 @@ function buildDT(
 }
 
 
-async function saveEventConfig() {
-
-    const button =
-        $("saveEventBtn");
-
-
-    try {
-
-        button.disabled =
-            true;
-
-
-        $("eventError")
-            .textContent =
-            "";
-
-
-        const result =
-
-            await api(
-
-                "adminSaveEventConfig",
-
-                {
-
-                    sessionToken:
-                        S.token,
-
-                    dataDeadline:
-                        buildDT(
-                            "data"
-                        ),
-
-                    formDeadline:
-                        buildDT(
-                            "form"
-                        ),
-
-                    eventStart:
-                        buildDT(
-                            "start"
-                        ),
-
-                    eventEnd:
-                        buildDT(
-                            "end"
-                        )
-
-                }
-
-            );
-
-
-        if (
-            unauth(
-                result
-            )
-        ) {
-
-            return;
-
-        }
-
-
-        if (
-            !result.success
-        ) {
-
-            throw new Error(
-
-                result.message ||
-                "儲存失敗"
-
-            );
-
-        }
-
-
-        toast(
-            "✅ 活動時程已更新"
-        );
-
-
-        await loadEvent();
-
-    }
-
-    catch (
-        error
-    ) {
-
-        $("eventError")
-            .textContent =
-            error.message;
-
-    }
-
-    finally {
-
-        button.disabled =
-            false;
-
-    }
-
-}
-
-
 /* ============================================================
-   Google 表單填寫進度
+   表單填寫進度
    ============================================================ */
 
 async function loadForms() {
 
-    setState(
-        "form",
-        "正在讀取填寫進度..."
+    setLoading(
+
+        "formState",
+
+        "formDesktop",
+
+        "正在讀取表單填寫進度..."
+
     );
 
 
@@ -3447,25 +4551,17 @@ async function loadForms() {
 
         const result =
 
-            await api(
-
-                "adminListFormSubmissions",
-
-                {
-                    sessionToken:
-                        S.token
-                }
-
+            await adminCall(
+                "adminListFormSubmissions"
             );
 
 
         if (
-            unauth(
-                result
-            )
+            result.error ===
+            "ADMIN_UNAUTHORIZED"
         ) {
 
-            return;
+            return handleUnauthorized();
 
         }
 
@@ -3477,14 +4573,14 @@ async function loadForms() {
             throw new Error(
 
                 result.message ||
-                "無法取得表單進度"
+                "讀取表單進度失敗"
 
             );
 
         }
 
 
-        S.forms =
+        STATE.forms =
 
             Array.isArray(
                 result.clubs
@@ -3495,50 +4591,62 @@ async function loadForms() {
                 : [];
 
 
-        $("formTotal")
-            .textContent =
+        STATE.filteredForms =
+            [
+                ...STATE.forms
+            ];
+
+
+        document.getElementById(
+            "formTotal"
+        ).textContent =
 
             result.total ??
+            STATE.forms.length;
 
-            S.forms.length;
 
-
-        $("formSubmitted")
-            .textContent =
+        document.getElementById(
+            "formSubmitted"
+        ).textContent =
 
             result.submittedCount ??
-
             0;
 
 
-        $("formPending")
-            .textContent =
+        document.getElementById(
+            "formPending"
+        ).textContent =
 
             result.pendingCount ??
-
             0;
 
 
-        $("formRate")
-            .textContent =
+        document.getElementById(
+            "formRate"
+        ).textContent =
 
-            `${
+            (
                 result.completionRate ??
                 0
-            }%`;
+            )
+
+            +
+
+            "%";
 
 
         renderForms();
 
     }
 
-    catch (
-        error
-    ) {
+    catch (error) {
 
-        setError(
-            "form",
+        showError(
+
+            "formState",
+
             error.message
+
         );
 
     }
@@ -3546,35 +4654,51 @@ async function loadForms() {
 }
 
 
-function renderForms() {
+function filterForms() {
 
     const query =
 
-        $("formSearch")
+        document
+            .getElementById(
+                "formSearch"
+            )
             .value
             .trim()
             .toLowerCase();
 
 
-    const filter =
-        $("formFilter")
+    const status =
+
+        document
+            .getElementById(
+                "formFilter"
+            )
             .value;
 
 
-    const list =
+    STATE.filteredForms =
 
-        S.forms.filter(
+        STATE.forms.filter(
+
             item => {
 
-                const matchesQuery =
+                const hit =
 
                     !query
 
                     ||
 
-                    (
-                        item.club +
-                        " " +
+                    String(
+                        item.club
+                    )
+                    .toLowerCase()
+                    .includes(
+                        query
+                    )
+
+                    ||
+
+                    String(
                         item.category
                     )
                     .toLowerCase()
@@ -3583,15 +4707,20 @@ function renderForms() {
                     );
 
 
-                const matchesStatus =
+                const statusMatch =
 
-                    filter ===
+                    status ===
                     "all"
 
                     ||
 
+                    item.status ===
+                    status
+
+                    ||
+
                     (
-                        filter ===
+                        status ===
                         "submitted"
 
                         &&
@@ -3602,7 +4731,7 @@ function renderForms() {
                     ||
 
                     (
-                        filter ===
+                        status ===
                         "pending"
 
                         &&
@@ -3612,28 +4741,72 @@ function renderForms() {
 
 
                 return (
-                    matchesQuery &&
-                    matchesStatus
+                    hit &&
+                    statusMatch
                 );
 
             }
+
         );
 
 
-    $("formCount")
-        .textContent =
+    renderForms();
 
-        `顯示 ${list.length} / ${S.forms.length} 個社團`;
+}
+
+
+function renderForms() {
+
+    const rows =
+        STATE.filteredForms;
+
+
+    document.getElementById(
+        "formResultCount"
+    ).textContent =
+
+        `顯示 ${rows.length} / ${STATE.forms.length} 個社團`;
+
+
+    const state =
+
+        document.getElementById(
+            "formState"
+        );
+
+
+    const desktop =
+
+        document.getElementById(
+            "formDesktop"
+        );
+
+
+    const mobile =
+
+        document.getElementById(
+            "formMobile"
+        );
 
 
     if (
-        !list.length
+        !rows.length
     ) {
 
-        empty(
-            "form",
-            "找不到符合條件的社團。"
-        );
+        state.style.display =
+            "block";
+
+
+        state.innerHTML =
+            "目前沒有符合的表單紀錄。";
+
+
+        desktop.style.display =
+            "none";
+
+
+        mobile.innerHTML =
+            "";
 
 
         return;
@@ -3641,36 +4814,40 @@ function renderForms() {
     }
 
 
-    $("formState")
-        .style
-        .display =
+    state.style.display =
         "none";
 
 
-    $("formTable")
-        .style
-        .display =
+    desktop.style.display =
         "block";
 
 
-    $("formBody")
-        .innerHTML =
+    document.getElementById(
+        "formTableBody"
+    ).innerHTML =
 
-        list.map(
-            item => {
+        rows.map(
 
-                return `
+            item =>
+
+                `
 
                 <tr>
 
-                    <td class="name">
+                    <td class="club-name">
+
                         ${esc(item.club)}
+
                     </td>
 
                     <td>
-                        <span class="chip">
+
+                        <span class="chip chip-muted">
+
                             ${esc(item.category)}
+
                         </span>
+
                     </td>
 
                     <td>
@@ -3678,77 +4855,109 @@ function renderForms() {
                         ${
                             item.submitted
 
-                                ? '<span class="chip chip-ok">✅ 已填寫</span>'
+                                ? `
+                                  <span class="chip chip-success">
+                                      ✅ 已填寫
+                                  </span>
+                                  `
 
-                                : '<span class="chip chip-bad">❌ 未填寫</span>'
+                                : `
+                                  <span class="chip chip-warning">
+                                      ❌ 未填寫
+                                  </span>
+                                  `
                         }
 
                     </td>
 
-                    <td>
-                        ${esc(
-                            item.submittedAtTaipei ||
-                            "-"
-                        )}
+                    <td class="muted">
+
+                        ${
+                            item.submitted
+
+                                ? esc(
+                                    item.submittedAtTaipei
+                                    ||
+                                    formatDate(
+                                        item.submittedAt
+                                    )
+                                  )
+
+                                : "-"
+                        }
+
                     </td>
 
                 </tr>
 
-                `;
+                `
 
-            }
-        )
-        .join(
-            ""
-        );
+        ).join("");
 
 
-    $("formMobile")
-        .innerHTML =
+    mobile.innerHTML =
 
-        list.map(
-            item => {
+        rows.map(
 
-                return `
+            item =>
+
+                `
 
                 <div class="mobile-card">
 
                     <div class="mobile-title">
+
                         ${esc(item.club)}
+
                     </div>
 
-                    <div class="mobile-sub">
+                    <div class="mobile-subtitle">
+
                         ${esc(item.category)}
+
                     </div>
 
-                    <div style="margin-top:8px">
+                    <div class="mobile-info">
 
-                        ${
-                            item.submitted
+                        <div>
 
-                                ? "✅ 已填寫"
+                            ${
+                                item.submitted
 
-                                : "❌ 未填寫"
-                        }
+                                    ? "✅ 已填寫"
 
-                        ·
+                                    : "❌ 未填寫"
+                            }
 
-                        ${esc(
-                            item.submittedAtTaipei ||
-                            "-"
-                        )}
+                        </div>
+
+                        <div>
+
+                            最後填寫：
+
+                            ${
+                                item.submitted
+
+                                    ? esc(
+                                        item.submittedAtTaipei
+                                        ||
+                                        formatDate(
+                                            item.submittedAt
+                                        )
+                                      )
+
+                                    : "-"
+                            }
+
+                        </div>
 
                     </div>
 
                 </div>
 
-                `;
+                `
 
-            }
-        )
-        .join(
-            ""
-        );
+        ).join("");
 
 }
 
@@ -3759,9 +4968,14 @@ function renderForms() {
 
 async function loadBindings() {
 
-    setState(
-        "binding",
+    setLoading(
+
+        "bindingState",
+
+        "bindingDesktop",
+
         "正在讀取綁定資料..."
+
     );
 
 
@@ -3769,25 +4983,17 @@ async function loadBindings() {
 
         const result =
 
-            await api(
-
-                "adminListBindings",
-
-                {
-                    sessionToken:
-                        S.token
-                }
-
+            await adminCall(
+                "adminListBindings"
             );
 
 
         if (
-            unauth(
-                result
-            )
+            result.error ===
+            "ADMIN_UNAUTHORIZED"
         ) {
 
-            return;
+            return handleUnauthorized();
 
         }
 
@@ -3799,14 +5005,14 @@ async function loadBindings() {
             throw new Error(
 
                 result.message ||
-                "無法取得綁定資料"
+                "讀取綁定資料失敗"
 
             );
 
         }
 
 
-        S.bindings =
+        STATE.bindings =
 
             Array.isArray(
                 result.bindings
@@ -3817,22 +5023,30 @@ async function loadBindings() {
                 : [];
 
 
-        $("bindingCount")
-            .textContent =
-            S.bindings.length;
+        STATE.filteredBindings =
+            [
+                ...STATE.bindings
+            ];
+
+
+        document.getElementById(
+            "bindingCount"
+        ).textContent =
+            STATE.bindings.length;
 
 
         renderBindings();
 
     }
 
-    catch (
-        error
-    ) {
+    catch (error) {
 
-        setError(
-            "binding",
+        showError(
+
+            "bindingState",
+
             error.message
+
         );
 
     }
@@ -3840,83 +5054,111 @@ async function loadBindings() {
 }
 
 
-function renderBindings() {
+function filterBindings() {
 
     const query =
 
-        $("bindingSearch")
+        document
+            .getElementById(
+                "bindingSearch"
+            )
             .value
             .trim()
             .toLowerCase();
 
 
-    const list =
+    STATE.filteredBindings =
 
-        S.bindings.filter(
-            item => {
+        STATE.bindings.filter(
 
-                if (!query) {
+            item =>
 
-                    return true;
+                !query
 
-                }
+                ||
 
+                [
 
-                const searchable =
+                    item.displayName,
+                    item.userId,
+                    item.club,
+                    item.category
 
-                    (
-                        (
-                            item.displayName ||
+                ].some(
+
+                    value =>
+
+                        String(
+                            value ||
                             ""
                         )
-
-                        + " " +
-
-                        (
-                            item.club ||
-                            ""
+                        .toLowerCase()
+                        .includes(
+                            query
                         )
 
-                        + " " +
+                )
 
-                        (
-                            item.category ||
-                            ""
-                        )
-
-                        + " " +
-
-                        (
-                            item.userId ||
-                            ""
-                        )
-                    )
-                    .toLowerCase();
-
-
-                return searchable
-                    .includes(
-                        query
-                    );
-
-            }
         );
 
 
-    $("bindingResult")
-        .textContent =
+    renderBindings();
 
-        `顯示 ${list.length} / ${S.bindings.length} 筆`;
+}
+
+
+function renderBindings() {
+
+    const rows =
+        STATE.filteredBindings;
+
+
+    document.getElementById(
+        "bindingResultCount"
+    ).textContent =
+
+        `顯示 ${rows.length} / ${STATE.bindings.length} 筆`;
+
+
+    const state =
+
+        document.getElementById(
+            "bindingState"
+        );
+
+
+    const desktop =
+
+        document.getElementById(
+            "bindingDesktop"
+        );
+
+
+    const mobile =
+
+        document.getElementById(
+            "bindingMobile"
+        );
 
 
     if (
-        !list.length
+        !rows.length
     ) {
 
-        empty(
-            "binding",
-            "找不到符合條件的綁定資料。"
-        );
+        state.style.display =
+            "block";
+
+
+        state.innerHTML =
+            "目前沒有符合的綁定資料。";
+
+
+        desktop.style.display =
+            "none";
+
+
+        mobile.innerHTML =
+            "";
 
 
         return;
@@ -3924,72 +5166,58 @@ function renderBindings() {
     }
 
 
-    $("bindingState")
-        .style
-        .display =
+    state.style.display =
         "none";
 
 
-    $("bindingTable")
-        .style
-        .display =
+    desktop.style.display =
         "block";
 
 
-    $("bindingBody")
-        .innerHTML =
+    document.getElementById(
+        "bindingTableBody"
+    ).innerHTML =
 
-        list.map(
-            item => {
+        rows.map(
 
-                return `
+            (item,index) =>
+
+                `
 
                 <tr>
 
-                    <td class="name">
+                    <td class="line-name">
 
-                        ${esc(
-                            item.displayName ||
-                            "-"
-                        )}
+                        ${esc(item.displayName || "LINE 使用者")}
 
                     </td>
 
                     <td class="mono">
 
-                        ${esc(
-                            item.userId ||
-                            ""
-                        )}
+                        ${esc(item.userId)}
 
                     </td>
 
                     <td>
 
-                        ${esc(
-                            item.club ||
-                            "-"
-                        )}
+                        ${esc(item.club)}
 
                     </td>
 
                     <td>
 
-                        <span class="chip">
+                        <span class="chip chip-muted">
 
-                            ${esc(
-                                item.category ||
-                                "-"
-                            )}
+                            ${esc(item.category)}
 
                         </span>
 
                     </td>
 
-                    <td>
+                    <td class="muted">
 
                         ${esc(
-                            fmt(
+                            formatDate(
                                 item.createdAt
                             )
                         )}
@@ -3999,8 +5227,8 @@ function renderBindings() {
                     <td>
 
                         <button
-                            class="btn btn-danger mini"
-                            onclick="unbind('${enc(item.userId)}','${enc(item.club || "")}')"
+                            class="btn btn-danger small-btn"
+                            onclick="openUnbindModal(${index})"
                         >
                             解除綁定
                         </button>
@@ -4009,67 +5237,62 @@ function renderBindings() {
 
                 </tr>
 
-                `;
+                `
 
-            }
-        )
-        .join(
-            ""
-        );
+        ).join("");
 
 
-    $("bindingMobile")
-        .innerHTML =
+    mobile.innerHTML =
 
-        list.map(
-            item => {
+        rows.map(
 
-                return `
+            (item,index) =>
+
+                `
 
                 <div class="mobile-card">
 
                     <div class="mobile-title">
 
-                        ${esc(
-                            item.displayName ||
-                            "-"
-                        )}
+                        ${esc(item.displayName || "LINE 使用者")}
 
                     </div>
 
-                    <div class="mobile-sub">
+                    <div class="mobile-subtitle">
 
-                        ${esc(
-                            item.club ||
-                            "-"
-                        )}
-
-                        ·
-
-                        ${esc(
-                            item.category ||
-                            "-"
-                        )}
+                        ${esc(item.club)}
 
                     </div>
 
-                    <div
-                        class="mono"
-                        style="margin-top:8px"
-                    >
+                    <div class="mobile-info">
 
-                        ${esc(
-                            item.userId ||
-                            ""
-                        )}
+                        <div>
+                            ${esc(item.category)}
+                        </div>
+
+                        <div class="mono">
+                            ${esc(item.userId)}
+                        </div>
+
+                        <div>
+
+                            綁定：
+
+                            ${esc(
+                                formatDate(
+                                    item.createdAt
+                                )
+                            )}
+
+                        </div>
 
                     </div>
 
                     <div class="mobile-actions">
 
                         <button
-                            class="btn btn-danger mini"
-                            onclick="unbind('${enc(item.userId)}','${enc(item.club || "")}')"
+                            class="btn btn-danger small-btn"
+                            onclick="openUnbindModal(${index})"
                         >
                             解除綁定
                         </button>
@@ -4078,42 +5301,72 @@ function renderBindings() {
 
                 </div>
 
-                `;
+                `
 
-            }
-        )
-        .join(
-            ""
-        );
+        ).join("");
 
 }
 
 
-async function unbind(
-    userIdEncoded,
-    clubEncoded
+/* ============================================================
+   解除綁定
+   ============================================================ */
+
+function openUnbindModal(
+    index
 ) {
 
-    const userId =
-        dec(
-            userIdEncoded
-        );
+    const item =
+
+        STATE.filteredBindings[
+            index
+        ];
 
 
-    const club =
-        dec(
-            clubEncoded
-        );
+    if (!item) {
 
+        return;
+
+    }
+
+
+    STATE.pendingUnbind =
+        item;
+
+
+    document.getElementById(
+        "unbindInfo"
+    ).innerHTML =
+
+        `
+
+        <b>LINE 名稱：</b>
+        ${esc(item.displayName || "LINE 使用者")}
+
+        <br>
+
+        <b>社團：</b>
+        ${esc(item.club)}
+
+        <br>
+
+        <b>屬性：</b>
+        ${esc(item.category)}
+
+        `;
+
+
+    openModal(
+        "unbindModal"
+    );
+
+}
+
+
+function closeUnbindModal() {
 
     if (
-
-        !confirm(
-
-            `確定解除「${club}」的 LINE 綁定？`
-
-        )
-
+        STATE.requestRunning
     ) {
 
         return;
@@ -4121,32 +5374,76 @@ async function unbind(
     }
 
 
+    STATE.pendingUnbind =
+        null;
+
+
+    closeModal(
+        "unbindModal"
+    );
+
+}
+
+
+async function confirmUnbind() {
+
+    if (
+        STATE.requestRunning ||
+        !STATE.pendingUnbind
+    ) {
+
+        return;
+
+    }
+
+
+    const item =
+        STATE.pendingUnbind;
+
+
+    const button =
+
+        document.getElementById(
+            "unbindBtn"
+        );
+
+
     try {
+
+        STATE.requestRunning =
+            true;
+
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "解除中...";
+
 
         const result =
 
-            await api(
+            await adminCall(
 
                 "adminUnbind",
 
                 {
-                    sessionToken:
-                        S.token,
 
                     userId:
-                        userId
+                        item.userId
+
                 }
 
             );
 
 
         if (
-            unauth(
-                result
-            )
+            result.error ===
+            "ADMIN_UNAUTHORIZED"
         ) {
 
-            return;
+            return handleUnauthorized();
 
         }
 
@@ -4158,29 +5455,56 @@ async function unbind(
             throw new Error(
 
                 result.message ||
-                "解除失敗"
+                "解除綁定失敗"
 
             );
 
         }
 
 
-        toast(
-            "✅ 已解除綁定"
+        closeModal(
+            "unbindModal"
         );
+
+
+        STATE.pendingUnbind =
+            null;
 
 
         await loadBindings();
 
+
+        showToast(
+
+            `✅ 已解除 ${item.displayName || "該使用者"} 的社團綁定`
+
+        );
+
     }
 
-    catch (
-        error
-    ) {
+    catch (error) {
 
-        alert(
+        showToast(
+
+            "❌ " +
             error.message
+
         );
+
+    }
+
+    finally {
+
+        STATE.requestRunning =
+            false;
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "確認解除";
 
     }
 
@@ -4188,14 +5512,19 @@ async function unbind(
 
 
 /* ============================================================
-   雲端管理
+   社團雲端
    ============================================================ */
 
 async function loadClouds() {
 
-    setState(
-        "cloud",
-        "正在讀取雲端資料..."
+    setLoading(
+
+        "cloudState",
+
+        "cloudDesktop",
+
+        "正在讀取社團雲端資料..."
+
     );
 
 
@@ -4203,25 +5532,17 @@ async function loadClouds() {
 
         const result =
 
-            await api(
-
-                "adminListCloudLinks",
-
-                {
-                    sessionToken:
-                        S.token
-                }
-
+            await adminCall(
+                "adminListCloudLinks"
             );
 
 
         if (
-            unauth(
-                result
-            )
+            result.error ===
+            "ADMIN_UNAUTHORIZED"
         ) {
 
-            return;
+            return handleUnauthorized();
 
         }
 
@@ -4233,14 +5554,14 @@ async function loadClouds() {
             throw new Error(
 
                 result.message ||
-                "無法取得雲端資料"
+                "讀取雲端資料失敗"
 
             );
 
         }
 
 
-        S.clouds =
+        STATE.clouds =
 
             Array.isArray(
                 result.clubs
@@ -4251,43 +5572,40 @@ async function loadClouds() {
                 : [];
 
 
-        $("cloudConfiguredCount")
-            .textContent =
+        STATE.filteredClouds =
+            [
+                ...STATE.clouds
+            ];
 
-            result.configuredCount ??
 
-            S.clouds.filter(
+        document.getElementById(
+            "cloudConfiguredCount"
+        ).textContent =
+
+            result.configuredCount
+
+            ??
+
+            STATE.clouds.filter(
+
                 item =>
                     item.configured
-            )
-            .length;
 
-
-        if (
-            !S.clubs.length
-        ) {
-
-            $("clubTotalCount")
-                .textContent =
-
-                result.total ??
-
-                S.clouds.length;
-
-        }
+            ).length;
 
 
         renderClouds();
 
     }
 
-    catch (
-        error
-    ) {
+    catch (error) {
 
-        setError(
-            "cloud",
+        showError(
+
+            "cloudState",
+
             error.message
+
         );
 
     }
@@ -4295,60 +5613,107 @@ async function loadClouds() {
 }
 
 
-function renderClouds() {
+function filterClouds() {
 
     const query =
 
-        $("cloudSearch")
+        document
+            .getElementById(
+                "cloudSearch"
+            )
             .value
             .trim()
             .toLowerCase();
 
 
-    const list =
+    STATE.filteredClouds =
 
-        S.clouds.filter(
-            item => {
+        STATE.clouds.filter(
 
-                if (!query) {
+            item =>
 
-                    return true;
+                !query
 
-                }
+                ||
 
+                String(
+                    item.club
+                )
+                .toLowerCase()
+                .includes(
+                    query
+                )
 
-                return (
+                ||
 
-                    (
-                        item.club +
-                        " " +
-                        item.category
-                    )
-                    .toLowerCase()
-                    .includes(
-                        query
-                    )
+                String(
+                    item.category
+                )
+                .toLowerCase()
+                .includes(
+                    query
+                )
 
-                );
-
-            }
         );
 
 
-    $("cloudCount")
-        .textContent =
+    renderClouds();
 
-        `顯示 ${list.length} / ${S.clouds.length} 個社團`;
+}
+
+
+function renderClouds() {
+
+    const rows =
+        STATE.filteredClouds;
+
+
+    document.getElementById(
+        "cloudResultCount"
+    ).textContent =
+
+        `顯示 ${rows.length} / ${STATE.clouds.length} 個社團`;
+
+
+    const state =
+
+        document.getElementById(
+            "cloudState"
+        );
+
+
+    const desktop =
+
+        document.getElementById(
+            "cloudDesktop"
+        );
+
+
+    const mobile =
+
+        document.getElementById(
+            "cloudMobile"
+        );
 
 
     if (
-        !list.length
+        !rows.length
     ) {
 
-        empty(
-            "cloud",
-            "找不到符合條件的社團。"
-        );
+        state.style.display =
+            "block";
+
+
+        state.innerHTML =
+            "目前沒有符合的雲端資料。";
+
+
+        desktop.style.display =
+            "none";
+
+
+        mobile.innerHTML =
+            "";
 
 
         return;
@@ -4356,43 +5721,37 @@ function renderClouds() {
     }
 
 
-    $("cloudState")
-        .style
-        .display =
+    state.style.display =
         "none";
 
 
-    $("cloudTable")
-        .style
-        .display =
+    desktop.style.display =
         "block";
 
 
-    $("cloudBody")
-        .innerHTML =
+    document.getElementById(
+        "cloudTableBody"
+    ).innerHTML =
 
-        list.map(
-            item => {
+        rows.map(
 
-                return `
+            (item,index) =>
+
+                `
 
                 <tr>
 
-                    <td class="name">
+                    <td class="club-name">
 
-                        ${esc(
-                            item.club
-                        )}
+                        ${esc(item.club)}
 
                     </td>
 
                     <td>
 
-                        <span class="chip">
+                        <span class="chip chip-muted">
 
-                            ${esc(
-                                item.category
-                            )}
+                            ${esc(item.category)}
 
                         </span>
 
@@ -4403,9 +5762,17 @@ function renderClouds() {
                         ${
                             item.configured
 
-                                ? '<span class="chip chip-ok">✅ 已設定</span>'
+                                ? `
+                                  <span class="chip chip-success">
+                                      ✅ 已設定
+                                  </span>
+                                  `
 
-                                : '<span class="chip chip-warn">尚未設定</span>'
+                                : `
+                                  <span class="chip chip-warning">
+                                      尚未設定
+                                  </span>
+                                  `
                         }
 
                     </td>
@@ -4413,17 +5780,18 @@ function renderClouds() {
                     <td>
 
                         ${
+                            item.configured &&
                             item.url
 
                                 ? `
-                                    <a
-                                        class="link"
-                                        href="${esc(item.url)}"
-                                        target="_blank"
-                                        rel="noopener"
-                                    >
-                                        ${esc(item.url)}
-                                    </a>
+                                  <a
+                                      class="link"
+                                      href="${attr(item.url)}"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                  >
+                                      ${esc(item.url)}
+                                  </a>
                                   `
 
                                 : "-"
@@ -4431,10 +5799,10 @@ function renderClouds() {
 
                     </td>
 
-                    <td>
+                    <td class="muted">
 
                         ${esc(
-                            fmt(
+                            formatDate(
                                 item.updatedAt
                             )
                         )}
@@ -4443,25 +5811,33 @@ function renderClouds() {
 
                     <td>
 
-                        <div class="actions">
+                        <div class="action-group">
 
                             <button
-                                class="btn btn-edit mini"
-                                onclick="editCloud('${enc(item.club)}','${enc(item.url || "")}')"
+                                class="btn btn-edit small-btn"
+                                onclick="openCloudModal(${index})"
                             >
-                                ✏️ 設定
+
+                                ${
+                                    item.configured
+
+                                        ? "修改"
+
+                                        : "設定"
+                                }
+
                             </button>
 
                             ${
                                 item.configured
 
                                     ? `
-                                        <button
-                                            class="btn btn-danger mini"
-                                            onclick="clearCloud('${enc(item.club)}')"
-                                        >
-                                            清除
-                                        </button>
+                                      <button
+                                          class="btn btn-danger small-btn"
+                                          onclick="openClearCloudModal(${index})"
+                                      >
+                                          清除
+                                      </button>
                                       `
 
                                     : ""
@@ -4473,70 +5849,88 @@ function renderClouds() {
 
                 </tr>
 
-                `;
+                `
 
-            }
-        )
-        .join(
-            ""
-        );
+        ).join("");
 
 
-    $("cloudMobile")
-        .innerHTML =
+    mobile.innerHTML =
 
-        list.map(
-            item => {
+        rows.map(
 
-                return `
+            (item,index) =>
+
+                `
 
                 <div class="mobile-card">
 
                     <div class="mobile-title">
 
-                        ${esc(
-                            item.club
-                        )}
+                        ${esc(item.club)}
 
                     </div>
 
-                    <div class="mobile-sub">
+                    <div class="mobile-subtitle">
 
-                        ${esc(
-                            item.category
-                        )}
+                        ${esc(item.category)}
 
-                        ·
+                    </div>
 
-                        ${
-                            item.configured
+                    <div class="mobile-info">
 
-                                ? "✅ 已設定"
+                        <div>
 
-                                : "尚未設定"
-                        }
+                            ${
+                                item.configured
+
+                                    ? "✅ 已設定雲端"
+
+                                    : "尚未設定雲端"
+                            }
+
+                        </div>
+
+                        <div>
+
+                            最後修改：
+
+                            ${esc(
+                                formatDate(
+                                    item.updatedAt
+                                )
+                            )}
+
+                        </div>
 
                     </div>
 
                     <div class="mobile-actions">
 
                         <button
-                            class="btn btn-edit mini"
-                            onclick="editCloud('${enc(item.club)}','${enc(item.url || "")}')"
+                            class="btn btn-edit small-btn"
+                            onclick="openCloudModal(${index})"
                         >
-                            ✏️ 設定
+
+                            ${
+                                item.configured
+
+                                    ? "修改"
+
+                                    : "設定"
+                            }
+
                         </button>
 
                         ${
                             item.configured
 
                                 ? `
-                                    <button
-                                        class="btn btn-danger mini"
-                                        onclick="clearCloud('${enc(item.club)}')"
-                                    >
-                                        清除
-                                    </button>
+                                  <button
+                                      class="btn btn-danger small-btn"
+                                      onclick="openClearCloudModal(${index})"
+                                  >
+                                      清除
+                                  </button>
                                   `
 
                                 : ""
@@ -4546,48 +5940,81 @@ function renderClouds() {
 
                 </div>
 
-                `;
+                `
 
-            }
-        )
-        .join(
-            ""
-        );
+        ).join("");
 
 }
 
 
-async function editCloud(
-    clubEncoded,
-    urlEncoded
+/* ============================================================
+   雲端設定
+   ============================================================ */
+
+function openCloudModal(
+    index
 ) {
 
-    const club =
-        dec(
-            clubEncoded
-        );
+    const item =
+
+        STATE.filteredClouds[
+            index
+        ];
 
 
-    const oldUrl =
-        dec(
-            urlEncoded
-        );
+    if (!item) {
+
+        return;
+
+    }
 
 
-    const url =
+    STATE.pendingCloud =
+        item;
 
-        prompt(
 
-            `請輸入「${club}」的專屬雲端網址：`,
+    document.getElementById(
+        "cloudModalInfo"
+    ).innerHTML =
 
-            oldUrl
+        `
 
-        );
+        <b>社團：</b>
+        ${esc(item.club)}
 
+        <br>
+
+        <b>屬性：</b>
+        ${esc(item.category)}
+
+        `;
+
+
+    document.getElementById(
+        "cloudUrlInput"
+    ).value =
+
+        item.url ||
+        "";
+
+
+    document.getElementById(
+        "cloudModalError"
+    ).textContent =
+        "";
+
+
+    openModal(
+        "cloudModal"
+    );
+
+}
+
+
+function closeCloudModal() {
 
     if (
-        url ===
-        null
+        STATE.requestRunning
     ) {
 
         return;
@@ -4595,15 +6022,65 @@ async function editCloud(
     }
 
 
-    const value =
-        url.trim();
+    STATE.pendingCloud =
+        null;
 
 
-    if (!value) {
+    closeModal(
+        "cloudModal"
+    );
 
-        alert(
-            "請輸入雲端網址"
+}
+
+
+async function saveCloudLink() {
+
+    if (
+        STATE.requestRunning ||
+        !STATE.pendingCloud
+    ) {
+
+        return;
+
+    }
+
+
+    const item =
+        STATE.pendingCloud;
+
+
+    const url =
+
+        document
+            .getElementById(
+                "cloudUrlInput"
+            )
+            .value
+            .trim();
+
+
+    const errorBox =
+
+        document.getElementById(
+            "cloudModalError"
         );
+
+
+    const button =
+
+        document.getElementById(
+            "saveCloudBtn"
+        );
+
+
+    if (
+        !/^https:\/\/\S+$/i.test(
+            url
+        )
+    ) {
+
+        errorBox.textContent =
+            "請輸入有效的 https:// 網址。";
 
 
         return;
@@ -4613,33 +6090,43 @@ async function editCloud(
 
     try {
 
+        STATE.requestRunning =
+            true;
+
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "儲存中...";
+
+
         const result =
 
-            await api(
+            await adminCall(
 
                 "adminSetCloudLink",
 
                 {
-                    sessionToken:
-                        S.token,
 
                     clubName:
-                        club,
+                        item.club,
 
                     url:
-                        value
+                        url
+
                 }
 
             );
 
 
         if (
-            unauth(
-                result
-            )
+            result.error ===
+            "ADMIN_UNAUTHORIZED"
         ) {
 
-            return;
+            return handleUnauthorized();
 
         }
 
@@ -4648,56 +6135,116 @@ async function editCloud(
             !result.success
         ) {
 
-            throw new Error(
+            errorBox.textContent =
 
                 result.message ||
-                "設定失敗"
+                "儲存失敗";
 
-            );
+
+            return;
 
         }
 
 
-        toast(
-            "✅ 雲端連結已更新"
+        closeModal(
+            "cloudModal"
         );
+
+
+        STATE.pendingCloud =
+            null;
 
 
         await loadClouds();
 
+
+        showToast(
+
+            `✅ 已更新 ${item.club} 的雲端連結`
+
+        );
+
     }
 
-    catch (
-        error
-    ) {
+    catch (error) {
 
-        alert(
-            error.message
-        );
+        errorBox.textContent =
+            error.message;
+
+    }
+
+    finally {
+
+        STATE.requestRunning =
+            false;
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "儲存連結";
 
     }
 
 }
 
 
-async function clearCloud(
-    clubEncoded
+/* ============================================================
+   清除雲端
+   ============================================================ */
+
+function openClearCloudModal(
+    index
 ) {
 
-    const club =
-        dec(
-            clubEncoded
-        );
+    const item =
 
+        STATE.filteredClouds[
+            index
+        ];
+
+
+    if (!item) {
+
+        return;
+
+    }
+
+
+    STATE.pendingClearCloud =
+        item;
+
+
+    document.getElementById(
+        "clearCloudInfo"
+    ).innerHTML =
+
+        `
+
+        <b>社團：</b>
+        ${esc(item.club)}
+
+        <br>
+
+        <b>屬性：</b>
+        ${esc(item.category)}
+
+        `;
+
+
+    openModal(
+        "clearCloudModal"
+    );
+
+}
+
+
+function closeClearCloudModal() {
 
     if (
-
-        !confirm(
-
-            `確定清除「${club}」的雲端連結？`
-
-        )
-
+        STATE.requestRunning
     ) {
 
         return;
@@ -4705,32 +6252,76 @@ async function clearCloud(
     }
 
 
+    STATE.pendingClearCloud =
+        null;
+
+
+    closeModal(
+        "clearCloudModal"
+    );
+
+}
+
+
+async function confirmClearCloud() {
+
+    if (
+        STATE.requestRunning ||
+        !STATE.pendingClearCloud
+    ) {
+
+        return;
+
+    }
+
+
+    const item =
+        STATE.pendingClearCloud;
+
+
+    const button =
+
+        document.getElementById(
+            "clearCloudBtn"
+        );
+
+
     try {
+
+        STATE.requestRunning =
+            true;
+
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "清除中...";
+
 
         const result =
 
-            await api(
+            await adminCall(
 
                 "adminClearCloudLink",
 
                 {
-                    sessionToken:
-                        S.token,
 
                     clubName:
-                        club
+                        item.club
+
                 }
 
             );
 
 
         if (
-            unauth(
-                result
-            )
+            result.error ===
+            "ADMIN_UNAUTHORIZED"
         ) {
 
-            return;
+            return handleUnauthorized();
 
         }
 
@@ -4749,22 +6340,49 @@ async function clearCloud(
         }
 
 
-        toast(
-            "✅ 雲端連結已清除"
+        closeModal(
+            "clearCloudModal"
         );
+
+
+        STATE.pendingClearCloud =
+            null;
 
 
         await loadClouds();
 
+
+        showToast(
+
+            `✅ 已清除 ${item.club} 的雲端連結`
+
+        );
+
     }
 
-    catch (
-        error
-    ) {
+    catch (error) {
 
-        alert(
+        showToast(
+
+            "❌ " +
             error.message
+
         );
+
+    }
+
+    finally {
+
+        STATE.requestRunning =
+            false;
+
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "確認清除";
 
     }
 
@@ -4772,213 +6390,437 @@ async function clearCloud(
 
 
 /* ============================================================
-   Loading / Error / Empty
+   Loading
    ============================================================ */
 
-function setState(
-    prefix,
-    message
+function setLoading(
+    stateId,
+    desktopId,
+    text
 ) {
 
     const state =
-        $(
-            prefix +
-            "State"
+
+        document.getElementById(
+            stateId
         );
 
 
-    const table =
-        $(
-            prefix +
-            "Table"
-        );
+    state.style.display =
+        "block";
 
 
-    const mobile =
-        $(
-            prefix +
-            "Mobile"
-        );
+    state.innerHTML =
+
+        `
+
+        <div class="spinner"></div>
+
+        ${esc(text)}
+
+        `;
 
 
-    if (
-        table
-    ) {
+    if (desktopId) {
 
-        table.style.display =
+        document.getElementById(
+            desktopId
+        ).style.display =
             "none";
-
-    }
-
-
-    if (
-        mobile
-    ) {
-
-        mobile.innerHTML =
-            "";
-
-    }
-
-
-    if (
-        state
-    ) {
-
-        state.style.display =
-            "block";
-
-
-        state.innerHTML =
-
-            `<div class="spinner"></div>${esc(message)}`;
 
     }
 
 }
 
 
-function setError(
-    prefix,
+function showError(
+    id,
     message
 ) {
 
-    const state =
-        $(
-            prefix +
-            "State"
+    const element =
+
+        document.getElementById(
+            id
         );
 
 
-    const table =
-        $(
-            prefix +
-            "Table"
-        );
+    element.style.display =
+        "block";
 
 
-    const mobile =
-        $(
-            prefix +
-            "Mobile"
-        );
+    element.innerHTML =
 
+        `
 
-    if (
-        table
-    ) {
+        ⚠️
 
-        table.style.display =
-            "none";
+        ${esc(message)}
 
-    }
-
-
-    if (
-        mobile
-    ) {
-
-        mobile.innerHTML =
-            "";
-
-    }
-
-
-    if (
-        state
-    ) {
-
-        state.style.display =
-            "block";
-
-
-        state.innerHTML =
-
-            `⚠️ ${esc(message)}`;
-
-    }
+        `;
 
 }
 
 
-function empty(
-    prefix,
-    message
-) {
+/* ============================================================
+   畫面
+   ============================================================ */
 
-    const state =
-        $(
-            prefix +
-            "State"
-        );
+function showLoginScreen() {
 
-
-    const table =
-        $(
-            prefix +
-            "Table"
-        );
+    document.getElementById(
+        "loginScreen"
+    ).style.display =
+        "flex";
 
 
-    const mobile =
-        $(
-            prefix +
-            "Mobile"
-        );
-
-
-    if (
-        table
-    ) {
-
-        table.style.display =
-            "none";
-
-    }
-
-
-    if (
-        mobile
-    ) {
-
-        mobile.innerHTML =
-            "";
-
-    }
-
-
-    if (
-        state
-    ) {
-
-        state.style.display =
-            "block";
-
-
-        state.textContent =
-            message;
-
-    }
+    document.getElementById(
+        "adminApp"
+    ).style.display =
+        "none";
 
 }
 
 
-/* 點背景關閉 Modal */
+function showAdminApp() {
 
-window.addEventListener(
+    document.getElementById(
+        "loginScreen"
+    ).style.display =
+        "none";
 
-    "click",
+
+    document.getElementById(
+        "adminApp"
+    ).style.display =
+        "block";
+
+}
+
+
+/* ============================================================
+   密碼
+   ============================================================ */
+
+function togglePassword() {
+
+    const input =
+
+        document.getElementById(
+            "adminPassword"
+        );
+
+
+    input.type =
+
+        input.type ===
+        "password"
+
+            ? "text"
+
+            : "password";
+
+}
+
+
+/* ============================================================
+   Modal
+   ============================================================ */
+
+function openModal(
+    id
+) {
+
+    document.getElementById(
+        id
+    ).style.display =
+        "flex";
+
+}
+
+
+function closeModal(
+    id
+) {
+
+    document.getElementById(
+        id
+    ).style.display =
+        "none";
+
+}
+
+
+/* ============================================================
+   日期
+   ============================================================ */
+
+function formatDate(
+    iso
+) {
+
+    if (!iso) {
+
+        return "-";
+
+    }
+
+
+    const date =
+        new Date(
+            iso
+        );
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return String(
+            iso
+        );
+
+    }
+
+
+    return new Intl.DateTimeFormat(
+
+        "zh-TW",
+
+        {
+
+            timeZone:
+                "Asia/Taipei",
+
+            year:
+                "numeric",
+
+            month:
+                "2-digit",
+
+            day:
+                "2-digit",
+
+            hour:
+                "2-digit",
+
+            minute:
+                "2-digit"
+
+        }
+
+    ).format(
+        date
+    );
+
+}
+
+
+/* ============================================================
+   Escape
+   ============================================================ */
+
+function esc(
+    value
+) {
+
+    return String(
+        value ??
+        ""
+    )
+
+    .replaceAll(
+        "&",
+        "&amp;"
+    )
+
+    .replaceAll(
+        "<",
+        "&lt;"
+    )
+
+    .replaceAll(
+        ">",
+        "&gt;"
+    )
+
+    .replaceAll(
+        '"',
+        "&quot;"
+    )
+
+    .replaceAll(
+        "'",
+        "&#039;"
+    );
+
+}
+
+
+function attr(
+    value
+) {
+
+    return esc(
+        value
+    );
+
+}
+
+
+/* ============================================================
+   Toast
+   ============================================================ */
+
+let toastTimer =
+    null;
+
+
+function showToast(
+    message
+) {
+
+    const toast =
+
+        document.getElementById(
+            "toast"
+        );
+
+
+    toast.textContent =
+        message;
+
+
+    toast.classList.add(
+        "show"
+    );
+
+
+    if (
+        toastTimer
+    ) {
+
+        clearTimeout(
+            toastTimer
+        );
+
+    }
+
+
+    toastTimer =
+
+        setTimeout(
+
+            () => {
+
+                toast.classList.remove(
+                    "show"
+                );
+
+            },
+
+            3000
+
+        );
+
+}
+
+
+/* ============================================================
+   背景點擊關閉 Modal
+   ============================================================ */
+
+[
+
+    "clubEditModal",
+    "clubDeleteModal",
+    "cloudModal",
+    "clearCloudModal",
+    "unbindModal"
+
+].forEach(
+
+    id => {
+
+        document
+            .getElementById(
+                id
+            )
+            .addEventListener(
+
+                "click",
+
+                function(event) {
+
+                    if (
+                        event.target !==
+                        this
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    if (
+                        STATE.requestRunning
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    closeModal(
+                        id
+                    );
+
+                }
+
+            );
+
+    }
+
+);
+
+
+/* ============================================================
+   ESC
+   ============================================================ */
+
+document.addEventListener(
+
+    "keydown",
 
     event => {
 
         if (
-            event.target ===
-            $("clubModalBg")
+            event.key !==
+            "Escape"
+
+            ||
+
+            STATE.requestRunning
         ) {
 
-            closeClubModal();
+            return;
 
         }
+
+
+        [
+
+            "clubEditModal",
+            "clubDeleteModal",
+            "cloudModal",
+            "clearCloudModal",
+            "unbindModal"
+
+        ].forEach(
+            closeModal
+        );
 
     }
 
