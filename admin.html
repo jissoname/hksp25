@@ -1,687 +1,495 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
->
-
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>社團評選｜管理員後台</title>
 
 <style>
+*{box-sizing:border-box}
 
-* {
-    box-sizing: border-box;
-}
-
-:root {
-    --primary: #1a73e8;
-    --primary-dark: #1557b0;
-
-    --background: #f4f6f9;
-    --card: #ffffff;
-
-    --border: #e4e7ec;
-
-    --text: #202124;
-    --muted: #667085;
-
-    --danger: #d92d20;
-    --danger-bg: #fff1f0;
-
-    --success: #167542;
-    --success-bg: #e7f6ec;
-
-    --warning: #9a6700;
-    --warning-bg: #fff4dd;
+:root{
+    --p:#1a73e8;
+    --pd:#1557b0;
+    --bg:#f4f6f9;
+    --bd:#e4e7ec;
+    --tx:#202124;
+    --mut:#667085;
+    --ok:#167542;
+    --okbg:#e7f6ec;
+    --bad:#d92d20;
+    --badbg:#fff1f0;
+    --warn:#9a6700;
+    --warnbg:#fff4dd
 }
 
 html,
-body {
-    margin: 0;
-    padding: 0;
-
-    min-height: 100%;
-
-    background: var(--background);
-
+body{
+    margin:0;
+    min-height:100%;
+    background:var(--bg);
+    color:var(--tx);
     font-family:
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
         "Noto Sans TC",
         Roboto,
-        sans-serif;
-
-    color: var(--text);
+        sans-serif
 }
 
 button,
-input {
-    font-family: inherit;
+input,
+select{
+    font:inherit
 }
 
-button {
-    cursor: pointer;
+button{
+    cursor:pointer
 }
 
 
-/* =========================================================
+/* =========================
    登入
-   ========================================================= */
+   ========================= */
 
-.login-screen {
-
-    min-height: 100vh;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 24px;
-
+.login{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px
 }
 
-.login-card {
-
-    width: 100%;
-    max-width: 420px;
-
-    padding: 32px;
-
-    background: white;
-
-    border: 1px solid var(--border);
-
-    border-radius: 20px;
-
-    box-shadow:
-        0 12px 40px
-        rgba(16, 24, 40, 0.08);
-
+.login-card{
+    width:min(420px,100%);
+    background:#fff;
+    border:1px solid var(--bd);
+    border-radius:18px;
+    padding:30px;
+    box-shadow:0 12px 40px #10182814
 }
 
-.login-icon {
-
-    width: 58px;
-    height: 58px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin-bottom: 18px;
-
-    border-radius: 16px;
-
-    background: #e8f0fe;
-
-    font-size: 28px;
-
+.login-icon{
+    font-size:30px
 }
 
-.login-title {
-
-    margin: 0 0 7px;
-
-    font-size: 24px;
-    font-weight: 800;
-
+.login h1{
+    margin:10px 0 6px;
+    font-size:24px
 }
 
-.login-description {
-
-    margin-bottom: 24px;
-
-    color: var(--muted);
-
-    font-size: 14px;
-    line-height: 1.7;
-
+.muted{
+    color:var(--mut)
 }
 
-.form-label {
-
-    display: block;
-
-    margin-bottom: 7px;
-
-    font-size: 13px;
-    font-weight: 700;
-
+.input{
+    width:100%;
+    height:44px;
+    border:1px solid #d0d5dd;
+    border-radius:9px;
+    padding:0 12px;
+    outline:none;
+    background:#fff
 }
 
-.password-wrap {
-
-    display: flex;
-
-    gap: 8px;
-
+.input:focus{
+    border-color:var(--p);
+    box-shadow:0 0 0 3px #1a73e814
 }
 
-.form-input {
-
-    width: 100%;
-    height: 46px;
-
-    padding: 0 14px;
-
-    border: 1px solid #d0d5dd;
-
-    border-radius: 10px;
-
-    outline: none;
-
-    background: white;
-
-    font-size: 15px;
-
+.login-btn,
+.primary{
+    border:0;
+    background:var(--p);
+    color:#fff;
+    border-radius:9px;
+    font-weight:750
 }
 
-.form-input:focus {
-
-    border-color: var(--primary);
-
-    box-shadow:
-        0 0 0 3px
-        rgba(26, 115, 232, 0.10);
-
+.login-btn{
+    width:100%;
+    height:44px;
+    margin-top:12px
 }
 
-.password-toggle {
-
-    flex-shrink: 0;
-
-    width: 46px;
-
-    border: 1px solid #d0d5dd;
-
-    border-radius: 10px;
-
-    background: white;
-
-    font-size: 17px;
-
-}
-
-.login-btn {
-
-    width: 100%;
-    height: 46px;
-
-    margin-top: 16px;
-
-    border: none;
-
-    border-radius: 10px;
-
-    background: var(--primary);
-
-    color: white;
-
-    font-size: 15px;
-    font-weight: 750;
-
-}
-
-.login-btn:disabled {
-
-    opacity: 0.55;
-
-    cursor: not-allowed;
-
-}
-
-.login-error {
-
-    min-height: 20px;
-
-    margin-top: 12px;
-
-    color: var(--danger);
-
-    font-size: 13px;
-
+.error{
+    min-height:18px;
+    color:var(--bad);
+    font-size:12px;
+    margin-top:8px
 }
 
 
-/* =========================================================
+/* =========================
    主畫面
-   ========================================================= */
+   ========================= */
 
-.admin-app {
-
-    display: none;
-
-    min-height: 100vh;
-
+#adminApp{
+    display:none
 }
 
-.topbar {
+.topbar{
+    position:sticky;
+    top:0;
+    z-index:20;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    padding:
+        14px
+        max(
+            16px,
+            calc((100vw - 1180px)/2)
+        );
+    background:#ffffffed;
+    border-bottom:1px solid var(--bd);
+    backdrop-filter:blur(10px)
+}
 
-    position: sticky;
-    top: 0;
+.brand{
+    font-weight:850
+}
 
-    z-index: 50;
+.brand small{
+    display:block;
+    color:var(--mut);
+    font-weight:500;
+    margin-top:2px
+}
 
-    display: flex;
+.top-actions{
+    display:flex;
+    gap:8px
+}
 
-    align-items: center;
-    justify-content: space-between;
+.btn{
+    height:38px;
+    padding:0 13px;
+    border:1px solid var(--bd);
+    border-radius:8px;
+    background:#fff;
+    color:#344054;
+    font-weight:700
+}
 
-    gap: 20px;
+.btn-danger{
+    color:var(--bad);
+    border-color:#f5c7c4;
+    background:var(--badbg)
+}
+
+.btn-edit{
+    color:var(--pd);
+    border-color:#bdd5ff;
+    background:#e8f0fe
+}
+
+.btn-ok{
+    color:var(--ok);
+    border-color:#cfe8d7;
+    background:var(--okbg)
+}
+
+.main{
+    width:min(
+        1180px,
+        calc(100% - 28px)
+    );
+
+    margin:auto;
 
     padding:
-        15px
-        max(20px, calc((100vw - 1180px) / 2));
-
-    background:
-        rgba(255, 255, 255, 0.96);
-
-    border-bottom:
-        1px solid var(--border);
-
-    backdrop-filter:
-        blur(10px);
-
+        25px
+        0
+        50px
 }
 
-.brand-title {
-
-    font-size: 18px;
-
-    font-weight: 800;
-
+.heading{
+    margin-bottom:18px
 }
 
-.brand-subtitle {
-
-    margin-top: 2px;
-
-    color: var(--muted);
-
-    font-size: 12px;
-
+.heading h1{
+    margin:0;
+    font-size:25px
 }
 
-.topbar-actions {
-
-    display: flex;
-
-    gap: 8px;
-
+.heading p{
+    margin:5px 0 0;
+    color:var(--mut);
+    font-size:14px
 }
 
-.top-btn {
 
-    height: 38px;
+/* =========================
+   統計
+   ========================= */
 
-    padding: 0 14px;
-
-    border: 1px solid var(--border);
-
-    border-radius: 9px;
-
-    background: white;
-
-    color: #344054;
-
-    font-size: 13px;
-
-    font-weight: 700;
-
-}
-
-.logout-btn {
-
-    color: var(--danger);
-
-    border-color: #f5c7c4;
-
-}
-
-.main {
-
-    width:
-        min(
-            1180px,
-            calc(100% - 32px)
+.stats{
+    display:grid;
+    grid-template-columns:
+        repeat(
+            4,
+            1fr
         );
 
-    margin: 0 auto;
+    gap:12px;
 
-    padding:
-        28px
-        0
-        50px;
-
+    margin-bottom:18px
 }
 
-.page-heading {
-
-    margin-bottom: 22px;
-
+.stat{
+    background:#fff;
+    border:1px solid var(--bd);
+    border-radius:13px;
+    padding:18px
 }
 
-.page-title {
-
-    margin: 0;
-
-    font-size: 25px;
-
-    font-weight: 850;
-
+.stat .label{
+    font-size:12px;
+    color:var(--mut);
+    font-weight:700
 }
 
-.page-description {
-
-    margin-top: 6px;
-
-    color: var(--muted);
-
-    font-size: 14px;
-
+.stat .value{
+    font-size:27px;
+    font-weight:850;
+    margin-top:6px
 }
 
 
-/* =========================================================
-   統計
-   ========================================================= */
-
-.stats-grid {
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
-
-    gap: 15px;
-
-    margin-bottom: 22px;
-
-}
-
-.stat-card {
-
-    padding: 20px;
-
-    background: white;
-
-    border: 1px solid var(--border);
-
-    border-radius: 14px;
-
-    box-shadow:
-        0 3px 12px
-        rgba(16, 24, 40, 0.035);
-
-}
-
-.stat-label {
-
-    color: var(--muted);
-
-    font-size: 13px;
-
-    font-weight: 650;
-
-}
-
-.stat-number {
-
-    margin-top: 9px;
-
-    font-size: 28px;
-
-    font-weight: 850;
-
-}
-
-.stat-text {
-
-    margin-top: 10px;
-
-    font-size: 15px;
-
-    font-weight: 800;
-
-}
-
-.status-chip {
-
-    display: inline-block;
-
-    padding: 5px 10px;
-
-    border-radius: 999px;
-
-    font-size: 12px;
-
-    font-weight: 750;
-
-}
-
-.status-success {
-
-    background: var(--success-bg);
-
-    color: var(--success);
-
-}
-
-.status-warning {
-
-    background: var(--warning-bg);
-
-    color: var(--warning);
-
-}
-
-.status-empty {
-
-    background: #f2f4f7;
-
-    color: #475467;
-
-}
-
-
-/* =========================================================
+/* =========================
    Panel
-   ========================================================= */
+   ========================= */
 
-.panel {
-
-    margin-bottom: 22px;
-
-    background: white;
-
-    border: 1px solid var(--border);
-
-    border-radius: 15px;
-
-    overflow: hidden;
-
+.panel{
+    background:#fff;
+    border:1px solid var(--bd);
+    border-radius:14px;
+    margin-bottom:18px;
+    overflow:hidden;
     box-shadow:
         0 3px 12px
-        rgba(16, 24, 40, 0.035);
-
+        #10182809
 }
 
-.panel-header {
-
-    display: flex;
-
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 15px;
-
-    padding: 18px 20px;
-
-    border-bottom:
-        1px solid var(--border);
-
-}
-
-.panel-title {
-
-    font-size: 16px;
-
-    font-weight: 800;
-
-}
-
-.result-count {
-
-    color: var(--muted);
-
-    font-size: 13px;
-
-}
-
-.search-wrap {
-
-    padding: 16px 20px;
-
-    border-bottom:
-        1px solid var(--border);
-
-    background: #fcfcfd;
-
-}
-
-.search-box {
-
-    position: relative;
-
-}
-
-.search-icon {
-
-    position: absolute;
-
-    top: 50%;
-    left: 14px;
-
-    transform:
-        translateY(-50%);
-
-}
-
-.search-input {
-
-    width: 100%;
-    height: 44px;
+.panel-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
 
     padding:
-        0
-        14px
-        0
-        42px;
+        16px
+        18px;
 
-    border: 1px solid #d0d5dd;
+    border-bottom:
+        1px solid
+        var(--bd)
+}
 
-    border-radius: 10px;
+.panel-title{
+    font-weight:850
+}
 
-    outline: none;
+.count{
+    font-size:12px;
+    color:var(--mut)
+}
 
-    font-size: 14px;
+.note{
+    padding:
+        10px
+        18px;
+
+    background:#f8fbff;
+
+    color:#475467;
+
+    font-size:12px;
+    line-height:1.65;
+
+    border-bottom:
+        1px solid
+        var(--bd)
+}
+
+.toolbar{
+    display:flex;
+    gap:10px;
+
+    padding:
+        13px
+        18px;
+
+    background:#fcfcfd;
+
+    border-bottom:
+        1px solid
+        var(--bd)
+}
+
+.toolbar .input{
+    flex:1
+}
+
+.toolbar select{
+    max-width:180px
+}
+
+.add-btn{
+    height:44px;
+    padding:0 15px
+}
+
+.state{
+    padding:
+        35px
+        18px;
+
+    text-align:center;
+    color:var(--mut)
+}
+
+.spinner{
+    width:26px;
+    height:26px;
+
+    margin:
+        0 auto
+        10px;
+
+    border:
+        3px solid
+        #e8eef7;
+
+    border-top-color:
+        var(--p);
+
+    border-radius:50%;
+
+    animation:
+        spin
+        .8s
+        linear
+        infinite
+}
+
+@keyframes spin{
+
+    to{
+        transform:
+            rotate(
+                360deg
+            )
+    }
 
 }
 
-.search-input:focus {
 
-    border-color: var(--primary);
-
-    box-shadow:
-        0 0 0 3px
-        rgba(26, 115, 232, 0.08);
-
-}
-
-
-/* =========================================================
+/* =========================
    Table
-   ========================================================= */
+   ========================= */
 
-.table-wrap {
-
-    width: 100%;
-
-    overflow-x: auto;
-
+.table-wrap{
+    overflow:auto
 }
 
-table {
-
-    width: 100%;
-
-    border-collapse: collapse;
-
-    min-width: 900px;
-
+table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:760px
 }
 
 th,
-td {
-
+td{
     padding:
-        14px
-        16px;
+        12px
+        14px;
 
     border-bottom:
-        1px solid #eaecf0;
+        1px solid
+        #eaecf0;
 
-    text-align: left;
+    text-align:left;
+    vertical-align:middle;
 
-    vertical-align: middle;
-
+    font-size:13px
 }
 
-th {
-
-    background: #f9fafb;
-
-    color: #667085;
-
-    font-size: 12px;
-
-    font-weight: 750;
-
-    white-space: nowrap;
-
+th{
+    background:#f9fafb;
+    color:#667085;
+    font-size:12px;
+    white-space:nowrap
 }
 
-td {
-
-    font-size: 13px;
-
+.name{
+    font-weight:800
 }
 
-tbody tr:hover {
+.chip{
+    display:inline-block;
 
-    background: #fafcff;
+    padding:
+        4px
+        8px;
 
+    border-radius:999px;
+
+    background:#f2f4f7;
+    color:#475467;
+
+    font-size:11px;
+    font-weight:750
 }
 
-.line-name,
-.club-name {
-
-    font-weight: 750;
-
+.chip-ok{
+    background:var(--okbg);
+    color:var(--ok)
 }
 
-.user-id {
+.chip-bad{
+    background:var(--badbg);
+    color:var(--bad)
+}
 
-    max-width: 220px;
+.chip-warn{
+    background:var(--warnbg);
+    color:var(--warn)
+}
 
-    color: var(--muted);
+.actions{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap
+}
 
+.mini{
+    height:32px;
+    padding:0 10px;
+    font-size:12px;
+    border-radius:7px
+}
+
+.link{
+    display:block;
+    max-width:300px;
+
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+
+    color:var(--p);
+    text-decoration:none
+}
+
+.link:hover{
+    text-decoration:underline
+}
+
+.mono{
     font-family:
         ui-monospace,
         SFMono-Regular,
@@ -689,1013 +497,362 @@ tbody tr:hover {
         Consolas,
         monospace;
 
-    font-size: 11px;
+    font-size:11px;
 
-    word-break: break-all;
+    color:var(--mut);
 
-}
-
-.category-chip {
-
-    display: inline-block;
-
-    padding: 5px 9px;
-
-    border-radius: 999px;
-
-    background: #f2f4f7;
-
-    color: #475467;
-
-    font-size: 11px;
-
-    font-weight: 700;
-
-}
-
-.date-text {
-
-    color: var(--muted);
-
-    white-space: nowrap;
-
-}
-
-.cloud-link {
-
-    display: block;
-
-    max-width: 280px;
-
-    color: var(--primary);
-
-    overflow: hidden;
-
-    text-overflow: ellipsis;
-
-    white-space: nowrap;
-
-    text-decoration: none;
-
-}
-
-.cloud-link:hover {
-
-    text-decoration: underline;
-
+    word-break:
+        break-all
 }
 
 
-/* =========================================================
-   Buttons
-   ========================================================= */
+/* =========================
+   手機版
+   ========================= */
 
-.unbind-btn,
-.edit-btn,
-.clear-btn,
-.open-btn {
+.mobile-list{
+    display:none
+}
 
+.mobile-card{
     padding:
-        7px
-        11px;
-
-    border-radius: 8px;
-
-    font-size: 12px;
-
-    font-weight: 750;
-
-}
-
-.unbind-btn,
-.clear-btn {
-
-    border:
-        1px solid #f5c7c4;
-
-    background: var(--danger-bg);
-
-    color: var(--danger);
-
-}
-
-.edit-btn {
-
-    border:
-        1px solid #bdd5ff;
-
-    background: #e8f0fe;
-
-    color: var(--primary-dark);
-
-}
-
-.open-btn {
-
-    border:
-        1px solid #cfe8d7;
-
-    background:
-        var(--success-bg);
-
-    color:
-        var(--success);
-
-}
-
-.action-group {
-
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 6px;
-
-}
-
-
-/* =========================================================
-   手機卡
-   ========================================================= */
-
-.mobile-list {
-
-    display: none;
-
-}
-
-.mobile-card {
-
-    padding: 17px;
-
-    border-bottom:
-        1px solid var(--border);
-
-}
-
-.mobile-card:last-child {
-
-    border-bottom: none;
-
-}
-
-.mobile-card-top {
-
-    display: flex;
-
-    justify-content: space-between;
-
-    gap: 12px;
-
-}
-
-.mobile-title {
-
-    font-size: 15px;
-
-    font-weight: 800;
-
-}
-
-.mobile-subtitle {
-
-    margin-top: 4px;
-
-    color: var(--primary);
-
-    font-size: 13px;
-
-    font-weight: 750;
-
-}
-
-.mobile-info {
-
-    display: grid;
-
-    gap: 7px;
-
-    margin-top: 13px;
-
-    color: var(--muted);
-
-    font-size: 12px;
-
-}
-
-.mobile-id {
-
-    word-break: break-all;
-
-}
-
-
-/* =========================================================
-   State
-   ========================================================= */
-
-.state-box {
-
-    padding: 50px 20px;
-
-    text-align: center;
-
-    color: var(--muted);
-
-}
-
-.state-icon {
-
-    margin-bottom: 10px;
-
-    font-size: 30px;
-
-}
-
-.spinner {
-
-    width: 30px;
-    height: 30px;
-
-    margin:
-        0
-        auto
-        12px;
-
-    border:
-        3px solid #e8eef7;
-
-    border-top-color:
-        var(--primary);
-
-    border-radius: 50%;
-
-    animation:
-        spin
-        .8s
-        linear
-        infinite;
-
-}
-
-@keyframes spin {
-
-    to {
-        transform:
-            rotate(360deg);
-    }
-
-}
-
-
-/* =========================================================
-   Modal
-   ========================================================= */
-
-.modal-backdrop {
-
-    position: fixed;
-
-    inset: 0;
-
-    z-index: 1000;
-
-    display: none;
-
-    align-items: center;
-    justify-content: center;
-
-    padding: 20px;
-
-    background:
-        rgba(16,24,40,0.55);
-
-}
-
-.modal {
-
-    width: 100%;
-    max-width: 470px;
-
-    background: white;
-
-    border-radius: 17px;
-
-    overflow: hidden;
-
-    box-shadow:
-        0 24px 60px
-        rgba(16,24,40,0.22);
-
-}
-
-.modal-body {
-
-    padding: 24px;
-
-}
-
-.modal-icon {
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    width: 45px;
-    height: 45px;
-
-    margin-bottom: 15px;
-
-    border-radius: 50%;
-
-    background: #e8f0fe;
-
-    font-size: 22px;
-
-}
-
-.modal-icon-danger {
-
-    background: var(--danger-bg);
-
-}
-
-.modal-title {
-
-    margin: 0;
-
-    font-size: 18px;
-
-    font-weight: 850;
-
-}
-
-.modal-description {
-
-    margin-top: 8px;
-
-    color: var(--muted);
-
-    font-size: 13px;
-
-    line-height: 1.7;
-
-}
-
-.modal-info {
-
-    margin-top: 16px;
-
-    padding: 13px;
-
-    border-radius: 10px;
-
-    background: #f9fafb;
-
-    font-size: 13px;
-
-    line-height: 1.8;
-
-}
-
-.modal-input-label {
-
-    display: block;
-
-    margin:
-        18px
-        0
-        7px;
-
-    font-size: 13px;
-
-    font-weight: 750;
-
-}
-
-.modal-input {
-
-    width: 100%;
-    height: 44px;
-
-    padding:
-        0
-        13px;
-
-    border:
-        1px solid #d0d5dd;
-
-    border-radius: 9px;
-
-    outline: none;
-
-    font-size: 14px;
-
-}
-
-.modal-input:focus {
-
-    border-color: var(--primary);
-
-    box-shadow:
-        0 0 0 3px
-        rgba(26,115,232,0.08);
-
-}
-
-.modal-error {
-
-    min-height: 18px;
-
-    margin-top: 8px;
-
-    color: var(--danger);
-
-    font-size: 12px;
-
-}
-
-.modal-footer {
-
-    display: flex;
-
-    justify-content: flex-end;
-
-    gap: 9px;
-
-    padding:
-        16px
-        24px;
-
-    border-top:
-        1px solid var(--border);
-
-    background: #fcfcfd;
-
-}
-
-.modal-btn {
-
-    height: 39px;
-
-    padding:
-        0
+        15px
         16px;
 
-    border-radius: 9px;
-
-    font-size: 13px;
-
-    font-weight: 750;
-
+    border-bottom:
+        1px solid
+        var(--bd)
 }
 
-.cancel-btn {
-
-    border:
-        1px solid #d0d5dd;
-
-    background: white;
-
-    color: #344054;
-
+.mobile-card:last-child{
+    border-bottom:0
 }
 
-.primary-btn {
-
-    border: none;
-
-    background: var(--primary);
-
-    color: white;
-
+.mobile-title{
+    font-weight:850
 }
 
-.danger-btn {
-
-    border: none;
-
-    background: var(--danger);
-
-    color: white;
-
+.mobile-sub{
+    margin-top:4px;
+    color:var(--mut);
+    font-size:12px
 }
 
-.modal-btn:disabled {
-
-    opacity: 0.55;
-
-    cursor: not-allowed;
-
+.mobile-actions{
+    margin-top:10px;
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap
 }
 
 
-/* =========================================================
-   Toast
-   ========================================================= */
+/* =========================
+   表單統計
+   ========================= */
 
-.toast {
+.summary{
+    display:grid;
 
-    position: fixed;
-
-    right: 20px;
-    bottom: 20px;
-
-    z-index: 2000;
-
-    max-width:
-        min(
-            380px,
-            calc(100% - 40px)
+    grid-template-columns:
+        repeat(
+            4,
+            1fr
         );
 
-    padding:
-        12px
-        16px;
-
-    border-radius: 10px;
-
-    background: #101828;
-
-    color: white;
-
-    font-size: 13px;
-
-    box-shadow:
-        0 10px 35px
-        rgba(16,24,40,0.2);
-
-    opacity: 0;
-
-    transform:
-        translateY(12px);
-
-    pointer-events: none;
-
-    transition: .25s ease;
-
-}
-
-.toast.show {
-
-    opacity: 1;
-
-    transform:
-        translateY(0);
-
-}
-
-
-
-
-/* =========================================================
-   Google 表單填寫進度
-   ========================================================= */
-
-.form-summary-grid {
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
-
-    gap: 12px;
+    gap:10px;
 
     padding:
+        15px
         18px
-        20px
-        0;
-
+        0
 }
 
-.form-summary-card {
-
-    padding: 14px;
-
+.summary-card{
     border:
-        1px solid var(--border);
+        1px solid
+        var(--bd);
 
-    border-radius: 12px;
+    border-radius:10px;
 
-    background: #fcfcfd;
+    padding:12px;
 
+    background:#fcfcfd
 }
 
-.form-summary-label {
-
-    color: var(--muted);
-
-    font-size: 12px;
-
-    font-weight: 700;
-
+.summary-card small{
+    color:var(--mut);
+    font-weight:700
 }
 
-.form-summary-value {
-
-    margin-top: 6px;
-
-    font-size: 23px;
-
-    font-weight: 850;
-
+.summary-card b{
+    display:block;
+    font-size:22px;
+    margin-top:4px
 }
 
-.form-progress-toolbar {
 
-    display: grid;
+/* =========================
+   活動時程
+   ========================= */
 
-    grid-template-columns:
-        minmax(0, 1fr)
-        180px;
-
-    gap: 10px;
-
+.event-body{
     padding:
         16px
-        20px;
-
-    border-bottom:
-        1px solid var(--border);
-
+        18px
 }
 
-.form-progress-toolbar .search-box {
+.event-grid{
+    display:grid;
 
-    width: 100%;
+    grid-template-columns:
+        repeat(
+            2,
+            1fr
+        );
 
+    gap:12px
 }
 
-.form-filter-select {
+.event-field{
+    padding:13px;
 
-    width: 100%;
-    height: 44px;
+    border:
+        1px solid
+        var(--bd);
+
+    border-radius:10px;
+
+    background:#fcfcfd
+}
+
+.event-field b{
+    font-size:13px
+}
+
+.event-field small{
+    display:block;
+    color:var(--mut);
+
+    margin:
+        4px
+        0
+        9px
+}
+
+.event-row{
+    display:grid;
+
+    grid-template-columns:
+        1fr
+        125px;
+
+    gap:7px
+}
+
+.event-save{
+    display:flex;
+
+    justify-content:flex-end;
+    align-items:center;
+
+    gap:10px;
+
+    margin-top:12px
+}
+
+.event-save .error{
+    flex:1;
+    margin:0
+}
+
+
+/* =========================
+   Modal
+   ========================= */
+
+.modal-bg{
+    position:fixed;
+    inset:0;
+
+    z-index:100;
+
+    display:none;
+
+    align-items:center;
+    justify-content:center;
+
+    padding:18px;
+
+    background:#1018288c
+}
+
+.modal{
+    width:min(
+        470px,
+        100%
+    );
+
+    background:#fff;
+
+    border-radius:15px;
+
+    overflow:hidden
+}
+
+.modal-body{
+    padding:22px
+}
+
+.modal h2{
+    margin:
+        0 0 8px;
+
+    font-size:19px
+}
+
+.modal label{
+    display:block;
+
+    font-size:12px;
+    font-weight:750;
+
+    margin:
+        14px
+        0
+        6px
+}
+
+.modal-foot{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
 
     padding:
-        0
-        12px;
+        14px
+        22px;
 
-    border:
-        1px solid #d0d5dd;
-
-    border-radius: 10px;
-
-    outline: none;
-
-    background: white;
-
-    color: #344054;
-
-    font-size: 14px;
-
-    font-weight: 650;
-
-}
-
-.form-filter-select:focus {
-
-    border-color: var(--primary);
-
-    box-shadow:
-        0 0 0 3px
-        rgba(26, 115, 232, 0.08);
-
-}
-
-.form-progress-time {
-
-    color: var(--muted);
-
-    font-size: 12px;
-
-    white-space: nowrap;
-
-}
-
-
-/* =========================================================
-   活動時程管理
-   ========================================================= */
-
-.event-panel-body {
-
-    padding: 20px;
-
-}
-
-.event-grid {
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(2, minmax(0, 1fr));
-
-    gap: 14px;
-
-}
-
-.event-field {
-
-    padding: 15px;
-
-    border:
-        1px solid var(--border);
-
-    border-radius: 12px;
-
-    background: #fcfcfd;
-
-}
-
-.event-field-title {
-
-    margin-bottom: 5px;
-
-    font-size: 14px;
-
-    font-weight: 800;
-
-}
-
-.event-field-note {
-
-    margin-bottom: 11px;
-
-    color: var(--muted);
-
-    font-size: 12px;
-
-}
-
-.event-input-row {
-
-    display: grid;
-
-    grid-template-columns:
-        minmax(0, 1fr)
-        130px;
-
-    gap: 8px;
-
-}
-
-.event-input {
-
-    width: 100%;
-    height: 42px;
-
-    padding: 0 11px;
-
-    border:
-        1px solid #d0d5dd;
-
-    border-radius: 9px;
-
-    outline: none;
-
-    background: white;
-
-    font-size: 14px;
-
-}
-
-.event-input:focus {
-
-    border-color: var(--primary);
-
-    box-shadow:
-        0 0 0 3px
-        rgba(26,115,232,0.08);
-
-}
-
-.event-footer {
-
-    display: flex;
-
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 12px;
-
-    margin-top: 16px;
-
-    padding-top: 16px;
+    background:#fcfcfd;
 
     border-top:
-        1px solid var(--border);
-
+        1px solid
+        var(--bd)
 }
 
-.event-meta {
-
-    color: var(--muted);
-
-    font-size: 12px;
-
-    line-height: 1.7;
-
+.modal-foot button{
+    height:38px;
+    padding:0 15px;
+    border-radius:8px;
+    font-weight:750
 }
 
-.event-save-btn {
 
-    flex-shrink: 0;
+/* =========================
+   Toast
+   ========================= */
 
-    min-width: 130px;
-    height: 42px;
+.toast{
+    position:fixed;
 
-    padding: 0 16px;
+    right:18px;
+    bottom:18px;
 
-    border: none;
+    z-index:200;
 
-    border-radius: 9px;
+    background:#101828;
+    color:#fff;
 
-    background: var(--primary);
+    border-radius:9px;
 
-    color: white;
+    padding:
+        11px
+        14px;
 
-    font-size: 13px;
-    font-weight: 800;
+    max-width:360px;
 
+    opacity:0;
+
+    transform:
+        translateY(
+            8px
+        );
+
+    pointer-events:none;
+
+    transition:.2s
 }
 
-.event-save-btn:disabled {
-
-    opacity: 0.55;
-
-    cursor: not-allowed;
-
+.toast.show{
+    opacity:1;
+    transform:none
 }
 
-.event-error {
 
-    min-height: 18px;
-
-    margin-top: 10px;
-
-    color: var(--danger);
-
-    font-size: 12px;
-
-}
-
-/* =========================================================
+/* =========================
    Responsive
-   ========================================================= */
+   ========================= */
 
-@media
-(max-width: 900px) {
+@media(max-width:800px){
 
-    .stats-grid {
+    .stats{
         grid-template-columns:
-            repeat(2, 1fr);
+            1fr
+            1fr
     }
 
-}
-
-@media
-(max-width: 760px) {
-
-    .topbar {
-
-        padding:
-            13px
-            15px;
-
+    .desktop{
+        display:none!important
     }
 
-    .brand-subtitle {
-
-        display: none;
-
+    .mobile-list{
+        display:block
     }
 
-    .top-btn span {
-
-        display: none;
-
+    .summary{
+        grid-template-columns:
+            1fr
+            1fr
     }
 
-    .main {
+    .event-grid{
+        grid-template-columns:
+            1fr
+    }
 
+    .event-row{
+        grid-template-columns:
+            1fr
+    }
+
+    .toolbar{
+        flex-direction:column
+    }
+
+    .toolbar select{
+        max-width:none
+    }
+
+    .topbar small{
+        display:none
+    }
+
+    .main{
         width:
-            calc(100% - 22px);
+            calc(
+                100% - 20px
+            );
 
-        padding:
-            18px
-            0
-            35px;
-
-    }
-
-    .page-title {
-
-        font-size: 21px;
-
-    }
-
-    .stats-grid {
-
-        grid-template-columns:
-            1fr
-            1fr;
-
-    }
-
-    .desktop-table {
-
-        display: none !important;
-
-    }
-
-    .mobile-list {
-
-        display: block;
-
-    }
-
-    .panel-header {
-
-        padding: 16px;
-
-    }
-
-    .search-wrap {
-
-        padding:
-            13px
-            16px;
-
-    }
-
-    .form-summary-grid {
-
-        grid-template-columns:
-            1fr
-            1fr;
-
-        padding:
-            14px
-            16px
-            0;
-
-    }
-
-    .form-progress-toolbar {
-
-        grid-template-columns:
-            1fr;
-
-        padding:
-            13px
-            16px;
-
-    }
-
-    .event-grid {
-
-        grid-template-columns:
-            1fr;
-
-    }
-
-    .event-input-row {
-
-        grid-template-columns:
-            1fr;
-
-    }
-
-    .event-footer {
-
-        align-items: stretch;
-        flex-direction: column;
-
-    }
-
-    .event-save-btn {
-
-        width: 100%;
-
+        padding-top:16px
     }
 
 }
-
 </style>
-
 </head>
 
 <body>
 
-
-<!-- ======================================================
-     登入
-     ====================================================== -->
-
 <section
     id="loginScreen"
-    class="login-screen"
+    class="login"
 >
 
 <div class="login-card">
@@ -1704,78 +861,38 @@ tbody tr:hover {
         🛠️
     </div>
 
-    <h1 class="login-title">
+    <h1>
         管理員後台
     </h1>
 
-    <div class="login-description">
-
+    <p class="muted">
         社團評選暨觀摩活動管理系統
-
-        <br>
-
-        請輸入管理員密碼。
-
-    </div>
+    </p>
 
     <form
-        onsubmit="handleAdminLogin(event)"
+        onsubmit="adminLogin(event)"
     >
 
-        <label
-            class="form-label"
-            for="adminPassword"
+        <input
+            id="adminPassword"
+            class="input"
+            type="password"
+            placeholder="請輸入管理員密碼"
+            autocomplete="current-password"
+            required
         >
-            管理員密碼
-        </label>
-
-        <div class="password-wrap">
-
-            <input
-
-                id="adminPassword"
-
-                class="form-input"
-
-                type="password"
-
-                placeholder="請輸入管理員密碼"
-
-                autocomplete="current-password"
-
-                required
-
-            >
-
-            <button
-
-                type="button"
-
-                class="password-toggle"
-
-                onclick="togglePassword()"
-
-            >
-                👁️
-            </button>
-
-        </div>
 
         <button
-
             id="loginBtn"
-
-            type="submit"
-
             class="login-btn"
-
+            type="submit"
         >
             登入管理後台
         </button>
 
         <div
             id="loginError"
-            class="login-error"
+            class="error"
         ></div>
 
     </form>
@@ -1785,48 +902,40 @@ tbody tr:hover {
 </section>
 
 
-
-<!-- ======================================================
-     主後台
-     ====================================================== -->
-
-<div
-    id="adminApp"
-    class="admin-app"
->
+<div id="adminApp">
 
 <header class="topbar">
 
-    <div>
+    <div class="brand">
 
-        <div class="brand-title">
-            🛠️ 社團評選管理後台
-        </div>
+        🛠️ 社團評選管理後台
 
-        <div class="brand-subtitle">
+        <small>
             115學年度第一學期全校學生社團評選暨觀摩活動
-        </div>
+        </small>
 
     </div>
 
-    <div class="topbar-actions">
+    <div class="top-actions">
 
         <button
-            type="button"
-            class="top-btn"
+            class="btn"
             onclick="refreshAllData()"
         >
             🔄
-            <span>重新整理</span>
+            <span>
+                重新整理
+            </span>
         </button>
 
         <button
-            type="button"
-            class="top-btn logout-btn"
-            onclick="logoutAdmin()"
+            class="btn btn-danger"
+            onclick="adminLogout()"
         >
             🚪
-            <span>登出</span>
+            <span>
+                登出
+            </span>
         </button>
 
     </div>
@@ -1836,35 +945,34 @@ tbody tr:hover {
 
 <main class="main">
 
+<div class="heading">
 
-<div class="page-heading">
-
-    <h1 class="page-title">
+    <h1>
         社團管理中心
     </h1>
 
-    <div class="page-description">
-        管理 LINE 社團綁定、各社團專屬雲端與活動重要時程。
-    </div>
+    <p>
+        管理社團名單、LINE 綁定、專屬雲端、Google 表單進度與活動時程。
+    </p>
 
 </div>
 
 
-<!-- ======================================================
+<!-- =========================
      統計
-     ====================================================== -->
+     ========================= -->
 
-<section class="stats-grid">
+<section class="stats">
 
-    <div class="stat-card">
+    <div class="stat">
 
-        <div class="stat-label">
+        <div class="label">
             已綁定帳號
         </div>
 
         <div
             id="bindingCount"
-            class="stat-number"
+            class="value"
         >
             -
         </div>
@@ -1872,15 +980,15 @@ tbody tr:hover {
     </div>
 
 
-    <div class="stat-card">
+    <div class="stat">
 
-        <div class="stat-label">
+        <div class="label">
             社團總數
         </div>
 
         <div
-            id="cloudTotalCount"
-            class="stat-number"
+            id="clubTotalCount"
+            class="value"
         >
             -
         </div>
@@ -1888,15 +996,15 @@ tbody tr:hover {
     </div>
 
 
-    <div class="stat-card">
+    <div class="stat">
 
-        <div class="stat-label">
+        <div class="label">
             已設定雲端
         </div>
 
         <div
             id="cloudConfiguredCount"
-            class="stat-number"
+            class="value"
         >
             -
         </div>
@@ -1904,18 +1012,17 @@ tbody tr:hover {
     </div>
 
 
-    <div class="stat-card">
+    <div class="stat">
 
-        <div class="stat-label">
+        <div class="label">
             綁定模式
         </div>
 
-        <div class="stat-text">
-
-            <span class="status-chip status-success">
-                🔒 單次綁定
-            </span>
-
+        <div
+            class="value"
+            style="font-size:16px"
+        >
+            🔒 單次綁定
         </div>
 
     </div>
@@ -1923,22 +1030,131 @@ tbody tr:hover {
 </section>
 
 
-
-<!-- ======================================================
-     活動時程管理
-     ====================================================== -->
+<!-- =========================
+     社團名單管理
+     ========================= -->
 
 <section class="panel">
 
-<div class="panel-header">
+<div class="panel-head">
+
+    <div class="panel-title">
+        🏫 社團名單管理
+    </div>
+
+    <div
+        id="clubCount"
+        class="count"
+    >
+        載入中...
+    </div>
+
+</div>
+
+
+<div class="note">
+
+    這裡是系統正式社團名單。
+    新增、修改或刪除後，
+    其他功能會使用最新名單。
+    修改名稱時，
+    後端會同步搬移綁定、雲端與表單紀錄。
+
+</div>
+
+
+<div class="toolbar">
+
+    <input
+        id="clubSearch"
+        class="input"
+        placeholder="搜尋社團名稱或屬性"
+        oninput="renderClubs()"
+    >
+
+    <button
+        class="primary add-btn"
+        onclick="openClubModal()"
+    >
+        ＋ 新增社團
+    </button>
+
+</div>
+
+
+<div
+    id="clubState"
+    class="state"
+>
+
+    <div class="spinner"></div>
+
+    正在讀取社團名單...
+
+</div>
+
+
+<div
+    id="clubTable"
+    class="table-wrap desktop"
+    style="display:none"
+>
+
+<table>
+
+<thead>
+
+<tr>
+
+    <th>
+        社團名稱
+    </th>
+
+    <th>
+        社團屬性
+    </th>
+
+    <th>
+        操作
+    </th>
+
+</tr>
+
+</thead>
+
+
+<tbody
+    id="clubBody"
+></tbody>
+
+</table>
+
+</div>
+
+
+<div
+    id="clubMobile"
+    class="mobile-list"
+></div>
+
+</section>
+
+
+<!-- =========================
+     活動時程
+     ========================= -->
+
+<section class="panel">
+
+<div class="panel-head">
 
     <div class="panel-title">
         ⏰ 活動時程管理
     </div>
 
     <div
-        id="eventConfigStatus"
-        class="result-count"
+        id="eventStatus"
+        class="count"
     >
         載入中...
     </div>
@@ -1947,8 +1163,8 @@ tbody tr:hover {
 
 
 <div
-    id="eventConfigState"
-    class="state-box"
+    id="eventState"
+    class="state"
 >
 
     <div class="spinner"></div>
@@ -1959,178 +1175,169 @@ tbody tr:hover {
 
 
 <div
-    id="eventConfigForm"
-    class="event-panel-body"
-    style="display:none;"
+    id="eventBody"
+    class="event-body"
+    style="display:none"
 >
 
-    <div class="event-grid">
-
-        <div class="event-field">
-
-            <div class="event-field-title">
-                📂 資料繳交截止
-            </div>
-
-            <div class="event-field-note">
-                社團資料最後繳交時間
-            </div>
-
-            <div class="event-input-row">
-
-                <input
-                    id="dataDeadlineDate"
-                    class="event-input"
-                    type="date"
-                >
-
-                <input
-                    id="dataDeadlineTime"
-                    class="event-input"
-                    type="time"
-                >
-
-            </div>
-
-        </div>
+<div class="event-grid">
 
 
-        <div class="event-field">
+<div class="event-field">
 
-            <div class="event-field-title">
-                📝 表單填寫截止
-            </div>
+    <b>
+        📂 資料繳交截止
+    </b>
 
-            <div class="event-field-note">
-                活動表單最後填寫時間
-            </div>
+    <small>
+        社團資料最後繳交時間
+    </small>
 
-            <div class="event-input-row">
+    <div class="event-row">
 
-                <input
-                    id="formDeadlineDate"
-                    class="event-input"
-                    type="date"
-                >
+        <input
+            id="dataDate"
+            class="input"
+            type="date"
+        >
 
-                <input
-                    id="formDeadlineTime"
-                    class="event-input"
-                    type="time"
-                >
-
-            </div>
-
-        </div>
-
-
-        <div class="event-field">
-
-            <div class="event-field-title">
-                🎯 活動開始
-            </div>
-
-            <div class="event-field-note">
-                社團評選暨觀摩活動開始時間
-            </div>
-
-            <div class="event-input-row">
-
-                <input
-                    id="eventStartDate"
-                    class="event-input"
-                    type="date"
-                >
-
-                <input
-                    id="eventStartTime"
-                    class="event-input"
-                    type="time"
-                >
-
-            </div>
-
-        </div>
-
-
-        <div class="event-field">
-
-            <div class="event-field-title">
-                🏁 活動結束
-            </div>
-
-            <div class="event-field-note">
-                社團評選暨觀摩活動結束時間
-            </div>
-
-            <div class="event-input-row">
-
-                <input
-                    id="eventEndDate"
-                    class="event-input"
-                    type="date"
-                >
-
-                <input
-                    id="eventEndTime"
-                    class="event-input"
-                    type="time"
-                >
-
-            </div>
-
-        </div>
+        <input
+            id="dataTime"
+            class="input"
+            type="time"
+        >
 
     </div>
 
+</div>
+
+
+<div class="event-field">
+
+    <b>
+        📝 表單填寫截止
+    </b>
+
+    <small>
+        活動表單最後填寫時間
+    </small>
+
+    <div class="event-row">
+
+        <input
+            id="formDate"
+            class="input"
+            type="date"
+        >
+
+        <input
+            id="formTime"
+            class="input"
+            type="time"
+        >
+
+    </div>
+
+</div>
+
+
+<div class="event-field">
+
+    <b>
+        🎯 活動開始
+    </b>
+
+    <small>
+        評選暨觀摩活動開始時間
+    </small>
+
+    <div class="event-row">
+
+        <input
+            id="startDate"
+            class="input"
+            type="date"
+        >
+
+        <input
+            id="startTime"
+            class="input"
+            type="time"
+        >
+
+    </div>
+
+</div>
+
+
+<div class="event-field">
+
+    <b>
+        🏁 活動結束
+    </b>
+
+    <small>
+        評選暨觀摩活動結束時間
+    </small>
+
+    <div class="event-row">
+
+        <input
+            id="endDate"
+            class="input"
+            type="date"
+        >
+
+        <input
+            id="endTime"
+            class="input"
+            type="time"
+        >
+
+    </div>
+
+</div>
+
+</div>
+
+
+<div class="event-save">
 
     <div
-        id="eventConfigError"
-        class="event-error"
+        id="eventError"
+        class="error"
     ></div>
 
+    <button
+        id="saveEventBtn"
+        class="primary btn"
+        onclick="saveEventConfig()"
+    >
+        儲存時程設定
+    </button>
 
-    <div class="event-footer">
-
-        <div
-            id="eventConfigMeta"
-            class="event-meta"
-        >
-            時區：Asia/Taipei
-        </div>
-
-        <button
-            id="saveEventConfigBtn"
-            type="button"
-            class="event-save-btn"
-            onclick="saveEventConfig()"
-        >
-            儲存時程設定
-        </button>
-
-    </div>
+</div>
 
 </div>
 
 </section>
 
 
-
-<!-- ======================================================
+<!-- =========================
      Google 表單填寫進度
-     ====================================================== -->
+     ========================= -->
 
 <section class="panel">
 
-<div class="panel-header">
+<div class="panel-head">
 
     <div class="panel-title">
         📋 Google 表單填寫進度
     </div>
 
     <div
-        id="formProgressResultCount"
-        class="result-count"
+        id="formCount"
+        class="count"
     >
         載入中...
     </div>
@@ -2138,97 +1345,75 @@ tbody tr:hover {
 </div>
 
 
-<div class="form-summary-grid">
+<div class="summary">
 
-    <div class="form-summary-card">
+    <div class="summary-card">
 
-        <div class="form-summary-label">
+        <small>
             社團總數
-        </div>
+        </small>
 
-        <div
-            id="formProgressTotalCount"
-            class="form-summary-value"
-        >
+        <b id="formTotal">
             -
-        </div>
+        </b>
 
     </div>
 
 
-    <div class="form-summary-card">
+    <div class="summary-card">
 
-        <div class="form-summary-label">
+        <small>
             ✅ 已填寫
-        </div>
+        </small>
 
-        <div
-            id="formProgressSubmittedCount"
-            class="form-summary-value"
-        >
+        <b id="formSubmitted">
             -
-        </div>
+        </b>
 
     </div>
 
 
-    <div class="form-summary-card">
+    <div class="summary-card">
 
-        <div class="form-summary-label">
+        <small>
             ❌ 未填寫
-        </div>
+        </small>
 
-        <div
-            id="formProgressPendingCount"
-            class="form-summary-value"
-        >
+        <b id="formPending">
             -
-        </div>
+        </b>
 
     </div>
 
 
-    <div class="form-summary-card">
+    <div class="summary-card">
 
-        <div class="form-summary-label">
+        <small>
             完成率
-        </div>
+        </small>
 
-        <div
-            id="formProgressCompletionRate"
-            class="form-summary-value"
-        >
+        <b id="formRate">
             -
-        </div>
+        </b>
 
     </div>
 
 </div>
 
 
-<div class="form-progress-toolbar">
+<div class="toolbar">
 
-    <div class="search-box">
-
-        <span class="search-icon">
-            🔎
-        </span>
-
-        <input
-            id="formProgressSearchInput"
-            class="search-input"
-            type="search"
-            placeholder="搜尋社團名稱或社團屬性"
-            oninput="filterFormProgress()"
-        >
-
-    </div>
-
+    <input
+        id="formSearch"
+        class="input"
+        placeholder="搜尋社團名稱或屬性"
+        oninput="renderForms()"
+    >
 
     <select
-        id="formProgressStatusFilter"
-        class="form-filter-select"
-        onchange="filterFormProgress()"
+        id="formFilter"
+        class="input"
+        onchange="renderForms()"
     >
 
         <option value="all">
@@ -2249,21 +1434,21 @@ tbody tr:hover {
 
 
 <div
-    id="formProgressState"
-    class="state-box"
+    id="formState"
+    class="state"
 >
 
     <div class="spinner"></div>
 
-    正在讀取表單填寫進度...
+    正在讀取填寫進度...
 
 </div>
 
 
 <div
-    id="formProgressDesktopTable"
-    class="table-wrap desktop-table"
-    style="display:none;"
+    id="formTable"
+    class="table-wrap desktop"
+    style="display:none"
 >
 
 <table>
@@ -2272,17 +1457,29 @@ tbody tr:hover {
 
 <tr>
 
-    <th>社團名稱</th>
-    <th>社團屬性</th>
-    <th>填寫狀態</th>
-    <th>最後填寫時間</th>
+    <th>
+        社團名稱
+    </th>
+
+    <th>
+        屬性
+    </th>
+
+    <th>
+        狀態
+    </th>
+
+    <th>
+        最後填寫時間
+    </th>
 
 </tr>
 
 </thead>
 
+
 <tbody
-    id="formProgressTableBody"
+    id="formBody"
 ></tbody>
 
 </table>
@@ -2291,28 +1488,28 @@ tbody tr:hover {
 
 
 <div
-    id="formProgressMobileList"
+    id="formMobile"
     class="mobile-list"
 ></div>
 
 </section>
 
 
-<!-- ======================================================
-     LINE 綁定管理
-     ====================================================== -->
+<!-- =========================
+     LINE 綁定
+     ========================= -->
 
 <section class="panel">
 
-<div class="panel-header">
+<div class="panel-head">
 
     <div class="panel-title">
         👥 LINE 帳號綁定資料
     </div>
 
     <div
-        id="bindingResultCount"
-        class="result-count"
+        id="bindingResult"
+        class="count"
     >
         載入中...
     </div>
@@ -2320,36 +1517,21 @@ tbody tr:hover {
 </div>
 
 
-<div class="search-wrap">
+<div class="toolbar">
 
-    <div class="search-box">
-
-        <span class="search-icon">
-            🔎
-        </span>
-
-        <input
-
-            id="bindingSearchInput"
-
-            class="search-input"
-
-            type="search"
-
-            placeholder="搜尋 LINE 名稱、社團、屬性或 User ID"
-
-            oninput="filterBindings()"
-
-        >
-
-    </div>
+    <input
+        id="bindingSearch"
+        class="input"
+        placeholder="搜尋 LINE 名稱、社團、屬性或 User ID"
+        oninput="renderBindings()"
+    >
 
 </div>
 
 
 <div
     id="bindingState"
-    class="state-box"
+    class="state"
 >
 
     <div class="spinner"></div>
@@ -2360,9 +1542,9 @@ tbody tr:hover {
 
 
 <div
-    id="bindingDesktopTable"
-    class="table-wrap desktop-table"
-    style="display:none;"
+    id="bindingTable"
+    class="table-wrap desktop"
+    style="display:none"
 >
 
 <table>
@@ -2371,19 +1553,37 @@ tbody tr:hover {
 
 <tr>
 
-    <th>LINE 名稱</th>
-    <th>LINE User ID</th>
-    <th>社團</th>
-    <th>屬性</th>
-    <th>綁定時間</th>
-    <th>操作</th>
+    <th>
+        LINE 名稱
+    </th>
+
+    <th>
+        User ID
+    </th>
+
+    <th>
+        社團
+    </th>
+
+    <th>
+        屬性
+    </th>
+
+    <th>
+        綁定時間
+    </th>
+
+    <th>
+        操作
+    </th>
 
 </tr>
 
 </thead>
 
+
 <tbody
-    id="bindingTableBody"
+    id="bindingBody"
 ></tbody>
 
 </table>
@@ -2392,29 +1592,28 @@ tbody tr:hover {
 
 
 <div
-    id="bindingMobileList"
+    id="bindingMobile"
     class="mobile-list"
 ></div>
 
 </section>
 
 
-
-<!-- ======================================================
-     社團雲端管理
-     ====================================================== -->
+<!-- =========================
+     雲端管理
+     ========================= -->
 
 <section class="panel">
 
-<div class="panel-header">
+<div class="panel-head">
 
     <div class="panel-title">
         ☁️ 社團專屬雲端管理
     </div>
 
     <div
-        id="cloudResultCount"
-        class="result-count"
+        id="cloudCount"
+        class="count"
     >
         載入中...
     </div>
@@ -2422,49 +1621,34 @@ tbody tr:hover {
 </div>
 
 
-<div class="search-wrap">
+<div class="toolbar">
 
-    <div class="search-box">
-
-        <span class="search-icon">
-            🔎
-        </span>
-
-        <input
-
-            id="cloudSearchInput"
-
-            class="search-input"
-
-            type="search"
-
-            placeholder="搜尋社團名稱或社團屬性"
-
-            oninput="filterClouds()"
-
-        >
-
-    </div>
+    <input
+        id="cloudSearch"
+        class="input"
+        placeholder="搜尋社團名稱或屬性"
+        oninput="renderClouds()"
+    >
 
 </div>
 
 
 <div
     id="cloudState"
-    class="state-box"
+    class="state"
 >
 
     <div class="spinner"></div>
 
-    正在讀取社團雲端資料...
+    正在讀取雲端資料...
 
 </div>
 
 
 <div
-    id="cloudDesktopTable"
-    class="table-wrap desktop-table"
-    style="display:none;"
+    id="cloudTable"
+    class="table-wrap desktop"
+    style="display:none"
 >
 
 <table>
@@ -2473,19 +1657,37 @@ tbody tr:hover {
 
 <tr>
 
-    <th>社團名稱</th>
-    <th>社團屬性</th>
-    <th>狀態</th>
-    <th>雲端連結</th>
-    <th>最後修改</th>
-    <th>操作</th>
+    <th>
+        社團名稱
+    </th>
+
+    <th>
+        屬性
+    </th>
+
+    <th>
+        狀態
+    </th>
+
+    <th>
+        連結
+    </th>
+
+    <th>
+        最後修改
+    </th>
+
+    <th>
+        操作
+    </th>
 
 </tr>
 
 </thead>
 
+
 <tbody
-    id="cloudTableBody"
+    id="cloudBody"
 ></tbody>
 
 </table>
@@ -2494,238 +1696,95 @@ tbody tr:hover {
 
 
 <div
-    id="cloudMobileList"
+    id="cloudMobile"
     class="mobile-list"
 ></div>
 
 </section>
-
 
 </main>
 
 </div>
 
 
-
-<!-- ======================================================
-     解除綁定 Modal
-     ====================================================== -->
+<!-- =========================
+     新增 / 修改社團
+     ========================= -->
 
 <div
-    id="unbindModal"
-    class="modal-backdrop"
+    id="clubModalBg"
+    class="modal-bg"
 >
 
 <div class="modal">
 
-    <div class="modal-body">
+<div class="modal-body">
 
-        <div class="modal-icon modal-icon-danger">
-            ⚠️
-        </div>
+    <h2 id="clubModalTitle">
+        新增社團
+    </h2>
 
-        <h2 class="modal-title">
-            確定解除綁定？
-        </h2>
-
-        <div class="modal-description">
-
-            解除後，此 LINE 帳號可重新選擇社團綁定。
-
-        </div>
-
-        <div
-            id="unbindInfo"
-            class="modal-info"
-        ></div>
-
+    <div
+        id="clubModalNote"
+        class="muted"
+        style="font-size:13px"
+    >
+        新增後會立即成為正式社團。
     </div>
 
 
-    <div class="modal-footer">
+    <label>
+        社團名稱
+    </label>
 
-        <button
-            type="button"
-            class="modal-btn cancel-btn"
-            onclick="closeUnbindModal()"
-        >
-            取消
-        </button>
+    <input
+        id="clubName"
+        class="input"
+        maxlength="100"
+        placeholder="請輸入完整社團名稱"
+    >
 
-        <button
 
-            id="confirmUnbindBtn"
+    <label>
+        社團屬性
+    </label>
 
-            type="button"
+    <select
+        id="clubCategory"
+        class="input"
+    ></select>
 
-            class="modal-btn danger-btn"
 
-            onclick="confirmUnbind()"
+    <div
+        id="clubModalError"
+        class="error"
+    ></div>
 
-        >
-            確認解除
-        </button>
+</div>
 
-    </div>
+
+<div class="modal-foot">
+
+    <button
+        class="btn"
+        onclick="closeClubModal()"
+    >
+        取消
+    </button>
+
+    <button
+        id="clubSaveBtn"
+        class="primary"
+        onclick="saveClub()"
+    >
+        儲存
+    </button>
 
 </div>
 
 </div>
 
-
-
-<!-- ======================================================
-     雲端設定 Modal
-     ====================================================== -->
-
-<div
-    id="cloudModal"
-    class="modal-backdrop"
->
-
-<div class="modal">
-
-    <div class="modal-body">
-
-        <div class="modal-icon">
-            ☁️
-        </div>
-
-        <h2 class="modal-title">
-            設定社團專屬雲端
-        </h2>
-
-        <div
-            id="cloudModalInfo"
-            class="modal-info"
-        ></div>
-
-        <label
-            class="modal-input-label"
-            for="cloudUrlInput"
-        >
-            雲端網址
-        </label>
-
-        <input
-
-            id="cloudUrlInput"
-
-            class="modal-input"
-
-            type="url"
-
-            placeholder="https://drive.google.com/..."
-
-            autocomplete="off"
-
-        >
-
-        <div
-            id="cloudModalError"
-            class="modal-error"
-        ></div>
-
-    </div>
-
-
-    <div class="modal-footer">
-
-        <button
-            type="button"
-            class="modal-btn cancel-btn"
-            onclick="closeCloudModal()"
-        >
-            取消
-        </button>
-
-        <button
-
-            id="saveCloudBtn"
-
-            type="button"
-
-            class="modal-btn primary-btn"
-
-            onclick="saveCloudLink()"
-
-        >
-            儲存連結
-        </button>
-
-    </div>
-
 </div>
-
-</div>
-
-
-
-<!-- ======================================================
-     清除雲端 Modal
-     ====================================================== -->
-
-<div
-    id="clearCloudModal"
-    class="modal-backdrop"
->
-
-<div class="modal">
-
-    <div class="modal-body">
-
-        <div class="modal-icon modal-icon-danger">
-            🗑️
-        </div>
-
-        <h2 class="modal-title">
-            清除社團雲端？
-        </h2>
-
-        <div class="modal-description">
-
-            清除後，該社團使用者將暫時無法取得專屬雲端連結。
-
-        </div>
-
-        <div
-            id="clearCloudInfo"
-            class="modal-info"
-        ></div>
-
-    </div>
-
-
-    <div class="modal-footer">
-
-        <button
-            type="button"
-            class="modal-btn cancel-btn"
-            onclick="closeClearCloudModal()"
-        >
-            取消
-        </button>
-
-        <button
-
-            id="confirmClearCloudBtn"
-
-            type="button"
-
-            class="modal-btn danger-btn"
-
-            onclick="confirmClearCloud()"
-
-        >
-            確認清除
-        </button>
-
-    </div>
-
-</div>
-
-</div>
-
 
 
 <div
@@ -2734,119 +1793,284 @@ tbody tr:hover {
 ></div>
 
 
-
 <script>
 
 /* ============================================================
-   後端
+   系統設定
    ============================================================ */
 
 const BACKEND_URL =
     "https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
 
 
-const ADMIN_SESSION_STORAGE_KEY =
+const SESSION_KEY =
     "HKSP_ADMIN_SESSION";
 
 
-/* ============================================================
-   狀態
-   ============================================================ */
+const S = {
 
-const ADMIN_STATE = {
+    token:
+        null,
 
-    sessionToken:
+    clubs:
+        [],
+
+    categories: [
+        "自治綜合性",
+        "康樂性",
+        "服務性",
+        "體能性",
+        "學藝性"
+    ],
+
+    editing:
         null,
 
     bindings:
         [],
 
-    filteredBindings:
-        [],
-
     clouds:
         [],
 
-    filteredClouds:
+    forms:
         [],
 
-    eventConfig:
-        null,
-
-    formSubmissions:
-        [],
-
-    filteredFormSubmissions:
-        [],
-
-    pendingUnbind:
-        null,
-
-    pendingCloud:
-        null,
-
-    pendingClearCloud:
-        null,
-
-    requestRunning:
-        false
+    event:
+        null
 
 };
 
 
+const $ =
+    id =>
+        document.getElementById(
+            id
+        );
+
+
 /* ============================================================
-   初始化
+   工具
    ============================================================ */
 
-document.addEventListener(
+const esc =
+    value =>
 
-    "DOMContentLoaded",
+        String(
+            value ??
+            ""
+        )
+        .replace(
 
-    async function () {
+            /[&<>'"]/g,
 
-        const savedToken =
+            character => ({
 
-            sessionStorage.getItem(
-                ADMIN_SESSION_STORAGE_KEY
-            );
+                "&":
+                    "&amp;",
+
+                "<":
+                    "&lt;",
+
+                ">":
+                    "&gt;",
+
+                "'":
+                    "&#39;",
+
+                "\"":
+                    "&quot;"
+
+            })[
+                character
+            ]
+
+        );
 
 
-        if (savedToken) {
+const enc =
+    value =>
+        encodeURIComponent(
+            String(
+                value ??
+                ""
+            )
+        );
 
-            ADMIN_STATE.sessionToken =
-                savedToken;
 
-            showAdminApp();
+const dec =
+    value =>
+        decodeURIComponent(
+            String(
+                value ??
+                ""
+            )
+        );
 
-            await refreshAllData();
 
-        }
+function toast(
+    message
+) {
 
-        else {
+    const element =
+        $("toast");
 
-            showLoginScreen();
 
-        }
+    element.textContent =
+        message;
+
+
+    element.classList.add(
+        "show"
+    );
+
+
+    clearTimeout(
+        toast.timer
+    );
+
+
+    toast.timer =
+        setTimeout(
+            () =>
+                element
+                    .classList
+                    .remove(
+                        "show"
+                    ),
+            2300
+        );
+
+}
+
+
+function fmt(
+    iso
+) {
+
+    if (!iso) {
+
+        return "-";
 
     }
 
-);
+
+    try {
+
+        return new Date(
+            iso
+        )
+        .toLocaleString(
+            "zh-TW",
+            {
+                timeZone:
+                    "Asia/Taipei",
+
+                hour12:
+                    false
+            }
+        );
+
+    }
+
+    catch {
+
+        return String(
+            iso
+        );
+
+    }
+
+}
+
+
+function showLogin(
+    message = ""
+) {
+
+    $("loginScreen")
+        .style
+        .display =
+        "flex";
+
+
+    $("adminApp")
+        .style
+        .display =
+        "none";
+
+
+    $("loginError")
+        .textContent =
+        message;
+
+}
+
+
+function showApp() {
+
+    $("loginScreen")
+        .style
+        .display =
+        "none";
+
+
+    $("adminApp")
+        .style
+        .display =
+        "block";
+
+}
+
+
+function unauth(
+    result
+) {
+
+    if (
+        result &&
+        result.error ===
+        "ADMIN_UNAUTHORIZED"
+    ) {
+
+        sessionStorage
+            .removeItem(
+                SESSION_KEY
+            );
+
+
+        S.token =
+            null;
+
+
+        showLogin(
+            "管理員登入已失效，請重新登入。"
+        );
+
+
+        return true;
+
+    }
+
+
+    return false;
+
+}
 
 
 /* ============================================================
    API
    ============================================================ */
 
-async function callAdminBackend(
+async function api(
     action,
-    extraData = {}
+    data = {}
 ) {
 
     const controller =
         new AbortController();
 
 
-    const timeout =
+    const timer =
         setTimeout(
             () =>
                 controller.abort(),
@@ -2873,7 +2097,7 @@ async function callAdminBackend(
                             action:
                                 action,
 
-                            ...extraData
+                            ...data
 
                         }),
 
@@ -2891,8 +2115,10 @@ async function callAdminBackend(
         if (!response.ok) {
 
             throw new Error(
+
                 "HTTP " +
                 response.status
+
             );
 
         }
@@ -2902,15 +2128,11 @@ async function callAdminBackend(
             await response.text();
 
 
-        let data;
-
-
         try {
 
-            data =
-                JSON.parse(
-                    text
-                );
+            return JSON.parse(
+                text
+            );
 
         }
 
@@ -2922,12 +2144,11 @@ async function callAdminBackend(
 
         }
 
-
-        return data;
-
     }
 
-    catch (error) {
+    catch (
+        error
+    ) {
 
         if (
             error.name ===
@@ -2940,6 +2161,7 @@ async function callAdminBackend(
 
         }
 
+
         throw error;
 
     }
@@ -2947,7 +2169,7 @@ async function callAdminBackend(
     finally {
 
         clearTimeout(
-            timeout
+            timer
         );
 
     }
@@ -2956,54 +2178,65 @@ async function callAdminBackend(
 
 
 /* ============================================================
-   管理員登入
+   啟動
    ============================================================ */
 
-async function handleAdminLogin(
+document.addEventListener(
+
+    "DOMContentLoaded",
+
+    async () => {
+
+        S.token =
+
+            sessionStorage
+                .getItem(
+                    SESSION_KEY
+                );
+
+
+        if (
+            S.token
+        ) {
+
+            showApp();
+
+            await refreshAllData();
+
+        }
+
+        else {
+
+            showLogin();
+
+        }
+
+    }
+
+);
+
+
+/* ============================================================
+   登入 / 登出
+   ============================================================ */
+
+async function adminLogin(
     event
 ) {
 
     event.preventDefault();
 
 
-    if (
-        ADMIN_STATE.requestRunning
-    ) {
-
-        return;
-
-    }
-
-
-    const passwordInput =
-
-        document.getElementById(
-            "adminPassword"
-        );
-
-
-    const loginBtn =
-
-        document.getElementById(
-            "loginBtn"
-        );
-
-
-    const loginError =
-
-        document.getElementById(
-            "loginError"
-        );
-
-
     const password =
-        passwordInput.value;
+        $("adminPassword")
+            .value;
+
+
+    const button =
+        $("loginBtn");
 
 
     if (!password) {
-
-        loginError.textContent =
-            "請輸入管理員密碼。";
 
         return;
 
@@ -3012,25 +2245,22 @@ async function handleAdminLogin(
 
     try {
 
-        ADMIN_STATE.requestRunning =
+        button.disabled =
             true;
 
 
-        loginBtn.disabled =
-            true;
-
-
-        loginBtn.textContent =
+        button.textContent =
             "登入中...";
 
 
-        loginError.textContent =
+        $("loginError")
+            .textContent =
             "";
 
 
         const result =
 
-            await callAdminBackend(
+            await api(
 
                 "adminLogin",
 
@@ -3042,70 +2272,69 @@ async function handleAdminLogin(
             );
 
 
-        passwordInput.value =
-            "";
-
-
         if (
             !result.success ||
             !result.sessionToken
         ) {
 
-            loginError.textContent =
+            throw new Error(
 
                 result.message ||
-                "登入失敗。";
+                "登入失敗"
 
-            return;
+            );
 
         }
 
 
-        ADMIN_STATE.sessionToken =
+        S.token =
             result.sessionToken;
 
 
-        sessionStorage.setItem(
+        sessionStorage
+            .setItem(
 
-            ADMIN_SESSION_STORAGE_KEY,
+                SESSION_KEY,
 
-            result.sessionToken
+                S.token
 
-        );
+            );
 
 
-        showAdminApp();
+        $("adminPassword")
+            .value =
+            "";
+
+
+        showApp();
 
 
         await refreshAllData();
 
 
-        showToast(
+        toast(
             "✅ 管理員登入成功"
         );
 
     }
 
-    catch (error) {
+    catch (
+        error
+    ) {
 
-        loginError.textContent =
-
-            "無法登入：" +
+        $("loginError")
+            .textContent =
             error.message;
 
     }
 
     finally {
 
-        ADMIN_STATE.requestRunning =
+        button.disabled =
             false;
 
 
-        loginBtn.disabled =
-            false;
-
-
-        loginBtn.textContent =
+        button.textContent =
             "登入管理後台";
 
     }
@@ -3113,27 +2342,21 @@ async function handleAdminLogin(
 }
 
 
-/* ============================================================
-   登出
-   ============================================================ */
-
-async function logoutAdmin() {
-
-    const token =
-        ADMIN_STATE.sessionToken;
-
+async function adminLogout() {
 
     try {
 
-        if (token) {
+        if (
+            S.token
+        ) {
 
-            await callAdminBackend(
+            await api(
 
                 "adminLogout",
 
                 {
                     sessionToken:
-                        token
+                        S.token
                 }
 
             );
@@ -3142,91 +2365,42 @@ async function logoutAdmin() {
 
     }
 
-    catch (error) {
+    catch {
 
-        console.warn(
-            error
-        );
+        // 即使後端登出失敗，
+        // 前端仍清除 Session。
 
     }
 
 
-    clearAdminSession();
+    sessionStorage
+        .removeItem(
+            SESSION_KEY
+        );
 
 
-    showLoginScreen();
+    S.token =
+        null;
 
 
-    showToast(
-        "已登出管理員後台"
+    showLogin();
+
+
+    toast(
+        "已登出"
     );
 
 }
 
 
 /* ============================================================
-   Session
-   ============================================================ */
-
-function clearAdminSession() {
-
-    ADMIN_STATE.sessionToken =
-        null;
-
-    ADMIN_STATE.bindings =
-        [];
-
-    ADMIN_STATE.clouds =
-        [];
-
-    ADMIN_STATE.eventConfig =
-        null;
-
-    ADMIN_STATE.formSubmissions =
-        [];
-
-    ADMIN_STATE.filteredFormSubmissions =
-        [];
-
-    ADMIN_STATE.pendingUnbind =
-        null;
-
-    ADMIN_STATE.pendingCloud =
-        null;
-
-    ADMIN_STATE.pendingClearCloud =
-        null;
-
-
-    sessionStorage.removeItem(
-        ADMIN_SESSION_STORAGE_KEY
-    );
-
-}
-
-
-function handleUnauthorized() {
-
-    clearAdminSession();
-
-    showLoginScreen();
-
-    document.getElementById(
-        "loginError"
-    ).textContent =
-        "管理員登入已失效，請重新登入。";
-
-}
-
-
-/* ============================================================
-   全部重新整理
+   重新整理全部
    ============================================================ */
 
 async function refreshAllData() {
 
     if (
-        !ADMIN_STATE.sessionToken
+        !S.token
     ) {
 
         return;
@@ -3236,104 +2410,121 @@ async function refreshAllData() {
 
     await Promise.all([
 
+        loadClubs(),
+
+        loadEvent(),
+
+        loadForms(),
+
         loadBindings(),
 
-        loadCloudLinks(),
-
-        loadEventConfig(),
-
-        loadFormSubmissions()
+        loadClouds()
 
     ]);
 
 }
 
 
-
 /* ============================================================
-   Google 表單填寫進度
+   社團名單管理
    ============================================================ */
 
-async function loadFormSubmissions() {
+async function loadClubs() {
 
-    showFormProgressLoading();
+    setState(
+        "club",
+        "正在讀取社團名單..."
+    );
 
 
     try {
 
         const result =
-            await callAdminBackend(
-                "adminListFormSubmissions",
+
+            await api(
+
+                "adminListClubs",
+
                 {
                     sessionToken:
-                        ADMIN_STATE.sessionToken
+                        S.token
                 }
+
             );
 
 
         if (
-            result.error ===
-            "ADMIN_UNAUTHORIZED"
+            unauth(
+                result
+            )
         ) {
 
-            handleUnauthorized();
             return;
 
         }
 
 
-        if (!result.success) {
+        if (
+            !result.success
+        ) {
 
             throw new Error(
+
                 result.message ||
-                "無法取得表單填寫進度"
+                "無法取得社團名單"
+
             );
 
         }
 
 
-        ADMIN_STATE.formSubmissions =
+        S.clubs =
+
             Array.isArray(
                 result.clubs
             )
-            ? result.clubs
-            : [];
+
+                ? result.clubs
+
+                : [];
 
 
-        document.getElementById(
-            "formProgressTotalCount"
-        ).textContent =
+        if (
+
+            Array.isArray(
+                result.categories
+            )
+
+            &&
+
+            result.categories.length
+
+        ) {
+
+            S.categories =
+                result.categories;
+
+        }
+
+
+        $("clubTotalCount")
+            .textContent =
+
             result.total ??
-            ADMIN_STATE.formSubmissions.length;
+
+            S.clubs.length;
 
 
-        document.getElementById(
-            "formProgressSubmittedCount"
-        ).textContent =
-            result.submittedCount ??
-            0;
-
-
-        document.getElementById(
-            "formProgressPendingCount"
-        ).textContent =
-            result.pendingCount ??
-            0;
-
-
-        document.getElementById(
-            "formProgressCompletionRate"
-        ).textContent =
-            `${result.completionRate ?? 0}%`;
-
-
-        filterFormProgress();
+        renderClubs();
 
     }
 
-    catch (error) {
+    catch (
+        error
+    ) {
 
-        showFormProgressError(
+        setError(
+            "club",
             error.message
         );
 
@@ -3342,392 +2533,632 @@ async function loadFormSubmissions() {
 }
 
 
-function filterFormProgress() {
-
-    const input =
-        document.getElementById(
-            "formProgressSearchInput"
-        );
-
-
-    const filterSelect =
-        document.getElementById(
-            "formProgressStatusFilter"
-        );
-
+function renderClubs() {
 
     const query =
-        (
-            input
-                ? input.value
-                : ""
-        )
-        .trim()
-        .toLowerCase();
+
+        $("clubSearch")
+            .value
+            .trim()
+            .toLowerCase();
 
 
-    const status =
-        filterSelect
-            ? filterSelect.value
-            : "all";
+    const list =
 
+        S.clubs.filter(
 
-    ADMIN_STATE.filteredFormSubmissions =
-        ADMIN_STATE.formSubmissions.filter(
-            item => {
+            item =>
 
-                const searchable = [
-                    item.club,
+                !query
+
+                ||
+
+                (
+                    item.name +
+                    " " +
                     item.category
-                ]
-                .join(" ")
-                .toLowerCase();
+                )
+                .toLowerCase()
+                .includes(
+                    query
+                )
 
-
-                const queryMatched =
-                    !query ||
-                    searchable.includes(
-                        query
-                    );
-
-
-                const statusMatched =
-                    status === "all"
-                    ||
-                    (
-                        status === "submitted"
-                        &&
-                        item.submitted
-                    )
-                    ||
-                    (
-                        status === "pending"
-                        &&
-                        !item.submitted
-                    );
-
-
-                return (
-                    queryMatched &&
-                    statusMatched
-                );
-
-            }
         );
 
 
-    renderFormProgress();
+    $("clubCount")
+        .textContent =
 
-}
-
-
-function renderFormProgress() {
-
-    const all =
-        ADMIN_STATE.formSubmissions.length;
-
-
-    const filtered =
-        ADMIN_STATE.filteredFormSubmissions.length;
-
-
-    document.getElementById(
-        "formProgressResultCount"
-    ).textContent =
-        `顯示 ${filtered} / ${all} 個社團`;
-
-
-    const state =
-        document.getElementById(
-            "formProgressState"
-        );
-
-
-    const desktop =
-        document.getElementById(
-            "formProgressDesktopTable"
-        );
-
-
-    const mobile =
-        document.getElementById(
-            "formProgressMobileList"
-        );
+        `顯示 ${list.length} / ${S.clubs.length} 個社團`;
 
 
     if (
-        filtered === 0
+        !list.length
     ) {
 
-        desktop.style.display =
-            "none";
+        empty(
+            "club",
+            "找不到符合條件的社團。"
+        );
 
-        mobile.innerHTML =
-            "";
-
-        state.style.display =
-            "block";
-
-        state.innerHTML =
-            `
-            <div class="state-icon">
-                📭
-            </div>
-            找不到符合條件的社團。
-            `;
 
         return;
 
     }
 
 
-    state.style.display =
+    $("clubState")
+        .style
+        .display =
         "none";
 
 
-    desktop.style.display =
+    $("clubTable")
+        .style
+        .display =
         "block";
 
 
-    document.getElementById(
-        "formProgressTableBody"
-    ).innerHTML =
-        ADMIN_STATE.filteredFormSubmissions
-        .map(
+    $("clubBody")
+        .innerHTML =
+
+        list.map(
             item => {
 
-                const status =
-                    item.submitted
-                    ? `
-                      <span class="status-chip status-success">
-                          ✅ 已填寫
-                      </span>
-                      `
-                    : `
-                      <span class="status-chip status-empty">
-                          ❌ 尚未填寫
-                      </span>
-                      `;
-
-
-                const submittedAt =
-                    item.submitted
-                    ? escapeHtml(
-                        item.submittedAtTaipei ||
-                        formatDate(
-                            item.submittedAt ||
-                            item.updatedAt
-                        )
-                      )
-                    : "-";
-
-
                 return `
+
                 <tr>
-                    <td>
-                        <div class="club-name">
-                            ${escapeHtml(item.club || "-")}
-                        </div>
+
+                    <td class="name">
+
+                        ${esc(
+                            item.name
+                        )}
+
                     </td>
 
                     <td>
-                        ${escapeHtml(item.category || "-")}
-                    </td>
 
-                    <td>
-                        ${status}
-                    </td>
+                        <span class="chip">
 
-                    <td>
-                        <span class="form-progress-time">
-                            ${submittedAt}
+                            ${esc(
+                                item.category
+                            )}
+
                         </span>
+
                     </td>
+
+                    <td>
+
+                        <div class="actions">
+
+                            <button
+                                class="btn btn-edit mini"
+                                onclick="openClubModal('${enc(item.name)}')"
+                            >
+                                ✏️ 修改
+                            </button>
+
+                            <button
+                                class="btn btn-danger mini"
+                                onclick="deleteClub('${enc(item.name)}')"
+                            >
+                                🗑️ 刪除
+                            </button>
+
+                        </div>
+
+                    </td>
+
                 </tr>
+
                 `;
 
             }
         )
-        .join("");
+        .join(
+            ""
+        );
 
 
-    mobile.innerHTML =
-        ADMIN_STATE.filteredFormSubmissions
-        .map(
+    $("clubMobile")
+        .innerHTML =
+
+        list.map(
             item => {
 
-                const status =
-                    item.submitted
-                    ? `
-                      <span class="status-chip status-success">
-                          ✅ 已填寫
-                      </span>
-                      `
-                    : `
-                      <span class="status-chip status-empty">
-                          ❌ 尚未填寫
-                      </span>
-                      `;
-
-
-                const submittedAt =
-                    item.submitted
-                    ? escapeHtml(
-                        item.submittedAtTaipei ||
-                        formatDate(
-                            item.submittedAt ||
-                            item.updatedAt
-                        )
-                      )
-                    : "-";
-
-
                 return `
+
                 <div class="mobile-card">
 
-                    <div class="mobile-card-top">
+                    <div class="mobile-title">
 
-                        <div>
-
-                            <div class="mobile-title">
-                                ${escapeHtml(item.club || "-")}
-                            </div>
-
-                            <div class="mobile-subtitle">
-                                ${escapeHtml(item.category || "-")}
-                            </div>
-
-                        </div>
-
-                        <div>
-                            ${status}
-                        </div>
+                        ${esc(
+                            item.name
+                        )}
 
                     </div>
 
+                    <div class="mobile-sub">
 
-                    <div class="mobile-info">
+                        ${esc(
+                            item.category
+                        )}
 
-                        <div>
-                            最後填寫時間：
-                            ${submittedAt}
-                        </div>
+                    </div>
+
+                    <div class="mobile-actions">
+
+                        <button
+                            class="btn btn-edit mini"
+                            onclick="openClubModal('${enc(item.name)}')"
+                        >
+                            ✏️ 修改
+                        </button>
+
+                        <button
+                            class="btn btn-danger mini"
+                            onclick="deleteClub('${enc(item.name)}')"
+                        >
+                            🗑️ 刪除
+                        </button>
 
                     </div>
 
                 </div>
+
                 `;
 
             }
         )
-        .join("");
-
-}
-
-
-function showFormProgressLoading() {
-
-    document.getElementById(
-        "formProgressDesktopTable"
-    ).style.display =
-        "none";
-
-
-    document.getElementById(
-        "formProgressMobileList"
-    ).innerHTML =
-        "";
-
-
-    document.getElementById(
-        "formProgressResultCount"
-    ).textContent =
-        "載入中...";
-
-
-    const state =
-        document.getElementById(
-            "formProgressState"
+        .join(
+            ""
         );
 
-
-    state.style.display =
-        "block";
-
-
-    state.innerHTML =
-        `
-        <div class="spinner"></div>
-        正在讀取表單填寫進度...
-        `;
-
 }
 
 
-function showFormProgressError(
-    message
+function openClubModal(
+    encoded = ""
 ) {
 
-    document.getElementById(
-        "formProgressDesktopTable"
-    ).style.display =
-        "none";
+    const name =
+
+        encoded
+
+            ? dec(
+                encoded
+            )
+
+            : "";
 
 
-    document.getElementById(
-        "formProgressMobileList"
-    ).innerHTML =
-        "";
+    const club =
 
+        S.clubs.find(
 
-    document.getElementById(
-        "formProgressResultCount"
-    ).textContent =
-        "讀取失敗";
+            item =>
+                item.name ===
+                name
 
-
-    const state =
-        document.getElementById(
-            "formProgressState"
         );
 
 
-    state.style.display =
-        "block";
+    S.editing =
+
+        club
+
+            ? {
+                oldName:
+                    club.name
+            }
+
+            : null;
 
 
-    state.innerHTML =
-        `
-        <div class="state-icon">
-            ⚠️
-        </div>
-        ${escapeHtml(message)}
-        `;
+    $("clubModalTitle")
+        .textContent =
+
+        club
+
+            ? "修改社團"
+
+            : "新增社團";
+
+
+    $("clubModalNote")
+        .textContent =
+
+        club
+
+            ? "修改名稱時會同步搬移 LINE 綁定、雲端與 Google 表單紀錄。"
+
+            : "新增後會立即成為系統正式社團名單。";
+
+
+    $("clubName")
+        .value =
+
+        club
+
+            ? club.name
+
+            : "";
+
+
+    $("clubCategory")
+        .innerHTML =
+
+        S.categories
+            .map(
+
+                category =>
+
+                    `<option value="${esc(category)}">${esc(category)}</option>`
+
+            )
+            .join(
+                ""
+            );
+
+
+    $("clubCategory")
+        .value =
+
+        club
+
+            ? club.category
+
+            : S.categories[
+                0
+            ];
+
+
+    $("clubModalError")
+        .textContent =
+        "";
+
+
+    $("clubModalBg")
+        .style
+        .display =
+        "flex";
+
+
+    setTimeout(
+
+        () =>
+            $("clubName")
+                .focus(),
+
+        50
+
+    );
 
 }
 
 
-/* ============================================================
-   活動時程資料
-   ============================================================ */
+function closeClubModal() {
 
-async function loadEventConfig() {
+    $("clubModalBg")
+        .style
+        .display =
+        "none";
 
-    showEventConfigLoading();
+
+    S.editing =
+        null;
+
+}
+
+
+async function saveClub() {
+
+    const name =
+
+        $("clubName")
+            .value
+            .trim();
+
+
+    const category =
+
+        $("clubCategory")
+            .value;
+
+
+    const button =
+        $("clubSaveBtn");
+
+
+    if (!name) {
+
+        $("clubModalError")
+            .textContent =
+            "請輸入社團名稱。";
+
+
+        return;
+
+    }
+
+
+    const isEdit =
+        Boolean(
+            S.editing
+        );
+
+
+    try {
+
+        button.disabled =
+            true;
+
+
+        const action =
+
+            isEdit
+
+                ? "adminUpdateClub"
+
+                : "adminAddClub";
+
+
+        const payload = {
+
+            sessionToken:
+                S.token,
+
+            clubName:
+                name,
+
+            category:
+                category
+
+        };
+
+
+        if (
+            isEdit
+        ) {
+
+            payload.oldName =
+                S.editing.oldName;
+
+        }
+
+
+        const result =
+
+            await api(
+                action,
+                payload
+            );
+
+
+        if (
+            unauth(
+                result
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message ||
+                "儲存失敗"
+
+            );
+
+        }
+
+
+        closeClubModal();
+
+
+        toast(
+
+            isEdit
+
+                ? "✅ 社團修改成功"
+
+                : "✅ 社團新增成功"
+
+        );
+
+
+        await Promise.all([
+
+            loadClubs(),
+
+            loadForms(),
+
+            loadBindings(),
+
+            loadClouds()
+
+        ]);
+
+    }
+
+    catch (
+        error
+    ) {
+
+        $("clubModalError")
+            .textContent =
+            error.message;
+
+    }
+
+    finally {
+
+        button.disabled =
+            false;
+
+    }
+
+}
+
+
+async function deleteClub(
+    encoded
+) {
+
+    const name =
+        dec(
+            encoded
+        );
+
+
+    const club =
+
+        S.clubs.find(
+
+            item =>
+                item.name ===
+                name
+
+        );
+
+
+    if (!club) {
+
+        return;
+
+    }
+
+
+    const confirmed =
+
+        confirm(
+
+            `確定刪除「${club.name}」？\n\n` +
+
+            `會同步清除該社團的 LINE 綁定、雲端設定與 Google 表單填寫紀錄。`
+
+        );
+
+
+    if (
+        !confirmed
+    ) {
+
+        return;
+
+    }
 
 
     try {
 
         const result =
 
-            await callAdminBackend(
+            await api(
 
-                "getEventConfig"
+                "adminDeleteClub",
+
+                {
+                    sessionToken:
+                        S.token,
+
+                    clubName:
+                        club.name
+                }
 
             );
 
 
-        if (!result.success) {
+        if (
+            unauth(
+                result
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message ||
+                "刪除失敗"
+
+            );
+
+        }
+
+
+        toast(
+            "✅ 社團已刪除"
+        );
+
+
+        await Promise.all([
+
+            loadClubs(),
+
+            loadForms(),
+
+            loadBindings(),
+
+            loadClouds()
+
+        ]);
+
+    }
+
+    catch (
+        error
+    ) {
+
+        alert(
+            error.message
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   活動時程
+   ============================================================ */
+
+async function loadEvent() {
+
+    setState(
+        "event",
+        "正在讀取活動時程..."
+    );
+
+
+    try {
+
+        const result =
+
+            await api(
+                "getEventConfig"
+            );
+
+
+        if (
+            !result.success ||
+            !result.config
+        ) {
 
             throw new Error(
 
@@ -3739,191 +3170,133 @@ async function loadEventConfig() {
         }
 
 
-        if (!result.config) {
-
-            throw new Error(
-                "後端沒有回傳活動時程設定"
-            );
-
-        }
-
-
-        ADMIN_STATE.eventConfig =
+        S.event =
             result.config;
 
 
-        renderEventConfig(
-            result.config
+        fillDT(
+            "data",
+            result.config.dataDeadline
         );
+
+
+        fillDT(
+            "form",
+            result.config.formDeadline
+        );
+
+
+        fillDT(
+            "start",
+            result.config.eventStart
+        );
+
+
+        fillDT(
+            "end",
+            result.config.eventEnd
+        );
+
+
+        $("eventState")
+            .style
+            .display =
+            "none";
+
+
+        $("eventBody")
+            .style
+            .display =
+            "block";
+
+
+        $("eventStatus")
+            .textContent =
+
+            result.config.updatedAt
+
+                ? "已載入設定"
+
+                : "使用預設設定";
 
     }
 
-    catch (error) {
+    catch (
+        error
+    ) {
 
-        showEventConfigError(
-            error.message
-        );
+        $("eventStatus")
+            .textContent =
+            "讀取失敗";
+
+
+        $("eventState")
+            .innerHTML =
+
+            `⚠️ ${esc(error.message)}`;
 
     }
 
 }
 
 
-function parseEventDateTimeParts(
-    value
-) {
-
-    const text =
-        String(
-            value || ""
-        );
-
-
-    const match =
-
-        text.match(
-            /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/
-        );
-
-
-    if (match) {
-
-        return {
-
-            date:
-                match[1],
-
-            time:
-                match[2]
-
-        };
-
-    }
-
-
-    return {
-
-        date:
-            "",
-
-        time:
-            ""
-
-    };
-
-}
-
-
-function setEventDateTimeInputs(
+function fillDT(
     prefix,
     value
 ) {
 
-    const parts =
-        parseEventDateTimeParts(
-            value
+    const string =
+
+        String(
+            value ||
+            ""
         );
 
 
-    document.getElementById(
-        prefix + "Date"
-    ).value =
-        parts.date;
+    $(
+        prefix +
+        "Date"
+    )
+    .value =
+        string.slice(
+            0,
+            10
+        );
 
 
-    document.getElementById(
-        prefix + "Time"
-    ).value =
-        parts.time;
-
-}
-
-
-function renderEventConfig(
-    config
-) {
-
-    document.getElementById(
-        "eventConfigState"
-    ).style.display =
-        "none";
-
-
-    document.getElementById(
-        "eventConfigForm"
-    ).style.display =
-        "block";
-
-
-    setEventDateTimeInputs(
-        "dataDeadline",
-        config.dataDeadline
-    );
-
-
-    setEventDateTimeInputs(
-        "formDeadline",
-        config.formDeadline
-    );
-
-
-    setEventDateTimeInputs(
-        "eventStart",
-        config.eventStart
-    );
-
-
-    setEventDateTimeInputs(
-        "eventEnd",
-        config.eventEnd
-    );
-
-
-    document.getElementById(
-        "eventConfigStatus"
-    ).textContent =
-        "已同步";
-
-
-    document.getElementById(
-        "eventConfigError"
-    ).textContent =
-        "";
-
-
-    document.getElementById(
-        "eventConfigMeta"
-    ).innerHTML =
-
-        `時區：<b>Asia/Taipei</b>` +
-
-        (
-            config.updatedAt
-
-            ? `<br>最後更新：${escapeHtml(formatDate(config.updatedAt))}`
-
-            : "<br>目前使用系統預設時程"
+    $(
+        prefix +
+        "Time"
+    )
+    .value =
+        string.slice(
+            11,
+            16
         );
 
 }
 
 
-function getEventInputValue(
+function buildDT(
     prefix
 ) {
 
     const date =
 
-        document.getElementById(
-            prefix + "Date"
-        ).value;
+        $(
+            prefix +
+            "Date"
+        )
+        .value;
 
 
     const time =
 
-        document.getElementById(
-            prefix + "Time"
-        ).value;
+        $(
+            prefix +
+            "Time"
+        )
+        .value;
 
 
     if (
@@ -3931,16 +3304,21 @@ function getEventInputValue(
         !time
     ) {
 
-        return null;
+        return "";
 
     }
 
 
     return (
+
         date +
+
         "T" +
+
         time +
+
         ":00+08:00"
+
     );
 
 }
@@ -3948,171 +3326,51 @@ function getEventInputValue(
 
 async function saveEventConfig() {
 
-    if (
-        ADMIN_STATE.requestRunning
-    ) {
-
-        return;
-
-    }
-
-
     const button =
-
-        document.getElementById(
-            "saveEventConfigBtn"
-        );
-
-
-    const errorBox =
-
-        document.getElementById(
-            "eventConfigError"
-        );
-
-
-    const dataDeadline =
-        getEventInputValue(
-            "dataDeadline"
-        );
-
-
-    const formDeadline =
-        getEventInputValue(
-            "formDeadline"
-        );
-
-
-    const eventStart =
-        getEventInputValue(
-            "eventStart"
-        );
-
-
-    const eventEnd =
-        getEventInputValue(
-            "eventEnd"
-        );
-
-
-    if (
-        !dataDeadline ||
-        !formDeadline ||
-        !eventStart ||
-        !eventEnd
-    ) {
-
-        errorBox.textContent =
-            "請完整設定四個日期與時間。";
-
-        return;
-
-    }
-
-
-    const dataTime =
-        Date.parse(
-            dataDeadline
-        );
-
-
-    const formTime =
-        Date.parse(
-            formDeadline
-        );
-
-
-    const startTime =
-        Date.parse(
-            eventStart
-        );
-
-
-    const endTime =
-        Date.parse(
-            eventEnd
-        );
-
-
-    if (
-        endTime <=
-        startTime
-    ) {
-
-        errorBox.textContent =
-            "活動結束時間必須晚於活動開始時間。";
-
-        return;
-
-    }
-
-
-    if (
-        dataTime >=
-        startTime
-    ) {
-
-        errorBox.textContent =
-            "資料繳交截止時間必須早於活動開始時間。";
-
-        return;
-
-    }
-
-
-    if (
-        formTime >=
-        startTime
-    ) {
-
-        errorBox.textContent =
-            "表單填寫截止時間必須早於活動開始時間。";
-
-        return;
-
-    }
+        $("saveEventBtn");
 
 
     try {
-
-        ADMIN_STATE.requestRunning =
-            true;
-
 
         button.disabled =
             true;
 
 
-        button.textContent =
-            "儲存中...";
-
-
-        errorBox.textContent =
+        $("eventError")
+            .textContent =
             "";
 
 
         const result =
 
-            await callAdminBackend(
+            await api(
 
                 "adminSaveEventConfig",
 
                 {
 
                     sessionToken:
-                        ADMIN_STATE.sessionToken,
+                        S.token,
 
                     dataDeadline:
-                        dataDeadline,
+                        buildDT(
+                            "data"
+                        ),
 
                     formDeadline:
-                        formDeadline,
+                        buildDT(
+                            "form"
+                        ),
 
                     eventStart:
-                        eventStart,
+                        buildDT(
+                            "start"
+                        ),
 
                     eventEnd:
-                        eventEnd
+                        buildDT(
+                            "end"
+                        )
 
                 }
 
@@ -4120,215 +3378,166 @@ async function saveEventConfig() {
 
 
         if (
-            result.error ===
-            "ADMIN_UNAUTHORIZED"
+            unauth(
+                result
+            )
         ) {
-
-            handleUnauthorized();
 
             return;
 
         }
 
 
-        if (!result.success) {
+        if (
+            !result.success
+        ) {
 
             throw new Error(
 
                 result.message ||
-                "活動時程儲存失敗"
+                "儲存失敗"
 
             );
 
         }
 
 
-        ADMIN_STATE.eventConfig =
-            result.config;
-
-
-        renderEventConfig(
-            result.config
+        toast(
+            "✅ 活動時程已更新"
         );
 
 
-        showToast(
-            "✅ 活動時程設定已儲存"
-        );
+        await loadEvent();
 
     }
 
-    catch (error) {
+    catch (
+        error
+    ) {
 
-        errorBox.textContent =
+        $("eventError")
+            .textContent =
             error.message;
 
     }
 
     finally {
 
-        ADMIN_STATE.requestRunning =
-            false;
-
-
         button.disabled =
             false;
-
-
-        button.textContent =
-            "儲存時程設定";
 
     }
 
 }
 
 
-function showEventConfigLoading() {
-
-    document.getElementById(
-        "eventConfigForm"
-    ).style.display =
-        "none";
-
-
-    document.getElementById(
-        "eventConfigStatus"
-    ).textContent =
-        "載入中...";
-
-
-    const box =
-
-        document.getElementById(
-            "eventConfigState"
-        );
-
-
-    box.style.display =
-        "block";
-
-
-    box.innerHTML =
-
-        `
-
-        <div class="spinner"></div>
-
-        正在讀取活動時程...
-
-        `;
-
-}
-
-
-function showEventConfigError(
-    message
-) {
-
-    document.getElementById(
-        "eventConfigForm"
-    ).style.display =
-        "none";
-
-
-    document.getElementById(
-        "eventConfigStatus"
-    ).textContent =
-        "讀取失敗";
-
-
-    const box =
-
-        document.getElementById(
-            "eventConfigState"
-        );
-
-
-    box.style.display =
-        "block";
-
-
-    box.innerHTML =
-
-        `
-
-        <div class="state-icon">
-            ⚠️
-        </div>
-
-        ${escapeHtml(message)}
-
-        `;
-
-}
-
-
 /* ============================================================
-   綁定資料
+   Google 表單填寫進度
    ============================================================ */
 
-async function loadBindings() {
+async function loadForms() {
 
-    showBindingLoading();
+    setState(
+        "form",
+        "正在讀取填寫進度..."
+    );
 
 
     try {
 
         const result =
 
-            await callAdminBackend(
+            await api(
 
-                "adminListBindings",
+                "adminListFormSubmissions",
 
                 {
-
                     sessionToken:
-                        ADMIN_STATE.sessionToken
-
+                        S.token
                 }
 
             );
 
 
         if (
-            result.error ===
-            "ADMIN_UNAUTHORIZED"
+            unauth(
+                result
+            )
         ) {
-
-            handleUnauthorized();
 
             return;
 
         }
 
 
-        if (!result.success) {
+        if (
+            !result.success
+        ) {
 
             throw new Error(
+
                 result.message ||
-                "無法取得綁定資料"
+                "無法取得表單進度"
+
             );
 
         }
 
 
-        ADMIN_STATE.bindings =
+        S.forms =
 
             Array.isArray(
-                result.bindings
+                result.clubs
             )
 
-            ? result.bindings
-            : [];
+                ? result.clubs
+
+                : [];
 
 
-        filterBindings();
+        $("formTotal")
+            .textContent =
+
+            result.total ??
+
+            S.forms.length;
+
+
+        $("formSubmitted")
+            .textContent =
+
+            result.submittedCount ??
+
+            0;
+
+
+        $("formPending")
+            .textContent =
+
+            result.pendingCount ??
+
+            0;
+
+
+        $("formRate")
+            .textContent =
+
+            `${
+                result.completionRate ??
+                0
+            }%`;
+
+
+        renderForms();
 
     }
 
-    catch (error) {
+    catch (
+        error
+    ) {
 
-        showBindingError(
+        setError(
+            "form",
             error.message
         );
 
@@ -4337,133 +3546,377 @@ async function loadBindings() {
 }
 
 
-function filterBindings() {
-
-    const input =
-
-        document.getElementById(
-            "bindingSearchInput"
-        );
-
+function renderForms() {
 
     const query =
 
-        (
-            input
-                ? input.value
-                : ""
-        )
-        .trim()
-        .toLowerCase();
+        $("formSearch")
+            .value
+            .trim()
+            .toLowerCase();
 
 
-    ADMIN_STATE.filteredBindings =
+    const filter =
+        $("formFilter")
+            .value;
 
-        !query
 
-        ? [...ADMIN_STATE.bindings]
+    const list =
 
-        : ADMIN_STATE.bindings.filter(
-
+        S.forms.filter(
             item => {
 
-                const searchable = [
+                const matchesQuery =
 
-                    item.displayName,
-                    item.userId,
-                    item.club,
-                    item.category
+                    !query
 
-                ]
-                .join(" ")
-                .toLowerCase();
+                    ||
+
+                    (
+                        item.club +
+                        " " +
+                        item.category
+                    )
+                    .toLowerCase()
+                    .includes(
+                        query
+                    );
 
 
-                return searchable.includes(
-                    query
+                const matchesStatus =
+
+                    filter ===
+                    "all"
+
+                    ||
+
+                    (
+                        filter ===
+                        "submitted"
+
+                        &&
+
+                        item.submitted
+                    )
+
+                    ||
+
+                    (
+                        filter ===
+                        "pending"
+
+                        &&
+
+                        !item.submitted
+                    );
+
+
+                return (
+                    matchesQuery &&
+                    matchesStatus
                 );
 
             }
-
         );
 
 
-    renderBindings();
+    $("formCount")
+        .textContent =
+
+        `顯示 ${list.length} / ${S.forms.length} 個社團`;
+
+
+    if (
+        !list.length
+    ) {
+
+        empty(
+            "form",
+            "找不到符合條件的社團。"
+        );
+
+
+        return;
+
+    }
+
+
+    $("formState")
+        .style
+        .display =
+        "none";
+
+
+    $("formTable")
+        .style
+        .display =
+        "block";
+
+
+    $("formBody")
+        .innerHTML =
+
+        list.map(
+            item => {
+
+                return `
+
+                <tr>
+
+                    <td class="name">
+                        ${esc(item.club)}
+                    </td>
+
+                    <td>
+                        <span class="chip">
+                            ${esc(item.category)}
+                        </span>
+                    </td>
+
+                    <td>
+
+                        ${
+                            item.submitted
+
+                                ? '<span class="chip chip-ok">✅ 已填寫</span>'
+
+                                : '<span class="chip chip-bad">❌ 未填寫</span>'
+                        }
+
+                    </td>
+
+                    <td>
+                        ${esc(
+                            item.submittedAtTaipei ||
+                            "-"
+                        )}
+                    </td>
+
+                </tr>
+
+                `;
+
+            }
+        )
+        .join(
+            ""
+        );
+
+
+    $("formMobile")
+        .innerHTML =
+
+        list.map(
+            item => {
+
+                return `
+
+                <div class="mobile-card">
+
+                    <div class="mobile-title">
+                        ${esc(item.club)}
+                    </div>
+
+                    <div class="mobile-sub">
+                        ${esc(item.category)}
+                    </div>
+
+                    <div style="margin-top:8px">
+
+                        ${
+                            item.submitted
+
+                                ? "✅ 已填寫"
+
+                                : "❌ 未填寫"
+                        }
+
+                        ·
+
+                        ${esc(
+                            item.submittedAtTaipei ||
+                            "-"
+                        )}
+
+                    </div>
+
+                </div>
+
+                `;
+
+            }
+        )
+        .join(
+            ""
+        );
+
+}
+
+
+/* ============================================================
+   LINE 綁定
+   ============================================================ */
+
+async function loadBindings() {
+
+    setState(
+        "binding",
+        "正在讀取綁定資料..."
+    );
+
+
+    try {
+
+        const result =
+
+            await api(
+
+                "adminListBindings",
+
+                {
+                    sessionToken:
+                        S.token
+                }
+
+            );
+
+
+        if (
+            unauth(
+                result
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message ||
+                "無法取得綁定資料"
+
+            );
+
+        }
+
+
+        S.bindings =
+
+            Array.isArray(
+                result.bindings
+            )
+
+                ? result.bindings
+
+                : [];
+
+
+        $("bindingCount")
+            .textContent =
+            S.bindings.length;
+
+
+        renderBindings();
+
+    }
+
+    catch (
+        error
+    ) {
+
+        setError(
+            "binding",
+            error.message
+        );
+
+    }
 
 }
 
 
 function renderBindings() {
 
-    const all =
-        ADMIN_STATE.bindings.length;
+    const query =
+
+        $("bindingSearch")
+            .value
+            .trim()
+            .toLowerCase();
 
 
-    const filtered =
-        ADMIN_STATE.filteredBindings.length;
+    const list =
+
+        S.bindings.filter(
+            item => {
+
+                if (!query) {
+
+                    return true;
+
+                }
 
 
-    document.getElementById(
-        "bindingCount"
-    ).textContent =
-        all;
+                const searchable =
+
+                    (
+                        (
+                            item.displayName ||
+                            ""
+                        )
+
+                        + " " +
+
+                        (
+                            item.club ||
+                            ""
+                        )
+
+                        + " " +
+
+                        (
+                            item.category ||
+                            ""
+                        )
+
+                        + " " +
+
+                        (
+                            item.userId ||
+                            ""
+                        )
+                    )
+                    .toLowerCase();
 
 
-    document.getElementById(
-        "bindingResultCount"
-    ).textContent =
+                return searchable
+                    .includes(
+                        query
+                    );
 
-        `顯示 ${filtered} / ${all} 筆`;
-
-
-    const state =
-
-        document.getElementById(
-            "bindingState"
+            }
         );
 
 
-    const desktop =
+    $("bindingResult")
+        .textContent =
 
-        document.getElementById(
-            "bindingDesktopTable"
-        );
-
-
-    const mobile =
-
-        document.getElementById(
-            "bindingMobileList"
-        );
+        `顯示 ${list.length} / ${S.bindings.length} 筆`;
 
 
     if (
-        filtered === 0
+        !list.length
     ) {
 
-        desktop.style.display =
-            "none";
-
-
-        mobile.innerHTML =
-            "";
-
-
-        state.style.display =
-            "block";
-
-
-        state.innerHTML =
-
-            `
-
-            <div class="state-icon">
-                📭
-            </div>
-
-            目前沒有符合條件的綁定資料。
-
-            `;
+        empty(
+            "binding",
+            "找不到符合條件的綁定資料。"
+        );
 
 
         return;
@@ -4471,259 +3924,261 @@ function renderBindings() {
     }
 
 
-    state.style.display =
+    $("bindingState")
+        .style
+        .display =
         "none";
 
 
-    document.getElementById(
-        "bindingTableBody"
-    ).innerHTML =
+    $("bindingTable")
+        .style
+        .display =
+        "block";
 
-        ADMIN_STATE.filteredBindings
 
-        .map(
+    $("bindingBody")
+        .innerHTML =
 
-            (item, index) => `
+        list.map(
+            item => {
 
-            <tr>
+                return `
 
-                <td>
+                <tr>
 
-                    <div class="line-name">
+                    <td class="name">
 
-                        ${escapeHtml(item.displayName || "LINE 使用者")}
+                        ${esc(
+                            item.displayName ||
+                            "-"
+                        )}
 
-                    </div>
+                    </td>
 
-                </td>
+                    <td class="mono">
 
-                <td>
+                        ${esc(
+                            item.userId ||
+                            ""
+                        )}
 
-                    <div class="user-id">
+                    </td>
 
-                        ${escapeHtml(item.userId || "")}
+                    <td>
 
-                    </div>
+                        ${esc(
+                            item.club ||
+                            "-"
+                        )}
 
-                </td>
+                    </td>
 
-                <td>
+                    <td>
 
-                    <div class="club-name">
+                        <span class="chip">
 
-                        ${escapeHtml(item.club || "-")}
+                            ${esc(
+                                item.category ||
+                                "-"
+                            )}
 
-                    </div>
+                        </span>
 
-                </td>
+                    </td>
 
-                <td>
+                    <td>
 
-                    <span class="category-chip">
+                        ${esc(
+                            fmt(
+                                item.createdAt
+                            )
+                        )}
 
-                        ${escapeHtml(item.category || "-")}
+                    </td>
 
-                    </span>
+                    <td>
 
-                </td>
+                        <button
+                            class="btn btn-danger mini"
+                            onclick="unbind('${enc(item.userId)}','${enc(item.club || "")}')"
+                        >
+                            解除綁定
+                        </button>
 
-                <td>
+                    </td>
 
-                    <span class="date-text">
+                </tr>
 
-                        ${escapeHtml(formatDate(item.createdAt))}
+                `;
 
-                    </span>
-
-                </td>
-
-                <td>
-
-                    <button
-
-                        class="unbind-btn"
-
-                        type="button"
-
-                        onclick="openUnbindModal(${index})"
-
-                    >
-                        解除綁定
-                    </button>
-
-                </td>
-
-            </tr>
-
-            `
-
+            }
         )
-        .join("");
+        .join(
+            ""
+        );
 
 
-    desktop.style.display =
-        "";
+    $("bindingMobile")
+        .innerHTML =
 
+        list.map(
+            item => {
 
-    mobile.innerHTML =
+                return `
 
-        ADMIN_STATE.filteredBindings
+                <div class="mobile-card">
 
-        .map(
+                    <div class="mobile-title">
 
-            (item, index) => `
-
-            <div class="mobile-card">
-
-                <div class="mobile-card-top">
-
-                    <div>
-
-                        <div class="mobile-title">
-
-                            ${escapeHtml(item.displayName || "LINE 使用者")}
-
-                        </div>
-
-                        <div class="mobile-subtitle">
-
-                            ${escapeHtml(item.club || "-")}
-
-                        </div>
+                        ${esc(
+                            item.displayName ||
+                            "-"
+                        )}
 
                     </div>
 
-                    <button
+                    <div class="mobile-sub">
 
-                        class="unbind-btn"
+                        ${esc(
+                            item.club ||
+                            "-"
+                        )}
 
-                        onclick="openUnbindModal(${index})"
+                        ·
 
+                        ${esc(
+                            item.category ||
+                            "-"
+                        )}
+
+                    </div>
+
+                    <div
+                        class="mono"
+                        style="margin-top:8px"
                     >
-                        解除綁定
-                    </button>
 
-                </div>
-
-                <div class="mobile-info">
-
-                    <div>
-
-                        屬性：
-                        ${escapeHtml(item.category || "-")}
+                        ${esc(
+                            item.userId ||
+                            ""
+                        )}
 
                     </div>
 
-                    <div>
+                    <div class="mobile-actions">
 
-                        綁定時間：
-                        ${escapeHtml(formatDate(item.createdAt))}
-
-                    </div>
-
-                    <div class="mobile-id">
-
-                        User ID：
-                        ${escapeHtml(item.userId || "")}
+                        <button
+                            class="btn btn-danger mini"
+                            onclick="unbind('${enc(item.userId)}','${enc(item.club || "")}')"
+                        >
+                            解除綁定
+                        </button>
 
                     </div>
 
                 </div>
 
-            </div>
+                `;
 
-            `
-
+            }
         )
-        .join("");
+        .join(
+            ""
+        );
 
 }
 
 
-/* ============================================================
-   雲端資料
-   ============================================================ */
+async function unbind(
+    userIdEncoded,
+    clubEncoded
+) {
 
-async function loadCloudLinks() {
+    const userId =
+        dec(
+            userIdEncoded
+        );
 
-    showCloudLoading();
+
+    const club =
+        dec(
+            clubEncoded
+        );
+
+
+    if (
+
+        !confirm(
+
+            `確定解除「${club}」的 LINE 綁定？`
+
+        )
+
+    ) {
+
+        return;
+
+    }
 
 
     try {
 
         const result =
 
-            await callAdminBackend(
+            await api(
 
-                "adminListCloudLinks",
+                "adminUnbind",
 
                 {
-
                     sessionToken:
-                        ADMIN_STATE.sessionToken
+                        S.token,
 
+                    userId:
+                        userId
                 }
 
             );
 
 
         if (
-            result.error ===
-            "ADMIN_UNAUTHORIZED"
+            unauth(
+                result
+            )
         ) {
-
-            handleUnauthorized();
 
             return;
 
         }
 
 
-        if (!result.success) {
+        if (
+            !result.success
+        ) {
 
             throw new Error(
 
                 result.message ||
-                "無法取得社團雲端資料"
+                "解除失敗"
 
             );
 
         }
 
 
-        ADMIN_STATE.clouds =
-
-            Array.isArray(
-                result.clubs
-            )
-
-            ? result.clubs
-            : [];
+        toast(
+            "✅ 已解除綁定"
+        );
 
 
-        document.getElementById(
-            "cloudTotalCount"
-        ).textContent =
-
-            result.total ??
-            ADMIN_STATE.clouds.length;
-
-
-        document.getElementById(
-            "cloudConfiguredCount"
-        ).textContent =
-
-            result.configuredCount ??
-            0;
-
-
-        filterClouds();
+        await loadBindings();
 
     }
 
-    catch (error) {
+    catch (
+        error
+    ) {
 
-        showCloudError(
+        alert(
             error.message
         );
 
@@ -4732,201 +4187,212 @@ async function loadCloudLinks() {
 }
 
 
-function filterClouds() {
+/* ============================================================
+   雲端管理
+   ============================================================ */
 
-    const input =
+async function loadClouds() {
 
-        document.getElementById(
-            "cloudSearchInput"
+    setState(
+        "cloud",
+        "正在讀取雲端資料..."
+    );
+
+
+    try {
+
+        const result =
+
+            await api(
+
+                "adminListCloudLinks",
+
+                {
+                    sessionToken:
+                        S.token
+                }
+
+            );
+
+
+        if (
+            unauth(
+                result
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message ||
+                "無法取得雲端資料"
+
+            );
+
+        }
+
+
+        S.clouds =
+
+            Array.isArray(
+                result.clubs
+            )
+
+                ? result.clubs
+
+                : [];
+
+
+        $("cloudConfiguredCount")
+            .textContent =
+
+            result.configuredCount ??
+
+            S.clouds.filter(
+                item =>
+                    item.configured
+            )
+            .length;
+
+
+        if (
+            !S.clubs.length
+        ) {
+
+            $("clubTotalCount")
+                .textContent =
+
+                result.total ??
+
+                S.clouds.length;
+
+        }
+
+
+        renderClouds();
+
+    }
+
+    catch (
+        error
+    ) {
+
+        setError(
+            "cloud",
+            error.message
         );
 
-
-    const query =
-
-        (
-            input
-                ? input.value
-                : ""
-        )
-        .trim()
-        .toLowerCase();
-
-
-    ADMIN_STATE.filteredClouds =
-
-        !query
-
-        ? [...ADMIN_STATE.clouds]
-
-        : ADMIN_STATE.clouds.filter(
-
-            item => {
-
-                return (
-
-                    (
-                        item.club || ""
-                    )
-                    .toLowerCase()
-                    .includes(query)
-
-                    ||
-
-                    (
-                        item.category || ""
-                    )
-                    .toLowerCase()
-                    .includes(query)
-
-                );
-
-            }
-
-        );
-
-
-    renderClouds();
+    }
 
 }
 
 
 function renderClouds() {
 
-    const all =
-        ADMIN_STATE.clouds.length;
+    const query =
+
+        $("cloudSearch")
+            .value
+            .trim()
+            .toLowerCase();
 
 
-    const filtered =
-        ADMIN_STATE.filteredClouds.length;
+    const list =
+
+        S.clouds.filter(
+            item => {
+
+                if (!query) {
+
+                    return true;
+
+                }
 
 
-    document.getElementById(
-        "cloudResultCount"
-    ).textContent =
+                return (
 
-        `顯示 ${filtered} / ${all} 個社團`;
+                    (
+                        item.club +
+                        " " +
+                        item.category
+                    )
+                    .toLowerCase()
+                    .includes(
+                        query
+                    )
 
+                );
 
-    const state =
-
-        document.getElementById(
-            "cloudState"
+            }
         );
 
 
-    const desktop =
+    $("cloudCount")
+        .textContent =
 
-        document.getElementById(
-            "cloudDesktopTable"
-        );
-
-
-    const mobile =
-
-        document.getElementById(
-            "cloudMobileList"
-        );
+        `顯示 ${list.length} / ${S.clouds.length} 個社團`;
 
 
     if (
-        filtered === 0
+        !list.length
     ) {
 
-        desktop.style.display =
-            "none";
+        empty(
+            "cloud",
+            "找不到符合條件的社團。"
+        );
 
-        mobile.innerHTML =
-            "";
-
-        state.style.display =
-            "block";
-
-        state.innerHTML =
-
-            `
-
-            <div class="state-icon">
-                📭
-            </div>
-
-            找不到符合條件的社團。
-
-            `;
 
         return;
 
     }
 
 
-    state.style.display =
+    $("cloudState")
+        .style
+        .display =
         "none";
 
 
-    document.getElementById(
-        "cloudTableBody"
-    ).innerHTML =
-
-        ADMIN_STATE.filteredClouds
-
-        .map(
-
-            (item, index) => {
+    $("cloudTable")
+        .style
+        .display =
+        "block";
 
 
-                const status =
+    $("cloudBody")
+        .innerHTML =
 
-                    item.configured
-
-                    ? `
-                      <span class="status-chip status-success">
-                          ✅ 已設定
-                      </span>
-                      `
-
-                    : `
-                      <span class="status-chip status-empty">
-                          尚未設定
-                      </span>
-                      `;
-
-
-                const link =
-
-                    item.configured
-
-                    ? `
-                      <a
-                          class="cloud-link"
-                          href="${escapeAttribute(item.url)}"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                      >
-                          ${escapeHtml(item.url)}
-                      </a>
-                      `
-
-                    : "-";
-
+        list.map(
+            item => {
 
                 return `
 
                 <tr>
 
-                    <td>
+                    <td class="name">
 
-                        <div class="club-name">
-
-                            ${escapeHtml(item.club)}
-
-                        </div>
+                        ${esc(
+                            item.club
+                        )}
 
                     </td>
 
                     <td>
 
-                        <span class="category-chip">
+                        <span class="chip">
 
-                            ${escapeHtml(item.category)}
+                            ${esc(
+                                item.category
+                            )}
 
                         </span>
 
@@ -4934,66 +4400,71 @@ function renderClouds() {
 
                     <td>
 
-                        ${status}
+                        ${
+                            item.configured
+
+                                ? '<span class="chip chip-ok">✅ 已設定</span>'
+
+                                : '<span class="chip chip-warn">尚未設定</span>'
+                        }
 
                     </td>
 
                     <td>
 
-                        ${link}
+                        ${
+                            item.url
 
-                    </td>
+                                ? `
+                                    <a
+                                        class="link"
+                                        href="${esc(item.url)}"
+                                        target="_blank"
+                                        rel="noopener"
+                                    >
+                                        ${esc(item.url)}
+                                    </a>
+                                  `
 
-                    <td>
-
-                        <span class="date-text">
-
-                            ${
-                                item.updatedAt
-                                ? escapeHtml(
-                                    formatDate(
-                                        item.updatedAt
-                                    )
-                                  )
                                 : "-"
-                            }
-
-                        </span>
+                        }
 
                     </td>
 
                     <td>
 
-                        <div class="action-group">
+                        ${esc(
+                            fmt(
+                                item.updatedAt
+                            )
+                        )}
+
+                    </td>
+
+                    <td>
+
+                        <div class="actions">
 
                             <button
-
-                                type="button"
-
-                                class="edit-btn"
-
-                                onclick="openCloudModal(${index})"
-
+                                class="btn btn-edit mini"
+                                onclick="editCloud('${enc(item.club)}','${enc(item.url || "")}')"
                             >
-                                ${
-                                    item.configured
-                                    ? "修改連結"
-                                    : "設定連結"
-                                }
+                                ✏️ 設定
                             </button>
 
                             ${
                                 item.configured
-                                ? `
-                                  <button
-                                      type="button"
-                                      class="clear-btn"
-                                      onclick="openClearCloudModal(${index})"
-                                  >
-                                      清除
-                                  </button>
-                                  `
-                                : ""
+
+                                    ? `
+                                        <button
+                                            class="btn btn-danger mini"
+                                            onclick="clearCloud('${enc(item.club)}')"
+                                        >
+                                            清除
+                                        </button>
+                                      `
+
+                                    : ""
                             }
 
                         </div>
@@ -5005,317 +4476,135 @@ function renderClouds() {
                 `;
 
             }
-
         )
-        .join("");
+        .join(
+            ""
+        );
 
 
-    desktop.style.display =
-        "";
+    $("cloudMobile")
+        .innerHTML =
 
+        list.map(
+            item => {
 
-    mobile.innerHTML =
+                return `
 
-        ADMIN_STATE.filteredClouds
+                <div class="mobile-card">
 
-        .map(
+                    <div class="mobile-title">
 
-            (item, index) => `
-
-            <div class="mobile-card">
-
-                <div class="mobile-card-top">
-
-                    <div>
-
-                        <div class="mobile-title">
-
-                            ${escapeHtml(item.club)}
-
-                        </div>
-
-                        <div class="mobile-subtitle">
-
-                            ${escapeHtml(item.category)}
-
-                        </div>
+                        ${esc(
+                            item.club
+                        )}
 
                     </div>
 
-                    ${
-                        item.configured
+                    <div class="mobile-sub">
 
-                        ? `
-                          <span class="status-chip status-success">
-                              ✅ 已設定
-                          </span>
-                          `
+                        ${esc(
+                            item.category
+                        )}
 
-                        : `
-                          <span class="status-chip status-empty">
-                              尚未設定
-                          </span>
-                          `
-                    }
+                        ·
 
-                </div>
+                        ${
+                            item.configured
 
+                                ? "✅ 已設定"
 
-                <div class="mobile-info">
+                                : "尚未設定"
+                        }
 
-                    ${
-                        item.configured
+                    </div>
 
-                        ? `
-                          <div>
-                              雲端：
-                              <a
-                                  href="${escapeAttribute(item.url)}"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                              >
-                                  開啟連結
-                              </a>
-                          </div>
-                          `
-
-                        : `
-                          <div>
-                              尚未設定專屬雲端
-                          </div>
-                          `
-                    }
-
-                    ${
-                        item.updatedAt
-
-                        ? `
-                          <div>
-                              最後修改：
-                              ${escapeHtml(formatDate(item.updatedAt))}
-                          </div>
-                          `
-
-                        : ""
-                    }
-
-                    <div class="action-group">
+                    <div class="mobile-actions">
 
                         <button
-
-                            class="edit-btn"
-
-                            onclick="openCloudModal(${index})"
-
+                            class="btn btn-edit mini"
+                            onclick="editCloud('${enc(item.club)}','${enc(item.url || "")}')"
                         >
-                            ${
-                                item.configured
-                                ? "修改連結"
-                                : "設定連結"
-                            }
+                            ✏️ 設定
                         </button>
 
                         ${
                             item.configured
 
-                            ? `
-                              <button
-                                  class="clear-btn"
-                                  onclick="openClearCloudModal(${index})"
-                              >
-                                  清除
-                              </button>
-                              `
+                                ? `
+                                    <button
+                                        class="btn btn-danger mini"
+                                        onclick="clearCloud('${enc(item.club)}')"
+                                    >
+                                        清除
+                                    </button>
+                                  `
 
-                            : ""
+                                : ""
                         }
 
                     </div>
 
                 </div>
 
-            </div>
+                `;
 
-            `
-
+            }
         )
-        .join("");
+        .join(
+            ""
+        );
 
 }
 
 
-/* ============================================================
-   雲端設定 Modal
-   ============================================================ */
-
-function openCloudModal(
-    index
+async function editCloud(
+    clubEncoded,
+    urlEncoded
 ) {
 
-    const item =
-
-        ADMIN_STATE.filteredClouds[
-            index
-        ];
-
-
-    if (!item) {
-
-        return;
-
-    }
-
-
-    ADMIN_STATE.pendingCloud =
-        item;
-
-
-    document.getElementById(
-        "cloudModalInfo"
-    ).innerHTML =
-
-        `
-
-        <b>社團：</b>
-        ${escapeHtml(item.club)}
-
-        <br>
-
-        <b>屬性：</b>
-        ${escapeHtml(item.category)}
-
-        `;
-
-
-    document.getElementById(
-        "cloudUrlInput"
-    ).value =
-
-        item.url ||
-        "";
-
-
-    document.getElementById(
-        "cloudModalError"
-    ).textContent =
-        "";
-
-
-    document.getElementById(
-        "cloudModal"
-    ).style.display =
-        "flex";
-
-
-    setTimeout(
-
-        () => {
-
-            document.getElementById(
-                "cloudUrlInput"
-            ).focus();
-
-        },
-
-        60
-
-    );
-
-}
-
-
-function closeCloudModal() {
-
-    if (
-        ADMIN_STATE.requestRunning
-    ) {
-
-        return;
-
-    }
-
-
-    ADMIN_STATE.pendingCloud =
-        null;
-
-
-    document.getElementById(
-        "cloudModal"
-    ).style.display =
-        "none";
-
-}
-
-
-/* ============================================================
-   儲存雲端
-   ============================================================ */
-
-async function saveCloudLink() {
-
-    if (
-        ADMIN_STATE.requestRunning
-    ) {
-
-        return;
-
-    }
-
-
-    const item =
-        ADMIN_STATE.pendingCloud;
-
-
-    if (!item) {
-
-        return;
-
-    }
-
-
-    const input =
-
-        document.getElementById(
-            "cloudUrlInput"
+    const club =
+        dec(
+            clubEncoded
         );
 
 
-    const errorBox =
-
-        document.getElementById(
-            "cloudModalError"
-        );
-
-
-    const button =
-
-        document.getElementById(
-            "saveCloudBtn"
+    const oldUrl =
+        dec(
+            urlEncoded
         );
 
 
     const url =
-        input.value.trim();
+
+        prompt(
+
+            `請輸入「${club}」的專屬雲端網址：`,
+
+            oldUrl
+
+        );
 
 
-    if (!url) {
-
-        errorBox.textContent =
-            "請輸入雲端網址。";
+    if (
+        url ===
+        null
+    ) {
 
         return;
 
     }
 
 
-    if (
-        !/^https:\/\/[^\s]+$/i.test(
-            url
-        )
-    ) {
+    const value =
+        url.trim();
 
-        errorBox.textContent =
-            "請輸入有效的 https:// 網址。";
+
+    if (!value) {
+
+        alert(
+            "請輸入雲端網址"
+        );
+
 
         return;
 
@@ -5324,988 +4613,372 @@ async function saveCloudLink() {
 
     try {
 
-        ADMIN_STATE.requestRunning =
-            true;
-
-
-        button.disabled =
-            true;
-
-
-        button.textContent =
-            "儲存中...";
-
-
-        errorBox.textContent =
-            "";
-
-
         const result =
 
-            await callAdminBackend(
+            await api(
 
                 "adminSetCloudLink",
 
                 {
-
                     sessionToken:
-                        ADMIN_STATE.sessionToken,
+                        S.token,
 
                     clubName:
-                        item.club,
+                        club,
 
                     url:
-                        url
-
+                        value
                 }
 
             );
 
 
         if (
-            result.error ===
-            "ADMIN_UNAUTHORIZED"
+            unauth(
+                result
+            )
         ) {
-
-            handleUnauthorized();
 
             return;
 
         }
 
 
-        if (!result.success) {
+        if (
+            !result.success
+        ) {
 
             throw new Error(
+
                 result.message ||
-                "儲存失敗"
+                "設定失敗"
+
             );
 
         }
 
 
-        document.getElementById(
-            "cloudModal"
-        ).style.display =
-            "none";
-
-
-        ADMIN_STATE.pendingCloud =
-            null;
-
-
-        await loadCloudLinks();
-
-
-        showToast(
-            `✅ ${item.club} 雲端連結已儲存`
+        toast(
+            "✅ 雲端連結已更新"
         );
 
-    }
 
-    catch (error) {
-
-        errorBox.textContent =
-            error.message;
+        await loadClouds();
 
     }
 
-    finally {
+    catch (
+        error
+    ) {
 
-        ADMIN_STATE.requestRunning =
-            false;
-
-
-        button.disabled =
-            false;
-
-
-        button.textContent =
-            "儲存連結";
+        alert(
+            error.message
+        );
 
     }
 
 }
 
 
-/* ============================================================
-   清除雲端
-   ============================================================ */
-
-function openClearCloudModal(
-    index
+async function clearCloud(
+    clubEncoded
 ) {
 
-    const item =
-
-        ADMIN_STATE.filteredClouds[
-            index
-        ];
-
-
-    if (!item) {
-
-        return;
-
-    }
-
-
-    ADMIN_STATE.pendingClearCloud =
-        item;
-
-
-    document.getElementById(
-        "clearCloudInfo"
-    ).innerHTML =
-
-        `
-
-        <b>社團：</b>
-        ${escapeHtml(item.club)}
-
-        <br>
-
-        <b>屬性：</b>
-        ${escapeHtml(item.category)}
-
-        `;
-
-
-    document.getElementById(
-        "clearCloudModal"
-    ).style.display =
-        "flex";
-
-}
-
-
-function closeClearCloudModal() {
-
-    if (
-        ADMIN_STATE.requestRunning
-    ) {
-
-        return;
-
-    }
-
-
-    ADMIN_STATE.pendingClearCloud =
-        null;
-
-
-    document.getElementById(
-        "clearCloudModal"
-    ).style.display =
-        "none";
-
-}
-
-
-async function confirmClearCloud() {
-
-    if (
-        ADMIN_STATE.requestRunning
-    ) {
-
-        return;
-
-    }
-
-
-    const item =
-        ADMIN_STATE.pendingClearCloud;
-
-
-    if (!item) {
-
-        return;
-
-    }
-
-
-    const button =
-
-        document.getElementById(
-            "confirmClearCloudBtn"
+    const club =
+        dec(
+            clubEncoded
         );
+
+
+    if (
+
+        !confirm(
+
+            `確定清除「${club}」的雲端連結？`
+
+        )
+
+    ) {
+
+        return;
+
+    }
 
 
     try {
 
-        ADMIN_STATE.requestRunning =
-            true;
-
-
-        button.disabled =
-            true;
-
-
-        button.textContent =
-            "清除中...";
-
-
         const result =
 
-            await callAdminBackend(
+            await api(
 
                 "adminClearCloudLink",
 
                 {
-
                     sessionToken:
-                        ADMIN_STATE.sessionToken,
+                        S.token,
 
                     clubName:
-                        item.club
-
+                        club
                 }
 
             );
 
 
         if (
-            result.error ===
-            "ADMIN_UNAUTHORIZED"
+            unauth(
+                result
+            )
         ) {
-
-            handleUnauthorized();
 
             return;
 
         }
 
 
-        if (!result.success) {
+        if (
+            !result.success
+        ) {
 
             throw new Error(
+
                 result.message ||
                 "清除失敗"
+
             );
 
         }
 
 
-        document.getElementById(
-            "clearCloudModal"
-        ).style.display =
-            "none";
-
-
-        ADMIN_STATE.pendingClearCloud =
-            null;
-
-
-        await loadCloudLinks();
-
-
-        showToast(
-            `✅ 已清除 ${item.club} 的雲端連結`
+        toast(
+            "✅ 雲端連結已清除"
         );
+
+
+        await loadClouds();
 
     }
 
-    catch (error) {
+    catch (
+        error
+    ) {
 
-        showToast(
-            "❌ " +
+        alert(
             error.message
         );
 
     }
 
-    finally {
-
-        ADMIN_STATE.requestRunning =
-            false;
-
-
-        button.disabled =
-            false;
-
-
-        button.textContent =
-            "確認清除";
-
-    }
-
 }
 
 
 /* ============================================================
-   解除綁定
+   Loading / Error / Empty
    ============================================================ */
 
-function openUnbindModal(
-    index
+function setState(
+    prefix,
+    message
 ) {
 
-    const item =
-
-        ADMIN_STATE.filteredBindings[
-            index
-        ];
-
-
-    if (!item) {
-
-        return;
-
-    }
-
-
-    ADMIN_STATE.pendingUnbind =
-        item;
-
-
-    document.getElementById(
-        "unbindInfo"
-    ).innerHTML =
-
-        `
-
-        <b>LINE 名稱：</b>
-        ${escapeHtml(item.displayName || "LINE 使用者")}
-
-        <br>
-
-        <b>社團：</b>
-        ${escapeHtml(item.club || "-")}
-
-        <br>
-
-        <b>屬性：</b>
-        ${escapeHtml(item.category || "-")}
-
-        `;
-
-
-    document.getElementById(
-        "unbindModal"
-    ).style.display =
-        "flex";
-
-}
-
-
-function closeUnbindModal() {
-
-    if (
-        ADMIN_STATE.requestRunning
-    ) {
-
-        return;
-
-    }
-
-
-    ADMIN_STATE.pendingUnbind =
-        null;
-
-
-    document.getElementById(
-        "unbindModal"
-    ).style.display =
-        "none";
-
-}
-
-
-async function confirmUnbind() {
-
-    if (
-        ADMIN_STATE.requestRunning
-    ) {
-
-        return;
-
-    }
-
-
-    const item =
-        ADMIN_STATE.pendingUnbind;
-
-
-    if (!item) {
-
-        return;
-
-    }
-
-
-    const button =
-
-        document.getElementById(
-            "confirmUnbindBtn"
+    const state =
+        $(
+            prefix +
+            "State"
         );
 
 
-    try {
-
-        ADMIN_STATE.requestRunning =
-            true;
-
-
-        button.disabled =
-            true;
+    const table =
+        $(
+            prefix +
+            "Table"
+        );
 
 
-        button.textContent =
-            "解除中...";
+    const mobile =
+        $(
+            prefix +
+            "Mobile"
+        );
 
 
-        const result =
+    if (
+        table
+    ) {
 
-            await callAdminBackend(
-
-                "adminUnbind",
-
-                {
-
-                    sessionToken:
-                        ADMIN_STATE.sessionToken,
-
-                    userId:
-                        item.userId
-
-                }
-
-            );
-
-
-        if (
-            result.error ===
-            "ADMIN_UNAUTHORIZED"
-        ) {
-
-            handleUnauthorized();
-
-            return;
-
-        }
-
-
-        if (!result.success) {
-
-            throw new Error(
-                result.message ||
-                "解除綁定失敗"
-            );
-
-        }
-
-
-        document.getElementById(
-            "unbindModal"
-        ).style.display =
+        table.style.display =
             "none";
 
-
-        ADMIN_STATE.pendingUnbind =
-            null;
-
-
-        await loadBindings();
-
-
-        showToast(
-
-            `✅ 已解除 ${item.displayName || "該使用者"} 的社團綁定`
-
-        );
-
     }
-
-    catch (error) {
-
-        showToast(
-            "❌ " +
-            error.message
-        );
-
-    }
-
-    finally {
-
-        ADMIN_STATE.requestRunning =
-            false;
-
-
-        button.disabled =
-            false;
-
-
-        button.textContent =
-            "確認解除";
-
-    }
-
-}
-
-
-/* ============================================================
-   Loading / Error
-   ============================================================ */
-
-function showBindingLoading() {
-
-    document.getElementById(
-        "bindingDesktopTable"
-    ).style.display =
-        "none";
-
-
-    document.getElementById(
-        "bindingMobileList"
-    ).innerHTML =
-        "";
-
-
-    const box =
-
-        document.getElementById(
-            "bindingState"
-        );
-
-
-    box.style.display =
-        "block";
-
-
-    box.innerHTML =
-
-        `
-
-        <div class="spinner"></div>
-
-        正在讀取綁定資料...
-
-        `;
-
-}
-
-
-function showCloudLoading() {
-
-    document.getElementById(
-        "cloudDesktopTable"
-    ).style.display =
-        "none";
-
-
-    document.getElementById(
-        "cloudMobileList"
-    ).innerHTML =
-        "";
-
-
-    const box =
-
-        document.getElementById(
-            "cloudState"
-        );
-
-
-    box.style.display =
-        "block";
-
-
-    box.innerHTML =
-
-        `
-
-        <div class="spinner"></div>
-
-        正在讀取社團雲端資料...
-
-        `;
-
-}
-
-
-function showBindingError(
-    message
-) {
-
-    const box =
-
-        document.getElementById(
-            "bindingState"
-        );
-
-
-    box.style.display =
-        "block";
-
-
-    box.innerHTML =
-
-        `
-
-        <div class="state-icon">
-            ⚠️
-        </div>
-
-        ${escapeHtml(message)}
-
-        `;
-
-}
-
-
-function showCloudError(
-    message
-) {
-
-    const box =
-
-        document.getElementById(
-            "cloudState"
-        );
-
-
-    box.style.display =
-        "block";
-
-
-    box.innerHTML =
-
-        `
-
-        <div class="state-icon">
-            ⚠️
-        </div>
-
-        ${escapeHtml(message)}
-
-        `;
-
-}
-
-
-/* ============================================================
-   畫面切換
-   ============================================================ */
-
-function showLoginScreen() {
-
-    document.getElementById(
-        "loginScreen"
-    ).style.display =
-        "flex";
-
-
-    document.getElementById(
-        "adminApp"
-    ).style.display =
-        "none";
-
-}
-
-
-function showAdminApp() {
-
-    document.getElementById(
-        "loginScreen"
-    ).style.display =
-        "none";
-
-
-    document.getElementById(
-        "adminApp"
-    ).style.display =
-        "block";
-
-}
-
-
-/* ============================================================
-   密碼
-   ============================================================ */
-
-function togglePassword() {
-
-    const input =
-
-        document.getElementById(
-            "adminPassword"
-        );
-
-
-    input.type =
-
-        input.type ===
-        "password"
-
-        ? "text"
-
-        : "password";
-
-}
-
-
-/* ============================================================
-   日期
-   ============================================================ */
-
-function formatDate(
-    iso
-) {
-
-    if (!iso) {
-
-        return "-";
-
-    }
-
-
-    const date =
-        new Date(iso);
 
 
     if (
-        Number.isNaN(
-            date.getTime()
-        )
+        mobile
     ) {
 
-        return iso;
+        mobile.innerHTML =
+            "";
 
     }
-
-
-    return new Intl.DateTimeFormat(
-
-        "zh-TW",
-
-        {
-
-            year:
-                "numeric",
-
-            month:
-                "2-digit",
-
-            day:
-                "2-digit",
-
-            hour:
-                "2-digit",
-
-            minute:
-                "2-digit"
-
-        }
-
-    ).format(date);
-
-}
-
-
-/* ============================================================
-   Escape
-   ============================================================ */
-
-function escapeHtml(
-    text
-) {
-
-    return String(
-        text ?? ""
-    )
-
-    .replaceAll(
-        "&",
-        "&amp;"
-    )
-
-    .replaceAll(
-        "<",
-        "&lt;"
-    )
-
-    .replaceAll(
-        ">",
-        "&gt;"
-    )
-
-    .replaceAll(
-        '"',
-        "&quot;"
-    )
-
-    .replaceAll(
-        "'",
-        "&#039;"
-    );
-
-}
-
-
-function escapeAttribute(
-    text
-) {
-
-    return escapeHtml(
-        text
-    );
-
-}
-
-
-/* ============================================================
-   Toast
-   ============================================================ */
-
-let toastTimer =
-    null;
-
-
-function showToast(
-    message
-) {
-
-    const toast =
-
-        document.getElementById(
-            "toast"
-        );
-
-
-    toast.textContent =
-        message;
-
-
-    toast.classList.add(
-        "show"
-    );
 
 
     if (
-        toastTimer
+        state
     ) {
 
-        clearTimeout(
-            toastTimer
-        );
+        state.style.display =
+            "block";
+
+
+        state.innerHTML =
+
+            `<div class="spinner"></div>${esc(message)}`;
 
     }
-
-
-    toastTimer =
-        setTimeout(
-
-            () => {
-
-                toast.classList.remove(
-                    "show"
-                );
-
-            },
-
-            3000
-
-        );
 
 }
 
 
-/* ============================================================
-   背景點擊關閉 Modal
-   ============================================================ */
+function setError(
+    prefix,
+    message
+) {
 
-[
-    "unbindModal",
-    "cloudModal",
-    "clearCloudModal"
-
-].forEach(
-
-    id => {
-
-        const modal =
-            document.getElementById(id);
-
-
-        modal.addEventListener(
-
-            "click",
-
-            function(event) {
-
-                if (
-                    event.target !==
-                    this
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    id ===
-                    "unbindModal"
-                ) {
-
-                    closeUnbindModal();
-
-                }
-
-
-                if (
-                    id ===
-                    "cloudModal"
-                ) {
-
-                    closeCloudModal();
-
-                }
-
-
-                if (
-                    id ===
-                    "clearCloudModal"
-                ) {
-
-                    closeClearCloudModal();
-
-                }
-
-            }
-
+    const state =
+        $(
+            prefix +
+            "State"
         );
+
+
+    const table =
+        $(
+            prefix +
+            "Table"
+        );
+
+
+    const mobile =
+        $(
+            prefix +
+            "Mobile"
+        );
+
+
+    if (
+        table
+    ) {
+
+        table.style.display =
+            "none";
 
     }
 
-);
+
+    if (
+        mobile
+    ) {
+
+        mobile.innerHTML =
+            "";
+
+    }
 
 
-/* ============================================================
-   ESC
-   ============================================================ */
+    if (
+        state
+    ) {
 
-document.addEventListener(
+        state.style.display =
+            "block";
 
-    "keydown",
+
+        state.innerHTML =
+
+            `⚠️ ${esc(message)}`;
+
+    }
+
+}
+
+
+function empty(
+    prefix,
+    message
+) {
+
+    const state =
+        $(
+            prefix +
+            "State"
+        );
+
+
+    const table =
+        $(
+            prefix +
+            "Table"
+        );
+
+
+    const mobile =
+        $(
+            prefix +
+            "Mobile"
+        );
+
+
+    if (
+        table
+    ) {
+
+        table.style.display =
+            "none";
+
+    }
+
+
+    if (
+        mobile
+    ) {
+
+        mobile.innerHTML =
+            "";
+
+    }
+
+
+    if (
+        state
+    ) {
+
+        state.style.display =
+            "block";
+
+
+        state.textContent =
+            message;
+
+    }
+
+}
+
+
+/* 點背景關閉 Modal */
+
+window.addEventListener(
+
+    "click",
 
     event => {
 
         if (
-            event.key !==
-            "Escape"
+            event.target ===
+            $("clubModalBg")
         ) {
 
-            return;
+            closeClubModal();
 
         }
-
-
-        closeUnbindModal();
-
-        closeCloudModal();
-
-        closeClearCloudModal();
 
     }
 
@@ -6314,5 +4987,4 @@ document.addEventListener(
 </script>
 
 </body>
-
 </html>
