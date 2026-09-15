@@ -1,1301 +1,115 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width,
-    initial-scale=1.0,
-    maximum-scale=1.0,
-    user-scalable=no,
-    shrink-to-fit=no,
-    viewport-fit=cover"
->
-
-<title>
-    ✦ 社團評選暨觀摩活動 智能客服 ✦
-</title>
-
-<script
-    src="https://static.line-scdn.net/liff/edge/2/sdk.js"
-></script>
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,shrink-to-fit=no,viewport-fit=cover">
+<title>✦ 社團評選暨觀摩活動 智能客服 ✦</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
-
-* {
-    box-sizing: border-box;
-}
-
-html,
-body {
-    width: 100%;
-    height: 100%;
-
-    margin: 0;
-    padding: 0;
-
-    background: #f4f6f8;
-
-    overflow: hidden;
-
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        "Noto Sans TC",
-        Roboto,
-        sans-serif;
-
-    color: #202124;
-}
-
-
-button,
-input {
-    font-family: inherit;
-}
-
-
-button {
-    -webkit-tap-highlight-color:
-        transparent;
-}
-
-
-/* ============================================================
-   主畫面
-   ============================================================ */
-
-.chat-container {
-
-    position: relative;
-
-    width: 100%;
-
-    height: 100vh;
-
-    height:
-        calc(
-            var(--vh, 1vh) *
-            100
-        );
-
-    display: flex;
-
-    flex-direction: column;
-
-    background:
-        #f4f6f8;
-
-    overflow:
-        hidden;
-}
-
-
-/* ============================================================
-   背景浮水印
-   ============================================================ */
-
-.chat-container::before {
-
-    content: "";
-
-    position: absolute;
-
-    top: 50%;
-    left: 50%;
-
-    transform:
-        translate(
-            -50%,
-            -50%
-        );
-
-    width: 260px;
-    height: 260px;
-
-    background:
-        url("./bg-logo.png")
-        no-repeat
-        center /
-        contain;
-
-    opacity: 0.07;
-
-    pointer-events:
-        none;
-
-    z-index: 0;
-}
-
-
-/* ============================================================
-   Header
-   ============================================================ */
-
-.chat-header {
-
-    position: relative;
-
-    z-index: 20;
-
-    flex-shrink: 0;
-
-    padding:
-        calc(
-            14px +
-            env(
-                safe-area-inset-top
-            )
-        )
-        16px
-        12px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #1a73e8,
-            #1557b0
-        );
-
-    color: white;
-
-    text-align:
-        center;
-
-    box-shadow:
-        0 2px 8px
-        rgba(
-            0,
-            0,
-            0,
-            0.08
-        );
-}
-
-
-.header-title {
-
-    font-size:
-        16px;
-
-    font-weight:
-        700;
-
-    letter-spacing:
-        0.3px;
-}
-
-
-.identity-chip {
-
-    display:
-        inline-block;
-
-    margin-top:
-        6px;
-
-    padding:
-        3px 9px;
-
-    border-radius:
-        999px;
-
-    background:
-        rgba(
-            255,
-            255,
-            255,
-            0.16
-        );
-
-    font-size:
-        11px;
-
-    color:
-        rgba(
-            255,
-            255,
-            255,
-            0.95
-        );
-}
-
-
-/* ============================================================
-   聊天訊息
-   ============================================================ */
-
-.chat-messages {
-
-    position: relative;
-
-    z-index: 2;
-
-    flex: 1;
-
-    display: flex;
-
-    flex-direction:
-        column;
-
-    gap: 12px;
-
-    padding:
-        16px;
-
-    overflow-y:
-        auto;
-
-    -webkit-overflow-scrolling:
-        touch;
-
-    background:
-        transparent;
-
-    scroll-behavior:
-        smooth;
-}
-
-
-.message {
-
-    max-width:
-        88%;
-
-    padding:
-        12px 15px;
-
-    border-radius:
-        18px;
-
-    font-size:
-        15px;
-
-    line-height:
-        1.6;
-
-    word-break:
-        break-word;
-}
-
-
-.message.bot {
-
-    align-self:
-        flex-start;
-
-    background:
-        rgba(
-            255,
-            255,
-            255,
-            0.96
-        );
-
-    color:
-        #202124;
-
-    border:
-        1px solid
-        #e8eaed;
-
-    border-bottom-left-radius:
-        5px;
-
-    box-shadow:
-        0 2px 5px
-        rgba(
-            0,
-            0,
-            0,
-            0.04
-        );
-}
-
-
-.message.user {
-
-    align-self:
-        flex-end;
-
-    background:
-        #1a73e8;
-
-    color:
-        white;
-
-    border-bottom-right-radius:
-        5px;
-
-    box-shadow:
-        0 2px 5px
-        rgba(
-            26,
-            115,
-            232,
-            0.18
-        );
-}
-
-
-/* ============================================================
-   快捷功能
-   ============================================================ */
-
-.quick-tags-container {
-
-    position: relative;
-
-    z-index: 10;
-
-    flex-shrink: 0;
-
-    display: flex;
-
-    gap: 8px;
-
-    padding:
-        9px
-        13px
-        5px;
-
-    overflow-x:
-        auto;
-
-    white-space:
-        nowrap;
-
-    background:
-        rgba(
-            244,
-            246,
-            248,
-            0.96
-        );
-
-    -webkit-overflow-scrolling:
-        touch;
-}
-
-
-.quick-tags-container::-webkit-scrollbar {
-
-    display:
-        none;
-}
-
-
-.quick-tag {
-
-    flex-shrink:
-        0;
-
-    border:
-        1px solid
-        #1a73e8;
-
-    border-radius:
-        18px;
-
-    padding:
-        8px 14px;
-
-    background:
-        white;
-
-    color:
-        #1a73e8;
-
-    font-size:
-        13px;
-
-    font-weight:
-        600;
-
-    cursor:
-        pointer;
-
-    transition:
-        0.2s;
-}
-
-
-.quick-tag:active {
-
-    transform:
-        scale(
-            0.97
-        );
-
-    background:
-        #1a73e8;
-
-    color:
-        white;
-}
-
-
-/* ============================================================
-   輸入區
-   ============================================================ */
-
-.chat-input-area {
-
-    position:
-        relative;
-
-    z-index: 20;
-
-    flex-shrink:
-        0;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    gap: 9px;
-
-    padding:
-        11px
-        13px
-        calc(
-            11px +
-            env(
-                safe-area-inset-bottom
-            )
-        );
-
-    background:
-        white;
-
-    border-top:
-        1px solid
-        #dadce0;
-
-    box-shadow:
-        0 -2px 10px
-        rgba(
-            0,
-            0,
-            0,
-            0.025
-        );
-}
-
-
-.chat-input {
-
-    flex: 1;
-
-    min-width: 0;
-
-    height: 43px;
-
-    padding:
-        0 17px;
-
-    border:
-        1px solid
-        #dadce0;
-
-    border-radius:
-        23px;
-
-    outline:
-        none;
-
-    background:
-        #f1f3f4;
-
-    font-size:
-        16px;
-
-    -webkit-appearance:
-        none;
-}
-
-
-.chat-input:focus {
-
-    background:
-        white;
-
-    border-color:
-        #1a73e8;
-
-    box-shadow:
-        0 0 0 2px
-        rgba(
-            26,
-            115,
-            232,
-            0.08
-        );
-}
-
-
-.send-btn {
-
-    flex-shrink:
-        0;
-
-    height:
-        43px;
-
-    padding:
-        0 20px;
-
-    border:
-        none;
-
-    border-radius:
-        23px;
-
-    background:
-        #1a73e8;
-
-    color:
-        white;
-
-    font-size:
-        14px;
-
-    font-weight:
-        700;
-
-    cursor:
-        pointer;
-}
-
-
-/* ============================================================
-   社團分類
-   ============================================================ */
-
-.club-category-container {
-
-    display:
-        flex;
-
-    flex-wrap:
-        wrap;
-
-    gap:
-        8px;
-
-    margin-top:
-        10px;
-}
-
-
-.club-category-btn {
-
-    border:
-        1px solid
-        #1a73e8;
-
-    border-radius:
-        18px;
-
-    padding:
-        7px 12px;
-
-    background:
-        white;
-
-    color:
-        #1a73e8;
-
-    font-size:
-        13px;
-
-    font-weight:
-        650;
-
-    cursor:
-        pointer;
-}
-
-
-.club-list {
-
-    display:
-        flex;
-
-    flex-direction:
-        column;
-
-    gap:
-        7px;
-
-    margin-top:
-        11px;
-}
-
-
-.club-list-item {
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    gap:
-        9px;
-
-    padding:
-        8px 10px;
-
-    border:
-        1px solid
-        #e4e7eb;
-
-    border-radius:
-        10px;
-
-    background:
-        #f8f9fa;
-}
-
-
-.club-number {
-
-    flex-shrink:
-        0;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    width:
-        26px;
-
-    height:
-        26px;
-
-    border-radius:
-        50%;
-
-    background:
-        #e8f0fe;
-
-    color:
-        #1a73e8;
-
-    font-size:
-        12px;
-
-    font-weight:
-        800;
-}
-
-
-/* ============================================================
-   綁定介面
-   ============================================================ */
-
-.binding-card {
-
-    margin-top:
-        8px;
-
-    padding:
-        13px;
-
-    border:
-        1px solid
-        #e4e7eb;
-
-    border-radius:
-        13px;
-
-    background:
-        #f8f9fa;
-}
-
-
-.binding-title {
-
-    margin-bottom:
-        4px;
-
-    font-size:
-        16px;
-
-    font-weight:
-        800;
-}
-
-
-.binding-description {
-
-    margin-bottom:
-        11px;
-
-    color:
-        #5f6368;
-
-    font-size:
-        13px;
-}
-
-
-.binding-input {
-
-    width:
-        100%;
-
-    height:
-        42px;
-
-    padding:
-        0 13px;
-
-    border:
-        1px solid
-        #cdd2d7;
-
-    border-radius:
-        10px;
-
-    outline:
-        none;
-
-    background:
-        white;
-
-    font-size:
-        15px;
-}
-
-
-.binding-feedback {
-
-    margin-top:
-        8px;
-
-    font-size:
-        13px;
-}
-
-
-.error-text {
-
-    color:
-        #b42318;
-}
-
-
-.success-text {
-
-    color:
-        #167542;
-}
-
-
-/* ============================================================
-   共用按鈕
-   ============================================================ */
-
-.action-row {
-
-    display:
-        flex;
-
-    flex-wrap:
-        wrap;
-
-    gap:
-        8px;
-
-    margin-top:
-        12px;
-}
-
-
-.action-btn {
-
-    border:
-        none;
-
-    border-radius:
-        10px;
-
-    padding:
-        9px 14px;
-
-    font-size:
-        13px;
-
-    font-weight:
-        700;
-
-    cursor:
-        pointer;
-}
-
-
-.action-btn:disabled {
-
-    opacity:
-        0.55;
-
-    cursor:
-        not-allowed;
-}
-
-
-.action-primary {
-
-    background:
-        #1a73e8;
-
-    color:
-        white;
-}
-
-
-.action-secondary {
-
-    background:
-        #e8f0fe;
-
-    color:
-        #1557b0;
-}
-
-
-/* ============================================================
-   資料卡
-   ============================================================ */
-
-.info-card {
-
-    margin-top:
-        10px;
-
-    padding:
-        12px;
-
-    border-radius:
-        12px;
-
-    border:
-        1px solid
-        #e4e7eb;
-
-    background:
-        #f8f9fa;
-}
-
-
-.info-row {
-
-    display:
-        flex;
-
-    justify-content:
-        space-between;
-
-    gap:
-        10px;
-
-    padding:
-        6px 0;
-
-    border-bottom:
-        1px solid
-        #eceff1;
-}
-
-
-.info-row:last-child {
-
-    border-bottom:
-        none;
-}
-
-
-.info-label {
-
-    color:
-        #5f6368;
-
-    font-size:
-        13px;
-}
-
-
-.info-value {
-
-    text-align:
-        right;
-
-    font-size:
-        13px;
-
-    font-weight:
-        750;
-}
-
-
-/* ============================================================
-   狀態
-   ============================================================ */
-
-.status-badge {
-
-    display:
-        inline-block;
-
-    padding:
-        4px 9px;
-
-    border-radius:
-        999px;
-
-    font-size:
-        12px;
-
-    font-weight:
-        750;
-}
-
-
-.status-success {
-
-    background:
-        #e7f6ec;
-
-    color:
-        #167542;
-}
-
-
-.status-warning {
-
-    background:
-        #fff4dd;
-
-    color:
-        #9a6700;
-}
-
-
-.status-locked {
-
-    background:
-        #e8f0fe;
-
-    color:
-        #1557b0;
-}
-
-
-.chat-link {
-
-    color:
-        #1a73e8;
-
-    text-decoration:
-        underline;
-
-    font-weight:
-        700;
-
-    cursor:
-        pointer;
-}
-
-
-.mini-note {
-
-    margin-top:
-        9px;
-
-    padding:
-        9px 10px;
-
-    border-left:
-        3px solid
-        #f9ab00;
-
-    border-radius:
-        6px;
-
-    background:
-        #fff8e1;
-
-    color:
-        #5f4b00;
-
-    font-size:
-        12px;
-}
-
-
-/* ============================================================
-   公告倒數
-   ============================================================ */
-
-.event-announcement {
-
-    margin:
-        14px
-        0
-        4px;
-
-    padding:
-        13px;
-
-    border:
-        1px solid
-        #d8e6ff;
-
-    border-radius:
-        13px;
-
-    background:
-        #f7faff;
-}
-
-
-.event-announcement-title {
-
-    margin-bottom:
-        10px;
-
-    color:
-        #1557b0;
-
-    font-size:
-        15px;
-
-    font-weight:
-        800;
-}
-
-
-.event-countdown-main {
-
-    margin-bottom:
-        10px;
-
-    padding:
-        10px;
-
-    border-radius:
-        10px;
-
-    background:
-        #e8f0fe;
-
-    text-align:
-        center;
-}
-
-
-.event-countdown-value {
-
-    color:
-        #1557b0;
-
-    font-size:
-        17px;
-
-    font-weight:
-        850;
-
-    line-height:
-        1.65;
-}
-
-
-.event-deadline-row {
-
-    padding:
-        8px 0;
-
-    border-bottom:
-        1px solid
-        #e5eaf0;
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;padding:0;background:#f4f6f8;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,sans-serif;color:#202124}
+button,input{font-family:inherit}
+button{-webkit-tap-highlight-color:transparent}
+
+.chat-container{position:relative;width:100%;height:100vh;height:calc(var(--vh,1vh)*100);display:flex;flex-direction:column;background:#f4f6f8;overflow:hidden}
+.chat-container::before{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:260px;height:260px;background:url("./bg-logo.png") no-repeat center/contain;opacity:.07;pointer-events:none;z-index:0}
+
+.chat-header{position:relative;z-index:20;flex-shrink:0;padding:calc(14px + env(safe-area-inset-top)) 16px 12px;background:linear-gradient(135deg,#1a73e8,#1557b0);color:#fff;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.header-title{font-size:16px;font-weight:700;letter-spacing:.3px}
+.identity-chip{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.16);font-size:11px;color:rgba(255,255,255,.95)}
+
+.chat-messages{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;gap:12px;padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:transparent;scroll-behavior:smooth}
+.message{max-width:88%;padding:12px 15px;border-radius:18px;font-size:15px;line-height:1.6;word-break:break-word}
+.message.bot{align-self:flex-start;background:rgba(255,255,255,.96);color:#202124;border:1px solid #e8eaed;border-bottom-left-radius:5px;box-shadow:0 2px 5px rgba(0,0,0,.04)}
+.message.user{align-self:flex-end;background:#1a73e8;color:#fff;border-bottom-right-radius:5px;box-shadow:0 2px 5px rgba(26,115,232,.18)}
+
+.quick-tags-container{position:relative;z-index:10;flex-shrink:0;display:flex;gap:8px;padding:9px 13px 5px;overflow-x:auto;white-space:nowrap;background:rgba(244,246,248,.96);-webkit-overflow-scrolling:touch}
+.quick-tags-container::-webkit-scrollbar{display:none}
+.quick-tag{flex-shrink:0;border:1px solid #1a73e8;border-radius:18px;padding:8px 14px;background:#fff;color:#1a73e8;font-size:13px;font-weight:600;cursor:pointer;transition:.2s}
+.quick-tag:active{transform:scale(.97);background:#1a73e8;color:#fff}
+
+.chat-input-area{position:relative;z-index:20;flex-shrink:0;display:flex;align-items:center;gap:9px;padding:11px 13px calc(11px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #dadce0;box-shadow:0 -2px 10px rgba(0,0,0,.025)}
+.chat-input{flex:1;min-width:0;height:43px;padding:0 17px;border:1px solid #dadce0;border-radius:23px;outline:none;background:#f1f3f4;font-size:16px;-webkit-appearance:none}
+.chat-input:focus{background:#fff;border-color:#1a73e8;box-shadow:0 0 0 2px rgba(26,115,232,.08)}
+.send-btn{flex-shrink:0;height:43px;padding:0 20px;border:none;border-radius:23px;background:#1a73e8;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+
+.club-category-container{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.club-category-btn{border:1px solid #1a73e8;border-radius:18px;padding:7px 12px;background:#fff;color:#1a73e8;font-size:13px;font-weight:650;cursor:pointer}
+
+.club-list{display:flex;flex-direction:column;gap:7px;margin-top:11px}
+.club-list-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid #e4e7eb;border-radius:10px;background:#f8f9fa}
+.club-number{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#e8f0fe;color:#1a73e8;font-size:12px;font-weight:800}
+
+.binding-card{margin-top:8px;padding:13px;border:1px solid #e4e7eb;border-radius:13px;background:#f8f9fa}
+.binding-title{margin-bottom:4px;font-size:16px;font-weight:800}
+.binding-description{margin-bottom:11px;color:#5f6368;font-size:13px}
+.binding-input{width:100%;height:42px;padding:0 13px;border:1px solid #cdd2d7;border-radius:10px;outline:none;background:#fff;font-size:15px}
+.binding-feedback{margin-top:8px;font-size:13px}
+.error-text{color:#b42318}
+.success-text{color:#167542}
+
+.action-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.action-btn{border:none;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.action-btn:disabled{opacity:.55;cursor:not-allowed}
+.action-primary{background:#1a73e8;color:#fff}
+.action-secondary{background:#e8f0fe;color:#1557b0}
+
+.info-card{margin-top:10px;padding:12px;border-radius:12px;border:1px solid #e4e7eb;background:#f8f9fa}
+.info-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #eceff1}
+.info-row:last-child{border-bottom:none}
+.info-label{color:#5f6368;font-size:13px}
+.info-value{text-align:right;font-size:13px;font-weight:750}
+
+.status-badge{display:inline-block;padding:4px 9px;border-radius:999px;font-size:12px;font-weight:750}
+.status-success{background:#e7f6ec;color:#167542}
+.status-warning{background:#fff4dd;color:#9a6700}
+.status-locked{background:#e8f0fe;color:#1557b0}
+
+.chat-link{color:#1a73e8;text-decoration:underline;font-weight:700;cursor:pointer}
+
+.mini-note{margin-top:9px;padding:9px 10px;border-left:3px solid #f9ab00;border-radius:6px;background:#fff8e1;color:#5f4b00;font-size:12px}
+
+.event-announcement{margin:14px 0 4px;padding:13px;border:1px solid #d8e6ff;border-radius:13px;background:#f7faff}
+.event-announcement-title{margin-bottom:10px;color:#1557b0;font-size:15px;font-weight:800}
+.event-countdown-main{margin-bottom:10px;padding:10px;border-radius:10px;background:#e8f0fe;text-align:center}
+.event-countdown-value{color:#1557b0;font-size:17px;font-weight:850;line-height:1.65}
+
+.event-deadline-row{padding:8px 0;border-bottom:1px solid #e5eaf0}
+.event-deadline-name{font-size:13px;font-weight:800}
+.event-deadline-date{margin-top:2px;color:#5f6368;font-size:12px}
+.event-deadline-status{display:inline-block;margin-top:5px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800}
+
+.deadline-green{background:#e7f6ec;color:#167542}
+.deadline-yellow{background:#fff4dd;color:#9a6700}
+.deadline-warning{background:#fff0e8;color:#b54708}
+.deadline-today{background:#ffe4e8;color:#b42318}
+.deadline-over{background:#f2f4f7;color:#667085}
+
+.event-time-line{margin-top:10px;padding-top:9px;border-top:1px solid #d8e6ff;color:#344054;font-size:12px;line-height:1.7}
+
+@media(max-width:420px){
+    .message{max-width:92%}
 }
-
-
-.event-deadline-name {
-
-    font-size:
-        13px;
-
-    font-weight:
-        800;
-}
-
-
-.event-deadline-date {
-
-    margin-top:
-        2px;
-
-    color:
-        #5f6368;
-
-    font-size:
-        12px;
-}
-
-
-.event-deadline-status {
-
-    display:
-        inline-block;
-
-    margin-top:
-        5px;
-
-    padding:
-        3px 8px;
-
-    border-radius:
-        999px;
-
-    font-size:
-        11px;
-
-    font-weight:
-        800;
-}
-
-
-.deadline-green {
-
-    background:
-        #e7f6ec;
-
-    color:
-        #167542;
-}
-
-
-.deadline-yellow {
-
-    background:
-        #fff4dd;
-
-    color:
-        #9a6700;
-}
-
-
-.deadline-warning {
-
-    background:
-        #fff0e8;
-
-    color:
-        #b54708;
-}
-
-
-.deadline-today {
-
-    background:
-        #ffe4e8;
-
-    color:
-        #b42318;
-}
-
-
-.deadline-over {
-
-    background:
-        #f2f4f7;
-
-    color:
-        #667085;
-}
-
-
-.event-time-line {
-
-    margin-top:
-        10px;
-
-    padding-top:
-        9px;
-
-    border-top:
-        1px solid
-        #d8e6ff;
-
-    color:
-        #344054;
-
-    font-size:
-        12px;
-
-    line-height:
-        1.7;
-}
-
-
-@media
-(max-width: 420px) {
-
-    .message {
-
-        max-width:
-            92%;
-
-    }
-
-}
-
 </style>
-
 </head>
-
 
 <body>
 
-
 <div class="chat-container">
 
-
 <header class="chat-header">
-
     <div class="header-title">
-
         ✦ 社團評選暨觀摩活動 智能客服 ✦
-
     </div>
-
 
     <div
         id="identityChip"
         class="identity-chip"
     >
-
         LINE 身分確認中...
-
     </div>
-
 </header>
-
 
 
 <main
@@ -1303,84 +117,79 @@ button {
     class="chat-messages"
 >
 
-
 <div class="message bot">
 
-    哈囉！我是本次活動的線上客服小幫手唷！😊
+哈囉！我是本次活動的線上客服小幫手唷！😊
 
-    <br>
+<br>
 
-    歡迎詢問我任何關於
-    「115學年度第一學期全校學生社團評選暨觀摩活動」
-    的問題！
-
-
-    <div class="event-announcement">
-
-        <div class="event-announcement-title">
-
-            ⏰ 活動重要時程
-
-        </div>
+歡迎詢問我任何關於
+「115學年度第一學期全校學生社團評選暨觀摩活動」
+的問題！
 
 
-        <div id="eventAnnouncementContent">
+<div class="event-announcement">
 
-            正在讀取活動倒數...
+    <div class="event-announcement-title">
 
-        </div>
+        ⏰ 活動重要時程
 
     </div>
 
 
-    <br>
+    <div id="eventAnnouncementContent">
 
+        正在讀取活動倒數...
 
-    📌
-    <b>
-        社團查詢提醒：
-    </b>
-
-    <br>
-
-    若要查詢社團屬性或進行社團綁定，
-    請輸入
-
-    <b>
-        「社團完整名稱（全稱）」
-    </b>。
-
-    <br><br>
-
-    例如：
-
-    <b>
-        火舞藝術社
-    </b>
-    ✅
-
-    <br>
-
-    請避免只輸入
-    「火舞」等簡稱。
-
-    <br><br>
-
-    💡
-
-    <b>
-        您也可以直接點選下方快捷功能進行查詢。
-    </b>
+    </div>
 
 </div>
 
 
+<br>
+
+📌
+<b>
+    社團查詢提醒：
+</b>
+
+<br>
+
+若要查詢社團屬性或進行社團綁定，
+請輸入
+
+<b>
+    「社團完整名稱（全稱）」
+</b>。
+
+<br><br>
+
+例如：
+
+<b>
+    火舞藝術社
+</b>
+✅
+
+<br>
+
+請避免只輸入
+「火舞」等簡稱。
+
+<br><br>
+
+💡
+
+<b>
+    您也可以直接點選下方快捷功能進行查詢。
+</b>
+
+</div>
+
 </main>
 
 
-
 <div class="quick-tags-container">
-
 
 <button
     type="button"
@@ -1390,7 +199,6 @@ button {
     📚 社團總覽
 </button>
 
-
 <button
     type="button"
     class="quick-tag"
@@ -1398,7 +206,6 @@ button {
 >
     🔗 社團綁定
 </button>
-
 
 <button
     type="button"
@@ -1408,7 +215,6 @@ button {
     ☁️ 社團雲端
 </button>
 
-
 <button
     type="button"
     class="quick-tag"
@@ -1416,7 +222,6 @@ button {
 >
     📅 活動時間
 </button>
-
 
 <button
     type="button"
@@ -1426,7 +231,6 @@ button {
     📍 活動地點
 </button>
 
-
 <button
     type="button"
     class="quick-tag"
@@ -1434,7 +238,6 @@ button {
 >
     🔨 佈置時間
 </button>
-
 
 <button
     type="button"
@@ -1444,7 +247,6 @@ button {
     👀 觀摩時間
 </button>
 
-
 <button
     type="button"
     class="quick-tag"
@@ -1452,7 +254,6 @@ button {
 >
     📝 修改表單
 </button>
-
 
 <button
     type="button"
@@ -1462,7 +263,6 @@ button {
     🙋 更換解說員
 </button>
 
-
 <button
     type="button"
     class="quick-tag"
@@ -1471,9 +271,7 @@ button {
     📱 聯絡學生議會
 </button>
 
-
 </div>
-
 
 
 <form
@@ -1489,7 +287,6 @@ button {
     autocomplete="off"
 >
 
-
 <button
     type="submit"
     class="send-btn"
@@ -1497,20 +294,12 @@ button {
     發送
 </button>
 
-
 </form>
-
 
 </div>
 
 
-
 <script>
-
-
-/* ============================================================
-   系統設定
-   ============================================================ */
 
 const LIFF_ID =
     "2011529426-hq8fXduC";
@@ -1520,14 +309,9 @@ const BACKEND_URL =
     "https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
 
 
-/* ============================================================
-   社團資料
-   ============================================================ */
-
 const CLUB_DATA = {
 
     "自治綜合性": [
-
         "護理系學會",
         "物治系學會",
         "營養系學會",
@@ -1544,21 +328,15 @@ const CLUB_DATA = {
         "多遊系學會",
         "環安系學會",
         "智科系學會",
-
         "餐旅系學會（日間部）",
         "餐旅系學會（夜間部）",
-
         "食科系學會（日間部）",
         "食科系學會（夜間部）",
-
         "國際語言系學會",
         "畢聯會（日、夜）"
-
     ],
 
-
     "康樂性": [
-
         "熱舞社",
         "火舞藝術社",
         "穿越炸雞社",
@@ -1568,12 +346,9 @@ const CLUB_DATA = {
         "弘櫻吉他社",
         "熱門音樂社",
         "管樂社"
-
     ],
 
-
     "服務性": [
-
         "佳音社",
         "崇德文化青年社",
         "慈濟青年社",
@@ -1584,12 +359,9 @@ const CLUB_DATA = {
         "健康天使服務隊",
         "諮輔志工隊",
         "住宿志工隊"
-
     ],
 
-
     "體能性": [
-
         "翔風羽球社",
         "跆拳道社",
         "棒壘社",
@@ -1601,12 +373,9 @@ const CLUB_DATA = {
         "LET'S GO SUP 水上休閒社",
         "撞球社",
         "戶外探索社"
-
     ],
 
-
     "學藝性": [
-
         "動漫畫研習社",
         "企業研習社",
         "桌遊社",
@@ -1623,154 +392,95 @@ const CLUB_DATA = {
         "原住民食育研究社",
         "餐旅競賽技藝研習社",
         "餐飲服務社"
-
     ]
 
 };
 
 
-/* ============================================================
-   FAQ
-   活動時間不再寫死，改由 EVENT_CONFIG 取得
-   ============================================================ */
-
 const FAQ_DATA = [
 
     {
-
         keywords: [
             "活動地點"
         ],
 
         answer:
-
             "📍 <b>活動地點</b><br><br>" +
-
             "弘光科技大學<br>" +
-
             "<b>毓麟館</b>"
-
     },
 
-
     {
-
         keywords: [
             "佈置時間"
         ],
 
         answer:
-
             "🔨 <b>場地佈置時間</b><br><br>" +
-
             "當日 <b>10:30 開始</b>，" +
-
             "並於 <b>13:00 準時結束</b>。" +
-
             "<br><br>" +
-
             "請各社團務必於規定時間內完成佈置。"
-
     },
 
-
     {
-
         keywords: [
             "觀摩時間"
         ],
 
         answer:
-
             "👀 <b>社團觀摩時間</b><br><br>" +
-
             "<b>16:30 - 16:50</b><br>" +
-
             "共計 20 分鐘。"
-
     },
 
-
     {
-
         keywords: [
             "修改表單"
         ],
 
         answer:
-
             "📝 <b>修改表單資料</b><br><br>" +
-
             "若需要修改已填寫的 Google 表單內容，" +
-
             "請勿重複填寫。" +
-
             "<br><br>" +
-
             "請直接聯絡學生議會協助修改。" +
-
             "<br><br>" +
-
             "<span class='chat-link' onclick='openInstagram()'>" +
-
             "點我前往學生議會 Instagram 💬" +
-
             "</span>"
-
     },
 
-
     {
-
         keywords: [
             "更換解說員"
         ],
 
         answer:
-
             "🙋 <b>更換解說員</b><br><br>" +
-
             "不可私自更換解說員。" +
-
             "<br><br>" +
-
             "若發生特殊或緊急狀況，" +
-
             "請先向主辦單位回報並取得同意。"
-
     },
 
-
     {
-
         keywords: [
             "聯絡學生議會"
         ],
 
         answer:
-
             "📱 <b>聯絡學生議會</b><br><br>" +
-
             "若有個別或緊急狀況，" +
-
             "歡迎直接私訊學生議會。" +
-
             "<br><br>" +
-
             "<span class='chat-link' onclick='openInstagram()'>" +
-
             "點我開啟 Instagram 專頁 💬" +
-
             "</span>"
-
     }
 
 ];
 
-
-/* ============================================================
-   APP 狀態
-   ============================================================ */
 
 const APP_STATE = {
 
@@ -1812,10 +522,6 @@ const APP_STATE = {
 
 };
 
-
-/* ============================================================
-   活動預設備援資料
-   ============================================================ */
 
 const FALLBACK_EVENT_CONFIG = {
 
@@ -1886,14 +592,11 @@ document.addEventListener(
 
         resetVH();
 
-
         /*
-         * 活動公告為公開資訊，
-         * 不需要等待 LINE 登入即可讀取。
+         * 公告倒數先讀取，
+         * 不需要等待 LINE 身分驗證。
          */
-
         loadEventAnnouncement();
-
 
         await initializeApp();
 
@@ -1903,22 +606,25 @@ document.addEventListener(
 
 
 /* ============================================================
-   初始化 LINE
+   LINE 初始化
    ============================================================ */
 
 async function initializeApp() {
 
-    const identityOK =
+    const ok =
         await initializeIdentity();
 
 
-    if (!identityOK) {
+    if (!ok) {
 
         return;
 
     }
 
 
+    /*
+     * 只在登入完成時同步一次綁定狀態。
+     */
     await syncBindingFromBackend(
         true
     );
@@ -1926,14 +632,9 @@ async function initializeApp() {
 }
 
 
-/* ============================================================
-   LIFF 身分
-   ============================================================ */
-
 async function initializeIdentity() {
 
     const chip =
-
         document.getElementById(
             "identityChip"
         );
@@ -2031,7 +732,7 @@ async function initializeIdentity() {
 
 
 /* ============================================================
-   LINE Token
+   LINE ID Token
    ============================================================ */
 
 function getLineIDToken() {
@@ -2070,7 +771,7 @@ function getLineIDToken() {
 
 
 /* ============================================================
-   共用 POST
+   後端 POST
    ============================================================ */
 
 async function postBackend(
@@ -2175,7 +876,7 @@ async function postBackend(
 
 
 /* ============================================================
-   LINE 驗證 API
+   LINE 驗證後端
    ============================================================ */
 
 async function callBackend(
@@ -2212,7 +913,7 @@ async function callBackend(
 
 
 /* ============================================================
-   公開 API
+   公開後端
    ============================================================ */
 
 async function callPublicBackend(
@@ -2233,7 +934,7 @@ async function callPublicBackend(
 
 
 /* ============================================================
-   同步綁定資料
+   同步綁定
    ============================================================ */
 
 async function syncBindingFromBackend(
@@ -2241,7 +942,6 @@ async function syncBindingFromBackend(
 ) {
 
     const chip =
-
         document.getElementById(
             "identityChip"
         );
@@ -2250,7 +950,6 @@ async function syncBindingFromBackend(
     try {
 
         const result =
-
             await callBackend(
                 "checkBinding"
             );
@@ -2384,10 +1083,6 @@ async function syncBindingFromBackend(
 }
 
 
-/* ============================================================
-   重新同步
-   ============================================================ */
-
 async function retryBackendSync() {
 
     appendMessage(
@@ -2454,7 +1149,7 @@ function escapeHtml(
 
 
 /* ============================================================
-   聊天訊息
+   顯示訊息
    ============================================================ */
 
 function appendMessage(
@@ -2464,21 +1159,18 @@ function appendMessage(
 ) {
 
     const container =
-
         document.getElementById(
             "chatMessages"
         );
 
 
     const message =
-
         document.createElement(
             "div"
         );
 
 
     message.className =
-
         "message " +
         sender;
 
@@ -2505,6 +1197,10 @@ function appendMessage(
     );
 
 
+    /*
+     * 30ms 只處理畫面捲動，
+     * 不會延遲客服回答。
+     */
     setTimeout(
 
         () => {
@@ -2529,7 +1225,7 @@ function appendMessage(
 
 
 /* ============================================================
-   精準搜尋社團
+   精準找社團
    ============================================================ */
 
 function findExactClub(
@@ -2594,28 +1290,37 @@ function showClubOverview() {
 
     const buttons =
 
-        Object
-            .keys(
-                CLUB_DATA
-            )
-            .map(
+        Object.keys(
+            CLUB_DATA
+        )
+        .map(
 
-                category => `
+            category => `
 
-                <button
-                    type="button"
-                    class="club-category-btn"
-                    onclick="selectClubCategory('${category}')"
-                >
+            <button
 
-                    ${escapeHtml(category)}
+                type="button"
 
-                </button>
+                class="club-category-btn"
 
-                `
+                onclick="
+                    selectClubCategory('${category}')
+                "
 
-            )
-            .join("");
+            >
+
+                ${
+                    escapeHtml(
+                        category
+                    )
+                }
+
+            </button>
+
+            `
+
+        )
+        .join("");
 
 
     appendMessage(
@@ -2681,36 +1386,40 @@ function showClubCategory(
     }
 
 
-    const listHTML =
+    const list =
 
         clubs
-            .map(
+        .map(
 
-                (
-                    club,
-                    index
-                ) => `
+            (
+                club,
+                index
+            ) => `
 
-                <div class="club-list-item">
+            <div class="club-list-item">
 
-                    <div class="club-number">
+                <div class="club-number">
 
-                        ${index + 1}
-
-                    </div>
-
-                    <div>
-
-                        ${escapeHtml(club)}
-
-                    </div>
+                    ${index + 1}
 
                 </div>
 
-                `
+                <div>
 
-            )
-            .join("");
+                    ${
+                        escapeHtml(
+                            club
+                        )
+                    }
+
+                </div>
+
+            </div>
+
+            `
+
+        )
+        .join("");
 
 
     appendMessage(
@@ -2720,14 +1429,18 @@ function showClubCategory(
         <b>
 
             📂
-            ${escapeHtml(category)}
+            ${
+                escapeHtml(
+                    category
+                )
+            }
 
         </b>
 
 
         <div class="club-list">
 
-            ${listHTML}
+            ${list}
 
         </div>
 
@@ -2743,10 +1456,12 @@ function showClubCategory(
 
 
 /* ============================================================
-   重要功能前重新驗證
+   社團綁定
+   高速版：
+   不再點進來就重新 call checkBinding
    ============================================================ */
 
-async function prepareProtectedFeature() {
+async function showBindingPanel() {
 
     if (
         !APP_STATE.identityReady
@@ -2761,35 +1476,15 @@ async function prepareProtectedFeature() {
         );
 
 
-        return false;
-
-    }
-
-
-    return syncBindingFromBackend(
-        false
-    );
-
-}
-
-
-/* ============================================================
-   社團綁定畫面
-   ============================================================ */
-
-async function showBindingPanel() {
-
-    const ready =
-        await prepareProtectedFeature();
-
-
-    if (!ready) {
-
         return;
 
     }
 
 
+    /*
+     * 登入時已經同步過一次。
+     * 若本來已綁定就立即顯示。
+     */
     if (
         APP_STATE.currentBinding
     ) {
@@ -2893,7 +1588,9 @@ async function showBindingPanel() {
 
                     class="action-btn action-primary"
 
-                    onclick="lookupBindingClub('${id}')"
+                    onclick="
+                        lookupBindingClub('${id}')
+                    "
 
                 >
 
@@ -2908,7 +1605,9 @@ async function showBindingPanel() {
 
                     class="action-btn action-secondary"
 
-                    onclick="showClubOverview()"
+                    onclick="
+                        showClubOverview()
+                    "
 
                 >
 
@@ -2917,7 +1616,6 @@ async function showBindingPanel() {
                 </button>
 
             </div>
-
 
         </div>
 
@@ -2933,7 +1631,7 @@ async function showBindingPanel() {
 
 
 /* ============================================================
-   查詢綁定社團
+   查詢綁定名稱
    ============================================================ */
 
 function lookupBindingClub(
@@ -2941,14 +1639,12 @@ function lookupBindingClub(
 ) {
 
     const input =
-
         document.getElementById(
             id
         );
 
 
     const feedback =
-
         document.getElementById(
 
             id +
@@ -3051,7 +1747,7 @@ function lookupBindingClub(
 
 
 /* ============================================================
-   綁定二次確認
+   二次確認
    ============================================================ */
 
 function showBindingConfirmation(
@@ -3081,7 +1777,11 @@ function showBindingConfirmation(
 
                 <span class="info-value">
 
-                    ${escapeHtml(club.name)}
+                    ${
+                        escapeHtml(
+                            club.name
+                        )
+                    }
 
                 </span>
 
@@ -3099,7 +1799,11 @@ function showBindingConfirmation(
 
                 <span class="info-value">
 
-                    ${escapeHtml(club.category)}
+                    ${
+                        escapeHtml(
+                            club.category
+                        )
+                    }
 
                 </span>
 
@@ -3112,7 +1816,6 @@ function showBindingConfirmation(
         <div class="mini-note">
 
             ⚠️
-
             <b>
                 重要提醒
             </b>
@@ -3141,7 +1844,9 @@ function showBindingConfirmation(
 
                 class="action-btn action-secondary"
 
-                onclick="cancelBindingConfirmation()"
+                onclick="
+                    cancelBindingConfirmation()
+                "
 
             >
 
@@ -3158,7 +1863,9 @@ function showBindingConfirmation(
 
                 class="action-btn action-primary"
 
-                onclick="confirmClubBinding()"
+                onclick="
+                    confirmClubBinding()
+                "
 
             >
 
@@ -3233,7 +1940,6 @@ async function confirmClubBinding() {
 
 
     const button =
-
         document.getElementById(
             "confirmBindingBtn"
         );
@@ -3257,6 +1963,11 @@ async function confirmClubBinding() {
         }
 
 
+        /*
+         * 真正綁定時後端仍會再次驗證。
+         * 所以拿掉前面的 checkBinding
+         * 不會讓使用者重複綁定。
+         */
         const result =
 
             await callBackend(
@@ -3345,7 +2056,12 @@ async function confirmClubBinding() {
 
             `
 
-            <span class="status-badge status-success">
+            <span
+                class="
+                    status-badge
+                    status-success
+                "
+            >
 
                 ✓ 綁定成功
 
@@ -3372,7 +2088,9 @@ async function confirmClubBinding() {
 
                         ${
                             escapeHtml(
-                                APP_STATE.currentBinding.club
+                                APP_STATE
+                                    .currentBinding
+                                    .club
                             )
                         }
 
@@ -3391,7 +2109,9 @@ async function confirmClubBinding() {
 
                         ${
                             escapeHtml(
-                                APP_STATE.currentBinding.category
+                                APP_STATE
+                                    .currentBinding
+                                    .category
                             )
                         }
 
@@ -3420,9 +2140,14 @@ async function confirmClubBinding() {
 
                     type="button"
 
-                    class="action-btn action-primary"
+                    class="
+                        action-btn
+                        action-primary
+                    "
 
-                    onclick="showCloudPanel()"
+                    onclick="
+                        showCloudPanel()
+                    "
 
                 >
 
@@ -3502,7 +2227,7 @@ async function confirmClubBinding() {
 
 
 /* ============================================================
-   已綁定顯示
+   已綁定
    ============================================================ */
 
 function showLockedBinding(
@@ -3520,7 +2245,12 @@ function showLockedBinding(
 
         `
 
-        <span class="status-badge status-locked">
+        <span
+            class="
+                status-badge
+                status-locked
+            "
+        >
 
             🔒 已鎖定
 
@@ -3545,7 +2275,11 @@ function showLockedBinding(
 
                 <span class="info-value">
 
-                    ${escapeHtml(binding.club)}
+                    ${
+                        escapeHtml(
+                            binding.club
+                        )
+                    }
 
                 </span>
 
@@ -3560,7 +2294,11 @@ function showLockedBinding(
 
                 <span class="info-value">
 
-                    ${escapeHtml(binding.category)}
+                    ${
+                        escapeHtml(
+                            binding.category
+                        )
+                    }
 
                 </span>
 
@@ -3589,6 +2327,9 @@ function showLockedBinding(
 
 /* ============================================================
    社團專屬雲端
+   高速版：
+   不先 checkBinding
+   直接由 getMyCloudLink 驗證
    ============================================================ */
 
 async function showCloudPanel() {
@@ -3602,66 +2343,15 @@ async function showCloudPanel() {
     }
 
 
-    const ready =
-        await prepareProtectedFeature();
-
-
-    if (!ready) {
-
-        return;
-
-    }
-
-
-    const binding =
-        APP_STATE.currentBinding;
-
-
-    if (!binding) {
+    if (
+        !APP_STATE.identityReady
+    ) {
 
         appendMessage(
 
-            `
+            "⚠️ 尚未完成 LINE 身分驗證。",
 
-            ⚠️
-
-            <b>
-                尚未綁定社團
-            </b>
-
-            <br><br>
-
-            您必須先完成社團綁定，
-            才能使用
-
-            <b>
-                「社團專屬雲端」
-            </b>。
-
-
-            <div class="action-row">
-
-                <button
-
-                    type="button"
-
-                    class="action-btn action-primary"
-
-                    onclick="showBindingPanel()"
-
-                >
-
-                    🔗 前往社團綁定
-
-                </button>
-
-            </div>
-
-            `,
-
-            "bot",
-
-            true
+            "bot"
 
         );
 
@@ -3677,6 +2367,10 @@ async function showCloudPanel() {
             true;
 
 
+        /*
+         * 只打一支 API。
+         * getMyCloudLink 本身就會確認是否綁定。
+         */
         const result =
 
             await callBackend(
@@ -3705,8 +2399,12 @@ async function showCloudPanel() {
 
                 <br><br>
 
-                您的社團綁定資料目前不存在，
-                請先完成社團綁定。
+                您必須先完成社團綁定，
+                才能使用
+
+                <b>
+                    「社團專屬雲端」
+                </b>。
 
 
                 <div class="action-row">
@@ -3715,9 +2413,14 @@ async function showCloudPanel() {
 
                         type="button"
 
-                        class="action-btn action-primary"
+                        class="
+                            action-btn
+                            action-primary
+                        "
 
-                        onclick="showBindingPanel()"
+                        onclick="
+                            showBindingPanel()
+                        "
 
                     >
 
@@ -3753,8 +2456,16 @@ async function showCloudPanel() {
                     result.club.name
                 )
 
-                ? result.club.name
-                : binding.club;
+                ||
+
+                (
+                    APP_STATE.currentBinding &&
+                    APP_STATE.currentBinding.club
+                )
+
+                ||
+
+                "目前綁定社團";
 
 
             const category =
@@ -3764,15 +2475,50 @@ async function showCloudPanel() {
                     result.club.category
                 )
 
-                ? result.club.category
-                : binding.category;
+                ||
+
+                (
+                    APP_STATE.currentBinding &&
+                    APP_STATE.currentBinding.category
+                )
+
+                ||
+
+                "-";
+
+
+            APP_STATE.currentBinding = {
+
+                club:
+                    clubName,
+
+                category:
+                    category,
+
+                createdAt:
+
+                    (
+                        APP_STATE.currentBinding &&
+                        APP_STATE.currentBinding.createdAt
+                    )
+
+                    ||
+
+                    null
+
+            };
 
 
             appendMessage(
 
                 `
 
-                <span class="status-badge status-warning">
+                <span
+                    class="
+                        status-badge
+                        status-warning
+                    "
+                >
 
                     ☁️ 尚未設定
 
@@ -3796,7 +2542,6 @@ async function showCloudPanel() {
 
 
                 <div class="info-card">
-
 
                     <div class="info-row">
 
@@ -3834,7 +2579,6 @@ async function showCloudPanel() {
                         </span>
 
                     </div>
-
 
                 </div>
 
@@ -3884,21 +2628,50 @@ async function showCloudPanel() {
         APP_STATE.currentBinding = {
 
             club:
-                cloud.club ||
-                binding.club,
+
+                cloud.club
+
+                ||
+
+                (
+                    APP_STATE.currentBinding &&
+                    APP_STATE.currentBinding.club
+                )
+
+                ||
+
+                "",
 
             category:
-                cloud.category ||
-                binding.category,
+
+                cloud.category
+
+                ||
+
+                (
+                    APP_STATE.currentBinding &&
+                    APP_STATE.currentBinding.category
+                )
+
+                ||
+
+                "",
 
             createdAt:
-                binding.createdAt
+
+                (
+                    APP_STATE.currentBinding &&
+                    APP_STATE.currentBinding.createdAt
+                )
+
+                ||
+
+                null
 
         };
 
 
-        const safeCloudUrl =
-
+        const safe =
             escapeHtml(
                 cloud.url
             );
@@ -3908,7 +2681,12 @@ async function showCloudPanel() {
 
             `
 
-            <span class="status-badge status-success">
+            <span
+                class="
+                    status-badge
+                    status-success
+                "
+            >
 
                 ✓ LINE 身分與社團驗證完成
 
@@ -3925,7 +2703,6 @@ async function showCloudPanel() {
 
             <div class="info-card">
 
-
                 <div class="info-row">
 
                     <span class="info-label">
@@ -3938,7 +2715,9 @@ async function showCloudPanel() {
 
                         ${
                             escapeHtml(
-                                APP_STATE.currentBinding.club
+                                APP_STATE
+                                    .currentBinding
+                                    .club
                             )
                         }
 
@@ -3959,14 +2738,15 @@ async function showCloudPanel() {
 
                         ${
                             escapeHtml(
-                                APP_STATE.currentBinding.category
+                                APP_STATE
+                                    .currentBinding
+                                    .category
                             )
                         }
 
                     </span>
 
                 </div>
-
 
             </div>
 
@@ -3983,9 +2763,12 @@ async function showCloudPanel() {
 
                 <a
 
-                    href="${safeCloudUrl}"
+                    href="${safe}"
 
-                    class="action-btn action-primary"
+                    class="
+                        action-btn
+                        action-primary
+                    "
 
                     style="
                         text-decoration:none;
@@ -3995,7 +2778,10 @@ async function showCloudPanel() {
 
                     target="_blank"
 
-                    rel="noopener noreferrer"
+                    rel="
+                        noopener
+                        noreferrer
+                    "
 
                     onclick="
                         event.preventDefault();
@@ -4007,7 +2793,9 @@ async function showCloudPanel() {
                     ☁️ 開啟
                     ${
                         escapeHtml(
-                            APP_STATE.currentBinding.club
+                            APP_STATE
+                                .currentBinding
+                                .club
                         )
                     }
                     雲端
@@ -4065,9 +2853,14 @@ async function showCloudPanel() {
 
                     type="button"
 
-                    class="action-btn action-primary"
+                    class="
+                        action-btn
+                        action-primary
+                    "
 
-                    onclick="showCloudPanel()"
+                    onclick="
+                        showCloudPanel()
+                    "
 
                 >
 
@@ -4097,10 +2890,6 @@ async function showCloudPanel() {
 }
 
 
-/* ============================================================
-   舊按鈕相容
-   ============================================================ */
-
 async function openBoundClubCloud() {
 
     await showCloudPanel();
@@ -4109,7 +2898,7 @@ async function openBoundClubCloud() {
 
 
 /* ============================================================
-   活動倒數時間
+   活動時程
    ============================================================ */
 
 function getNowMs() {
@@ -4125,12 +2914,8 @@ function getNowMs() {
 }
 
 
-/* ============================================================
-   台灣日期 Key
-   ============================================================ */
-
 function taipeiDateKey(
-    milliseconds
+    ms
 ) {
 
     const parts =
@@ -4157,11 +2942,7 @@ function taipeiDateKey(
 
         )
         .formatToParts(
-
-            new Date(
-                milliseconds
-            )
-
+            new Date(ms)
         );
 
 
@@ -4199,16 +2980,14 @@ function taipeiDateKey(
 }
 
 
-/* ============================================================
-   顯示日期時間
-   ============================================================ */
-
 function formatTaipeiDateTime(
     value
 ) {
 
     const date =
-        new Date(value);
+        new Date(
+            value
+        );
 
 
     if (
@@ -4251,23 +3030,22 @@ function formatTaipeiDateTime(
 
         }
 
-    ).format(
+    )
+    .format(
         date
     );
 
 }
 
 
-/* ============================================================
-   顯示活動日期
-   ============================================================ */
-
 function formatTaipeiDate(
     value
 ) {
 
     const date =
-        new Date(value);
+        new Date(
+            value
+        );
 
 
     if (
@@ -4350,16 +3128,14 @@ function formatTaipeiDate(
 }
 
 
-/* ============================================================
-   顯示時間
-   ============================================================ */
-
 function formatTaipeiTime(
     value
 ) {
 
     const date =
-        new Date(value);
+        new Date(
+            value
+        );
 
 
     if (
@@ -4400,10 +3176,6 @@ function formatTaipeiTime(
 
 }
 
-
-/* ============================================================
-   天、小時、分鐘
-   ============================================================ */
 
 function countdownParts(
     target,
@@ -4480,10 +3252,6 @@ function countdownParts(
 }
 
 
-/* ============================================================
-   截止狀態
-   ============================================================ */
-
 function deadlineStatus(
     value,
     now
@@ -4493,7 +3261,8 @@ function deadlineStatus(
 
         new Date(
             value
-        ).getTime();
+        )
+        .getTime();
 
 
     if (
@@ -4522,7 +3291,8 @@ function deadlineStatus(
 
 
     if (
-        diff <= 0
+        diff <=
+        0
     ) {
 
         return {
@@ -4659,10 +3429,6 @@ function deadlineStatus(
 }
 
 
-/* ============================================================
-   活動主倒數
-   ============================================================ */
-
 function eventMainStatus(
     config,
     now
@@ -4672,24 +3438,21 @@ function eventMainStatus(
 
         new Date(
             config.eventStart
-        ).getTime();
+        )
+        .getTime();
 
 
     const end =
 
         new Date(
             config.eventEnd
-        ).getTime();
+        )
+        .getTime();
 
 
     if (
-        !Number.isFinite(
-            start
-        )
-        ||
-        !Number.isFinite(
-            end
-        )
+        !Number.isFinite(start) ||
+        !Number.isFinite(end)
     ) {
 
         return "⚠️ 活動時間格式錯誤";
@@ -4784,20 +3547,16 @@ function eventMainStatus(
 }
 
 
-/* ============================================================
-   更新首頁公告
-   ============================================================ */
-
 function renderEventAnnouncement() {
 
-    const container =
+    const box =
 
         document.getElementById(
             "eventAnnouncementContent"
         );
 
 
-    if (!container) {
+    if (!box) {
 
         return;
 
@@ -4837,8 +3596,7 @@ function renderEventAnnouncement() {
         );
 
 
-    container.innerHTML = `
-
+    box.innerHTML = `
 
         <div class="event-countdown-main">
 
@@ -4864,7 +3622,6 @@ function renderEventAnnouncement() {
 
             </div>
 
-
             <div class="event-deadline-date">
 
                 ${
@@ -4878,7 +3635,6 @@ function renderEventAnnouncement() {
                 }
 
             </div>
-
 
             <span
                 class="
@@ -4906,7 +3662,6 @@ function renderEventAnnouncement() {
 
             </div>
 
-
             <div class="event-deadline-date">
 
                 ${
@@ -4920,7 +3675,6 @@ function renderEventAnnouncement() {
                 }
 
             </div>
-
 
             <span
                 class="
@@ -4990,15 +3744,10 @@ function renderEventAnnouncement() {
 
         </div>
 
-
     `;
 
 }
 
-
-/* ============================================================
-   向後端取得活動時程
-   ============================================================ */
 
 async function loadEventAnnouncement() {
 
@@ -5052,7 +3801,8 @@ async function loadEventAnnouncement() {
 
             new Date(
                 result.serverNow
-            ).getTime();
+            )
+            .getTime();
 
 
         if (
@@ -5081,12 +3831,6 @@ async function loadEventAnnouncement() {
 
         );
 
-
-        /*
-         * 後端暫時失效時
-         * 使用目前已知活動日期，
-         * 避免首頁公告整個空白。
-         */
 
         APP_STATE.eventConfig = {
 
@@ -5122,10 +3866,6 @@ async function loadEventAnnouncement() {
     }
 
 
-    /*
-     * 每 30 秒刷新一次。
-     */
-
     APP_STATE.eventCountdownTimer =
 
         setInterval(
@@ -5140,7 +3880,7 @@ async function loadEventAnnouncement() {
 
 
 /* ============================================================
-   動態活動時間 FAQ
+   活動時間
    ============================================================ */
 
 async function showDynamicEventTime() {
@@ -5236,10 +3976,6 @@ function openInstagram() {
 }
 
 
-/* ============================================================
-   外部連結
-   ============================================================ */
-
 function openExternalUrl(
     url
 ) {
@@ -5295,7 +4031,7 @@ function openExternalUrl(
 
 
 /* ============================================================
-   快捷鍵
+   快捷功能
    ============================================================ */
 
 function clickQuickTag(
@@ -5310,7 +4046,7 @@ function clickQuickTag(
 
 
 /* ============================================================
-   文字送出
+   輸入
    ============================================================ */
 
 function handleFormSubmit(
@@ -5321,7 +4057,6 @@ function handleFormSubmit(
 
 
     const input =
-
         document.getElementById(
             "userInput"
         );
@@ -5350,10 +4085,12 @@ function handleFormSubmit(
 
 
 /* ============================================================
-   智能客服核心
+   核心客服
+   高速版：
+   完全移除原本 220ms 人工等待
    ============================================================ */
 
-function processMessage(
+async function processMessage(
     rawQuery
 ) {
 
@@ -5374,268 +4111,208 @@ function processMessage(
     );
 
 
-    setTimeout(
+    /*
+     * 沒有 setTimeout(220)。
+     * 直接開始判斷並回答。
+     */
 
-        async () => {
 
+    /* 活動時間 */
 
-            /* =================================================
-               動態活動時間
-               ================================================= */
+    if (
+        query.includes(
+            "活動時間"
+        )
+    ) {
 
-            if (
-                query.includes(
-                    "活動時間"
-                )
-            ) {
+        await showDynamicEventTime();
 
-                await showDynamicEventTime();
+        return;
 
-                return;
+    }
 
-            }
 
+    /* 社團總覽 */
 
-            /* =================================================
-               社團總覽
-               ================================================= */
+    if (
 
-            if (
+        query ===
+        "社團總覽"
 
-                query ===
-                "社團總覽"
+        ||
 
-                ||
+        query ===
+        "社團總攬"
 
-                query ===
-                "社團總攬"
+        ||
 
-                ||
+        query ===
+        "社團一覽"
 
-                query ===
-                "社團一覽"
+        ||
 
-                ||
+        query ===
+        "社團名單"
 
-                query ===
-                "社團名單"
+    ) {
 
-            ) {
+        showClubOverview();
 
-                showClubOverview();
+        return;
 
-                return;
+    }
 
-            }
 
+    /* 社團綁定 */
 
-            /* =================================================
-               綁定
-               ================================================= */
+    if (
 
-            if (
+        query ===
+        "社團綁定"
 
-                query ===
-                "社團綁定"
+        ||
 
-                ||
+        query ===
+        "綁定社團"
 
-                query ===
-                "綁定社團"
+    ) {
 
-            ) {
+        await showBindingPanel();
 
-                await showBindingPanel();
+        return;
 
-                return;
+    }
 
-            }
 
+    /* 社團雲端 */
 
-            /* =================================================
-               社團雲端
-               ================================================= */
+    if (
 
-            if (
+        query ===
+        "社團專屬雲端"
 
-                query ===
-                "社團專屬雲端"
+        ||
 
-                ||
+        query ===
+        "社團雲端"
 
-                query ===
-                "社團雲端"
+        ||
 
-                ||
+        query ===
+        "雲端"
 
-                query ===
-                "雲端"
+    ) {
 
-            ) {
+        await showCloudPanel();
 
-                await showCloudPanel();
+        return;
 
-                return;
+    }
 
-            }
 
+    /* 五大類 */
 
-            /* =================================================
-               五大類
-               ================================================= */
+    if (
+        CLUB_DATA[
+            query
+        ]
+    ) {
 
-            if (
-                CLUB_DATA[
-                    query
-                ]
-            ) {
+        showClubCategory(
+            query
+        );
 
-                showClubCategory(
-                    query
-                );
+        return;
 
-                return;
+    }
 
-            }
 
+    /* 完整社團名稱 */
 
-            /* =================================================
-               完整社團名稱
-               ================================================= */
+    const exactClub =
 
-            const exactClub =
+        findExactClub(
+            query
+        );
 
-                findExactClub(
-                    query
-                );
 
+    if (
+        exactClub
+    ) {
 
-            if (
-                exactClub
-            ) {
+        appendMessage(
 
-                appendMessage(
+            `
 
-                    `
+            🔎
 
-                    🔎
+            <b>
 
-                    <b>
-
-                        ${
-                            escapeHtml(
-                                exactClub.name
-                            )
-                        }
-
-                    </b>
-
-                    <br><br>
-
-                    社團屬性：
-
-                    <b>
-
-                        ${
-                            escapeHtml(
-                                exactClub.category
-                            )
-                        }
-
-                    </b>
-
-                    `,
-
-                    "bot",
-
-                    true
-
-                );
-
-
-                return;
-
-            }
-
-
-            /* =================================================
-               FAQ
-               ================================================= */
-
-            for (
-                const item
-                of FAQ_DATA
-            ) {
-
-                const matched =
-
-                    item
-                        .keywords
-                        .some(
-
-                            keyword =>
-
-                                query.includes(
-                                    keyword
-                                )
-
-                        );
-
-
-                if (
-                    matched
-                ) {
-
-                    appendMessage(
-
-                        item.answer,
-
-                        "bot",
-
-                        true
-
-                    );
-
-
-                    return;
-
+                ${
+                    escapeHtml(
+                        exactClub.name
+                    )
                 }
 
-            }
+            </b>
+
+            <br><br>
+
+            社團屬性：
+
+            <b>
+
+                ${
+                    escapeHtml(
+                        exactClub.category
+                    )
+                }
+
+            </b>
+
+            `,
+
+            "bot",
+
+            true
+
+        );
 
 
-            /* =================================================
-               找不到
-               ================================================= */
+        return;
+
+    }
+
+
+    /* FAQ */
+
+    for (
+        const item
+        of FAQ_DATA
+    ) {
+
+        const matched =
+
+            item
+            .keywords
+            .some(
+
+                keyword =>
+
+                    query.includes(
+                        keyword
+                    )
+
+            );
+
+
+        if (
+            matched
+        ) {
 
             appendMessage(
 
-                `
-
-                抱歉，目前找不到符合的資料。
-
-                <br><br>
-
-                📌
-                若您正在查詢社團，
-                請輸入
-
-                <b>
-                    「社團完整名稱」
-                </b>。
-
-                <br><br>
-
-                也可以使用下方
-
-                <b>
-                    「📚 社團總覽」
-                </b>
-
-                查看完整名單，
-                或聯絡學生議會協助確認。
-
-                `,
+                item.answer,
 
                 "bot",
 
@@ -5644,18 +4321,53 @@ function processMessage(
             );
 
 
-        },
+            return;
 
-        220
+        }
+
+    }
+
+
+    /* 找不到 */
+
+    appendMessage(
+
+        `
+
+        抱歉，目前找不到符合的資料。
+
+        <br><br>
+
+        📌
+        若您正在查詢社團，
+        請輸入
+
+        <b>
+            「社團完整名稱」
+        </b>。
+
+        <br><br>
+
+        也可以使用下方
+
+        <b>
+            「📚 社團總覽」
+        </b>
+
+        查看完整名單，
+        或聯絡學生議會協助確認。
+
+        `,
+
+        "bot",
+
+        true
 
     );
 
 }
 
-
 </script>
 
-
 </body>
-
 </html>
