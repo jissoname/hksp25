@@ -1247,6 +1247,133 @@ tbody tr:hover {
 }
 
 
+
+
+/* =========================================================
+   Google 表單填寫進度
+   ========================================================= */
+
+.form-summary-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 12px;
+
+    padding:
+        18px
+        20px
+        0;
+
+}
+
+.form-summary-card {
+
+    padding: 14px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 12px;
+
+    background: #fcfcfd;
+
+}
+
+.form-summary-label {
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+}
+
+.form-summary-value {
+
+    margin-top: 6px;
+
+    font-size: 23px;
+
+    font-weight: 850;
+
+}
+
+.form-progress-toolbar {
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        180px;
+
+    gap: 10px;
+
+    padding:
+        16px
+        20px;
+
+    border-bottom:
+        1px solid var(--border);
+
+}
+
+.form-progress-toolbar .search-box {
+
+    width: 100%;
+
+}
+
+.form-filter-select {
+
+    width: 100%;
+    height: 44px;
+
+    padding:
+        0
+        12px;
+
+    border:
+        1px solid #d0d5dd;
+
+    border-radius: 10px;
+
+    outline: none;
+
+    background: white;
+
+    color: #344054;
+
+    font-size: 14px;
+
+    font-weight: 650;
+
+}
+
+.form-filter-select:focus {
+
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(26, 115, 232, 0.08);
+
+}
+
+.form-progress-time {
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+    white-space: nowrap;
+
+}
+
+
 /* =========================================================
    活動時程管理
    ========================================================= */
@@ -1495,6 +1622,30 @@ tbody tr:hover {
     }
 
     .search-wrap {
+
+        padding:
+            13px
+            16px;
+
+    }
+
+    .form-summary-grid {
+
+        grid-template-columns:
+            1fr
+            1fr;
+
+        padding:
+            14px
+            16px
+            0;
+
+    }
+
+    .form-progress-toolbar {
+
+        grid-template-columns:
+            1fr;
 
         padding:
             13px
@@ -1960,6 +2111,189 @@ tbody tr:hover {
     </div>
 
 </div>
+
+</section>
+
+
+
+<!-- ======================================================
+     Google 表單填寫進度
+     ====================================================== -->
+
+<section class="panel">
+
+<div class="panel-header">
+
+    <div class="panel-title">
+        📋 Google 表單填寫進度
+    </div>
+
+    <div
+        id="formProgressResultCount"
+        class="result-count"
+    >
+        載入中...
+    </div>
+
+</div>
+
+
+<div class="form-summary-grid">
+
+    <div class="form-summary-card">
+
+        <div class="form-summary-label">
+            社團總數
+        </div>
+
+        <div
+            id="formProgressTotalCount"
+            class="form-summary-value"
+        >
+            -
+        </div>
+
+    </div>
+
+
+    <div class="form-summary-card">
+
+        <div class="form-summary-label">
+            ✅ 已填寫
+        </div>
+
+        <div
+            id="formProgressSubmittedCount"
+            class="form-summary-value"
+        >
+            -
+        </div>
+
+    </div>
+
+
+    <div class="form-summary-card">
+
+        <div class="form-summary-label">
+            ❌ 未填寫
+        </div>
+
+        <div
+            id="formProgressPendingCount"
+            class="form-summary-value"
+        >
+            -
+        </div>
+
+    </div>
+
+
+    <div class="form-summary-card">
+
+        <div class="form-summary-label">
+            完成率
+        </div>
+
+        <div
+            id="formProgressCompletionRate"
+            class="form-summary-value"
+        >
+            -
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="form-progress-toolbar">
+
+    <div class="search-box">
+
+        <span class="search-icon">
+            🔎
+        </span>
+
+        <input
+            id="formProgressSearchInput"
+            class="search-input"
+            type="search"
+            placeholder="搜尋社團名稱或社團屬性"
+            oninput="filterFormProgress()"
+        >
+
+    </div>
+
+
+    <select
+        id="formProgressStatusFilter"
+        class="form-filter-select"
+        onchange="filterFormProgress()"
+    >
+
+        <option value="all">
+            全部社團
+        </option>
+
+        <option value="submitted">
+            ✅ 已填寫
+        </option>
+
+        <option value="pending">
+            ❌ 未填寫
+        </option>
+
+    </select>
+
+</div>
+
+
+<div
+    id="formProgressState"
+    class="state-box"
+>
+
+    <div class="spinner"></div>
+
+    正在讀取表單填寫進度...
+
+</div>
+
+
+<div
+    id="formProgressDesktopTable"
+    class="table-wrap desktop-table"
+    style="display:none;"
+>
+
+<table>
+
+<thead>
+
+<tr>
+
+    <th>社團名稱</th>
+    <th>社團屬性</th>
+    <th>填寫狀態</th>
+    <th>最後填寫時間</th>
+
+</tr>
+
+</thead>
+
+<tbody
+    id="formProgressTableBody"
+></tbody>
+
+</table>
+
+</div>
+
+
+<div
+    id="formProgressMobileList"
+    class="mobile-list"
+></div>
 
 </section>
 
@@ -2439,6 +2773,12 @@ const ADMIN_STATE = {
     eventConfig:
         null,
 
+    formSubmissions:
+        [],
+
+    filteredFormSubmissions:
+        [],
+
     pendingUnbind:
         null,
 
@@ -2842,6 +3182,12 @@ function clearAdminSession() {
     ADMIN_STATE.eventConfig =
         null;
 
+    ADMIN_STATE.formSubmissions =
+        [];
+
+    ADMIN_STATE.filteredFormSubmissions =
+        [];
+
     ADMIN_STATE.pendingUnbind =
         null;
 
@@ -2894,9 +3240,469 @@ async function refreshAllData() {
 
         loadCloudLinks(),
 
-        loadEventConfig()
+        loadEventConfig(),
+
+        loadFormSubmissions()
 
     ]);
+
+}
+
+
+
+/* ============================================================
+   Google 表單填寫進度
+   ============================================================ */
+
+async function loadFormSubmissions() {
+
+    showFormProgressLoading();
+
+
+    try {
+
+        const result =
+            await callAdminBackend(
+                "adminListFormSubmissions",
+                {
+                    sessionToken:
+                        ADMIN_STATE.sessionToken
+                }
+            );
+
+
+        if (
+            result.error ===
+            "ADMIN_UNAUTHORIZED"
+        ) {
+
+            handleUnauthorized();
+            return;
+
+        }
+
+
+        if (!result.success) {
+
+            throw new Error(
+                result.message ||
+                "無法取得表單填寫進度"
+            );
+
+        }
+
+
+        ADMIN_STATE.formSubmissions =
+            Array.isArray(
+                result.clubs
+            )
+            ? result.clubs
+            : [];
+
+
+        document.getElementById(
+            "formProgressTotalCount"
+        ).textContent =
+            result.total ??
+            ADMIN_STATE.formSubmissions.length;
+
+
+        document.getElementById(
+            "formProgressSubmittedCount"
+        ).textContent =
+            result.submittedCount ??
+            0;
+
+
+        document.getElementById(
+            "formProgressPendingCount"
+        ).textContent =
+            result.pendingCount ??
+            0;
+
+
+        document.getElementById(
+            "formProgressCompletionRate"
+        ).textContent =
+            `${result.completionRate ?? 0}%`;
+
+
+        filterFormProgress();
+
+    }
+
+    catch (error) {
+
+        showFormProgressError(
+            error.message
+        );
+
+    }
+
+}
+
+
+function filterFormProgress() {
+
+    const input =
+        document.getElementById(
+            "formProgressSearchInput"
+        );
+
+
+    const filterSelect =
+        document.getElementById(
+            "formProgressStatusFilter"
+        );
+
+
+    const query =
+        (
+            input
+                ? input.value
+                : ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+    const status =
+        filterSelect
+            ? filterSelect.value
+            : "all";
+
+
+    ADMIN_STATE.filteredFormSubmissions =
+        ADMIN_STATE.formSubmissions.filter(
+            item => {
+
+                const searchable = [
+                    item.club,
+                    item.category
+                ]
+                .join(" ")
+                .toLowerCase();
+
+
+                const queryMatched =
+                    !query ||
+                    searchable.includes(
+                        query
+                    );
+
+
+                const statusMatched =
+                    status === "all"
+                    ||
+                    (
+                        status === "submitted"
+                        &&
+                        item.submitted
+                    )
+                    ||
+                    (
+                        status === "pending"
+                        &&
+                        !item.submitted
+                    );
+
+
+                return (
+                    queryMatched &&
+                    statusMatched
+                );
+
+            }
+        );
+
+
+    renderFormProgress();
+
+}
+
+
+function renderFormProgress() {
+
+    const all =
+        ADMIN_STATE.formSubmissions.length;
+
+
+    const filtered =
+        ADMIN_STATE.filteredFormSubmissions.length;
+
+
+    document.getElementById(
+        "formProgressResultCount"
+    ).textContent =
+        `顯示 ${filtered} / ${all} 個社團`;
+
+
+    const state =
+        document.getElementById(
+            "formProgressState"
+        );
+
+
+    const desktop =
+        document.getElementById(
+            "formProgressDesktopTable"
+        );
+
+
+    const mobile =
+        document.getElementById(
+            "formProgressMobileList"
+        );
+
+
+    if (
+        filtered === 0
+    ) {
+
+        desktop.style.display =
+            "none";
+
+        mobile.innerHTML =
+            "";
+
+        state.style.display =
+            "block";
+
+        state.innerHTML =
+            `
+            <div class="state-icon">
+                📭
+            </div>
+            找不到符合條件的社團。
+            `;
+
+        return;
+
+    }
+
+
+    state.style.display =
+        "none";
+
+
+    desktop.style.display =
+        "block";
+
+
+    document.getElementById(
+        "formProgressTableBody"
+    ).innerHTML =
+        ADMIN_STATE.filteredFormSubmissions
+        .map(
+            item => {
+
+                const status =
+                    item.submitted
+                    ? `
+                      <span class="status-chip status-success">
+                          ✅ 已填寫
+                      </span>
+                      `
+                    : `
+                      <span class="status-chip status-empty">
+                          ❌ 尚未填寫
+                      </span>
+                      `;
+
+
+                const submittedAt =
+                    item.submitted
+                    ? escapeHtml(
+                        item.submittedAtTaipei ||
+                        formatDate(
+                            item.submittedAt ||
+                            item.updatedAt
+                        )
+                      )
+                    : "-";
+
+
+                return `
+                <tr>
+                    <td>
+                        <div class="club-name">
+                            ${escapeHtml(item.club || "-")}
+                        </div>
+                    </td>
+
+                    <td>
+                        ${escapeHtml(item.category || "-")}
+                    </td>
+
+                    <td>
+                        ${status}
+                    </td>
+
+                    <td>
+                        <span class="form-progress-time">
+                            ${submittedAt}
+                        </span>
+                    </td>
+                </tr>
+                `;
+
+            }
+        )
+        .join("");
+
+
+    mobile.innerHTML =
+        ADMIN_STATE.filteredFormSubmissions
+        .map(
+            item => {
+
+                const status =
+                    item.submitted
+                    ? `
+                      <span class="status-chip status-success">
+                          ✅ 已填寫
+                      </span>
+                      `
+                    : `
+                      <span class="status-chip status-empty">
+                          ❌ 尚未填寫
+                      </span>
+                      `;
+
+
+                const submittedAt =
+                    item.submitted
+                    ? escapeHtml(
+                        item.submittedAtTaipei ||
+                        formatDate(
+                            item.submittedAt ||
+                            item.updatedAt
+                        )
+                      )
+                    : "-";
+
+
+                return `
+                <div class="mobile-card">
+
+                    <div class="mobile-card-top">
+
+                        <div>
+
+                            <div class="mobile-title">
+                                ${escapeHtml(item.club || "-")}
+                            </div>
+
+                            <div class="mobile-subtitle">
+                                ${escapeHtml(item.category || "-")}
+                            </div>
+
+                        </div>
+
+                        <div>
+                            ${status}
+                        </div>
+
+                    </div>
+
+
+                    <div class="mobile-info">
+
+                        <div>
+                            最後填寫時間：
+                            ${submittedAt}
+                        </div>
+
+                    </div>
+
+                </div>
+                `;
+
+            }
+        )
+        .join("");
+
+}
+
+
+function showFormProgressLoading() {
+
+    document.getElementById(
+        "formProgressDesktopTable"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "formProgressMobileList"
+    ).innerHTML =
+        "";
+
+
+    document.getElementById(
+        "formProgressResultCount"
+    ).textContent =
+        "載入中...";
+
+
+    const state =
+        document.getElementById(
+            "formProgressState"
+        );
+
+
+    state.style.display =
+        "block";
+
+
+    state.innerHTML =
+        `
+        <div class="spinner"></div>
+        正在讀取表單填寫進度...
+        `;
+
+}
+
+
+function showFormProgressError(
+    message
+) {
+
+    document.getElementById(
+        "formProgressDesktopTable"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "formProgressMobileList"
+    ).innerHTML =
+        "";
+
+
+    document.getElementById(
+        "formProgressResultCount"
+    ).textContent =
+        "讀取失敗";
+
+
+    const state =
+        document.getElementById(
+            "formProgressState"
+        );
+
+
+    state.style.display =
+        "block";
+
+
+    state.innerHTML =
+        `
+        <div class="state-icon">
+            ⚠️
+        </div>
+        ${escapeHtml(message)}
+        `;
 
 }
 
