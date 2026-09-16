@@ -4,7923 +4,1045 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>社團評選｜管理員後台</title>
-
 <style>
-*{box-sizing:border-box}
-html,body{
-    margin:0;
-    min-height:100%;
-    background:#f5f7fb;
-    color:#202124;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,sans-serif
-}
-button,input,select{font:inherit}
-button{cursor:pointer}
-
-:root{
-    --p:#1a73e8;
-    --pd:#1557b0;
-    --card:#fff;
-    --border:#e4e7ec;
-    --text:#202124;
-    --muted:#667085;
-    --danger:#d92d20;
-    --dangerbg:#fff1f0;
-    --success:#167542;
-    --successbg:#e7f6ec;
-    --warning:#b54708;
-    --warningbg:#fff0e8;
-    --shadow:0 8px 24px rgba(16,24,40,.06)
-}
-
-.login-screen{
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:24px
-}
-
-.login-card{
-    width:100%;
-    max-width:420px;
-    padding:32px;
-    background:#fff;
-    border:1px solid var(--border);
-    border-radius:22px;
-    box-shadow:0 16px 50px rgba(16,24,40,.1)
-}
-
-.login-icon{
-    width:58px;
-    height:58px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    margin-bottom:18px;
-    border-radius:16px;
-    background:#e8f0fe;
-    font-size:28px
-}
-
-.login-title{
-    margin:0 0 7px;
-    font-size:24px;
-    font-weight:850
-}
-
-.login-description{
-    margin-bottom:24px;
-    color:var(--muted);
-    font-size:14px;
-    line-height:1.7
-}
-
-.form-label{
-    display:block;
-    margin-bottom:7px;
-    font-size:13px;
-    font-weight:750
-}
-
-.password-wrap{
-    display:flex;
-    gap:8px
-}
-
-.field{
-    width:100%;
-    height:44px;
-    padding:0 13px;
-    border:1px solid #d0d5dd;
-    border-radius:10px;
-    outline:none;
-    background:#fff;
-    font-size:14px
-}
-
-.field:focus{
-    border-color:var(--p);
-    box-shadow:0 0 0 3px rgba(26,115,232,.09)
-}
-
-.password-toggle{
-    width:46px;
-    flex-shrink:0;
-    border:1px solid #d0d5dd;
-    border-radius:10px;
-    background:#fff
-}
-
-.login-btn{
-    width:100%;
-    height:46px;
-    margin-top:16px;
-    border:0;
-    border-radius:10px;
-    background:var(--p);
-    color:#fff;
-    font-weight:800
-}
-
-.login-btn:disabled,
-.btn:disabled,
-.top-btn:disabled{
-    opacity:.55;
-    cursor:not-allowed
-}
-
-.error{
-    min-height:18px;
-    margin-top:9px;
-    color:var(--danger);
-    font-size:12px
-}
-
-.admin-app{
-    display:none;
-    min-height:100vh
-}
-
-.topbar{
-    position:sticky;
-    top:0;
-    z-index:50;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:16px;
-    padding:14px max(18px,calc((100vw - 1180px)/2));
-    background:rgba(255,255,255,.96);
-    border-bottom:1px solid var(--border);
-    backdrop-filter:blur(10px)
-}
-
-.brand-title{
-    font-size:18px;
-    font-weight:850
-}
-
-.brand-subtitle{
-    margin-top:2px;
-    color:var(--muted);
-    font-size:12px
-}
-
-.top-actions{
-    display:flex;
-    gap:8px
-}
-
-.top-btn{
-    height:38px;
-    padding:0 14px;
-    border:1px solid var(--border);
-    border-radius:10px;
-    background:#fff;
-    color:#344054;
-    font-size:13px;
-    font-weight:750
-}
-
-.logout{
-    color:var(--danger);
-    border-color:#f5c7c4
-}
-
-.main{
-    width:min(1180px,calc(100% - 30px));
-    margin:auto;
-    padding:28px 0 50px
-}
-
-.hero{
-    display:flex;
-    justify-content:space-between;
-    align-items:end;
-    gap:20px;
-    margin-bottom:20px
-}
-
-.page-title{
-    margin:0;
-    font-size:27px;
-    font-weight:900
-}
-
-.page-description{
-    margin-top:6px;
-    color:var(--muted);
-    font-size:14px
-}
-
-.last-refresh{
-    color:var(--muted);
-    font-size:12px;
-    white-space:nowrap
-}
-
-.stats-grid{
-    display:grid;
-    grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:14px;
-    margin-bottom:18px
-}
-
-.stat-card{
-    position:relative;
-    padding:18px;
-    background:#fff;
-    border:1px solid var(--border);
-    border-radius:16px;
-    box-shadow:var(--shadow);
-    overflow:hidden
-}
-
-.stat-card::before{
-    content:"";
-    position:absolute;
-    left:0;
-    top:0;
-    bottom:0;
-    width:4px;
-    background:#d9e7ff
-}
-
-.stat-label{
-    color:var(--muted);
-    font-size:12px;
-    font-weight:750
-}
-
-.stat-number{
-    margin-top:7px;
-    font-size:28px;
-    font-weight:900;
-    line-height:1
-}
-
-.stat-foot{
-    margin-top:7px;
-    color:var(--muted);
-    font-size:11px
-}
-
-.accordion-stack{
-    display:grid;
-    gap:12px
-}
-
-.accordion{
-    background:#fff;
-    border:1px solid var(--border);
-    border-radius:16px;
-    box-shadow:var(--shadow);
-    overflow:hidden
-}
-
-.accordion-head{
-    width:100%;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:15px;
-    padding:17px 18px;
-    border:0;
-    background:#fff;
-    text-align:left
-}
-
-.accordion-head:hover{
-    background:#fafcff
-}
-
-.accordion-left{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    min-width:0
-}
-
-.accordion-icon{
-    width:40px;
-    height:40px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:12px;
-    background:#eef4ff;
-    font-size:20px;
-    flex-shrink:0
-}
-
-.accordion-title{
-    font-size:15px;
-    font-weight:850
-}
-
-.accordion-sub{
-    margin-top:2px;
-    color:var(--muted);
-    font-size:12px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis
-}
-
-.accordion-right{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    flex-shrink:0
-}
-
-.count-pill{
-    padding:5px 9px;
-    border-radius:999px;
-    background:#f2f4f7;
-    color:#475467;
-    font-size:11px;
-    font-weight:800
-}
-
-.chevron{
-    width:30px;
-    height:30px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:9px;
-    background:#f8fafc;
-    color:#667085;
-    font-size:14px;
-    transition:.22s transform
-}
-
-.accordion.open .chevron{
-    transform:rotate(90deg)
-}
-
-.accordion-body{
-    display:grid;
-    grid-template-rows:0fr;
-    transition:grid-template-rows .26s ease
-}
-
-.accordion-inner{
-    min-height:0;
-    overflow:hidden
-}
-
-.accordion.open .accordion-body{
-    grid-template-rows:1fr
-}
-
-.section-content{
-    border-top:1px solid var(--border)
-}
-
-.panel-note{
-    padding:11px 18px;
-    background:#f8fbff;
-    color:#475467;
-    font-size:12px;
-    line-height:1.7
-}
-
-.toolbar{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:14px 18px;
-    border-bottom:1px solid var(--border);
-    background:#fcfcfd
-}
-
-.search{
-    position:relative;
-    flex:1
-}
-
-.search span{
-    position:absolute;
-    left:13px;
-    top:50%;
-    transform:translateY(-50%)
-}
-
-.search .field{
-    padding-left:40px
-}
-
-.filter{
-    width:190px
-}
-
-.btn{
-    height:40px;
-    padding:0 14px;
-    border:1px solid var(--border);
-    border-radius:10px;
-    background:#fff;
-    color:#344054;
-    font-size:13px;
-    font-weight:800
-}
-
-.btn-primary{
-    border-color:var(--p);
-    background:var(--p);
-    color:#fff
-}
-
-.btn-edit{
-    border-color:#bdd5ff;
-    background:#e8f0fe;
-    color:var(--pd)
-}
-
-.btn-danger{
-    border-color:#f5c7c4;
-    background:var(--dangerbg);
-    color:var(--danger)
-}
-
-.btn-success{
-    border-color:#cfe8d7;
-    background:var(--successbg);
-    color:var(--success)
-}
-
-.small{
-    height:33px;
-    padding:0 10px;
-    font-size:12px
-}
-
-.actions{
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px
-}
-
-.state{
-    padding:38px 18px;
-    text-align:center;
-    color:var(--muted);
-    font-size:13px
-}
-
-.spinner{
-    width:28px;
-    height:28px;
-    margin:0 auto 10px;
-    border:3px solid #e8eef7;
-    border-top-color:var(--p);
-    border-radius:50%;
-    animation:spin .8s linear infinite
-}
-
-@keyframes spin{
-    to{transform:rotate(360deg)}
-}
-
-.table-scroll{
-    max-height:56vh;
-    overflow:auto
-}
-
-.table-scroll table{
-    width:100%;
-    border-collapse:collapse;
-    min-width:760px
-}
-
-.table-scroll thead{
-    position:sticky;
-    top:0;
-    z-index:2
-}
-
-.table-scroll th,
-.table-scroll td{
-    padding:13px 15px;
-    border-bottom:1px solid #eaecf0;
-    text-align:left;
-    vertical-align:middle
-}
-
-.table-scroll th{
-    background:#f9fafb;
-    color:#667085;
-    font-size:11px;
-    font-weight:800;
-    white-space:nowrap
-}
-
-.table-scroll td{
-    font-size:13px
-}
-
-.table-scroll tbody tr:hover{
-    background:#fafcff
-}
-
-.name{
-    font-weight:800
-}
-
-.muted{
-    color:var(--muted)
-}
-
-.mono{
-    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    font-size:11px;
-    word-break:break-all
-}
-
-.chip{
-    display:inline-block;
-    padding:5px 9px;
-    border-radius:999px;
-    font-size:11px;
-    font-weight:800
-}
-
-.chip-muted{
-    background:#f2f4f7;
-    color:#475467
-}
-
-.chip-success{
-    background:var(--successbg);
-    color:var(--success)
-}
-
-.chip-warning{
-    background:var(--warningbg);
-    color:var(--warning)
-}
-
-.chip-danger{
-    background:#ffe4e8;
-    color:#b42318
-}
-
-.link{
-    display:block;
-    max-width:280px;
-    color:var(--p);
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    text-decoration:none
-}
-
-.link:hover{
-    text-decoration:underline
-}
-
-.mobile-list{
-    display:none
-}
-
-.mobile-card{
-    padding:15px;
-    border-bottom:1px solid var(--border)
-}
-
-.mobile-card:last-child{
-    border-bottom:0
-}
-
-.mobile-title{
-    font-size:14px;
-    font-weight:850
-}
-
-.mobile-sub{
-    margin-top:3px;
-    color:var(--p);
-    font-size:12px;
-    font-weight:750
-}
-
-.mobile-info{
-    display:grid;
-    gap:6px;
-    margin-top:10px;
-    color:var(--muted);
-    font-size:11px
-}
-
-.mobile-actions{
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px;
-    margin-top:10px
-}
-
-.summary-grid{
-    display:grid;
-    grid-template-columns:repeat(5,minmax(0,1fr));
-    gap:10px;
-    padding:15px 18px 0
-}
-
-.summary-card{
-    padding:13px;
-    border:1px solid var(--border);
-    border-radius:12px;
-    background:#fcfcfd
-}
-
-.summary-label{
-    color:var(--muted);
-    font-size:11px;
-    font-weight:750
-}
-
-.summary-value{
-    margin-top:5px;
-    font-size:21px;
-    font-weight:900
-}
-
-.sync-meta{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    padding:12px 18px;
-    background:#fff;
-    border-bottom:1px solid var(--border)
-}
-
-.sync-meta-text{
-    color:var(--muted);
-    font-size:12px;
-    line-height:1.7
-}
-
-.sync-warning{
-    color:#b54708;
-    font-weight:750
-}
-
-.event-body{
-    padding:18px
-}
-
-.event-grid{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:12px
-}
-
-.event-field{
-    padding:14px;
-    border:1px solid var(--border);
-    border-radius:12px;
-    background:#fcfcfd
-}
-
-.event-title{
-    font-size:13px;
-    font-weight:850
-}
-
-.event-note{
-    margin:4px 0 10px;
-    color:var(--muted);
-    font-size:11px
-}
-
-.event-row{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 125px;
-    gap:8px
-}
-
-.event-footer{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    margin-top:14px;
-    padding-top:14px;
-    border-top:1px solid var(--border)
-}
-
-.event-meta{
-    color:var(--muted);
-    font-size:11px;
-    line-height:1.7
-}
-
-.modal-backdrop{
-    position:fixed;
-    inset:0;
-    z-index:1000;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-    background:rgba(16,24,40,.55)
-}
-
-.modal{
-    width:100%;
-    max-width:470px;
-    background:#fff;
-    border-radius:18px;
-    overflow:hidden;
-    box-shadow:0 24px 60px rgba(16,24,40,.22)
-}
-
-.modal-body{
-    padding:24px
-}
-
-.modal-icon{
-    width:45px;
-    height:45px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    margin-bottom:14px;
-    border-radius:50%;
-    background:#e8f0fe;
-    font-size:22px
-}
-
-.modal-danger{
-    background:var(--dangerbg)
-}
-
-.modal-title{
-    margin:0;
-    font-size:18px;
-    font-weight:900
-}
-
-.modal-desc{
-    margin-top:7px;
-    color:var(--muted);
-    font-size:13px;
-    line-height:1.7
-}
-
-.modal-info{
-    margin-top:14px;
-    padding:12px;
-    border-radius:10px;
-    background:#f9fafb;
-    font-size:13px;
-    line-height:1.8
-}
-
-.modal-label{
-    display:block;
-    margin:16px 0 6px;
-    font-size:12px;
-    font-weight:800
-}
-
-.modal-footer{
-    display:flex;
-    justify-content:flex-end;
-    gap:8px;
-    padding:15px 24px;
-    border-top:1px solid var(--border);
-    background:#fcfcfd
-}
-
-.warning-box{
-    margin-top:13px;
-    padding:11px 12px;
-    border:1px solid #f5c7c4;
-    border-radius:10px;
-    background:var(--dangerbg);
-    color:#7a271a;
-    font-size:12px;
-    line-height:1.7
-}
-
-.toast{
-    position:fixed;
-    right:20px;
-    bottom:20px;
-    z-index:2000;
-    max-width:min(380px,calc(100% - 40px));
-    padding:12px 16px;
-    border-radius:10px;
-    background:#101828;
-    color:#fff;
-    font-size:13px;
-    box-shadow:0 10px 35px rgba(16,24,40,.2);
-    opacity:0;
-    transform:translateY(12px);
-    pointer-events:none;
-    transition:.25s
-}
-
-.toast.show{
-    opacity:1;
-    transform:translateY(0)
-}
-
-@media(max-width:1000px){
-    .summary-grid{
-        grid-template-columns:repeat(3,1fr)
-    }
-}
-
-@media(max-width:900px){
-    .stats-grid{
-        grid-template-columns:repeat(2,1fr)
-    }
-}
-
-@media(max-width:760px){
-
-    .topbar{
-        padding:12px 14px
-    }
-
-    .brand-subtitle,
-    .top-btn span{
-        display:none
-    }
-
-    .main{
-        width:calc(100% - 20px);
-        padding:18px 0 35px
-    }
-
-    .hero{
-        align-items:flex-start;
-        flex-direction:column
-    }
-
-    .page-title{
-        font-size:22px
-    }
-
-    .stats-grid{
-        gap:9px
-    }
-
-    .stat-card{
-        padding:15px
-    }
-
-    .stat-number{
-        font-size:24px
-    }
-
-    .accordion-head{
-        padding:14px
-    }
-
-    .accordion-sub{
-        max-width:190px
-    }
-
-    .toolbar{
-        padding:12px 14px;
-        align-items:stretch;
-        flex-direction:column
-    }
-
-    .filter,
-    .toolbar .btn{
-        width:100%
-    }
-
-    .desktop-table{
-        display:none!important
-    }
-
-    .mobile-list{
-        display:block;
-        max-height:55vh;
-        overflow:auto
-    }
-
-    .summary-grid{
-        grid-template-columns:1fr 1fr;
-        padding:12px 14px 0
-    }
-
-    .sync-meta{
-        align-items:stretch;
-        flex-direction:column
-    }
-
-    .sync-meta .btn{
-        width:100%
-    }
-
-    .event-body{
-        padding:14px
-    }
-
-    .event-grid,
-    .event-row{
-        grid-template-columns:1fr
-    }
-
-    .event-footer{
-        align-items:stretch;
-        flex-direction:column
-    }
-
-    .event-footer .btn{
-        width:100%
-    }
-
-}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#f5f7fb;color:#202124;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,sans-serif}button,input,select{font:inherit}button{cursor:pointer}:root{--p:#1a73e8;--pd:#1557b0;--card:#fff;--border:#e4e7ec;--text:#202124;--muted:#667085;--danger:#d92d20;--dangerbg:#fff1f0;--success:#167542;--successbg:#e7f6ec;--warning:#b54708;--warningbg:#fff0e8;--shadow:0 8px 24px rgba(16,24,40,.06)}
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}.login-card{width:100%;max-width:420px;padding:32px;background:#fff;border:1px solid var(--border);border-radius:22px;box-shadow:0 16px 50px rgba(16,24,40,.1)}.login-icon{width:58px;height:58px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;border-radius:16px;background:#e8f0fe;font-size:28px}.login-title{margin:0 0 7px;font-size:24px;font-weight:850}.login-description{margin-bottom:24px;color:var(--muted);font-size:14px;line-height:1.7}.form-label{display:block;margin-bottom:7px;font-size:13px;font-weight:750}.password-wrap{display:flex;gap:8px}.field{width:100%;height:44px;padding:0 13px;border:1px solid #d0d5dd;border-radius:10px;outline:none;background:#fff;font-size:14px}.field:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(26,115,232,.09)}.password-toggle{width:46px;flex-shrink:0;border:1px solid #d0d5dd;border-radius:10px;background:#fff}.login-btn{width:100%;height:46px;margin-top:16px;border:0;border-radius:10px;background:var(--p);color:#fff;font-weight:800}.login-btn:disabled,.btn:disabled,.top-btn:disabled{opacity:.55;cursor:not-allowed}.error{min-height:18px;margin-top:9px;color:var(--danger);font-size:12px}
+.admin-app{display:none;min-height:100vh}.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px max(18px,calc((100vw - 1180px)/2));background:rgba(255,255,255,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(10px)}.brand-title{font-size:18px;font-weight:850}.brand-subtitle{margin-top:2px;color:var(--muted);font-size:12px}.top-actions{display:flex;gap:8px}.top-btn{height:38px;padding:0 14px;border:1px solid var(--border);border-radius:10px;background:#fff;color:#344054;font-size:13px;font-weight:750}.logout{color:var(--danger);border-color:#f5c7c4}.main{width:min(1180px,calc(100% - 30px));margin:auto;padding:28px 0 50px}.hero{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:20px}.page-title{margin:0;font-size:27px;font-weight:900}.page-description{margin-top:6px;color:var(--muted);font-size:14px}.last-refresh{color:var(--muted);font-size:12px;white-space:nowrap}
+.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.stat-card{position:relative;padding:18px;background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}.stat-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#d9e7ff}.stat-label{color:var(--muted);font-size:12px;font-weight:750}.stat-number{margin-top:7px;font-size:28px;font-weight:900;line-height:1}.stat-foot{margin-top:7px;color:var(--muted);font-size:11px}
+.accordion-stack{display:grid;gap:12px}.accordion{background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}.accordion-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:15px;padding:17px 18px;border:0;background:#fff;text-align:left}.accordion-head:hover{background:#fafcff}.accordion-left{display:flex;align-items:center;gap:12px;min-width:0}.accordion-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:#eef4ff;font-size:20px;flex-shrink:0}.accordion-title{font-size:15px;font-weight:850}.accordion-sub{margin-top:2px;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.accordion-right{display:flex;align-items:center;gap:10px;flex-shrink:0}.count-pill{padding:5px 9px;border-radius:999px;background:#f2f4f7;color:#475467;font-size:11px;font-weight:800}.chevron{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:#f8fafc;color:#667085;font-size:14px;transition:.22s transform}.accordion.open .chevron{transform:rotate(90deg)}.accordion-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .26s ease}.accordion-inner{min-height:0;overflow:hidden}.accordion.open .accordion-body{grid-template-rows:1fr}.section-content{border-top:1px solid var(--border)}
+.panel-note{padding:11px 18px;background:#f8fbff;color:#475467;font-size:12px;line-height:1.7}.toolbar{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);background:#fcfcfd}.search{position:relative;flex:1}.search span{position:absolute;left:13px;top:50%;transform:translateY(-50%)}.search .field{padding-left:40px}.filter{width:190px}.btn{height:40px;padding:0 14px;border:1px solid var(--border);border-radius:10px;background:#fff;color:#344054;font-size:13px;font-weight:800}.btn-primary{border-color:var(--p);background:var(--p);color:#fff}.btn-edit{border-color:#bdd5ff;background:#e8f0fe;color:var(--pd)}.btn-danger{border-color:#f5c7c4;background:var(--dangerbg);color:var(--danger)}.btn-success{border-color:#cfe8d7;background:var(--successbg);color:var(--success)}.small{height:33px;padding:0 10px;font-size:12px}.actions{display:flex;flex-wrap:wrap;gap:6px}.state{padding:38px 18px;text-align:center;color:var(--muted);font-size:13px}.spinner{width:28px;height:28px;margin:0 auto 10px;border:3px solid #e8eef7;border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.table-scroll{max-height:56vh;overflow:auto}.table-scroll table{width:100%;border-collapse:collapse;min-width:760px}.table-scroll thead{position:sticky;top:0;z-index:2}.table-scroll th,.table-scroll td{padding:13px 15px;border-bottom:1px solid #eaecf0;text-align:left;vertical-align:middle}.table-scroll th{background:#f9fafb;color:#667085;font-size:11px;font-weight:800;white-space:nowrap}.table-scroll td{font-size:13px}.table-scroll tbody tr:hover{background:#fafcff}.name{font-weight:800}.muted{color:var(--muted)}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;word-break:break-all}.chip{display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800}.chip-muted{background:#f2f4f7;color:#475467}.chip-success{background:var(--successbg);color:var(--success)}.chip-warning{background:var(--warningbg);color:var(--warning)}.chip-danger{background:#ffe4e8;color:#b42318}.link{display:block;max-width:280px;color:var(--p);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}.link:hover{text-decoration:underline}.mobile-list{display:none}.mobile-card{padding:15px;border-bottom:1px solid var(--border)}.mobile-card:last-child{border-bottom:0}.mobile-title{font-size:14px;font-weight:850}.mobile-sub{margin-top:3px;color:var(--p);font-size:12px;font-weight:750}.mobile-info{display:grid;gap:6px;margin-top:10px;color:var(--muted);font-size:11px}.mobile-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.summary-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;padding:15px 18px 0}.summary-card{padding:13px;border:1px solid var(--border);border-radius:12px;background:#fcfcfd}.summary-label{color:var(--muted);font-size:11px;font-weight:750}.summary-value{margin-top:5px;font-size:21px;font-weight:900}.sync-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--border)}.sync-meta-text{color:var(--muted);font-size:12px;line-height:1.7}.sync-warning{color:#b54708;font-weight:750}.event-body{padding:18px}.event-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.event-field{padding:14px;border:1px solid var(--border);border-radius:12px;background:#fcfcfd}.event-title{font-size:13px;font-weight:850}.event-note{margin:4px 0 10px;color:var(--muted);font-size:11px}.event-row{display:grid;grid-template-columns:minmax(0,1fr) 125px;gap:8px}.event-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}.event-meta{color:var(--muted);font-size:11px;line-height:1.7}
+
+.score-wrap{padding:18px;display:grid;gap:14px}.score-top-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.score-info-card{padding:14px;border:1px solid var(--border);border-radius:12px;background:#fcfcfd}.score-info-label{color:var(--muted);font-size:11px;font-weight:800}.score-info-value{margin-top:5px;font-size:19px;font-weight:900}.score-phase-card{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#fff}.score-phase-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px;background:#f9fafb;border-bottom:1px solid var(--border)}.score-phase-title{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:900}.score-phase-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.score-phase-body{padding:15px}.score-row{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px;align-items:end}.score-help{margin-top:5px;color:var(--muted);font-size:11px;line-height:1.6}.score-criteria-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 10px}.score-criteria-title{font-size:13px;font-weight:900}.score-criterion-list{display:grid;gap:8px}.score-criterion{display:grid;grid-template-columns:36px minmax(0,1fr) 120px auto auto;gap:8px;align-items:center;padding:10px;border:1px solid var(--border);border-radius:11px;background:#fcfcfd}.score-order{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:#eef4ff;color:var(--pd);font-size:12px;font-weight:900}.score-criterion .field{height:38px}.score-inline-actions{display:flex;gap:5px}.score-icon-btn{width:34px;height:34px;border:1px solid var(--border);border-radius:9px;background:#fff;color:#475467;font-weight:900}.score-icon-btn:disabled{opacity:.35;cursor:not-allowed}.score-delete-btn{color:var(--danger);border-color:#f5c7c4;background:var(--dangerbg)}.score-empty{padding:20px;border:1px dashed #d0d5dd;border-radius:11px;text-align:center;color:var(--muted);font-size:12px;background:#fcfcfd}.score-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;border-top:1px solid var(--border);margin-top:14px}.score-footer-text{color:var(--muted);font-size:11px;line-height:1.6}.score-lock{padding:11px 13px;border:1px solid #f7d7a5;border-radius:10px;background:#fffaeb;color:#93370d;font-size:12px;line-height:1.65}.score-lock.danger{border-color:#f5c7c4;background:var(--dangerbg);color:#7a271a}.score-weight-status.good{color:var(--success)}.score-weight-status.bad{color:var(--danger)}.score-weight-status.wait{color:var(--warning)}
+.modal-backdrop{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(16,24,40,.55)}.modal{width:100%;max-width:470px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(16,24,40,.22)}.modal-body{padding:24px}.modal-icon{width:45px;height:45px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;border-radius:50%;background:#e8f0fe;font-size:22px}.modal-danger{background:var(--dangerbg)}.modal-title{margin:0;font-size:18px;font-weight:900}.modal-desc{margin-top:7px;color:var(--muted);font-size:13px;line-height:1.7}.modal-info{margin-top:14px;padding:12px;border-radius:10px;background:#f9fafb;font-size:13px;line-height:1.8}.modal-label{display:block;margin:16px 0 6px;font-size:12px;font-weight:800}.modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:15px 24px;border-top:1px solid var(--border);background:#fcfcfd}.warning-box{margin-top:13px;padding:11px 12px;border:1px solid #f5c7c4;border-radius:10px;background:var(--dangerbg);color:#7a271a;font-size:12px;line-height:1.7}.toast{position:fixed;right:20px;bottom:20px;z-index:2000;max-width:min(380px,calc(100% - 40px));padding:12px 16px;border-radius:10px;background:#101828;color:#fff;font-size:13px;box-shadow:0 10px 35px rgba(16,24,40,.2);opacity:0;transform:translateY(12px);pointer-events:none;transition:.25s}.toast.show{opacity:1;transform:translateY(0)}
+@media(max-width:1000px){.summary-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:1000px){.score-top-grid{grid-template-columns:1fr 1fr}}@media(max-width:760px){.topbar{padding:12px 14px}.brand-subtitle,.top-btn span{display:none}.main{width:calc(100% - 20px);padding:18px 0 35px}.hero{align-items:flex-start;flex-direction:column}.page-title{font-size:22px}.stats-grid{gap:9px}.stat-card{padding:15px}.stat-number{font-size:24px}.accordion-head{padding:14px}.accordion-sub{max-width:190px}.toolbar{padding:12px 14px;align-items:stretch;flex-direction:column}.filter,.toolbar .btn{width:100%}.desktop-table{display:none!important}.mobile-list{display:block;max-height:55vh;overflow:auto}.summary-grid{grid-template-columns:1fr 1fr;padding:12px 14px 0}.sync-meta{align-items:stretch;flex-direction:column}.sync-meta .btn{width:100%}.event-body{padding:14px}.event-grid,.event-row{grid-template-columns:1fr}.event-footer{align-items:stretch;flex-direction:column}.event-footer .btn{width:100%}.score-wrap{padding:12px}.score-top-grid{grid-template-columns:1fr}.score-phase-head,.score-footer{align-items:stretch;flex-direction:column}.score-phase-actions .btn{flex:1}.score-row{grid-template-columns:1fr}.score-criterion{grid-template-columns:32px minmax(0,1fr) 90px}.score-criterion .score-enable-wrap{grid-column:2/4}.score-criterion .score-inline-actions{grid-column:2/4}.score-inline-actions .score-icon-btn{flex:1;width:auto}}
 </style>
 </head>
-
 <body>
-
-<section id="loginScreen" class="login-screen">
-
-<div class="login-card">
-
-<div class="login-icon">
-🛠️
-</div>
-
-<h1 class="login-title">
-管理員後台
-</h1>
-
-<div class="login-description">
-社團評選暨觀摩活動管理系統
-<br>
-請輸入管理員密碼。
-</div>
-
-<form onsubmit="handleLogin(event)">
-
-<label class="form-label" for="adminPassword">
-管理員密碼
-</label>
-
-<div class="password-wrap">
-
-<input
-    id="adminPassword"
-    class="field"
-    type="password"
-    autocomplete="current-password"
-    required
-    placeholder="請輸入管理員密碼"
->
-
-<button
-    type="button"
-    class="password-toggle"
-    onclick="togglePassword()"
->
-👁️
-</button>
-
-</div>
-
-<button
-    id="loginBtn"
-    type="submit"
-    class="login-btn"
->
-登入管理後台
-</button>
-
-<div id="loginError" class="error"></div>
-
-</form>
-
-</div>
-
-</section>
-
-
+<section id="loginScreen" class="login-screen"><div class="login-card"><div class="login-icon">🛠️</div><h1 class="login-title">管理員後台</h1><div class="login-description">社團評選暨觀摩活動管理系統<br>請輸入管理員密碼。</div><form onsubmit="handleLogin(event)"><label class="form-label" for="adminPassword">管理員密碼</label><div class="password-wrap"><input id="adminPassword" class="field" type="password" autocomplete="current-password" required placeholder="請輸入管理員密碼"><button type="button" class="password-toggle" onclick="togglePassword()">👁️</button></div><button id="loginBtn" type="submit" class="login-btn">登入管理後台</button><div id="loginError" class="error"></div></form></div></section>
 <div id="adminApp" class="admin-app">
-
-<header class="topbar">
-
-<div>
-
-<div class="brand-title">
-🛠️ 社團評選管理後台
-</div>
-
-<div class="brand-subtitle">
-115學年度第一學期全校學生社團評選暨觀摩活動
-</div>
-
-</div>
-
-
-<div class="top-actions">
-
-<button
-    id="topSyncBtn"
-    class="top-btn"
-    onclick="syncAndRefreshAllData()"
->
-🔄
-<span>同步並重新整理</span>
-</button>
-
-<button
-    class="top-btn logout"
-    onclick="logoutAdmin()"
->
-🚪
-<span>登出</span>
-</button>
-
-</div>
-
-</header>
-
-
+<header class="topbar"><div><div class="brand-title">🛠️ 社團評選管理後台</div><div class="brand-subtitle">115學年度第一學期全校學生社團評選暨觀摩活動</div></div><div class="top-actions"><button id="topSyncBtn" class="top-btn" onclick="syncAndRefreshAllData()">🔄 <span>同步並重新整理</span></button><button class="top-btn logout" onclick="logoutAdmin()">🚪 <span>登出</span></button></div></header>
 <main class="main">
-
-<div class="hero">
-
-<div>
-
-<h1 class="page-title">
-社團管理中心
-</h1>
-
-<div class="page-description">
-集中管理社團名單、評審帳號、活動時程、Google 表單、LINE 綁定與專屬雲端。
-</div>
-
-</div>
-
-<div id="lastRefresh" class="last-refresh">
-尚未更新
-</div>
-
-</div>
-
-
-<section class="stats-grid">
-
-<div class="stat-card">
-
-<div class="stat-label">
-社團總數
-</div>
-
-<div id="statClubs" class="stat-number">
--
-</div>
-
-<div class="stat-foot">
-正式社團名單
-</div>
-
-</div>
-
-
-<div class="stat-card">
-
-<div class="stat-label">
-已綁定帳號
-</div>
-
-<div id="statBindings" class="stat-number">
--
-</div>
-
-<div class="stat-foot">
-LINE 永久綁定
-</div>
-
-</div>
-
-
-<div class="stat-card">
-
-<div class="stat-label">
-已設定雲端
-</div>
-
-<div id="statClouds" class="stat-number">
--
-</div>
-
-<div class="stat-foot">
-社團專屬連結
-</div>
-
-</div>
-
-
-<div class="stat-card">
-
-<div class="stat-label">
-表單完成率
-</div>
-
-<div id="statFormRate" class="stat-number">
--
-</div>
-
-<div class="stat-foot">
-只計算正常單筆填寫
-</div>
-
-</div>
-
-</section>
-
-
+<div class="hero"><div><h1 class="page-title">社團管理中心</h1><div class="page-description">集中管理社團名單、評審帳號、評分機制、活動時程、Google 表單、LINE 綁定與專屬雲端。</div></div><div id="lastRefresh" class="last-refresh">尚未更新</div></div>
+<section class="stats-grid"><div class="stat-card"><div class="stat-label">社團總數</div><div id="statClubs" class="stat-number">-</div><div class="stat-foot">正式社團名單</div></div><div class="stat-card"><div class="stat-label">已綁定帳號</div><div id="statBindings" class="stat-number">-</div><div class="stat-foot">LINE 永久綁定</div></div><div class="stat-card"><div class="stat-label">已設定雲端</div><div id="statClouds" class="stat-number">-</div><div class="stat-foot">社團專屬連結</div></div><div class="stat-card"><div class="stat-label">表單完成率</div><div id="statFormRate" class="stat-number">-</div><div class="stat-foot">只計算正常單筆填寫</div></div></section>
 <div class="accordion-stack">
-
-
-<section id="acc-clubs" class="accordion open">
-
-<button
-    class="accordion-head"
-    onclick="toggleAccordion('clubs')"
->
-
-<span class="accordion-left">
-
-<span class="accordion-icon">
-🏫
-</span>
-
-<span>
-
-<div class="accordion-title">
-社團名單管理
-</div>
-
-<div class="accordion-sub">
-新增、修改、刪除正式社團
-</div>
-
-</span>
-
-</span>
-
-
-<span class="accordion-right">
-
-<span id="clubCountPill" class="count-pill">
--
-</span>
-
-<span class="chevron">
-▶
-</span>
-
-</span>
-
-</button>
-
-
-<div class="accordion-body">
-
-<div class="accordion-inner">
-
-<div class="section-content">
-
-<div class="panel-note">
-系統唯一正式社團名單。修改名稱或屬性時，後端會同步處理相關資料。
-</div>
-
-
-<div class="toolbar">
-
-<div class="search">
-
-<span>
-🔎
-</span>
-
-<input
-    id="clubSearch"
-    class="field"
-    type="search"
-    placeholder="搜尋社團名稱或屬性"
-    oninput="filterClubs()"
->
-
-</div>
-
-<button
-    class="btn btn-primary"
-    onclick="openAddClub()"
->
-＋ 新增社團
-</button>
-
-</div>
-
-
-<div id="clubState" class="state">
-
-<div class="spinner"></div>
-
-正在讀取社團名單...
-
-</div>
-
-
-<div
-    id="clubDesktop"
-    class="table-scroll desktop-table"
-    style="display:none"
->
-
-<table>
-
-<thead>
-
-<tr>
-<th>社團名稱</th>
-<th>社團屬性</th>
-<th>操作</th>
-</tr>
-
-</thead>
-
-<tbody id="clubTable"></tbody>
-
-</table>
-
-</div>
-
-<div id="clubMobile" class="mobile-list"></div>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-
-<section id="acc-judges" class="accordion">
-
-<button
-    class="accordion-head"
-    onclick="toggleAccordion('judges')"
->
-
-<span class="accordion-left">
-
-<span class="accordion-icon">
-👨‍⚖️
-</span>
-
-<span>
-
-<div class="accordion-title">
-評審帳號管理
-</div>
-
-<div class="accordion-sub">
-建立評審帳號、指派社團屬性與管理登入權限
-</div>
-
-</span>
-
-</span>
-
-
-<span class="accordion-right">
-
-<span id="judgeCountPill" class="count-pill">
--
-</span>
-
-<span class="chevron">
-▶
-</span>
-
-</span>
-
-</button>
-
-
-<div class="accordion-body">
-
-<div class="accordion-inner">
-
-<div class="section-content">
-
-<div class="panel-note">
-📌 資料審查與實地審查共用同一批評審。每位評審可以負責一個或多個社團屬性。
-</div>
-
-
-<div class="toolbar">
-
-<div class="search">
-
-<span>
-🔎
-</span>
-
-<input
-    id="judgeSearch"
-    class="field"
-    type="search"
-    placeholder="搜尋評審姓名、帳號或負責屬性"
-    oninput="filterJudges()"
->
-
-</div>
-
-<button
-    class="btn btn-primary"
-    onclick="openAddJudge()"
->
-＋ 新增評審
-</button>
-
-</div>
-
-
-<div id="judgeState" class="state">
-
-<div class="spinner"></div>
-
-正在讀取評審資料...
-
-</div>
-
-
-<div
-    id="judgeDesktop"
-    class="table-scroll desktop-table"
-    style="display:none"
->
-
-<table>
-
-<thead>
-
-<tr>
-<th>評審名稱</th>
-<th>登入帳號</th>
-<th>負責屬性</th>
-<th>帳號狀態</th>
-<th>最後修改</th>
-<th>操作</th>
-</tr>
-
-</thead>
-
-<tbody id="judgeTable"></tbody>
-
-</table>
-
-</div>
-
-
-<div id="judgeMobile" class="mobile-list"></div>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-
-<section id="acc-event" class="accordion">
-
-<button
-    class="accordion-head"
-    onclick="toggleAccordion('event')"
->
-
-<span class="accordion-left">
-
-<span class="accordion-icon">
-⏰
-</span>
-
-<span>
-
-<div class="accordion-title">
-活動時程管理
-</div>
-
-<div class="accordion-sub">
-截止時間與活動開始／結束
-</div>
-
-</span>
-
-</span>
-
-<span class="accordion-right">
-
-<span id="eventPill" class="count-pill">
-時程
-</span>
-
-<span class="chevron">
-▶
-</span>
-
-</span>
-
-</button>
-
-
-<div class="accordion-body">
-
-<div class="accordion-inner">
-
-<div class="section-content">
-
-<div id="eventState" class="state">
-
-<div class="spinner"></div>
-
-正在讀取活動時程...
-
-</div>
-
-
-<div id="eventForm" class="event-body" style="display:none">
-
-<div class="event-grid">
-
-<div class="event-field">
-
-<div class="event-title">
-📂 資料繳交截止
-</div>
-
-<div class="event-note">
-社團資料最後繳交時間
-</div>
-
-<div class="event-row">
-
-<input id="dataDeadlineDate" class="field" type="date">
-
-<input id="dataDeadlineTime" class="field" type="time">
-
-</div>
-
-</div>
-
-
-<div class="event-field">
-
-<div class="event-title">
-📝 表單填寫截止
-</div>
-
-<div class="event-note">
-活動表單最後填寫時間
-</div>
-
-<div class="event-row">
-
-<input id="formDeadlineDate" class="field" type="date">
-
-<input id="formDeadlineTime" class="field" type="time">
-
-</div>
-
-</div>
-
-
-<div class="event-field">
-
-<div class="event-title">
-🎯 活動開始
-</div>
-
-<div class="event-note">
-社團評選暨觀摩活動開始
-</div>
-
-<div class="event-row">
-
-<input id="eventStartDate" class="field" type="date">
-
-<input id="eventStartTime" class="field" type="time">
-
-</div>
-
-</div>
-
-
-<div class="event-field">
-
-<div class="event-title">
-🏁 活動結束
-</div>
-
-<div class="event-note">
-社團評選暨觀摩活動結束
-</div>
-
-<div class="event-row">
-
-<input id="eventEndDate" class="field" type="date">
-
-<input id="eventEndTime" class="field" type="time">
-
-</div>
-
-</div>
-
-</div>
-
-
-<div id="eventError" class="error"></div>
-
-
-<div class="event-footer">
-
-<div id="eventMeta" class="event-meta">
-時區：Asia/Taipei
-</div>
-
-<button
-    id="saveEventBtn"
-    class="btn btn-primary"
-    onclick="saveEventConfig()"
->
-儲存時程設定
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-
-<section id="acc-forms" class="accordion">
-
-<button
-    class="accordion-head"
-    onclick="toggleAccordion('forms')"
->
-
-<span class="accordion-left">
-
-<span class="accordion-icon">
-📋
-</span>
-
-<span>
-
-<div class="accordion-title">
-Google 表單填寫進度
-</div>
-
-<div class="accordion-sub">
-0 筆未填寫／1 筆完成／2 筆以上重複填寫
-</div>
-
-</span>
-
-</span>
-
-
-<span class="accordion-right">
-
-<span id="formCountPill" class="count-pill">
--
-</span>
-
-<span class="chevron">
-▶
-</span>
-
-</span>
-
-</button>
-
-
-<div class="accordion-body">
-
-<div class="accordion-inner">
-
-<div class="section-content">
-
-
-<div class="summary-grid">
-
-<div class="summary-card">
-
-<div class="summary-label">
-社團總數
-</div>
-
-<div id="formTotal" class="summary-value">
--
-</div>
-
-</div>
-
-
-<div class="summary-card">
-
-<div class="summary-label">
-✅ 已填寫
-</div>
-
-<div id="formSubmitted" class="summary-value">
--
-</div>
-
-</div>
-
-
-<div class="summary-card">
-
-<div class="summary-label">
-❌ 未填寫
-</div>
-
-<div id="formPending" class="summary-value">
--
-</div>
-
-</div>
-
-
-<div class="summary-card">
-
-<div class="summary-label">
-⚠️ 重複填寫
-</div>
-
-<div id="formDuplicate" class="summary-value">
--
-</div>
-
-</div>
-
-
-<div class="summary-card">
-
-<div class="summary-label">
-完成率
-</div>
-
-<div id="formRate" class="summary-value">
--
-</div>
-
-</div>
-
-</div>
-
-
-<div class="sync-meta">
-
-<div id="formSyncMeta" class="sync-meta-text">
-最後同步：尚未同步
-</div>
-
-<button
-    id="formSyncBtn"
-    class="btn btn-primary"
-    onclick="syncFormNow()"
->
-🔄 立即同步 Google Form
-</button>
-
-</div>
-
-
-<div class="toolbar">
-
-<div class="search">
-
-<span>
-🔎
-</span>
-
-<input
-    id="formSearch"
-    class="field"
-    type="search"
-    placeholder="搜尋社團名稱或屬性"
-    oninput="filterForms()"
->
-
-</div>
-
-
-<select
-    id="formFilter"
-    class="field filter"
-    onchange="filterForms()"
->
-
-<option value="all">
-全部社團
-</option>
-
-<option value="submitted">
-✅ 已填寫
-</option>
-
-<option value="pending">
-❌ 未填寫
-</option>
-
-<option value="duplicate">
-⚠️ 重複填寫
-</option>
-
-</select>
-
-</div>
-
-
-<div id="formState" class="state">
-
-<div class="spinner"></div>
-
-正在讀取表單進度...
-
-</div>
-
-
-<div
-    id="formDesktop"
-    class="table-scroll desktop-table"
-    style="display:none"
->
-
-<table>
-
-<thead>
-
-<tr>
-<th>社團名稱</th>
-<th>屬性</th>
-<th>狀態</th>
-<th>回覆筆數</th>
-<th>最後填寫時間</th>
-</tr>
-
-</thead>
-
-<tbody id="formTable"></tbody>
-
-</table>
-
-</div>
-
-
-<div id="formMobile" class="mobile-list"></div>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-
-<section id="acc-bindings" class="accordion">
-
-<button
-    class="accordion-head"
-    onclick="toggleAccordion('bindings')"
->
-
-<span class="accordion-left">
-
-<span class="accordion-icon">
-👥
-</span>
-
-<span>
-
-<div class="accordion-title">
-LINE 帳號綁定
-</div>
-
-<div class="accordion-sub">
-查看與解除 LINE 社團綁定
-</div>
-
-</span>
-
-</span>
-
-
-<span class="accordion-right">
-
-<span id="bindingCountPill" class="count-pill">
--
-</span>
-
-<span class="chevron">
-▶
-</span>
-
-</span>
-
-</button>
-
-
-<div class="accordion-body">
-
-<div class="accordion-inner">
-
-<div class="section-content">
-
-<div class="toolbar">
-
-<div class="search">
-
-<span>
-🔎
-</span>
-
-<input
-    id="bindingSearch"
-    class="field"
-    type="search"
-    placeholder="搜尋 LINE 名稱、社團、屬性或 User ID"
-    oninput="filterBindings()"
->
-
-</div>
-
-</div>
-
-
-<div id="bindingState" class="state">
-
-<div class="spinner"></div>
-
-正在讀取綁定資料...
-
-</div>
-
-
-<div
-    id="bindingDesktop"
-    class="table-scroll desktop-table"
-    style="display:none"
->
-
-<table>
-
-<thead>
-
-<tr>
-<th>LINE 名稱</th>
-<th>User ID</th>
-<th>社團</th>
-<th>屬性</th>
-<th>綁定時間</th>
-<th>操作</th>
-</tr>
-
-</thead>
-
-<tbody id="bindingTable"></tbody>
-
-</table>
-
-</div>
-
-
-<div id="bindingMobile" class="mobile-list"></div>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-
-<section id="acc-clouds" class="accordion">
-
-<button
-    class="accordion-head"
-    onclick="toggleAccordion('clouds')"
->
-
-<span class="accordion-left">
-
-<span class="accordion-icon">
-☁️
-</span>
-
-<span>
-
-<div class="accordion-title">
-社團專屬雲端
-</div>
-
-<div class="accordion-sub">
-設定或清除各社團專屬雲端連結
-</div>
-
-</span>
-
-</span>
-
-
-<span class="accordion-right">
-
-<span id="cloudCountPill" class="count-pill">
--
-</span>
-
-<span class="chevron">
-▶
-</span>
-
-</span>
-
-</button>
-
-
-<div class="accordion-body">
-
-<div class="accordion-inner">
-
-<div class="section-content">
-
-<div class="toolbar">
-
-<div class="search">
-
-<span>
-🔎
-</span>
-
-<input
-    id="cloudSearch"
-    class="field"
-    type="search"
-    placeholder="搜尋社團名稱或屬性"
-    oninput="filterClouds()"
->
-
-</div>
-
-</div>
-
-
-<div id="cloudState" class="state">
-
-<div class="spinner"></div>
-
-正在讀取雲端資料...
-
-</div>
-
-
-<div
-    id="cloudDesktop"
-    class="table-scroll desktop-table"
-    style="display:none"
->
-
-<table>
-
-<thead>
-
-<tr>
-<th>社團名稱</th>
-<th>屬性</th>
-<th>狀態</th>
-<th>雲端連結</th>
-<th>最後修改</th>
-<th>操作</th>
-</tr>
-
-</thead>
-
-<tbody id="cloudTable"></tbody>
-
-</table>
-
-</div>
-
-
-<div id="cloudMobile" class="mobile-list"></div>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-</div>
-
-</main>
-
-</div>
-
-
-<!-- 社團新增 / 修改 -->
-
-<div id="clubEditModal" class="modal-backdrop">
-
-<div class="modal">
-
-<div class="modal-body">
-
-<div class="modal-icon">
-🏫
-</div>
-
-<h2 id="clubModalTitle" class="modal-title">
-新增社團
-</h2>
-
-<div id="clubModalDesc" class="modal-desc">
-新增後會立即成為正式社團名單。
-</div>
-
-<label class="modal-label">
-社團名稱
-</label>
-
-<input
-    id="clubNameInput"
-    class="field"
-    maxlength="100"
-    autocomplete="off"
->
-
-<label class="modal-label">
-社團屬性
-</label>
-
-<select id="clubCategorySelect" class="field"></select>
-
-<div id="clubEditError" class="error"></div>
-
-</div>
-
-<div class="modal-footer">
-
-<button class="btn" onclick="closeClubEdit()">
-取消
-</button>
-
-<button
-    id="saveClubBtn"
-    class="btn btn-primary"
-    onclick="saveClub()"
->
-儲存
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- 刪除社團 -->
-
-<div id="clubDeleteModal" class="modal-backdrop">
-
-<div class="modal">
-
-<div class="modal-body">
-
-<div class="modal-icon modal-danger">
-🗑️
-</div>
-
-<h2 class="modal-title">
-刪除社團？
-</h2>
-
-<div class="modal-desc">
-刪除後，該社團會從正式社團名單中移除。
-</div>
-
-<div id="clubDeleteInfo" class="modal-info"></div>
-
-<div class="warning-box">
-⚠️ 刪除社團會同步清除該社團的 LINE 綁定、專屬雲端與 Google 表單填寫紀錄。
-</div>
-
-<div id="clubDeleteError" class="error"></div>
-
-</div>
-
-<div class="modal-footer">
-
-<button class="btn" onclick="closeClubDelete()">
-取消
-</button>
-
-<button
-    id="deleteClubBtn"
-    class="btn btn-danger"
-    onclick="confirmDeleteClub()"
->
-確認刪除
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- 評審新增 / 修改 -->
-
-<div id="judgeEditModal" class="modal-backdrop">
-
-<div class="modal">
-
-<div class="modal-body">
-
-<div class="modal-icon">
-👨‍⚖️
-</div>
-
-<h2 id="judgeModalTitle" class="modal-title">
-新增評審
-</h2>
-
-<div id="judgeModalDesc" class="modal-desc">
-建立新的評審登入帳號。
-</div>
-
-
-<label class="modal-label">
-評審名稱
-</label>
-
-<input
-    id="judgeDisplayNameInput"
-    class="field"
-    maxlength="100"
-    autocomplete="off"
-    placeholder="例如：王教授"
->
-
-
-<label class="modal-label">
-登入帳號
-</label>
-
-<input
-    id="judgeUsernameInput"
-    class="field"
-    maxlength="40"
-    autocomplete="off"
-    placeholder="例如：judge01"
->
-
-
-<div id="judgePasswordGroup">
-
-<label class="modal-label">
-登入密碼
-</label>
-
-<input
-    id="judgePasswordInput"
-    class="field"
-    type="password"
-    maxlength="200"
-    autocomplete="new-password"
-    placeholder="至少 6 個字元"
->
-
-</div>
-
-
-<label class="modal-label">
-負責社團屬性
-</label>
-
-<div
-    id="judgeCategoryChoices"
-    class="modal-info"
-    style="
-        display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        gap:10px
-    "
-></div>
-
-
-<label
-    style="
-        display:flex;
-        align-items:center;
-        gap:8px;
-        margin-top:16px;
-        font-size:13px;
-        font-weight:750
-    "
->
-
-<input
-    id="judgeActiveInput"
-    type="checkbox"
-    checked
->
-
-啟用此評審帳號
-
-</label>
-
-
-<div id="judgeEditError" class="error"></div>
-
-</div>
-
-
-<div class="modal-footer">
-
-<button
-    class="btn"
-    onclick="closeJudgeEdit()"
->
-取消
-</button>
-
-<button
-    id="saveJudgeBtn"
-    class="btn btn-primary"
-    onclick="saveJudge()"
->
-儲存
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- 重設評審密碼 -->
-
-<div id="judgePasswordModal" class="modal-backdrop">
-
-<div class="modal">
-
-<div class="modal-body">
-
-<div class="modal-icon">
-🔑
-</div>
-
-<h2 class="modal-title">
-重設評審密碼
-</h2>
-
-<div class="modal-desc">
-重設後，該評審目前已登入的 Session 會立即失效。
-</div>
-
-<div id="judgePasswordInfo" class="modal-info"></div>
-
-<label class="modal-label">
-新密碼
-</label>
-
-<input
-    id="judgeNewPasswordInput"
-    class="field"
-    type="password"
-    maxlength="200"
-    autocomplete="new-password"
-    placeholder="至少 6 個字元"
->
-
-<div id="judgePasswordError" class="error"></div>
-
-</div>
-
-
-<div class="modal-footer">
-
-<button
-    class="btn"
-    onclick="closeJudgePasswordModal()"
->
-取消
-</button>
-
-<button
-    id="resetJudgePasswordBtn"
-    class="btn btn-primary"
-    onclick="confirmResetJudgePassword()"
->
-重設密碼
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- 刪除評審 -->
-
-<div id="judgeDeleteModal" class="modal-backdrop">
-
-<div class="modal">
-
-<div class="modal-body">
-
-<div class="modal-icon modal-danger">
-🗑️
-</div>
-
-<h2 class="modal-title">
-刪除評審帳號？
-</h2>
-
-<div class="modal-desc">
-刪除後此帳號將無法再登入評審系統。
-</div>
-
-<div id="judgeDeleteInfo" class="modal-info"></div>
-
-<div class="warning-box">
-⚠️ 正式開始評分後，我們會再加入成績保留機制；目前此功能主要用於建立評審名單階段。
-</div>
-
-<div id="judgeDeleteError" class="error"></div>
-
-</div>
-
-
-<div class="modal-footer">
-
-<button
-    class="btn"
-    onclick="closeJudgeDeleteModal()"
->
-取消
-</button>
-
-<button
-    id="deleteJudgeBtn"
-    class="btn btn-danger"
-    onclick="confirmDeleteJudge()"
->
-確認刪除
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- 雲端設定 -->
-
-<div id="cloudModal" class="modal-backdrop">
-
-<div class="modal">
-
-<div class="modal-body">
-
-<div class="modal-icon">
-☁️
-</div>
-
-<h2 class="modal-title">
-設定社團專屬雲端
-</h2>
-
-<div id="cloudModalInfo" class="modal-info"></div>
-
-<label class="modal-label">
-雲端網址
-</label>
-
-<input
-    id="cloudUrlInput"
-    class="field"
-    type="url"
-    placeholder="https://drive.google.com/..."
-    autocomplete="off"
->
-
-<div id="cloudModalError" class="error"></div>
-
-</div>
-
-
-<div class="modal-footer">
-
-<button class="btn" onclick="closeCloudModal()">
-取消
-</button>
-
-<button
-    id="saveCloudBtn"
-    class="btn btn-primary"
-    onclick="saveCloudLink()"
->
-儲存連結
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- 清除雲端 -->
-
-<div id="clearCloudModal" class="modal-backdrop">
-
-<div class="modal">
-
-<div class="modal-body">
-
-<div class="modal-icon modal-danger">
-🗑️
-</div>
-
-<h2 class="modal-title">
-清除社團雲端？
-</h2>
-
-<div class="modal-desc">
-清除後，該社團使用者將暫時無法取得專屬雲端。
-</div>
-
-<div id="clearCloudInfo" class="modal-info"></div>
-
-</div>
-
-
-<div class="modal-footer">
-
-<button
-    class="btn"
-    onclick="closeClearCloudModal()"
->
-取消
-</button>
-
-<button
-    id="clearCloudBtn"
-    class="btn btn-danger"
-    onclick="confirmClearCloud()"
->
-確認清除
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- 解除綁定 -->
-
-<div id="unbindModal" class="modal-backdrop">
-
-<div class="modal">
-
-<div class="modal-body">
-
-<div class="modal-icon modal-danger">
-⚠️
-</div>
-
-<h2 class="modal-title">
-確定解除綁定？
-</h2>
-
-<div class="modal-desc">
-解除後，此 LINE 帳號可以重新選擇社團。
-</div>
-
-<div id="unbindInfo" class="modal-info"></div>
-
-</div>
-
-
-<div class="modal-footer">
-
-<button
-    class="btn"
-    onclick="closeUnbindModal()"
->
-取消
-</button>
-
-<button
-    id="unbindBtn"
-    class="btn btn-danger"
-    onclick="confirmUnbind()"
->
-確認解除
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
+<section id="acc-clubs" class="accordion open"><button class="accordion-head" onclick="toggleAccordion('clubs')"><span class="accordion-left"><span class="accordion-icon">🏫</span><span><div class="accordion-title">社團名單管理</div><div class="accordion-sub">新增、修改、刪除正式社團</div></span></span><span class="accordion-right"><span id="clubCountPill" class="count-pill">-</span><span class="chevron">▶</span></span></button><div class="accordion-body"><div class="accordion-inner"><div class="section-content"><div class="panel-note">系統唯一正式社團名單。修改名稱或屬性時，後端會同步處理相關資料。</div><div class="toolbar"><div class="search"><span>🔎</span><input id="clubSearch" class="field" type="search" placeholder="搜尋社團名稱或屬性" oninput="filterClubs()"></div><button class="btn btn-primary" onclick="openAddClub()">＋ 新增社團</button></div><div id="clubState" class="state"><div class="spinner"></div>正在讀取社團名單...</div><div id="clubDesktop" class="table-scroll desktop-table" style="display:none"><table><thead><tr><th>社團名稱</th><th>社團屬性</th><th>操作</th></tr></thead><tbody id="clubTable"></tbody></table></div><div id="clubMobile" class="mobile-list"></div></div></div></div></section>
+<section id="acc-judges" class="accordion"><button class="accordion-head" onclick="toggleAccordion('judges')"><span class="accordion-left"><span class="accordion-icon">👨‍⚖️</span><span><div class="accordion-title">評審帳號管理</div><div class="accordion-sub">建立評審帳號、指派社團屬性與管理登入權限</div></span></span><span class="accordion-right"><span id="judgeCountPill" class="count-pill">-</span><span class="chevron">▶</span></span></button><div class="accordion-body"><div class="accordion-inner"><div class="section-content"><div class="panel-note">📌 資料審查與實地審查共用同一批評審。每位評審可以負責一個或多個社團屬性。</div><div class="toolbar"><div class="search"><span>🔎</span><input id="judgeSearch" class="field" type="search" placeholder="搜尋評審姓名、帳號或負責屬性" oninput="filterJudges()"></div><button class="btn btn-primary" onclick="openAddJudge()">＋ 新增評審</button></div><div id="judgeState" class="state"><div class="spinner"></div>正在讀取評審資料...</div><div id="judgeDesktop" class="table-scroll desktop-table" style="display:none"><table><thead><tr><th>評審名稱</th><th>登入帳號</th><th>負責屬性</th><th>帳號狀態</th><th>最後修改</th><th>操作</th></tr></thead><tbody id="judgeTable"></tbody></table></div><div id="judgeMobile" class="mobile-list"></div></div></div></div></section>
+<section id="acc-score" class="accordion"><button class="accordion-head" onclick="toggleAccordion('score')"><span class="accordion-left"><span class="accordion-icon">⚙️</span><span><div class="accordion-title">評分機制設定</div><div class="accordion-sub">設定資料審查、實地審查、評分項目與最終權重</div></span></span><span class="accordion-right"><span id="scoreCountPill" class="count-pill">-</span><span class="chevron">▶</span></span></button><div class="accordion-body"><div class="accordion-inner"><div class="section-content"><div class="panel-note">📌 評分項目與配分可由後台修改。發布後評審端才會看到；權重尚未確定時可以先留空。</div><div id="scoreState" class="state"><div class="spinner"></div>正在讀取評分機制...</div><div id="scoreEditor" class="score-wrap" style="display:none">
+<div id="scoreLockNotice" class="score-lock" style="display:none"></div>
+<div class="score-top-grid"><div class="score-info-card"><div class="score-info-label">設定版本</div><div id="scoreRevision" class="score-info-value">-</div></div><div class="score-info-card"><div class="score-info-label">資料審查權重</div><div id="scoreDataWeightSummary" class="score-info-value">未設定</div></div><div class="score-info-card"><div class="score-info-label">實地審查權重</div><div id="scoreFieldWeightSummary" class="score-info-value">未設定</div></div></div>
+<div class="score-phase-card"><div class="score-phase-head"><div class="score-phase-title">📄 資料審查 <span id="dataReviewPublishChip" class="chip chip-muted">草稿</span></div><div class="score-phase-actions"><button id="dataReviewPublishBtn" class="btn btn-primary small" onclick="toggleScorePublish('dataReview')">發布給評審</button></div></div><div class="score-phase-body"><div class="score-row"><div><label class="modal-label" style="margin-top:0">階段狀態</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:750"><input id="dataReviewEnabled" type="checkbox" onchange="updateScorePreview()">啟用資料審查</label><div class="score-help">停用後此階段不會提供給評審。</div></div><div><label class="modal-label" style="margin-top:0">最終權重 %</label><input id="dataReviewWeight" class="field" type="number" min="0" max="100" step="0.01" placeholder="可先留空" oninput="updateScorePreview()"></div></div><div class="score-criteria-head"><div class="score-criteria-title">評分項目｜階段總分：<span id="dataReviewTotal">0</span> 分</div><button class="btn btn-primary small" onclick="addScoreCriterion('dataReview')">＋ 新增項目</button></div><div id="dataReviewCriteria" class="score-criterion-list"></div></div></div>
+<div class="score-phase-card"><div class="score-phase-head"><div class="score-phase-title">🏫 實地審查 <span id="fieldReviewPublishChip" class="chip chip-muted">草稿</span></div><div class="score-phase-actions"><button id="fieldReviewPublishBtn" class="btn btn-primary small" onclick="toggleScorePublish('fieldReview')">發布給評審</button></div></div><div class="score-phase-body"><div class="score-row"><div><label class="modal-label" style="margin-top:0">階段狀態</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:750"><input id="fieldReviewEnabled" type="checkbox" onchange="updateScorePreview()">啟用實地審查</label><div class="score-help">停用後此階段不會提供給評審。</div></div><div><label class="modal-label" style="margin-top:0">最終權重 %</label><input id="fieldReviewWeight" class="field" type="number" min="0" max="100" step="0.01" placeholder="可先留空" oninput="updateScorePreview()"></div></div><div class="score-criteria-head"><div class="score-criteria-title">評分項目｜階段總分：<span id="fieldReviewTotal">0</span> 分</div><button class="btn btn-primary small" onclick="addScoreCriterion('fieldReview')">＋ 新增項目</button></div><div id="fieldReviewCriteria" class="score-criterion-list"></div></div></div>
+<div class="score-footer"><div class="score-footer-text"><div id="scoreWeightStatus" class="score-weight-status wait">最終權重尚未設定完整。</div><div id="scoreUpdatedAt">最後修改：-</div></div><button id="saveScoreBtn" class="btn btn-primary" onclick="saveScoreConfig()">💾 儲存評分機制</button></div>
+</div></div></div></div></section>
+<section id="acc-event" class="accordion"><button class="accordion-head" onclick="toggleAccordion('event')"><span class="accordion-left"><span class="accordion-icon">⏰</span><span><div class="accordion-title">活動時程管理</div><div class="accordion-sub">截止時間與活動開始／結束</div></span></span><span class="accordion-right"><span id="eventPill" class="count-pill">時程</span><span class="chevron">▶</span></span></button><div class="accordion-body"><div class="accordion-inner"><div class="section-content"><div id="eventState" class="state"><div class="spinner"></div>正在讀取活動時程...</div><div id="eventForm" class="event-body" style="display:none"><div class="event-grid"><div class="event-field"><div class="event-title">📂 資料繳交截止</div><div class="event-note">社團資料最後繳交時間</div><div class="event-row"><input id="dataDeadlineDate" class="field" type="date"><input id="dataDeadlineTime" class="field" type="time"></div></div><div class="event-field"><div class="event-title">📝 表單填寫截止</div><div class="event-note">活動表單最後填寫時間</div><div class="event-row"><input id="formDeadlineDate" class="field" type="date"><input id="formDeadlineTime" class="field" type="time"></div></div><div class="event-field"><div class="event-title">🎯 活動開始</div><div class="event-note">社團評選暨觀摩活動開始</div><div class="event-row"><input id="eventStartDate" class="field" type="date"><input id="eventStartTime" class="field" type="time"></div></div><div class="event-field"><div class="event-title">🏁 活動結束</div><div class="event-note">社團評選暨觀摩活動結束</div><div class="event-row"><input id="eventEndDate" class="field" type="date"><input id="eventEndTime" class="field" type="time"></div></div></div><div id="eventError" class="error"></div><div class="event-footer"><div id="eventMeta" class="event-meta">時區：Asia/Taipei</div><button id="saveEventBtn" class="btn btn-primary" onclick="saveEventConfig()">儲存時程設定</button></div></div></div></div></div></section>
+<section id="acc-forms" class="accordion"><button class="accordion-head" onclick="toggleAccordion('forms')"><span class="accordion-left"><span class="accordion-icon">📋</span><span><div class="accordion-title">Google 表單填寫進度</div><div class="accordion-sub">0 筆未填寫／1 筆完成／2 筆以上重複填寫</div></span></span><span class="accordion-right"><span id="formCountPill" class="count-pill">-</span><span class="chevron">▶</span></span></button><div class="accordion-body"><div class="accordion-inner"><div class="section-content"><div class="summary-grid"><div class="summary-card"><div class="summary-label">社團總數</div><div id="formTotal" class="summary-value">-</div></div><div class="summary-card"><div class="summary-label">✅ 已填寫</div><div id="formSubmitted" class="summary-value">-</div></div><div class="summary-card"><div class="summary-label">❌ 未填寫</div><div id="formPending" class="summary-value">-</div></div><div class="summary-card"><div class="summary-label">⚠️ 重複填寫</div><div id="formDuplicate" class="summary-value">-</div></div><div class="summary-card"><div class="summary-label">完成率</div><div id="formRate" class="summary-value">-</div></div></div><div class="sync-meta"><div id="formSyncMeta" class="sync-meta-text">最後同步：尚未同步</div><button id="formSyncBtn" class="btn btn-primary" onclick="syncFormNow()">🔄 立即同步 Google Form</button></div><div class="toolbar"><div class="search"><span>🔎</span><input id="formSearch" class="field" type="search" placeholder="搜尋社團名稱或屬性" oninput="filterForms()"></div><select id="formFilter" class="field filter" onchange="filterForms()"><option value="all">全部社團</option><option value="submitted">✅ 已填寫</option><option value="pending">❌ 未填寫</option><option value="duplicate">⚠️ 重複填寫</option></select></div><div id="formState" class="state"><div class="spinner"></div>正在讀取表單進度...</div><div id="formDesktop" class="table-scroll desktop-table" style="display:none"><table><thead><tr><th>社團名稱</th><th>屬性</th><th>狀態</th><th>回覆筆數</th><th>最後填寫時間</th></tr></thead><tbody id="formTable"></tbody></table></div><div id="formMobile" class="mobile-list"></div></div></div></div></section>
+<section id="acc-bindings" class="accordion"><button class="accordion-head" onclick="toggleAccordion('bindings')"><span class="accordion-left"><span class="accordion-icon">👥</span><span><div class="accordion-title">LINE 帳號綁定</div><div class="accordion-sub">查看與解除 LINE 社團綁定</div></span></span><span class="accordion-right"><span id="bindingCountPill" class="count-pill">-</span><span class="chevron">▶</span></span></button><div class="accordion-body"><div class="accordion-inner"><div class="section-content"><div class="toolbar"><div class="search"><span>🔎</span><input id="bindingSearch" class="field" type="search" placeholder="搜尋 LINE 名稱、社團、屬性或 User ID" oninput="filterBindings()"></div></div><div id="bindingState" class="state"><div class="spinner"></div>正在讀取綁定資料...</div><div id="bindingDesktop" class="table-scroll desktop-table" style="display:none"><table><thead><tr><th>LINE 名稱</th><th>User ID</th><th>社團</th><th>屬性</th><th>綁定時間</th><th>操作</th></tr></thead><tbody id="bindingTable"></tbody></table></div><div id="bindingMobile" class="mobile-list"></div></div></div></div></section>
+<section id="acc-clouds" class="accordion"><button class="accordion-head" onclick="toggleAccordion('clouds')"><span class="accordion-left"><span class="accordion-icon">☁️</span><span><div class="accordion-title">社團專屬雲端</div><div class="accordion-sub">設定或清除各社團專屬雲端連結</div></span></span><span class="accordion-right"><span id="cloudCountPill" class="count-pill">-</span><span class="chevron">▶</span></span></button><div class="accordion-body"><div class="accordion-inner"><div class="section-content"><div class="toolbar"><div class="search"><span>🔎</span><input id="cloudSearch" class="field" type="search" placeholder="搜尋社團名稱或屬性" oninput="filterClouds()"></div></div><div id="cloudState" class="state"><div class="spinner"></div>正在讀取雲端資料...</div><div id="cloudDesktop" class="table-scroll desktop-table" style="display:none"><table><thead><tr><th>社團名稱</th><th>屬性</th><th>狀態</th><th>雲端連結</th><th>最後修改</th><th>操作</th></tr></thead><tbody id="cloudTable"></tbody></table></div><div id="cloudMobile" class="mobile-list"></div></div></div></div></section>
+</div></main></div>
+
+<div id="clubEditModal" class="modal-backdrop"><div class="modal"><div class="modal-body"><div class="modal-icon">🏫</div><h2 id="clubModalTitle" class="modal-title">新增社團</h2><div id="clubModalDesc" class="modal-desc">新增後會立即成為正式社團名單。</div><label class="modal-label">社團名稱</label><input id="clubNameInput" class="field" maxlength="100" autocomplete="off"><label class="modal-label">社團屬性</label><select id="clubCategorySelect" class="field"></select><div id="clubEditError" class="error"></div></div><div class="modal-footer"><button class="btn" onclick="closeClubEdit()">取消</button><button id="saveClubBtn" class="btn btn-primary" onclick="saveClub()">儲存</button></div></div></div>
+<div id="clubDeleteModal" class="modal-backdrop"><div class="modal"><div class="modal-body"><div class="modal-icon modal-danger">🗑️</div><h2 class="modal-title">刪除社團？</h2><div class="modal-desc">刪除後，該社團會從正式社團名單中移除。</div><div id="clubDeleteInfo" class="modal-info"></div><div class="warning-box">⚠️ 刪除社團會同步清除該社團的 LINE 綁定、專屬雲端與 Google 表單填寫紀錄。</div><div id="clubDeleteError" class="error"></div></div><div class="modal-footer"><button class="btn" onclick="closeClubDelete()">取消</button><button id="deleteClubBtn" class="btn btn-danger" onclick="confirmDeleteClub()">確認刪除</button></div></div></div>
+<div id="judgeEditModal" class="modal-backdrop"><div class="modal"><div class="modal-body"><div class="modal-icon">👨‍⚖️</div><h2 id="judgeModalTitle" class="modal-title">新增評審</h2><div id="judgeModalDesc" class="modal-desc">建立新的評審登入帳號。</div><label class="modal-label">評審名稱</label><input id="judgeDisplayNameInput" class="field" maxlength="100" autocomplete="off" placeholder="例如：王教授"><label class="modal-label">登入帳號</label><input id="judgeUsernameInput" class="field" maxlength="40" autocomplete="off" placeholder="例如：judge01"><div id="judgePasswordGroup"><label class="modal-label">登入密碼</label><input id="judgePasswordInput" class="field" type="password" maxlength="200" autocomplete="new-password" placeholder="至少 6 個字元"></div><label class="modal-label">負責社團屬性</label><div id="judgeCategoryChoices" class="modal-info" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px"></div><label style="display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13px;font-weight:750"><input id="judgeActiveInput" type="checkbox" checked>啟用此評審帳號</label><div id="judgeEditError" class="error"></div></div><div class="modal-footer"><button class="btn" onclick="closeJudgeEdit()">取消</button><button id="saveJudgeBtn" class="btn btn-primary" onclick="saveJudge()">儲存</button></div></div></div>
+<div id="judgePasswordModal" class="modal-backdrop"><div class="modal"><div class="modal-body"><div class="modal-icon">🔑</div><h2 class="modal-title">重設評審密碼</h2><div class="modal-desc">重設後，該評審目前已登入的 Session 會立即失效。</div><div id="judgePasswordInfo" class="modal-info"></div><label class="modal-label">新密碼</label><input id="judgeNewPasswordInput" class="field" type="password" maxlength="200" autocomplete="new-password" placeholder="至少 6 個字元"><div id="judgePasswordError" class="error"></div></div><div class="modal-footer"><button class="btn" onclick="closeJudgePasswordModal()">取消</button><button id="resetJudgePasswordBtn" class="btn btn-primary" onclick="confirmResetJudgePassword()">重設密碼</button></div></div></div>
+<div id="judgeDeleteModal" class="modal-backdrop"><div class="modal"><div class="modal-body"><div class="modal-icon modal-danger">🗑️</div><h2 class="modal-title">刪除評審帳號？</h2><div class="modal-desc">刪除後此帳號將無法再登入評審系統。</div><div id="judgeDeleteInfo" class="modal-info"></div><div class="warning-box">⚠️ 正式開始評分後，我們會再加入成績保留機制；目前此功能主要用於建立評審名單階段。</div><div id="judgeDeleteError" class="error"></div></div><div class="modal-footer"><button class="btn" onclick="closeJudgeDeleteModal()">取消</button><button id="deleteJudgeBtn" class="btn btn-danger" onclick="confirmDeleteJudge()">確認刪除</button></div></div></div>
+<div id="cloudModal" class="modal-backdrop"><div class="modal"><div class="modal-body"><div class="modal-icon">☁️</div><h2 class="modal-title">設定社團專屬雲端</h2><div id="cloudModalInfo" class="modal-info"></div><label class="modal-label">雲端網址</label><input id="cloudUrlInput" class="field" type="url" placeholder="https://drive.google.com/..." autocomplete="off"><div id="cloudModalError" class="error"></div></div><div class="modal-footer"><button class="btn" onclick="closeCloudModal()">取消</button><button id="saveCloudBtn" class="btn btn-primary" onclick="saveCloudLink()">儲存連結</button></div></div></div>
+<div id="clearCloudModal" class="modal-backdrop"><div class="modal"><div class="modal-body"><div class="modal-icon modal-danger">🗑️</div><h2 class="modal-title">清除社團雲端？</h2><div class="modal-desc">清除後，該社團使用者將暫時無法取得專屬雲端。</div><div id="clearCloudInfo" class="modal-info"></div></div><div class="modal-footer"><button class="btn" onclick="closeClearCloudModal()">取消</button><button id="clearCloudBtn" class="btn btn-danger" onclick="confirmClearCloud()">確認清除</button></div></div></div>
+<div id="unbindModal" class="modal-backdrop"><div class="modal"><div class="modal-body"><div class="modal-icon modal-danger">⚠️</div><h2 class="modal-title">確定解除綁定？</h2><div class="modal-desc">解除後，此 LINE 帳號可以重新選擇社團。</div><div id="unbindInfo" class="modal-info"></div></div><div class="modal-footer"><button class="btn" onclick="closeUnbindModal()">取消</button><button id="unbindBtn" class="btn btn-danger" onclick="confirmUnbind()">確認解除</button></div></div></div>
 <div id="toast" class="toast"></div>
 
-
 <script>
+const BACKEND_URL="https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
+const SESSION_KEY="HKSP_ADMIN_SESSION";
+const ACC_KEY="HKSP_ADMIN_ACCORDION";
+const FALLBACK_CATEGORIES=["全校自治性","自治綜合性","康樂性","服務性","體能性","學藝性"];
+const S={token:null,categories:[],clubs:[],fClubs:[],judgeCategories:[],judges:[],fJudges:[],forms:[],fForms:[],bindings:[],fBindings:[],clouds:[],fClouds:[],event:null,scoreConfig:null,scoreHasOfficialScores:false,pendingClub:null,pendingDelete:null,pendingJudge:null,pendingJudgeDelete:null,pendingJudgePassword:null,pendingUnbind:null,pendingCloud:null,pendingClear:null,busy:false,formSyncRunning:false};
 
-const BACKEND_URL =
-"https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
+document.addEventListener("DOMContentLoaded",async()=>{const token=sessionStorage.getItem(SESSION_KEY);restoreAccordion();if(token){S.token=token;showAdmin();await refreshAllData()}else showLogin()});
 
+async function post(payload){const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);try{const response=await fetch(BACKEND_URL,{method:"POST",body:JSON.stringify(payload),redirect:"follow",signal:controller.signal});if(!response.ok)throw new Error("HTTP "+response.status);const text=await response.text();try{return JSON.parse(text)}catch{throw new Error("後端回傳格式錯誤")}}catch(error){if(error.name==="AbortError")throw new Error("後端連線逾時");throw error}finally{clearTimeout(timeout)}}
 
-const SESSION_KEY =
-"HKSP_ADMIN_SESSION";
+function admin(action,data={}){return post({action,sessionToken:S.token,...data})}
+function pub(action,data={}){return post({action,...data})}
 
+function unauthorized(result){if(result&&result.error==="ADMIN_UNAUTHORIZED"){sessionStorage.removeItem(SESSION_KEY);S.token=null;showLogin();get("loginError").textContent="管理員登入已失效，請重新登入。";return true}return false}
 
-const ACC_KEY =
-"HKSP_ADMIN_ACCORDION";
+async function handleLogin(event){event.preventDefault();if(S.busy)return;const input=get("adminPassword"),button=get("loginBtn"),errorBox=get("loginError");if(!input.value)return;try{S.busy=true;button.disabled=true;button.textContent="登入中...";errorBox.textContent="";const result=await post({action:"adminLogin",password:input.value});input.value="";if(!result.success||!result.sessionToken){errorBox.textContent=result.message||"登入失敗";return}S.token=result.sessionToken;sessionStorage.setItem(SESSION_KEY,result.sessionToken);showAdmin();await refreshAllData();toast("✅ 管理員登入成功")}catch(error){errorBox.textContent="無法登入："+error.message}finally{S.busy=false;button.disabled=false;button.textContent="登入管理後台"}}
 
+async function logoutAdmin(){try{if(S.token)await admin("adminLogout")}catch(error){console.warn(error)}sessionStorage.removeItem(SESSION_KEY);S.token=null;showLogin();toast("已登出")}
 
-const FALLBACK_CATEGORIES = [
-    "全校自治性",
-    "自治綜合性",
-    "康樂性",
-    "服務性",
-    "體能性",
-    "學藝性"
-];
+function togglePassword(){const input=get("adminPassword");input.type=input.type==="password"?"text":"password"}
+function showLogin(){get("loginScreen").style.display="flex";get("adminApp").style.display="none"}
+function showAdmin(){get("loginScreen").style.display="none";get("adminApp").style.display="block"}
 
+function toggleAccordion(name){const target=get("acc-"+name);const willOpen=!target.classList.contains("open");document.querySelectorAll(".accordion").forEach(item=>item.classList.remove("open"));if(willOpen){target.classList.add("open");localStorage.setItem(ACC_KEY,name)}else localStorage.removeItem(ACC_KEY)}
 
-const S = {
+function restoreAccordion(){const saved=localStorage.getItem(ACC_KEY)||"clubs";document.querySelectorAll(".accordion").forEach(item=>item.classList.remove("open"));const element=get("acc-"+saved)||get("acc-clubs");if(element)element.classList.add("open")}
 
-    token:null,
+function updateLastRefresh(){get("lastRefresh").textContent="最後更新："+new Intl.DateTimeFormat("zh-TW",{hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(new Date())}
 
-    categories:[],
-    clubs:[],
-    fClubs:[],
+async function refreshAllData(){if(!S.token)return;await Promise.allSettled([loadClubs(),loadJudges(),loadScoreConfig(),loadEvent(),loadForms(),loadBindings(),loadClouds()]);updateLastRefresh()}
 
-    judgeCategories:[],
-    judges:[],
-    fJudges:[],
+async function syncAndRefreshAllData(){if(!S.token||S.formSyncRunning)return;const button=get("topSyncBtn");try{S.formSyncRunning=true;button.disabled=true;button.innerHTML="⏳ <span>同步中...</span>";toast("🔄 正在同步 Google Form 並更新後台...");const result=await admin("adminSyncFormSubmissions");if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"Google Form 同步失敗");applyFormResult(result);await Promise.allSettled([loadClubs(),loadJudges(),loadScoreConfig(),loadEvent(),loadBindings(),loadClouds()]);updateLastRefresh();toast("✅ Google Form 與後台資料已更新")}catch(error){toast("❌ "+error.message)}finally{S.formSyncRunning=false;button.disabled=false;button.innerHTML="🔄 <span>同步並重新整理</span>"}}
 
-    forms:[],
-    fForms:[],
+async function loadClubs(){loading("clubState","clubDesktop","正在讀取社團名單...");try{const result=await admin("adminListClubs");if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"無法取得社團名單");S.categories=Array.isArray(result.categories)&&result.categories.length?result.categories:FALLBACK_CATEGORIES;S.clubs=Array.isArray(result.clubs)?result.clubs:[];S.fClubs=[...S.clubs];get("statClubs").textContent=result.total??S.clubs.length;get("clubCountPill").textContent=(result.total??S.clubs.length)+" 個";fillCategories();renderClubs()}catch(error){fail("clubState",error.message)}}
 
-    bindings:[],
-    fBindings:[],
+function filterClubs(){const query=value("clubSearch").toLowerCase();S.fClubs=S.clubs.filter(item=>!query||(item.name+" "+item.category).toLowerCase().includes(query));renderClubs()}
 
-    clouds:[],
-    fClouds:[],
+function renderClubs(){const rows=S.fClubs,state=get("clubState"),desktop=get("clubDesktop"),mobile=get("clubMobile");if(!rows.length){state.style.display="block";state.textContent="目前沒有符合條件的社團。";desktop.style.display="none";mobile.innerHTML="";return}state.style.display="none";desktop.style.display="block";get("clubTable").innerHTML=rows.map(item=>`<tr><td class="name">${escapeHtml(item.name)}</td><td><span class="chip chip-muted">${escapeHtml(item.category)}</span></td><td><div class="actions"><button class="btn btn-edit small" onclick="openEditClub('${encodeValue(item.name)}')">修改</button><button class="btn btn-danger small" onclick="openDeleteClub('${encodeValue(item.name)}')">刪除</button></div></td></tr>`).join("");mobile.innerHTML=rows.map(item=>`<div class="mobile-card"><div class="mobile-title">${escapeHtml(item.name)}</div><div class="mobile-sub">${escapeHtml(item.category)}</div><div class="mobile-actions"><button class="btn btn-edit small" onclick="openEditClub('${encodeValue(item.name)}')">修改</button><button class="btn btn-danger small" onclick="openDeleteClub('${encodeValue(item.name)}')">刪除</button></div></div>`).join("")}
 
-    event:null,
+function fillCategories(selected=""){const categories=S.categories.length?S.categories:FALLBACK_CATEGORIES,select=get("clubCategorySelect");select.innerHTML=categories.map(category=>`<option value="${escapeAttribute(category)}">${escapeHtml(category)}</option>`).join("");if(categories.includes(selected))select.value=selected;else if(categories.includes("自治綜合性"))select.value="自治綜合性";else select.value=categories[0]||""}
 
-    pendingClub:null,
-    pendingDelete:null,
+function openAddClub(){S.pendingClub={mode:"add",oldName:null};get("clubModalTitle").textContent="新增社團";get("clubModalDesc").textContent="新增後會立即成為系統正式社團名單。";get("clubNameInput").value="";fillCategories();get("clubEditError").textContent="";get("saveClubBtn").textContent="新增社團";openModal("clubEditModal")}
 
-    pendingJudge:null,
-    pendingJudgeDelete:null,
-    pendingJudgePassword:null,
+function openEditClub(encodedName){const name=decodeURIComponent(encodedName),item=S.clubs.find(club=>club.name===name);if(!item){toast("找不到社團資料");return}S.pendingClub={mode:"edit",oldName:item.name};get("clubModalTitle").textContent="修改社團";get("clubModalDesc").textContent="若修改社團名稱，系統會同步搬移 LINE 綁定、專屬雲端與 Google 表單紀錄。";get("clubNameInput").value=item.name;fillCategories(item.category);get("clubEditError").textContent="";get("saveClubBtn").textContent="儲存修改";openModal("clubEditModal")}
 
-    pendingUnbind:null,
-    pendingCloud:null,
-    pendingClear:null,
+function closeClubEdit(){if(S.busy)return;S.pendingClub=null;closeModal("clubEditModal")}
 
-    busy:false,
+async function saveClub(){if(S.busy||!S.pendingClub)return;const clubName=value("clubNameInput"),category=get("clubCategorySelect").value,errorBox=get("clubEditError"),button=get("saveClubBtn");if(!clubName){errorBox.textContent="請輸入社團名稱。";return}try{S.busy=true;button.disabled=true;button.textContent="儲存中...";const action=S.pendingClub.mode==="add"?"adminAddClub":"adminUpdateClub";const data={clubName,category};if(S.pendingClub.mode==="edit")data.oldName=S.pendingClub.oldName;const result=await admin(action,data);if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"儲存失敗");closeModal("clubEditModal");S.pendingClub=null;await Promise.allSettled([loadClubs(),loadForms(),loadBindings(),loadClouds()]);toast(action==="adminAddClub"?"✅ 社團新增成功":"✅ 社團修改成功")}catch(error){errorBox.textContent=error.message}finally{S.busy=false;button.disabled=false;button.textContent="儲存"}}
 
-    formSyncRunning:false
+function openDeleteClub(encodedName){const name=decodeURIComponent(encodedName),item=S.clubs.find(club=>club.name===name);if(!item)return;S.pendingDelete=item;get("clubDeleteInfo").innerHTML=`<b>社團：</b>${escapeHtml(item.name)}<br><b>屬性：</b>${escapeHtml(item.category)}`;get("clubDeleteError").textContent="";openModal("clubDeleteModal")}
 
-};
+function closeClubDelete(){if(S.busy)return;S.pendingDelete=null;closeModal("clubDeleteModal")}
 
+async function confirmDeleteClub(){if(S.busy||!S.pendingDelete)return;const item=S.pendingDelete,button=get("deleteClubBtn"),errorBox=get("clubDeleteError");try{S.busy=true;button.disabled=true;button.textContent="刪除中...";const result=await admin("adminDeleteClub",{clubName:item.name});if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"刪除失敗");closeModal("clubDeleteModal");S.pendingDelete=null;await Promise.allSettled([loadClubs(),loadForms(),loadBindings(),loadClouds()]);toast("✅ 社團已刪除")}catch(error){errorBox.textContent=error.message}finally{S.busy=false;button.disabled=false;button.textContent="確認刪除"}}
 
-/* 初始化 */
+/* ============================================================
+   評分機制
+   ============================================================ */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
+function cloneScoreConfig(input){return JSON.parse(JSON.stringify(input||{}))}
 
-        const token =
-        sessionStorage.getItem(
-            SESSION_KEY
-        );
-
-
-        restoreAccordion();
-
-
-        if(token){
-
-            S.token =
-            token;
-
-
-            showAdmin();
-
-
-            await refreshAllData();
-
-        }
-        else{
-
-            showLogin();
-
-        }
-
+async function loadScoreConfig(){
+    loading("scoreState",null,"正在讀取評分機制...");
+    get("scoreEditor").style.display="none";
+    try{
+        const result=await admin("adminGetScoreConfig");
+        if(unauthorized(result))return;
+        if(!result.success||!result.config)throw new Error(result.message||"無法取得評分機制");
+        S.scoreConfig=cloneScoreConfig(result.config);
+        S.scoreHasOfficialScores=result.hasOfficialScores===true;
+        renderScoreConfig();
+    }catch(error){
+        get("scoreCountPill").textContent="讀取失敗";
+        fail("scoreState",error.message);
     }
-);
+}
 
+function ensureScorePhase(phaseKey){
+    if(!S.scoreConfig){
+        S.scoreConfig={
+            revision:1,
+            updatedAt:null,
+            dataReview:{enabled:true,published:false,weight:null,criteria:[]},
+            fieldReview:{enabled:true,published:false,weight:null,criteria:[]}
+        };
+    }
 
-/* API */
+    if(!S.scoreConfig[phaseKey]){
+        S.scoreConfig[phaseKey]={
+            enabled:true,
+            published:false,
+            weight:null,
+            criteria:[]
+        };
+    }
 
-async function post(payload){
+    if(!Array.isArray(S.scoreConfig[phaseKey].criteria)){
+        S.scoreConfig[phaseKey].criteria=[];
+    }
 
-    const controller =
-    new AbortController();
+    return S.scoreConfig[phaseKey];
+}
 
+function renderScoreConfig(){
+    const config=S.scoreConfig;
+    if(!config)return;
 
-    const timeout =
-    setTimeout(
-        () => controller.abort(),
-        15000
+    get("scoreState").style.display="none";
+    get("scoreEditor").style.display="grid";
+
+    get("scoreRevision").textContent="v"+(config.revision??1);
+
+    get("dataReviewEnabled").checked=config.dataReview?.enabled!==false;
+    get("fieldReviewEnabled").checked=config.fieldReview?.enabled!==false;
+
+    get("dataReviewWeight").value=
+        config.dataReview?.weight===null||
+        config.dataReview?.weight===undefined
+            ?""
+            :config.dataReview.weight;
+
+    get("fieldReviewWeight").value=
+        config.fieldReview?.weight===null||
+        config.fieldReview?.weight===undefined
+            ?""
+            :config.fieldReview.weight;
+
+    renderScoreCriteria("dataReview");
+    renderScoreCriteria("fieldReview");
+
+    renderScorePublishState("dataReview");
+    renderScorePublishState("fieldReview");
+
+    const published=[
+        config.dataReview?.published,
+        config.fieldReview?.published
+    ].filter(Boolean).length;
+
+    get("scoreCountPill").textContent=
+        published+" / 2 已發布";
+
+    const notice=get("scoreLockNotice");
+
+    if(S.scoreHasOfficialScores){
+        notice.style.display="block";
+        notice.className="score-lock danger";
+        notice.textContent=
+            "🔒 系統已存在正式評分紀錄。已發布的評分規則已受保護，後端會阻止直接修改或取消發布。";
+    }else{
+        notice.style.display="block";
+        notice.className="score-lock";
+        notice.textContent=
+            "💡 目前尚無正式評分紀錄。可以調整項目、配分與權重；發布後評審端才會看到。";
+    }
+
+    get("scoreUpdatedAt").textContent=
+        "最後修改："+formatDate(config.updatedAt);
+
+    updateScorePreview();
+}
+
+function renderScoreCriteria(phaseKey){
+    const phase=ensureScorePhase(phaseKey);
+    const box=get(phaseKey+"Criteria");
+    const items=phase.criteria;
+
+    if(!items.length){
+        box.innerHTML=
+            '<div class="score-empty">目前尚未設定評分項目。按「＋ 新增項目」開始設定。</div>';
+        return;
+    }
+
+    box.innerHTML=
+        items.map((item,index)=>`
+        <div
+            class="score-criterion"
+            data-phase="${phaseKey}"
+            data-index="${index}"
+        >
+            <div class="score-order">
+                ${index+1}
+            </div>
+
+            <input
+                class="field score-name"
+                maxlength="100"
+                value="${escapeAttribute(item.name||"")}"
+                placeholder="評分項目名稱"
+                oninput="updateScorePreview()"
+            >
+
+            <input
+                class="field score-max"
+                type="number"
+                min="0.01"
+                max="1000"
+                step="0.01"
+                value="${escapeAttribute(item.maxScore??"")}"
+                placeholder="最高分"
+                oninput="updateScorePreview()"
+            >
+
+            <label
+                class="score-enable-wrap"
+                style="
+                    display:flex;
+                    align-items:center;
+                    gap:6px;
+                    font-size:12px;
+                    font-weight:750;
+                    white-space:nowrap
+                "
+            >
+                <input
+                    class="score-enabled"
+                    type="checkbox"
+                    ${item.enabled!==false?"checked":""}
+                    onchange="updateScorePreview()"
+                >
+                啟用
+            </label>
+
+            <div class="score-inline-actions">
+
+                <button
+                    class="score-icon-btn"
+                    title="上移"
+                    onclick="moveScoreCriterion('${phaseKey}',${index},-1)"
+                    ${index===0?"disabled":""}
+                >
+                    ↑
+                </button>
+
+                <button
+                    class="score-icon-btn"
+                    title="下移"
+                    onclick="moveScoreCriterion('${phaseKey}',${index},1)"
+                    ${index===items.length-1?"disabled":""}
+                >
+                    ↓
+                </button>
+
+                <button
+                    class="score-icon-btn score-delete-btn"
+                    title="刪除"
+                    onclick="removeScoreCriterion('${phaseKey}',${index})"
+                >
+                    ×
+                </button>
+
+            </div>
+
+        </div>
+        `).join("");
+}
+
+function readScorePhaseFromDom(phaseKey){
+    const phase=ensureScorePhase(phaseKey);
+
+    const rows=Array.from(
+        document.querySelectorAll(
+            `.score-criterion[data-phase="${phaseKey}"]`
+        )
     );
 
+    const weightText=
+        get(phaseKey+"Weight")
+        .value
+        .trim();
+
+    return{
+        ...phase,
+
+        enabled:
+            get(phaseKey+"Enabled").checked,
+
+        weight:
+            weightText===""
+                ?null
+                :Number(weightText),
+
+        criteria:
+            rows.map((row,index)=>({
+                id:
+                    phase.criteria[index]?.id||"",
+
+                name:
+                    row.querySelector(".score-name")
+                    .value
+                    .trim(),
+
+                maxScore:
+                    Number(
+                        row.querySelector(".score-max").value
+                    ),
+
+                enabled:
+                    row.querySelector(".score-enabled").checked,
+
+                order:
+                    index+1
+            }))
+    };
+}
+
+function syncScoreStateFromDom(){
+    if(!S.scoreConfig)return;
+
+    S.scoreConfig.dataReview=
+        readScorePhaseFromDom("dataReview");
+
+    S.scoreConfig.fieldReview=
+        readScorePhaseFromDom("fieldReview");
+}
+
+function addScoreCriterion(phaseKey){
+    syncScoreStateFromDom();
+
+    const phase=ensureScorePhase(phaseKey);
+
+    if(phase.criteria.length>=30){
+        toast("⚠️ 每個階段最多 30 個評分項目");
+        return;
+    }
+
+    phase.criteria.push({
+        id:"",
+        name:"",
+        maxScore:10,
+        enabled:true,
+        order:phase.criteria.length+1
+    });
+
+    renderScoreCriteria(phaseKey);
+    updateScorePreview();
+
+    setTimeout(()=>{
+        const rows=
+            document.querySelectorAll(
+                `.score-criterion[data-phase="${phaseKey}"]`
+            );
+
+        const row=rows[rows.length-1];
+
+        if(row){
+            row.querySelector(".score-name")?.focus();
+        }
+    },0);
+}
+
+function removeScoreCriterion(phaseKey,index){
+    syncScoreStateFromDom();
+
+    const phase=ensureScorePhase(phaseKey);
+
+    if(index<0||index>=phase.criteria.length)return;
+
+    if(!window.confirm("確定要刪除這個評分項目嗎？")){
+        return;
+    }
+
+    phase.criteria.splice(index,1);
+
+    renderScoreCriteria(phaseKey);
+    updateScorePreview();
+}
+
+function moveScoreCriterion(phaseKey,index,direction){
+    syncScoreStateFromDom();
+
+    const phase=ensureScorePhase(phaseKey);
+    const target=index+direction;
+
+    if(target<0||target>=phase.criteria.length)return;
+
+    const temp=phase.criteria[index];
+
+    phase.criteria[index]=phase.criteria[target];
+    phase.criteria[target]=temp;
+
+    renderScoreCriteria(phaseKey);
+    updateScorePreview();
+}
+
+function scorePhaseTotalFromDom(phaseKey){
+    return Array.from(
+        document.querySelectorAll(
+            `.score-criterion[data-phase="${phaseKey}"]`
+        )
+    )
+    .reduce((sum,row)=>{
+
+        const enabled=
+            row.querySelector(".score-enabled")?.checked;
+
+        const max=
+            Number(
+                row.querySelector(".score-max")?.value||0
+            );
+
+        return sum+
+            (
+                enabled&&Number.isFinite(max)
+                    ?max
+                    :0
+            );
+
+    },0);
+}
+
+function prettyScoreNumber(n){
+    const v=
+        Math.round(
+            Number(n||0)*100
+        )/100;
+
+    return Number.isInteger(v)
+        ?String(v)
+        :String(v);
+}
+
+function updateScorePreview(){
+    if(!S.scoreConfig)return;
+
+    const dataWeightText=
+        get("dataReviewWeight")
+        .value
+        .trim();
+
+    const fieldWeightText=
+        get("fieldReviewWeight")
+        .value
+        .trim();
+
+    const dataWeight=
+        dataWeightText===""
+            ?null
+            :Number(dataWeightText);
+
+    const fieldWeight=
+        fieldWeightText===""
+            ?null
+            :Number(fieldWeightText);
+
+    get("dataReviewTotal").textContent=
+        prettyScoreNumber(
+            scorePhaseTotalFromDom("dataReview")
+        );
+
+    get("fieldReviewTotal").textContent=
+        prettyScoreNumber(
+            scorePhaseTotalFromDom("fieldReview")
+        );
+
+    get("scoreDataWeightSummary").textContent=
+        dataWeight===null
+            ?"未設定"
+            :prettyScoreNumber(dataWeight)+"%";
+
+    get("scoreFieldWeightSummary").textContent=
+        fieldWeight===null
+            ?"未設定"
+            :prettyScoreNumber(fieldWeight)+"%";
+
+    const status=get("scoreWeightStatus");
+
+    if(
+        dataWeight===null||
+        fieldWeight===null
+    ){
+        status.className=
+            "score-weight-status wait";
+
+        status.textContent=
+            "最終權重尚未設定完整；目前可以先儲存草稿。";
+    }else{
+
+        const total=
+            Math.round(
+                (dataWeight+fieldWeight)*100
+            )/100;
+
+        if(total===100){
+
+            status.className=
+                "score-weight-status good";
+
+            status.textContent=
+                "✅ 最終權重合計 100%，設定完整。";
+
+        }else{
+
+            status.className=
+                "score-weight-status bad";
+
+            status.textContent=
+                "⚠️ 最終權重目前合計 "+
+                prettyScoreNumber(total)+
+                "%，兩階段都填寫時必須合計 100%。";
+
+        }
+    }
+}
+
+function renderScorePublishState(phaseKey){
+    const phase=ensureScorePhase(phaseKey);
+
+    const chip=get(phaseKey+"PublishChip");
+    const button=get(phaseKey+"PublishBtn");
+
+    if(phase.published){
+
+        chip.className=
+            "chip chip-success";
+
+        chip.textContent=
+            "✅ 已發布";
+
+        button.className=
+            "btn btn-danger small";
+
+        button.textContent=
+            "取消發布";
+
+    }else{
+
+        chip.className=
+            "chip chip-muted";
+
+        chip.textContent=
+            "草稿";
+
+        button.className=
+            "btn btn-primary small";
+
+        button.textContent=
+            "發布給評審";
+    }
+
+    if(
+        S.scoreHasOfficialScores&&
+        phase.published&&
+        button.textContent==="取消發布"
+    ){
+        button.title=
+            "已有正式評分後無法取消發布";
+    }
+}
+
+function validateScoreEditor(payload){
+
+    for(
+        const phaseKey
+        of ["dataReview","fieldReview"]
+    ){
+
+        const phase=payload[phaseKey];
+
+        const label=
+            phaseKey==="dataReview"
+                ?"資料審查"
+                :"實地審查";
+
+        if(
+            phase.weight!==null&&
+            (
+                !Number.isFinite(phase.weight)||
+                phase.weight<0||
+                phase.weight>100
+            )
+        ){
+            return label+
+                "權重必須介於 0～100%。";
+        }
+
+        for(
+            let i=0;
+            i<phase.criteria.length;
+            i++
+        ){
+
+            const item=
+                phase.criteria[i];
+
+            if(!item.name){
+                return label+
+                    "第 "+
+                    (i+1)+
+                    " 個評分項目沒有名稱。";
+            }
+
+            if(
+                !Number.isFinite(item.maxScore)||
+                item.maxScore<=0||
+                item.maxScore>1000
+            ){
+                return "「"+
+                    item.name+
+                    "」最高分必須大於 0 且不得超過 1000。";
+            }
+        }
+    }
+
+    if(
+        payload.dataReview.weight!==null&&
+        payload.fieldReview.weight!==null
+    ){
+
+        const total=
+            Math.round(
+                (
+                    payload.dataReview.weight+
+                    payload.fieldReview.weight
+                )*
+                100
+            )/100;
+
+        if(total!==100){
+            return "資料審查與實地審查的最終權重合計必須為 100%。目前為 "+
+                total+
+                "%。";
+        }
+    }
+
+    return "";
+}
+
+async function saveScoreConfig(options={}){
+    if(
+        S.busy||
+        !S.scoreConfig
+    ){
+        return false;
+    }
+
+    syncScoreStateFromDom();
+
+    const payload={
+        dataReview:
+            S.scoreConfig.dataReview,
+
+        fieldReview:
+            S.scoreConfig.fieldReview
+    };
+
+    const error=
+        validateScoreEditor(payload);
+
+    if(error){
+        toast("❌ "+error);
+        return false;
+    }
+
+    const button=
+        get("saveScoreBtn");
 
     try{
 
-        const response =
-        await fetch(
-            BACKEND_URL,
-            {
-                method:"POST",
-                body:JSON.stringify(payload),
-                redirect:"follow",
-                signal:controller.signal
-            }
-        );
+        S.busy=true;
 
+        button.disabled=true;
 
-        if(!response.ok){
+        button.textContent=
+            "儲存中...";
 
+        const result=
+            await admin(
+                "adminSaveScoreConfig",
+                payload
+            );
+
+        if(unauthorized(result)){
+            return false;
+        }
+
+        if(!result.success){
             throw new Error(
-                "HTTP " +
-                response.status
+                result.message||
+                "儲存評分機制失敗"
             );
-
         }
 
-
-        const text =
-        await response.text();
-
-
-        try{
-
-            return JSON.parse(
-                text
+        S.scoreConfig=
+            cloneScoreConfig(
+                result.config
             );
 
+        renderScoreConfig();
+
+        if(!options.silent){
+            toast("✅ 評分機制已儲存");
         }
-        catch{
-
-            throw new Error(
-                "後端回傳格式錯誤"
-            );
-
-        }
-
-    }
-    catch(error){
-
-        if(
-            error.name ===
-            "AbortError"
-        ){
-
-            throw new Error(
-                "後端連線逾時"
-            );
-
-        }
-
-
-        throw error;
-
-    }
-    finally{
-
-        clearTimeout(
-            timeout
-        );
-
-    }
-
-}
-
-
-function admin(
-    action,
-    data={}
-){
-
-    return post({
-        action,
-        sessionToken:S.token,
-        ...data
-    });
-
-}
-
-
-function pub(
-    action,
-    data={}
-){
-
-    return post({
-        action,
-        ...data
-    });
-
-}
-
-
-/* 管理員 Session */
-
-function unauthorized(result){
-
-    if(
-        result &&
-        result.error ===
-        "ADMIN_UNAUTHORIZED"
-    ){
-
-        sessionStorage.removeItem(
-            SESSION_KEY
-        );
-
-
-        S.token =
-        null;
-
-
-        showLogin();
-
-
-        get(
-            "loginError"
-        ).textContent =
-        "管理員登入已失效，請重新登入。";
-
 
         return true;
 
+    }catch(error){
+
+        toast("❌ "+error.message);
+
+        return false;
+
+    }finally{
+
+        S.busy=false;
+
+        button.disabled=false;
+
+        button.textContent=
+            "💾 儲存評分機制";
     }
-
-
-    return false;
-
 }
 
-
-/* 登入 */
-
-async function handleLogin(event){
-
-    event.preventDefault();
-
-
-    if(S.busy){
-        return;
-    }
-
-
-    const input =
-    get(
-        "adminPassword"
-    );
-
-
-    const button =
-    get(
-        "loginBtn"
-    );
-
-
-    const errorBox =
-    get(
-        "loginError"
-    );
-
-
-    if(!input.value){
-        return;
-    }
-
-
-    try{
-
-        S.busy =
-        true;
-
-
-        button.disabled =
-        true;
-
-
-        button.textContent =
-        "登入中...";
-
-
-        errorBox.textContent =
-        "";
-
-
-        const result =
-        await post({
-            action:"adminLogin",
-            password:input.value
-        });
-
-
-        input.value =
-        "";
-
-
-        if(
-            !result.success ||
-            !result.sessionToken
-        ){
-
-            errorBox.textContent =
-            result.message ||
-            "登入失敗";
-
-
-            return;
-
-        }
-
-
-        S.token =
-        result.sessionToken;
-
-
-        sessionStorage.setItem(
-            SESSION_KEY,
-            result.sessionToken
-        );
-
-
-        showAdmin();
-
-
-        await refreshAllData();
-
-
-        toast(
-            "✅ 管理員登入成功"
-        );
-
-    }
-    catch(error){
-
-        errorBox.textContent =
-        "無法登入：" +
-        error.message;
-
-    }
-    finally{
-
-        S.busy =
-        false;
-
-
-        button.disabled =
-        false;
-
-
-        button.textContent =
-        "登入管理後台";
-
-    }
-
-}
-
-
-/* 登出 */
-
-async function logoutAdmin(){
-
-    try{
-
-        if(S.token){
-
-            await admin(
-                "adminLogout"
-            );
-
-        }
-
-    }
-    catch(error){
-
-        console.warn(
-            error
-        );
-
-    }
-
-
-    sessionStorage.removeItem(
-        SESSION_KEY
-    );
-
-
-    S.token =
-    null;
-
-
-    showLogin();
-
-
-    toast(
-        "已登出"
-    );
-
-}
-
-
-/* 密碼顯示 */
-
-function togglePassword(){
-
-    const input =
-    get(
-        "adminPassword"
-    );
-
-
-    input.type =
-    input.type === "password"
-        ? "text"
-        : "password";
-
-}
-
-
-/* 畫面 */
-
-function showLogin(){
-
-    get(
-        "loginScreen"
-    ).style.display =
-    "flex";
-
-
-    get(
-        "adminApp"
-    ).style.display =
-    "none";
-
-}
-
-
-function showAdmin(){
-
-    get(
-        "loginScreen"
-    ).style.display =
-    "none";
-
-
-    get(
-        "adminApp"
-    ).style.display =
-    "block";
-
-}
-
-
-/* Accordion */
-
-function toggleAccordion(name){
-
-    const target =
-    get(
-        "acc-" +
-        name
-    );
-
-
-    const willOpen =
-    !target.classList.contains(
-        "open"
-    );
-
-
-    document
-    .querySelectorAll(
-        ".accordion"
-    )
-    .forEach(
-        item =>
-            item.classList.remove(
-                "open"
-            )
-    );
-
-
-    if(willOpen){
-
-        target.classList.add(
-            "open"
-        );
-
-
-        localStorage.setItem(
-            ACC_KEY,
-            name
-        );
-
-    }
-    else{
-
-        localStorage.removeItem(
-            ACC_KEY
-        );
-
-    }
-
-}
-
-
-function restoreAccordion(){
-
-    const saved =
-    localStorage.getItem(
-        ACC_KEY
-    )
-    ||
-    "clubs";
-
-
-    document
-    .querySelectorAll(
-        ".accordion"
-    )
-    .forEach(
-        item =>
-            item.classList.remove(
-                "open"
-            )
-    );
-
-
-    const element =
-    get(
-        "acc-" +
-        saved
-    )
-    ||
-    get(
-        "acc-clubs"
-    );
-
-
-    if(element){
-
-        element.classList.add(
-            "open"
-        );
-
-    }
-
-}
-
-
-/* 最後更新 */
-
-function updateLastRefresh(){
-
-    get(
-        "lastRefresh"
-    ).textContent =
-    "最後更新：" +
-    new Intl.DateTimeFormat(
-        "zh-TW",
-        {
-            hour:"2-digit",
-            minute:"2-digit",
-            second:"2-digit"
-        }
-    )
-    .format(
-        new Date()
-    );
-
-}
-
-
-/* 全部重新整理 */
-
-async function refreshAllData(){
-
-    if(!S.token){
-        return;
-    }
-
-
-    await Promise.allSettled([
-
-        loadClubs(),
-
-        loadJudges(),
-
-        loadEvent(),
-
-        loadForms(),
-
-        loadBindings(),
-
-        loadClouds()
-
-    ]);
-
-
-    updateLastRefresh();
-
-}
-
-
-/* Google Form 同步 + 全部更新 */
-
-async function syncAndRefreshAllData(){
+async function toggleScorePublish(phaseKey){
 
     if(
-        !S.token ||
-        S.formSyncRunning
+        S.busy||
+        !S.scoreConfig
     ){
+        return;
+    }
+
+    const phase=
+        ensureScorePhase(phaseKey);
+
+    const target=
+        !phase.published;
+
+    const label=
+        phaseKey==="dataReview"
+            ?"資料審查"
+            :"實地審查";
+
+    if(
+        !target&&
+        S.scoreHasOfficialScores
+    ){
+        toast(
+            "🔒 已有正式評分紀錄，無法取消發布"
+        );
 
         return;
-
     }
 
+    if(target){
 
-    const button =
-    get(
-        "topSyncBtn"
-    );
+        const saved=
+            await saveScoreConfig({
+                silent:true
+            });
 
-
-    try{
-
-        S.formSyncRunning =
-        true;
-
-
-        button.disabled =
-        true;
-
-
-        button.innerHTML =
-        "⏳ <span>同步中...</span>";
-
-
-        toast(
-            "🔄 正在同步 Google Form 並更新後台..."
-        );
-
-
-        const result =
-        await admin(
-            "adminSyncFormSubmissions"
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
-
-            return;
-
-        }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "Google Form 同步失敗"
-            );
-
-        }
-
-
-        applyFormResult(
-            result
-        );
-
-
-        await Promise.allSettled([
-
-            loadClubs(),
-
-            loadJudges(),
-
-            loadEvent(),
-
-            loadBindings(),
-
-            loadClouds()
-
-        ]);
-
-
-        updateLastRefresh();
-
-
-        toast(
-            "✅ Google Form 與後台資料已更新"
-        );
-
-    }
-    catch(error){
-
-        toast(
-            "❌ " +
-            error.message
-        );
-
-    }
-    finally{
-
-        S.formSyncRunning =
-        false;
-
-
-        button.disabled =
-        false;
-
-
-        button.innerHTML =
-        "🔄 <span>同步並重新整理</span>";
-
-    }
-
-}
-
-
-/* ============================================================
-   社團
-   ============================================================ */
-
-async function loadClubs(){
-
-    loading(
-        "clubState",
-        "clubDesktop",
-        "正在讀取社團名單..."
-    );
-
-
-    try{
-
-        const result =
-        await admin(
-            "adminListClubs"
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
+        if(!saved){
             return;
         }
 
+        const latest=
+            ensureScorePhase(phaseKey);
 
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "無法取得社團名單"
-            );
-
-        }
-
-
-        S.categories =
-        Array.isArray(
-            result.categories
-        )
-        &&
-        result.categories.length
-
-            ? result.categories
-            : FALLBACK_CATEGORIES;
-
-
-        S.clubs =
-        Array.isArray(
-            result.clubs
-        )
-            ? result.clubs
-            : [];
-
-
-        S.fClubs = [
-            ...S.clubs
-        ];
-
-
-        get(
-            "statClubs"
-        ).textContent =
-        result.total ??
-        S.clubs.length;
-
-
-        get(
-            "clubCountPill"
-        ).textContent =
-        (
-            result.total ??
-            S.clubs.length
-        )
-        +
-        " 個";
-
-
-        fillCategories();
-
-
-        renderClubs();
-
-    }
-    catch(error){
-
-        fail(
-            "clubState",
-            error.message
-        );
-
-    }
-
-}
-
-
-function filterClubs(){
-
-    const query =
-    value(
-        "clubSearch"
-    )
-    .toLowerCase();
-
-
-    S.fClubs =
-    S.clubs.filter(
-        item =>
-            !query
-            ||
+        const enabledItems=
             (
-                item.name +
-                " " +
-                item.category
+                latest.criteria||
+                []
             )
-            .toLowerCase()
-            .includes(
-                query
-            )
-    );
-
-
-    renderClubs();
-
-}
-
-
-function renderClubs(){
-
-    const rows =
-    S.fClubs;
-
-
-    const state =
-    get(
-        "clubState"
-    );
-
-
-    const desktop =
-    get(
-        "clubDesktop"
-    );
-
-
-    const mobile =
-    get(
-        "clubMobile"
-    );
-
-
-    if(!rows.length){
-
-        state.style.display =
-        "block";
-
-
-        state.textContent =
-        "目前沒有符合條件的社團。";
-
-
-        desktop.style.display =
-        "none";
-
-
-        mobile.innerHTML =
-        "";
-
-
-        return;
-
-    }
-
-
-    state.style.display =
-    "none";
-
-
-    desktop.style.display =
-    "block";
-
-
-    get(
-        "clubTable"
-    ).innerHTML =
-    rows.map(
-        item => `
-
-        <tr>
-
-        <td class="name">
-
-        ${escapeHtml(item.name)}
-
-        </td>
-
-        <td>
-
-        <span class="chip chip-muted">
-
-        ${escapeHtml(item.category)}
-
-        </span>
-
-        </td>
-
-        <td>
-
-        <div class="actions">
-
-        <button
-            class="btn btn-edit small"
-            onclick="openEditClub('${encodeValue(item.name)}')"
-        >
-        修改
-        </button>
-
-        <button
-            class="btn btn-danger small"
-            onclick="openDeleteClub('${encodeValue(item.name)}')"
-        >
-        刪除
-        </button>
-
-        </div>
-
-        </td>
-
-        </tr>
-
-        `
-    )
-    .join("");
-
-
-    mobile.innerHTML =
-    rows.map(
-        item => `
-
-        <div class="mobile-card">
-
-        <div class="mobile-title">
-
-        ${escapeHtml(item.name)}
-
-        </div>
-
-        <div class="mobile-sub">
-
-        ${escapeHtml(item.category)}
-
-        </div>
-
-        <div class="mobile-actions">
-
-        <button
-            class="btn btn-edit small"
-            onclick="openEditClub('${encodeValue(item.name)}')"
-        >
-        修改
-        </button>
-
-        <button
-            class="btn btn-danger small"
-            onclick="openDeleteClub('${encodeValue(item.name)}')"
-        >
-        刪除
-        </button>
-
-        </div>
-
-        </div>
-
-        `
-    )
-    .join("");
-
-}
-
-
-function fillCategories(
-    selected=""
-){
-
-    const categories =
-    S.categories.length
-        ? S.categories
-        : FALLBACK_CATEGORIES;
-
-
-    const select =
-    get(
-        "clubCategorySelect"
-    );
-
-
-    select.innerHTML =
-    categories.map(
-        category => `
-
-        <option
-            value="${escapeAttribute(category)}"
-        >
-
-        ${escapeHtml(category)}
-
-        </option>
-
-        `
-    )
-    .join("");
-
-
-    if(
-        categories.includes(
-            selected
-        )
-    ){
-
-        select.value =
-        selected;
-
-    }
-    else if(
-        categories.includes(
-            "自治綜合性"
-        )
-    ){
-
-        select.value =
-        "自治綜合性";
-
-    }
-    else{
-
-        select.value =
-        categories[0] ||
-        "";
-
-    }
-
-}
-
-
-function openAddClub(){
-
-    S.pendingClub = {
-        mode:"add",
-        oldName:null
-    };
-
-
-    get(
-        "clubModalTitle"
-    ).textContent =
-    "新增社團";
-
-
-    get(
-        "clubModalDesc"
-    ).textContent =
-    "新增後會立即成為系統正式社團名單。";
-
-
-    get(
-        "clubNameInput"
-    ).value =
-    "";
-
-
-    fillCategories();
-
-
-    get(
-        "clubEditError"
-    ).textContent =
-    "";
-
-
-    get(
-        "saveClubBtn"
-    ).textContent =
-    "新增社團";
-
-
-    openModal(
-        "clubEditModal"
-    );
-
-}
-
-
-function openEditClub(
-    encodedName
-){
-
-    const name =
-    decodeURIComponent(
-        encodedName
-    );
-
-
-    const item =
-    S.clubs.find(
-        club =>
-            club.name ===
-            name
-    );
-
-
-    if(!item){
-
-        toast(
-            "找不到社團資料"
-        );
-
-
-        return;
-
-    }
-
-
-    S.pendingClub = {
-        mode:"edit",
-        oldName:item.name
-    };
-
-
-    get(
-        "clubModalTitle"
-    ).textContent =
-    "修改社團";
-
-
-    get(
-        "clubModalDesc"
-    ).textContent =
-    "若修改社團名稱，系統會同步搬移 LINE 綁定、專屬雲端與 Google 表單紀錄。";
-
-
-    get(
-        "clubNameInput"
-    ).value =
-    item.name;
-
-
-    fillCategories(
-        item.category
-    );
-
-
-    get(
-        "clubEditError"
-    ).textContent =
-    "";
-
-
-    get(
-        "saveClubBtn"
-    ).textContent =
-    "儲存修改";
-
-
-    openModal(
-        "clubEditModal"
-    );
-
-}
-
-
-function closeClubEdit(){
-
-    if(S.busy){
-        return;
-    }
-
-
-    S.pendingClub =
-    null;
-
-
-    closeModal(
-        "clubEditModal"
-    );
-
-}
-
-
-async function saveClub(){
-
-    if(
-        S.busy ||
-        !S.pendingClub
-    ){
-        return;
-    }
-
-
-    const clubName =
-    value(
-        "clubNameInput"
-    );
-
-
-    const category =
-    get(
-        "clubCategorySelect"
-    ).value;
-
-
-    const errorBox =
-    get(
-        "clubEditError"
-    );
-
-
-    const button =
-    get(
-        "saveClubBtn"
-    );
-
-
-    if(!clubName){
-
-        errorBox.textContent =
-        "請輸入社團名稱。";
-
-
-        return;
-
-    }
-
-
-    try{
-
-        S.busy =
-        true;
-
-
-        button.disabled =
-        true;
-
-
-        button.textContent =
-        "儲存中...";
-
-
-        const action =
-        S.pendingClub.mode ===
-        "add"
-            ? "adminAddClub"
-            : "adminUpdateClub";
-
-
-        const data = {
-            clubName,
-            category
-        };
-
+            .filter(
+                item=>
+                    item.enabled!==false
+            );
 
         if(
-            S.pendingClub.mode ===
-            "edit"
+            latest.enabled===false
         ){
+            toast(
+                "❌ "+
+                label+
+                "目前已停用，無法發布"
+            );
 
-            data.oldName =
-            S.pendingClub.oldName;
-
-        }
-
-
-        const result =
-        await admin(
-            action,
-            data
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
             return;
         }
 
+        if(!enabledItems.length){
 
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "儲存失敗"
+            toast(
+                "❌ "+
+                label+
+                "至少要有一個啟用中的評分項目才能發布"
             );
 
-        }
-
-
-        closeModal(
-            "clubEditModal"
-        );
-
-
-        S.pendingClub =
-        null;
-
-
-        await Promise.allSettled([
-            loadClubs(),
-            loadForms(),
-            loadBindings(),
-            loadClouds()
-        ]);
-
-
-        toast(
-            action === "adminAddClub"
-                ? "✅ 社團新增成功"
-                : "✅ 社團修改成功"
-        );
-
-    }
-    catch(error){
-
-        errorBox.textContent =
-        error.message;
-
-    }
-    finally{
-
-        S.busy =
-        false;
-
-
-        button.disabled =
-        false;
-
-
-        button.textContent =
-        "儲存";
-
-    }
-
-}
-
-
-function openDeleteClub(
-    encodedName
-){
-
-    const name =
-    decodeURIComponent(
-        encodedName
-    );
-
-
-    const item =
-    S.clubs.find(
-        club =>
-            club.name ===
-            name
-    );
-
-
-    if(!item){
-        return;
-    }
-
-
-    S.pendingDelete =
-    item;
-
-
-    get(
-        "clubDeleteInfo"
-    ).innerHTML = `
-
-    <b>社團：</b>
-
-    ${escapeHtml(item.name)}
-
-    <br>
-
-    <b>屬性：</b>
-
-    ${escapeHtml(item.category)}
-
-    `;
-
-
-    get(
-        "clubDeleteError"
-    ).textContent =
-    "";
-
-
-    openModal(
-        "clubDeleteModal"
-    );
-
-}
-
-
-function closeClubDelete(){
-
-    if(S.busy){
-        return;
-    }
-
-
-    S.pendingDelete =
-    null;
-
-
-    closeModal(
-        "clubDeleteModal"
-    );
-
-}
-
-
-async function confirmDeleteClub(){
-
-    if(
-        S.busy ||
-        !S.pendingDelete
-    ){
-        return;
-    }
-
-
-    const item =
-    S.pendingDelete;
-
-
-    const button =
-    get(
-        "deleteClubBtn"
-    );
-
-
-    const errorBox =
-    get(
-        "clubDeleteError"
-    );
-
-
-    try{
-
-        S.busy =
-        true;
-
-
-        button.disabled =
-        true;
-
-
-        button.textContent =
-        "刪除中...";
-
-
-        const result =
-        await admin(
-            "adminDeleteClub",
-            {
-                clubName:item.name
-            }
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
             return;
         }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "刪除失敗"
-            );
-
-        }
-
-
-        closeModal(
-            "clubDeleteModal"
-        );
-
-
-        S.pendingDelete =
-        null;
-
-
-        await Promise.allSettled([
-            loadClubs(),
-            loadForms(),
-            loadBindings(),
-            loadClouds()
-        ]);
-
-
-        toast(
-            "✅ 社團已刪除"
-        );
-
-    }
-    catch(error){
-
-        errorBox.textContent =
-        error.message;
-
-    }
-    finally{
-
-        S.busy =
-        false;
-
-
-        button.disabled =
-        false;
-
-
-        button.textContent =
-        "確認刪除";
-
     }
 
-}
+    const message=
+        target
+            ?`確定要發布「${label}」嗎？發布後評審端就能讀取這份評分標準。`
+            :`確定要取消發布「${label}」嗎？`;
 
-
-/* ============================================================
-   評審帳號管理
-   ============================================================ */
-
-async function loadJudges(){
-
-    loading(
-        "judgeState",
-        "judgeDesktop",
-        "正在讀取評審資料..."
-    );
-
+    if(
+        !window.confirm(message)
+    ){
+        return;
+    }
 
     try{
 
-        const result =
-        await admin(
-            "adminListJudges"
-        );
+        S.busy=true;
 
-
-        if(
-            unauthorized(result)
-        ){
-            return;
-        }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "無法取得評審資料"
-            );
-
-        }
-
-
-        S.judgeCategories =
-        Array.isArray(
-            result.categories
-        )
-        &&
-        result.categories.length
-
-            ? result.categories
-
-            : FALLBACK_CATEGORIES;
-
-
-        S.judges =
-        Array.isArray(
-            result.judges
-        )
-
-            ? result.judges
-
-            : [];
-
-
-        S.fJudges = [
-            ...S.judges
-        ];
-
-
-        get(
-            "judgeCountPill"
-        ).textContent =
-        (
-            result.activeCount
-            ??
-            S.judges.filter(
-                item =>
-                    item.active !== false
-            ).length
-        )
-        +
-        " / "
-        +
-        (
-            result.total ??
-            S.judges.length
-        );
-
-
-        renderJudges();
-
-    }
-    catch(error){
-
-        fail(
-            "judgeState",
-            error.message
-        );
-
-    }
-
-}
-
-
-function filterJudges(){
-
-    const query =
-    value(
-        "judgeSearch"
-    )
-    .toLowerCase();
-
-
-    S.fJudges =
-    S.judges.filter(
-        item => {
-
-            const searchable = [
-
-                item.displayName,
-
-                item.username,
-
-                ...(
-                    Array.isArray(
-                        item.categories
-                    )
-                        ? item.categories
-                        : []
-                )
-
-            ]
-            .join(" ")
-            .toLowerCase();
-
-
-            return(
-                !query ||
-                searchable.includes(
-                    query
-                )
-            );
-
-        }
-    );
-
-
-    renderJudges();
-
-}
-
-
-function renderJudges(){
-
-    const rows =
-    S.fJudges;
-
-
-    const state =
-    get(
-        "judgeState"
-    );
-
-
-    const desktop =
-    get(
-        "judgeDesktop"
-    );
-
-
-    const mobile =
-    get(
-        "judgeMobile"
-    );
-
-
-    if(!rows.length){
-
-        state.style.display =
-        "block";
-
-
-        state.textContent =
-        "目前沒有符合條件的評審帳號。";
-
-
-        desktop.style.display =
-        "none";
-
-
-        mobile.innerHTML =
-        "";
-
-
-        return;
-
-    }
-
-
-    state.style.display =
-    "none";
-
-
-    desktop.style.display =
-    "block";
-
-
-    get(
-        "judgeTable"
-    ).innerHTML =
-    rows.map(
-        item => {
-
-            const categories =
-            Array.isArray(
-                item.categories
-            )
-                ? item.categories
-                : [];
-
-
-            const categoryHtml =
-            categories.length
-
-                ? categories.map(
-                    category => `
-
-                    <span
-                        class="chip chip-muted"
-                        style="margin:2px"
-                    >
-
-                    ${escapeHtml(category)}
-
-                    </span>
-
-                    `
-                )
-                .join("")
-
-                : "-";
-
-
-            return `
-
-            <tr>
-
-            <td class="name">
-
-            ${escapeHtml(item.displayName)}
-
-            </td>
-
-
-            <td class="mono">
-
-            ${escapeHtml(item.username)}
-
-            </td>
-
-
-            <td>
-
-            ${categoryHtml}
-
-            </td>
-
-
-            <td>
-
-            ${
-                item.active !== false
-
-                    ? `
-                    <span class="chip chip-success">
-                    ✅ 啟用
-                    </span>
-                    `
-
-                    : `
-                    <span class="chip chip-danger">
-                    ⛔ 停用
-                    </span>
-                    `
-            }
-
-            </td>
-
-
-            <td class="muted">
-
-            ${escapeHtml(
-                formatDate(
-                    item.updatedAt
-                )
-            )}
-
-            </td>
-
-
-            <td>
-
-            <div class="actions">
-
-            <button
-                class="btn btn-edit small"
-                onclick="openEditJudge('${encodeValue(item.id)}')"
-            >
-            修改
-            </button>
-
-
-            <button
-                class="btn small"
-                onclick="openResetJudgePassword('${encodeValue(item.id)}')"
-            >
-            🔑 密碼
-            </button>
-
-
-            ${
-                item.active !== false
-
-                    ? `
-                    <button
-                        class="btn btn-danger small"
-                        onclick="toggleJudgeActive('${encodeValue(item.id)}',false)"
-                    >
-                    停用
-                    </button>
-                    `
-
-                    : `
-                    <button
-                        class="btn btn-success small"
-                        onclick="toggleJudgeActive('${encodeValue(item.id)}',true)"
-                    >
-                    啟用
-                    </button>
-                    `
-            }
-
-
-            <button
-                class="btn btn-danger small"
-                onclick="openDeleteJudge('${encodeValue(item.id)}')"
-            >
-            刪除
-            </button>
-
-            </div>
-
-            </td>
-
-            </tr>
-
-            `;
-
-        }
-    )
-    .join("");
-
-
-    mobile.innerHTML =
-    rows.map(
-        item => {
-
-            const categories =
-            Array.isArray(
-                item.categories
-            )
-                ? item.categories
-                : [];
-
-
-            return `
-
-            <div class="mobile-card">
-
-            <div class="mobile-title">
-
-            ${escapeHtml(item.displayName)}
-
-            </div>
-
-            <div class="mobile-sub">
-
-            @${escapeHtml(item.username)}
-
-            </div>
-
-            <div class="mobile-info">
-
-            <div>
-
-            ${
-                categories
-                .map(
-                    category =>
-                        escapeHtml(category)
-                )
-                .join("、")
-                ||
-                "尚未指派"
-            }
-
-            </div>
-
-            <div>
-
-            ${
-                item.active !== false
-                    ? "✅ 帳號啟用"
-                    : "⛔ 帳號停用"
-            }
-
-            </div>
-
-            <div>
-
-            最後修改：
-
-            ${escapeHtml(
-                formatDate(
-                    item.updatedAt
-                )
-            )}
-
-            </div>
-
-            </div>
-
-            <div class="mobile-actions">
-
-            <button
-                class="btn btn-edit small"
-                onclick="openEditJudge('${encodeValue(item.id)}')"
-            >
-            修改
-            </button>
-
-            <button
-                class="btn small"
-                onclick="openResetJudgePassword('${encodeValue(item.id)}')"
-            >
-            🔑 密碼
-            </button>
-
-            ${
-                item.active !== false
-
-                    ? `
-                    <button
-                        class="btn btn-danger small"
-                        onclick="toggleJudgeActive('${encodeValue(item.id)}',false)"
-                    >
-                    停用
-                    </button>
-                    `
-
-                    : `
-                    <button
-                        class="btn btn-success small"
-                        onclick="toggleJudgeActive('${encodeValue(item.id)}',true)"
-                    >
-                    啟用
-                    </button>
-                    `
-            }
-
-            </div>
-
-            </div>
-
-            `;
-
-        }
-    )
-    .join("");
-
-}
-
-
-function renderJudgeCategories(
-    selected=[]
-){
-
-    const categories =
-    S.judgeCategories.length
-
-        ? S.judgeCategories
-
-        : FALLBACK_CATEGORIES;
-
-
-    const box =
-    get(
-        "judgeCategoryChoices"
-    );
-
-
-    box.innerHTML =
-    categories.map(
-        category => `
-
-        <label
-            style="
-                display:flex;
-                align-items:center;
-                gap:7px;
-                padding:9px;
-                border:1px solid #e4e7ec;
-                border-radius:9px;
-                background:#fff;
-                cursor:pointer
-            "
-        >
-
-        <input
-            type="checkbox"
-            name="judgeCategory"
-            value="${escapeAttribute(category)}"
-            ${selected.includes(category) ? "checked" : ""}
-        >
-
-        <span>
-        ${escapeHtml(category)}
-        </span>
-
-        </label>
-
-        `
-    )
-    .join("");
-
-}
-
-
-function getJudgeSelectedCategories(){
-
-    return Array.from(
-        document.querySelectorAll(
-            'input[name="judgeCategory"]:checked'
-        )
-    )
-    .map(
-        item =>
-            item.value
-    );
-
-}
-
-
-function openAddJudge(){
-
-    S.pendingJudge = {
-        mode:"add",
-        judgeId:null
-    };
-
-
-    get(
-        "judgeModalTitle"
-    ).textContent =
-    "新增評審";
-
-
-    get(
-        "judgeModalDesc"
-    ).textContent =
-    "建立新的評審登入帳號，並設定負責的社團屬性。";
-
-
-    get(
-        "judgeDisplayNameInput"
-    ).value =
-    "";
-
-
-    get(
-        "judgeUsernameInput"
-    ).value =
-    "";
-
-
-    get(
-        "judgePasswordInput"
-    ).value =
-    "";
-
-
-    get(
-        "judgePasswordGroup"
-    ).style.display =
-    "block";
-
-
-    get(
-        "judgeActiveInput"
-    ).checked =
-    true;
-
-
-    get(
-        "judgeEditError"
-    ).textContent =
-    "";
-
-
-    renderJudgeCategories();
-
-
-    get(
-        "saveJudgeBtn"
-    ).textContent =
-    "新增評審";
-
-
-    openModal(
-        "judgeEditModal"
-    );
-
-}
-
-
-function openEditJudge(
-    encodedId
-){
-
-    const judgeId =
-    decodeURIComponent(
-        encodedId
-    );
-
-
-    const item =
-    S.judges.find(
-        judge =>
-            judge.id ===
-            judgeId
-    );
-
-
-    if(!item){
-
-        toast(
-            "找不到評審資料"
-        );
-
-
-        return;
-
-    }
-
-
-    S.pendingJudge = {
-        mode:"edit",
-        judgeId:item.id
-    };
-
-
-    get(
-        "judgeModalTitle"
-    ).textContent =
-    "修改評審";
-
-
-    get(
-        "judgeModalDesc"
-    ).textContent =
-    "修改評審名稱、登入帳號與負責屬性。密碼請使用獨立的重設功能。";
-
-
-    get(
-        "judgeDisplayNameInput"
-    ).value =
-    item.displayName ||
-    "";
-
-
-    get(
-        "judgeUsernameInput"
-    ).value =
-    item.username ||
-    "";
-
-
-    get(
-        "judgePasswordInput"
-    ).value =
-    "";
-
-
-    get(
-        "judgePasswordGroup"
-    ).style.display =
-    "none";
-
-
-    get(
-        "judgeActiveInput"
-    ).checked =
-    item.active !== false;
-
-
-    get(
-        "judgeEditError"
-    ).textContent =
-    "";
-
-
-    renderJudgeCategories(
-        Array.isArray(
-            item.categories
-        )
-            ? item.categories
-            : []
-    );
-
-
-    get(
-        "saveJudgeBtn"
-    ).textContent =
-    "儲存修改";
-
-
-    openModal(
-        "judgeEditModal"
-    );
-
-}
-
-
-function closeJudgeEdit(){
-
-    if(S.busy){
-        return;
-    }
-
-
-    S.pendingJudge =
-    null;
-
-
-    closeModal(
-        "judgeEditModal"
-    );
-
-}
-
-
-async function saveJudge(){
-
-    if(
-        S.busy ||
-        !S.pendingJudge
-    ){
-        return;
-    }
-
-
-    const displayName =
-    value(
-        "judgeDisplayNameInput"
-    );
-
-
-    const username =
-    value(
-        "judgeUsernameInput"
-    );
-
-
-    const password =
-    get(
-        "judgePasswordInput"
-    ).value;
-
-
-    const categories =
-    getJudgeSelectedCategories();
-
-
-    const active =
-    get(
-        "judgeActiveInput"
-    ).checked;
-
-
-    const errorBox =
-    get(
-        "judgeEditError"
-    );
-
-
-    const button =
-    get(
-        "saveJudgeBtn"
-    );
-
-
-    if(!displayName){
-
-        errorBox.textContent =
-        "請輸入評審名稱。";
-
-
-        return;
-
-    }
-
-
-    if(!username){
-
-        errorBox.textContent =
-        "請輸入登入帳號。";
-
-
-        return;
-
-    }
-
-
-    if(
-        categories.length ===
-        0
-    ){
-
-        errorBox.textContent =
-        "請至少勾選一個負責的社團屬性。";
-
-
-        return;
-
-    }
-
-
-    if(
-        S.pendingJudge.mode ===
-        "add"
-        &&
-        password.length < 6
-    ){
-
-        errorBox.textContent =
-        "評審密碼至少需要 6 個字元。";
-
-
-        return;
-
-    }
-
-
-    try{
-
-        S.busy =
-        true;
-
-
-        button.disabled =
-        true;
-
-
-        button.textContent =
-        "儲存中...";
-
-
-        errorBox.textContent =
-        "";
-
-
-        let result;
-
-
-        if(
-            S.pendingJudge.mode ===
-            "add"
-        ){
-
-            result =
+        const result=
             await admin(
-                "adminAddJudge",
+                "adminSetScorePhasePublished",
                 {
-                    displayName,
-                    username,
-                    password,
-                    categories,
-                    active
+                    phaseKey,
+                    published:target
                 }
             );
 
-        }
-        else{
-
-            result =
-            await admin(
-                "adminUpdateJudge",
-                {
-                    judgeId:
-                        S.pendingJudge.judgeId,
-
-                    displayName,
-                    username,
-                    categories,
-                    active
-                }
-            );
-
-        }
-
-
-        if(
-            unauthorized(result)
-        ){
+        if(unauthorized(result)){
             return;
         }
 
-
         if(!result.success){
-
             throw new Error(
-                result.message ||
-                "儲存評審失敗"
+                result.message||
+                "發布狀態更新失敗"
+            );
+        }
+
+        S.scoreConfig=
+            cloneScoreConfig(
+                result.config
             );
 
-        }
-
-
-        closeModal(
-            "judgeEditModal"
-        );
-
-
-        S.pendingJudge =
-        null;
-
-
-        await loadJudges();
-
+        renderScoreConfig();
 
         toast(
-            "✅ 評審資料已儲存"
+            target
+                ?"✅ "+label+"已發布"
+                :"✅ "+label+"已取消發布"
         );
 
+    }catch(error){
+
+        toast("❌ "+error.message);
+
+    }finally{
+
+        S.busy=false;
     }
-    catch(error){
-
-        errorBox.textContent =
-        error.message;
-
-    }
-    finally{
-
-        S.busy =
-        false;
-
-
-        button.disabled =
-        false;
-
-
-        button.textContent =
-        "儲存";
-
-    }
-
 }
-
-
-async function toggleJudgeActive(
-    encodedId,
-    active
-){
-
-    const judgeId =
-    decodeURIComponent(
-        encodedId
-    );
-
-
-    const item =
-    S.judges.find(
-        judge =>
-            judge.id ===
-            judgeId
-    );
-
-
-    if(!item){
-        return;
-    }
-
-
-    const message =
-    active
-
-        ? `確定要啟用「${item.displayName}」的評審帳號嗎？`
-
-        : `確定要停用「${item.displayName}」的評審帳號嗎？`;
-
-
-    if(
-        !window.confirm(
-            message
-        )
-    ){
-        return;
-    }
-
-
-    try{
-
-        const result =
-        await admin(
-            "adminSetJudgeActive",
-            {
-                judgeId,
-                active
-            }
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
-            return;
-        }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "修改帳號狀態失敗"
-            );
-
-        }
-
-
-        await loadJudges();
-
-
-        toast(
-            active
-                ? "✅ 評審帳號已啟用"
-                : "⛔ 評審帳號已停用"
-        );
-
-    }
-    catch(error){
-
-        toast(
-            "❌ " +
-            error.message
-        );
-
-    }
-
-}
-
-
-function openResetJudgePassword(
-    encodedId
-){
-
-    const judgeId =
-    decodeURIComponent(
-        encodedId
-    );
-
-
-    const item =
-    S.judges.find(
-        judge =>
-            judge.id ===
-            judgeId
-    );
-
-
-    if(!item){
-        return;
-    }
-
-
-    S.pendingJudgePassword =
-    item;
-
-
-    get(
-        "judgePasswordInfo"
-    ).innerHTML = `
-
-    <b>評審：</b>
-
-    ${escapeHtml(item.displayName)}
-
-    <br>
-
-    <b>帳號：</b>
-
-    ${escapeHtml(item.username)}
-
-    `;
-
-
-    get(
-        "judgeNewPasswordInput"
-    ).value =
-    "";
-
-
-    get(
-        "judgePasswordError"
-    ).textContent =
-    "";
-
-
-    openModal(
-        "judgePasswordModal"
-    );
-
-}
-
-
-function closeJudgePasswordModal(){
-
-    if(S.busy){
-        return;
-    }
-
-
-    S.pendingJudgePassword =
-    null;
-
-
-    closeModal(
-        "judgePasswordModal"
-    );
-
-}
-
-
-async function confirmResetJudgePassword(){
-
-    if(
-        S.busy ||
-        !S.pendingJudgePassword
-    ){
-        return;
-    }
-
-
-    const password =
-    get(
-        "judgeNewPasswordInput"
-    ).value;
-
-
-    const errorBox =
-    get(
-        "judgePasswordError"
-    );
-
-
-    const button =
-    get(
-        "resetJudgePasswordBtn"
-    );
-
-
-    if(
-        password.length <
-        6
-    ){
-
-        errorBox.textContent =
-        "新密碼至少需要 6 個字元。";
-
-
-        return;
-
-    }
-
-
-    try{
-
-        S.busy =
-        true;
-
-
-        button.disabled =
-        true;
-
-
-        button.textContent =
-        "重設中...";
-
-
-        const result =
-        await admin(
-            "adminResetJudgePassword",
-            {
-                judgeId:
-                    S.pendingJudgePassword.id,
-
-                newPassword:
-                    password
-            }
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
-            return;
-        }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "重設密碼失敗"
-            );
-
-        }
-
-
-        closeModal(
-            "judgePasswordModal"
-        );
-
-
-        S.pendingJudgePassword =
-        null;
-
-
-        toast(
-            "✅ 評審密碼已重設"
-        );
-
-    }
-    catch(error){
-
-        errorBox.textContent =
-        error.message;
-
-    }
-    finally{
-
-        S.busy =
-        false;
-
-
-        button.disabled =
-        false;
-
-
-        button.textContent =
-        "重設密碼";
-
-    }
-
-}
-
-
-function openDeleteJudge(
-    encodedId
-){
-
-    const judgeId =
-    decodeURIComponent(
-        encodedId
-    );
-
-
-    const item =
-    S.judges.find(
-        judge =>
-            judge.id ===
-            judgeId
-    );
-
-
-    if(!item){
-        return;
-    }
-
-
-    S.pendingJudgeDelete =
-    item;
-
-
-    get(
-        "judgeDeleteInfo"
-    ).innerHTML = `
-
-    <b>評審：</b>
-
-    ${escapeHtml(item.displayName)}
-
-    <br>
-
-    <b>帳號：</b>
-
-    ${escapeHtml(item.username)}
-
-    <br>
-
-    <b>負責屬性：</b>
-
-    ${escapeHtml(
-        Array.isArray(
-            item.categories
-        )
-            ? item.categories.join("、")
-            : ""
-    )}
-
-    `;
-
-
-    get(
-        "judgeDeleteError"
-    ).textContent =
-    "";
-
-
-    openModal(
-        "judgeDeleteModal"
-    );
-
-}
-
-
-function closeJudgeDeleteModal(){
-
-    if(S.busy){
-        return;
-    }
-
-
-    S.pendingJudgeDelete =
-    null;
-
-
-    closeModal(
-        "judgeDeleteModal"
-    );
-
-}
-
-
-async function confirmDeleteJudge(){
-
-    if(
-        S.busy ||
-        !S.pendingJudgeDelete
-    ){
-        return;
-    }
-
-
-    const button =
-    get(
-        "deleteJudgeBtn"
-    );
-
-
-    const errorBox =
-    get(
-        "judgeDeleteError"
-    );
-
-
-    try{
-
-        S.busy =
-        true;
-
-
-        button.disabled =
-        true;
-
-
-        button.textContent =
-        "刪除中...";
-
-
-        const result =
-        await admin(
-            "adminDeleteJudge",
-            {
-                judgeId:
-                    S.pendingJudgeDelete.id
-            }
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
-            return;
-        }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "刪除評審失敗"
-            );
-
-        }
-
-
-        closeModal(
-            "judgeDeleteModal"
-        );
-
-
-        S.pendingJudgeDelete =
-        null;
-
-
-        await loadJudges();
-
-
-        toast(
-            "✅ 評審帳號已刪除"
-        );
-
-    }
-    catch(error){
-
-        errorBox.textContent =
-        error.message;
-
-    }
-    finally{
-
-        S.busy =
-        false;
-
-
-        button.disabled =
-        false;
-
-
-        button.textContent =
-        "確認刪除";
-
-    }
-
-}
-
 
 /* ============================================================
    活動時程
    ============================================================ */
 
-async function loadEvent(){
+async function loadEvent(){loading("eventState",null,"正在讀取活動時程...");get("eventForm").style.display="none";try{const result=await pub("getEventConfig");if(!result.success||!result.config)throw new Error(result.message||"無法取得活動時程");S.event=result.config;["dataDeadline","formDeadline","eventStart","eventEnd"].forEach(key=>setDateTime(key,result.config[key]));get("eventState").style.display="none";get("eventForm").style.display="block";get("eventPill").textContent="已設定";get("eventMeta").textContent="時區：Asia/Taipei"+(result.config.updatedAt?"｜最後更新："+formatDate(result.config.updatedAt):"")}catch(error){get("eventPill").textContent="讀取失敗";fail("eventState",error.message)}}
 
-    loading(
-        "eventState",
-        null,
-        "正在讀取活動時程..."
-    );
+async function saveEventConfig(){if(S.busy)return;const button=get("saveEventBtn"),errorBox=get("eventError"),data={dataDeadline:makeIso("dataDeadline"),formDeadline:makeIso("formDeadline"),eventStart:makeIso("eventStart"),eventEnd:makeIso("eventEnd")};if(Object.values(data).some(item=>!item)){errorBox.textContent="請完整填寫日期與時間。";return}try{S.busy=true;button.disabled=true;button.textContent="儲存中...";errorBox.textContent="";const result=await admin("adminSaveEventConfig",data);if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"儲存失敗");S.event=result.config;get("eventMeta").textContent="時區：Asia/Taipei｜最後更新："+formatDate(result.config.updatedAt);toast("✅ 活動時程已更新")}catch(error){errorBox.textContent=error.message}finally{S.busy=false;button.disabled=false;button.textContent="儲存時程設定"}}
 
+function setDateTime(prefix,iso){const match=String(iso||"").match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);if(!match)return;get(prefix+"Date").value=match[1];get(prefix+"Time").value=match[2]}
 
-    get(
-        "eventForm"
-    ).style.display =
-    "none";
-
-
-    try{
-
-        const result =
-        await pub(
-            "getEventConfig"
-        );
-
-
-        if(
-            !result.success ||
-            !result.config
-        ){
-
-            throw new Error(
-                result.message ||
-                "無法取得活動時程"
-            );
-
-        }
-
-
-        S.event =
-        result.config;
-
-
-        [
-            "dataDeadline",
-            "formDeadline",
-            "eventStart",
-            "eventEnd"
-        ]
-        .forEach(
-            key =>
-                setDateTime(
-                    key,
-                    result.config[key]
-                )
-        );
-
-
-        get(
-            "eventState"
-        ).style.display =
-        "none";
-
-
-        get(
-            "eventForm"
-        ).style.display =
-        "block";
-
-
-        get(
-            "eventPill"
-        ).textContent =
-        "已設定";
-
-
-        get(
-            "eventMeta"
-        ).textContent =
-        "時區：Asia/Taipei"
-        +
-        (
-            result.config.updatedAt
-                ? "｜最後更新：" +
-                  formatDate(
-                      result.config.updatedAt
-                  )
-                : ""
-        );
-
-    }
-    catch(error){
-
-        get(
-            "eventPill"
-        ).textContent =
-        "讀取失敗";
-
-
-        fail(
-            "eventState",
-            error.message
-        );
-
-    }
-
-}
-
-
-async function saveEventConfig(){
-
-    if(S.busy){
-        return;
-    }
-
-
-    const button =
-    get(
-        "saveEventBtn"
-    );
-
-
-    const errorBox =
-    get(
-        "eventError"
-    );
-
-
-    const data = {
-
-        dataDeadline:
-            makeIso(
-                "dataDeadline"
-            ),
-
-        formDeadline:
-            makeIso(
-                "formDeadline"
-            ),
-
-        eventStart:
-            makeIso(
-                "eventStart"
-            ),
-
-        eventEnd:
-            makeIso(
-                "eventEnd"
-            )
-
-    };
-
-
-    if(
-        Object
-        .values(
-            data
-        )
-        .some(
-            item =>
-                !item
-        )
-    ){
-
-        errorBox.textContent =
-        "請完整填寫日期與時間。";
-
-
-        return;
-
-    }
-
-
-    try{
-
-        S.busy =
-        true;
-
-
-        button.disabled =
-        true;
-
-
-        button.textContent =
-        "儲存中...";
-
-
-        errorBox.textContent =
-        "";
-
-
-        const result =
-        await admin(
-            "adminSaveEventConfig",
-            data
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
-            return;
-        }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "儲存失敗"
-            );
-
-        }
-
-
-        S.event =
-        result.config;
-
-
-        get(
-            "eventMeta"
-        ).textContent =
-        "時區：Asia/Taipei｜最後更新："
-        +
-        formatDate(
-            result.config.updatedAt
-        );
-
-
-        toast(
-            "✅ 活動時程已更新"
-        );
-
-    }
-    catch(error){
-
-        errorBox.textContent =
-        error.message;
-
-    }
-    finally{
-
-        S.busy =
-        false;
-
-
-        button.disabled =
-        false;
-
-
-        button.textContent =
-        "儲存時程設定";
-
-    }
-
-}
-
-
-function setDateTime(
-    prefix,
-    iso
-){
-
-    const match =
-    String(
-        iso ||
-        ""
-    )
-    .match(
-        /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/
-    );
-
-
-    if(!match){
-        return;
-    }
-
-
-    get(
-        prefix +
-        "Date"
-    ).value =
-    match[1];
-
-
-    get(
-        prefix +
-        "Time"
-    ).value =
-    match[2];
-
-}
-
-
-function makeIso(prefix){
-
-    const date =
-    get(
-        prefix +
-        "Date"
-    ).value;
-
-
-    const time =
-    get(
-        prefix +
-        "Time"
-    ).value;
-
-
-    return(
-        date &&
-        time
-            ? date +
-              "T" +
-              time +
-              ":00+08:00"
-            : ""
-    );
-
-}
-
+function makeIso(prefix){const date=get(prefix+"Date").value,time=get(prefix+"Time").value;return date&&time?date+"T"+time+":00+08:00":""}
 
 /* ============================================================
    Google Form
    ============================================================ */
 
-function applyFormResult(result){
+function applyFormResult(result){S.forms=Array.isArray(result.clubs)?result.clubs:[];S.fForms=[...S.forms];get("formTotal").textContent=result.total??S.forms.length;get("formSubmitted").textContent=result.submittedCount??0;get("formPending").textContent=result.pendingCount??0;get("formDuplicate").textContent=result.duplicateCount??0;get("formRate").textContent=(result.completionRate??0)+"%";get("statFormRate").textContent=(result.completionRate??0)+"%";get("formCountPill").textContent=(result.submittedCount??0)+"/"+(result.total??S.forms.length)+(result.duplicateCount?" · ⚠ "+result.duplicateCount:"");const syncText=result.lastSyncAtTaipei||(result.lastSyncAt?formatDate(result.lastSyncAt):"尚未同步");const invalidResponses=Number(result.invalidResponseCount||0);get("formSyncMeta").innerHTML=`最後同步：<b>${escapeHtml(syncText||"尚未同步")}</b>${invalidResponses>0?`<br><span class="sync-warning">⚠️ 另有 ${invalidResponses} 筆回覆無法辨識社團名稱</span>`:""}`;filterForms()}
 
-    S.forms =
-    Array.isArray(
-        result.clubs
-    )
-        ? result.clubs
-        : [];
+async function loadForms(){loading("formState","formDesktop","正在讀取表單進度...");try{const result=await admin("adminListFormSubmissions");if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"無法取得表單進度");applyFormResult(result)}catch(error){fail("formState",error.message)}}
 
+async function syncFormNow(){if(S.formSyncRunning)return;const button=get("formSyncBtn");try{S.formSyncRunning=true;button.disabled=true;button.textContent="⏳ 同步中...";const result=await admin("adminSyncFormSubmissions");if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"Google Form 同步失敗");applyFormResult(result);updateLastRefresh();toast("✅ Google Form 已立即同步")}catch(error){toast("❌ "+error.message)}finally{S.formSyncRunning=false;button.disabled=false;button.textContent="🔄 立即同步 Google Form"}}
 
-    S.fForms = [
-        ...S.forms
-    ];
+function filterForms(){const query=value("formSearch").toLowerCase(),filter=get("formFilter").value;S.fForms=S.forms.filter(item=>{const searchMatched=!query||(String(item.club||"")+" "+String(item.category||"")).toLowerCase().includes(query);const itemStatus=String(item.status||(item.submitted?"submitted":"pending"));const statusMatched=filter==="all"||itemStatus===filter;return searchMatched&&statusMatched});renderForms()}
 
+function formStatusUi(item){const status=String(item.status||"");if(status==="duplicate")return{label:"⚠️ 重複填寫",cls:"chip-warning"};if(status==="submitted")return{label:"✅ 已填寫",cls:"chip-success"};if(status==="invalid")return{label:"⚠️ 資料異常",cls:"chip-danger"};return{label:"❌ 未填寫",cls:"chip-muted"}}
 
-    get(
-        "formTotal"
-    ).textContent =
-    result.total ??
-    S.forms.length;
-
-
-    get(
-        "formSubmitted"
-    ).textContent =
-    result.submittedCount ??
-    0;
-
-
-    get(
-        "formPending"
-    ).textContent =
-    result.pendingCount ??
-    0;
-
-
-    get(
-        "formDuplicate"
-    ).textContent =
-    result.duplicateCount ??
-    0;
-
-
-    get(
-        "formRate"
-    ).textContent =
-    (
-        result.completionRate ??
-        0
-    )
-    +
-    "%";
-
-
-    get(
-        "statFormRate"
-    ).textContent =
-    (
-        result.completionRate ??
-        0
-    )
-    +
-    "%";
-
-
-    get(
-        "formCountPill"
-    ).textContent =
-    (
-        result.submittedCount ??
-        0
-    )
-    +
-    "/"
-    +
-    (
-        result.total ??
-        S.forms.length
-    )
-    +
-    (
-        result.duplicateCount
-            ? " · ⚠ " +
-              result.duplicateCount
-            : ""
-    );
-
-
-    const syncText =
-    result.lastSyncAtTaipei
-    ||
-    (
-        result.lastSyncAt
-            ? formatDate(
-                result.lastSyncAt
-              )
-            : "尚未同步"
-    );
-
-
-    const invalidResponses =
-    Number(
-        result.invalidResponseCount ||
-        0
-    );
-
-
-    get(
-        "formSyncMeta"
-    ).innerHTML = `
-
-    最後同步：
-
-    <b>
-    ${escapeHtml(syncText || "尚未同步")}
-    </b>
-
-    ${
-        invalidResponses > 0
-
-            ? `
-            <br>
-
-            <span class="sync-warning">
-
-            ⚠️ 另有 ${invalidResponses} 筆回覆無法辨識社團名稱
-
-            </span>
-            `
-
-            : ""
-    }
-
-    `;
-
-
-    filterForms();
-
-}
-
-
-async function loadForms(){
-
-    loading(
-        "formState",
-        "formDesktop",
-        "正在讀取表單進度..."
-    );
-
-
-    try{
-
-        const result =
-        await admin(
-            "adminListFormSubmissions"
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
-            return;
-        }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "無法取得表單進度"
-            );
-
-        }
-
-
-        applyFormResult(
-            result
-        );
-
-    }
-    catch(error){
-
-        fail(
-            "formState",
-            error.message
-        );
-
-    }
-
-}
-
-
-async function syncFormNow(){
-
-    if(S.formSyncRunning){
-        return;
-    }
-
-
-    const button =
-    get(
-        "formSyncBtn"
-    );
-
-
-    try{
-
-        S.formSyncRunning =
-        true;
-
-
-        button.disabled =
-        true;
-
-
-        button.textContent =
-        "⏳ 同步中...";
-
-
-        const result =
-        await admin(
-            "adminSyncFormSubmissions"
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
-            return;
-        }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "Google Form 同步失敗"
-            );
-
-        }
-
-
-        applyFormResult(
-            result
-        );
-
-
-        updateLastRefresh();
-
-
-        toast(
-            "✅ Google Form 已立即同步"
-        );
-
-    }
-    catch(error){
-
-        toast(
-            "❌ " +
-            error.message
-        );
-
-    }
-    finally{
-
-        S.formSyncRunning =
-        false;
-
-
-        button.disabled =
-        false;
-
-
-        button.textContent =
-        "🔄 立即同步 Google Form";
-
-    }
-
-}
-
-
-function filterForms(){
-
-    const query =
-    value(
-        "formSearch"
-    )
-    .toLowerCase();
-
-
-    const filter =
-    get(
-        "formFilter"
-    ).value;
-
-
-    S.fForms =
-    S.forms.filter(
-        item => {
-
-            const searchMatched =
-            !query
-            ||
-            (
-                String(
-                    item.club ||
-                    ""
-                )
-                +
-                " "
-                +
-                String(
-                    item.category ||
-                    ""
-                )
-            )
-            .toLowerCase()
-            .includes(
-                query
-            );
-
-
-            const itemStatus =
-            String(
-                item.status
-                ||
-                (
-                    item.submitted
-                        ? "submitted"
-                        : "pending"
-                )
-            );
-
-
-            const statusMatched =
-            filter ===
-            "all"
-            ||
-            itemStatus ===
-            filter;
-
-
-            return(
-                searchMatched &&
-                statusMatched
-            );
-
-        }
-    );
-
-
-    renderForms();
-
-}
-
-
-function formStatusUi(item){
-
-    const status =
-    String(
-        item.status ||
-        ""
-    );
-
-
-    if(
-        status ===
-        "duplicate"
-    ){
-
-        return{
-            label:"⚠️ 重複填寫",
-            cls:"chip-warning"
-        };
-
-    }
-
-
-    if(
-        status ===
-        "submitted"
-    ){
-
-        return{
-            label:"✅ 已填寫",
-            cls:"chip-success"
-        };
-
-    }
-
-
-    if(
-        status ===
-        "invalid"
-    ){
-
-        return{
-            label:"⚠️ 資料異常",
-            cls:"chip-danger"
-        };
-
-    }
-
-
-    return{
-        label:"❌ 未填寫",
-        cls:"chip-muted"
-    };
-
-}
-
-
-function renderForms(){
-
-    const rows =
-    S.fForms;
-
-
-    const state =
-    get(
-        "formState"
-    );
-
-
-    const desktop =
-    get(
-        "formDesktop"
-    );
-
-
-    const mobile =
-    get(
-        "formMobile"
-    );
-
-
-    if(!rows.length){
-
-        state.style.display =
-        "block";
-
-
-        state.textContent =
-        "目前沒有符合條件的表單紀錄。";
-
-
-        desktop.style.display =
-        "none";
-
-
-        mobile.innerHTML =
-        "";
-
-
-        return;
-
-    }
-
-
-    state.style.display =
-    "none";
-
-
-    desktop.style.display =
-    "block";
-
-
-    get(
-        "formTable"
-    ).innerHTML =
-    rows.map(
-        item => {
-
-            const ui =
-            formStatusUi(
-                item
-            );
-
-
-            const count =
-            Number(
-                item.responseCount ||
-                0
-            );
-
-
-            const time =
-            item.latestSubmittedAtTaipei
-            ||
-            item.submittedAtTaipei
-            ||
-            formatDate(
-                item.latestSubmittedAt
-                ||
-                item.submittedAt
-            );
-
-
-            return `
-
-            <tr>
-
-            <td class="name">
-
-            ${escapeHtml(item.club)}
-
-            </td>
-
-            <td>
-
-            <span class="chip chip-muted">
-
-            ${escapeHtml(item.category)}
-
-            </span>
-
-            </td>
-
-            <td>
-
-            <span class="chip ${ui.cls}">
-
-            ${ui.label}
-
-            </span>
-
-            </td>
-
-            <td>
-            ${count}
-            </td>
-
-            <td class="muted">
-
-            ${
-                time
-                    ? escapeHtml(time)
-                    : "-"
-            }
-
-            </td>
-
-            </tr>
-
-            `;
-
-        }
-    )
-    .join("");
-
-
-    mobile.innerHTML =
-    rows.map(
-        item => {
-
-            const ui =
-            formStatusUi(
-                item
-            );
-
-
-            const count =
-            Number(
-                item.responseCount ||
-                0
-            );
-
-
-            const time =
-            item.latestSubmittedAtTaipei
-            ||
-            item.submittedAtTaipei
-            ||
-            formatDate(
-                item.latestSubmittedAt
-                ||
-                item.submittedAt
-            );
-
-
-            return `
-
-            <div class="mobile-card">
-
-            <div class="mobile-title">
-
-            ${escapeHtml(item.club)}
-
-            </div>
-
-            <div class="mobile-sub">
-
-            ${escapeHtml(item.category)}
-
-            </div>
-
-            <div class="mobile-info">
-
-            <div>
-
-            <span class="chip ${ui.cls}">
-            ${ui.label}
-            </span>
-
-            </div>
-
-            <div>
-            回覆筆數：${count}
-            </div>
-
-            <div>
-
-            最後填寫：
-
-            ${
-                time
-                    ? escapeHtml(time)
-                    : "-"
-            }
-
-            </div>
-
-            </div>
-
-            </div>
-
-            `;
-
-        }
-    )
-    .join("");
-
-}
-
+function renderForms(){const rows=S.fForms,state=get("formState"),desktop=get("formDesktop"),mobile=get("formMobile");if(!rows.length){state.style.display="block";state.textContent="目前沒有符合條件的表單紀錄。";desktop.style.display="none";mobile.innerHTML="";return}state.style.display="none";desktop.style.display="block";get("formTable").innerHTML=rows.map(item=>{const ui=formStatusUi(item),count=Number(item.responseCount||0),time=item.latestSubmittedAtTaipei||item.submittedAtTaipei||formatDate(item.latestSubmittedAt||item.submittedAt);return `<tr><td class="name">${escapeHtml(item.club)}</td><td><span class="chip chip-muted">${escapeHtml(item.category)}</span></td><td><span class="chip ${ui.cls}">${ui.label}</span></td><td>${count}</td><td class="muted">${time?escapeHtml(time):"-"}</td></tr>`}).join("");mobile.innerHTML=rows.map(item=>{const ui=formStatusUi(item),count=Number(item.responseCount||0),time=item.latestSubmittedAtTaipei||item.submittedAtTaipei||formatDate(item.latestSubmittedAt||item.submittedAt);return `<div class="mobile-card"><div class="mobile-title">${escapeHtml(item.club)}</div><div class="mobile-sub">${escapeHtml(item.category)}</div><div class="mobile-info"><div><span class="chip ${ui.cls}">${ui.label}</span></div><div>回覆筆數：${count}</div><div>最後填寫：${time?escapeHtml(time):"-"}</div></div></div>`}).join("")}
 
 /* ============================================================
    LINE 綁定
    ============================================================ */
 
-async function loadBindings(){
+async function loadBindings(){loading("bindingState","bindingDesktop","正在讀取綁定資料...");try{const result=await admin("adminListBindings");if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"無法取得綁定資料");S.bindings=Array.isArray(result.bindings)?result.bindings:[];S.fBindings=[...S.bindings];get("statBindings").textContent=S.bindings.length;get("bindingCountPill").textContent=S.bindings.length+" 筆";renderBindings()}catch(error){fail("bindingState",error.message)}}
 
-    loading(
-        "bindingState",
-        "bindingDesktop",
-        "正在讀取綁定資料..."
-    );
+function filterBindings(){const query=value("bindingSearch").toLowerCase();S.fBindings=S.bindings.filter(item=>!query||[item.displayName,item.userId,item.club,item.category].join(" ").toLowerCase().includes(query));renderBindings()}
 
+function renderBindings(){const rows=S.fBindings,state=get("bindingState"),desktop=get("bindingDesktop"),mobile=get("bindingMobile");if(!rows.length){state.style.display="block";state.textContent="目前沒有符合條件的綁定資料。";desktop.style.display="none";mobile.innerHTML="";return}state.style.display="none";desktop.style.display="block";get("bindingTable").innerHTML=rows.map(item=>`<tr><td class="name">${escapeHtml(item.displayName||"LINE 使用者")}</td><td class="mono">${escapeHtml(item.userId)}</td><td>${escapeHtml(item.club)}</td><td><span class="chip chip-muted">${escapeHtml(item.category)}</span></td><td class="muted">${escapeHtml(formatDate(item.createdAt))}</td><td><button class="btn btn-danger small" onclick="openUnbind('${encodeValue(item.userId)}')">解除綁定</button></td></tr>`).join("");mobile.innerHTML=rows.map(item=>`<div class="mobile-card"><div class="mobile-title">${escapeHtml(item.displayName||"LINE 使用者")}</div><div class="mobile-sub">${escapeHtml(item.club)}</div><div class="mobile-info"><div>${escapeHtml(item.category)}</div><div class="mono">${escapeHtml(item.userId)}</div><div>綁定：${escapeHtml(formatDate(item.createdAt))}</div></div><div class="mobile-actions"><button class="btn btn-danger small" onclick="openUnbind('${encodeValue(item.userId)}')">解除綁定</button></div></div>`).join("")}
 
-    try{
+function openUnbind(encodedUserId){const userId=decodeURIComponent(encodedUserId),item=S.bindings.find(binding=>binding.userId===userId);if(!item)return;S.pendingUnbind=item;get("unbindInfo").innerHTML=`<b>LINE 名稱：</b>${escapeHtml(item.displayName||"LINE 使用者")}<br><b>社團：</b>${escapeHtml(item.club)}<br><b>屬性：</b>${escapeHtml(item.category)}`;openModal("unbindModal")}
 
-        const result =
-        await admin(
-            "adminListBindings"
-        );
+function closeUnbindModal(){if(S.busy)return;S.pendingUnbind=null;closeModal("unbindModal")}
 
-
-        if(
-            unauthorized(result)
-        ){
-            return;
-        }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "無法取得綁定資料"
-            );
-
-        }
-
-
-        S.bindings =
-        Array.isArray(
-            result.bindings
-        )
-            ? result.bindings
-            : [];
-
-
-        S.fBindings = [
-            ...S.bindings
-        ];
-
-
-        get(
-            "statBindings"
-        ).textContent =
-        S.bindings.length;
-
-
-        get(
-            "bindingCountPill"
-        ).textContent =
-        S.bindings.length +
-        " 筆";
-
-
-        renderBindings();
-
-    }
-    catch(error){
-
-        fail(
-            "bindingState",
-            error.message
-        );
-
-    }
-
-}
-
-
-function filterBindings(){
-
-    const query =
-    value(
-        "bindingSearch"
-    )
-    .toLowerCase();
-
-
-    S.fBindings =
-    S.bindings.filter(
-        item =>
-            !query
-            ||
-            [
-                item.displayName,
-                item.userId,
-                item.club,
-                item.category
-            ]
-            .join(" ")
-            .toLowerCase()
-            .includes(
-                query
-            )
-    );
-
-
-    renderBindings();
-
-}
-
-
-function renderBindings(){
-
-    const rows =
-    S.fBindings;
-
-
-    const state =
-    get(
-        "bindingState"
-    );
-
-
-    const desktop =
-    get(
-        "bindingDesktop"
-    );
-
-
-    const mobile =
-    get(
-        "bindingMobile"
-    );
-
-
-    if(!rows.length){
-
-        state.style.display =
-        "block";
-
-
-        state.textContent =
-        "目前沒有符合條件的綁定資料。";
-
-
-        desktop.style.display =
-        "none";
-
-
-        mobile.innerHTML =
-        "";
-
-
-        return;
-
-    }
-
-
-    state.style.display =
-    "none";
-
-
-    desktop.style.display =
-    "block";
-
-
-    get(
-        "bindingTable"
-    ).innerHTML =
-    rows.map(
-        item => `
-
-        <tr>
-
-        <td class="name">
-
-        ${escapeHtml(
-            item.displayName ||
-            "LINE 使用者"
-        )}
-
-        </td>
-
-        <td class="mono">
-
-        ${escapeHtml(item.userId)}
-
-        </td>
-
-        <td>
-
-        ${escapeHtml(item.club)}
-
-        </td>
-
-        <td>
-
-        <span class="chip chip-muted">
-
-        ${escapeHtml(item.category)}
-
-        </span>
-
-        </td>
-
-        <td class="muted">
-
-        ${escapeHtml(
-            formatDate(
-                item.createdAt
-            )
-        )}
-
-        </td>
-
-        <td>
-
-        <button
-            class="btn btn-danger small"
-            onclick="openUnbind('${encodeValue(item.userId)}')"
-        >
-        解除綁定
-        </button>
-
-        </td>
-
-        </tr>
-
-        `
-    )
-    .join("");
-
-
-    mobile.innerHTML =
-    rows.map(
-        item => `
-
-        <div class="mobile-card">
-
-        <div class="mobile-title">
-
-        ${escapeHtml(
-            item.displayName ||
-            "LINE 使用者"
-        )}
-
-        </div>
-
-        <div class="mobile-sub">
-
-        ${escapeHtml(item.club)}
-
-        </div>
-
-        <div class="mobile-info">
-
-        <div>
-        ${escapeHtml(item.category)}
-        </div>
-
-        <div class="mono">
-        ${escapeHtml(item.userId)}
-        </div>
-
-        <div>
-
-        綁定：
-
-        ${escapeHtml(
-            formatDate(
-                item.createdAt
-            )
-        )}
-
-        </div>
-
-        </div>
-
-        <div class="mobile-actions">
-
-        <button
-            class="btn btn-danger small"
-            onclick="openUnbind('${encodeValue(item.userId)}')"
-        >
-        解除綁定
-        </button>
-
-        </div>
-
-        </div>
-
-        `
-    )
-    .join("");
-
-}
-
-
-function openUnbind(
-    encodedUserId
-){
-
-    const userId =
-    decodeURIComponent(
-        encodedUserId
-    );
-
-
-    const item =
-    S.bindings.find(
-        binding =>
-            binding.userId ===
-            userId
-    );
-
-
-    if(!item){
-        return;
-    }
-
-
-    S.pendingUnbind =
-    item;
-
-
-    get(
-        "unbindInfo"
-    ).innerHTML = `
-
-    <b>LINE 名稱：</b>
-
-    ${escapeHtml(
-        item.displayName ||
-        "LINE 使用者"
-    )}
-
-    <br>
-
-    <b>社團：</b>
-
-    ${escapeHtml(item.club)}
-
-    <br>
-
-    <b>屬性：</b>
-
-    ${escapeHtml(item.category)}
-
-    `;
-
-
-    openModal(
-        "unbindModal"
-    );
-
-}
-
-
-function closeUnbindModal(){
-
-    if(S.busy){
-        return;
-    }
-
-
-    S.pendingUnbind =
-    null;
-
-
-    closeModal(
-        "unbindModal"
-    );
-
-}
-
-
-async function confirmUnbind(){
-
-    if(
-        S.busy ||
-        !S.pendingUnbind
-    ){
-        return;
-    }
-
-
-    const item =
-    S.pendingUnbind;
-
-
-    const button =
-    get(
-        "unbindBtn"
-    );
-
-
-    try{
-
-        S.busy =
-        true;
-
-
-        button.disabled =
-        true;
-
-
-        button.textContent =
-        "解除中...";
-
-
-        const result =
-        await admin(
-            "adminUnbind",
-            {
-                userId:item.userId
-            }
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
-            return;
-        }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "解除綁定失敗"
-            );
-
-        }
-
-
-        closeModal(
-            "unbindModal"
-        );
-
-
-        S.pendingUnbind =
-        null;
-
-
-        await loadBindings();
-
-
-        toast(
-            "✅ 已解除綁定"
-        );
-
-    }
-    catch(error){
-
-        toast(
-            "❌ " +
-            error.message
-        );
-
-    }
-    finally{
-
-        S.busy =
-        false;
-
-
-        button.disabled =
-        false;
-
-
-        button.textContent =
-        "確認解除";
-
-    }
-
-}
-
+async function confirmUnbind(){if(S.busy||!S.pendingUnbind)return;const item=S.pendingUnbind,button=get("unbindBtn");try{S.busy=true;button.disabled=true;button.textContent="解除中...";const result=await admin("adminUnbind",{userId:item.userId});if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"解除綁定失敗");closeModal("unbindModal");S.pendingUnbind=null;await loadBindings();toast("✅ 已解除綁定")}catch(error){toast("❌ "+error.message)}finally{S.busy=false;button.disabled=false;button.textContent="確認解除"}}
 
 /* ============================================================
-   雲端
+   社團雲端
    ============================================================ */
 
-async function loadClouds(){
+async function loadClouds(){loading("cloudState","cloudDesktop","正在讀取雲端資料...");try{const result=await admin("adminListCloudLinks");if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"無法取得雲端資料");S.clouds=Array.isArray(result.clubs)?result.clubs:[];S.fClouds=[...S.clouds];get("statClouds").textContent=result.configuredCount??S.clouds.filter(item=>item.configured).length;get("cloudCountPill").textContent=(result.configuredCount??0)+"/"+(result.total??S.clouds.length);renderClouds()}catch(error){fail("cloudState",error.message)}}
 
-    loading(
-        "cloudState",
-        "cloudDesktop",
-        "正在讀取雲端資料..."
-    );
+function filterClouds(){const query=value("cloudSearch").toLowerCase();S.fClouds=S.clouds.filter(item=>!query||(item.club+" "+item.category).toLowerCase().includes(query));renderClouds()}
 
+function renderClouds(){const rows=S.fClouds,state=get("cloudState"),desktop=get("cloudDesktop"),mobile=get("cloudMobile");if(!rows.length){state.style.display="block";state.textContent="目前沒有符合條件的雲端資料。";desktop.style.display="none";mobile.innerHTML="";return}state.style.display="none";desktop.style.display="block";get("cloudTable").innerHTML=rows.map(item=>`<tr><td class="name">${escapeHtml(item.club)}</td><td><span class="chip chip-muted">${escapeHtml(item.category)}</span></td><td>${item.configured?'<span class="chip chip-success">✅ 已設定</span>':'<span class="chip chip-muted">尚未設定</span>'}</td><td>${item.configured&&item.url?`<a class="link" href="${escapeAttribute(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.url)}</a>`:"-"}</td><td class="muted">${escapeHtml(formatDate(item.updatedAt))}</td><td><div class="actions"><button class="btn btn-edit small" onclick="openCloud('${encodeValue(item.club)}')">${item.configured?"修改":"設定"}</button>${item.configured?`<button class="btn btn-danger small" onclick="openClearCloud('${encodeValue(item.club)}')">清除</button>`:""}</div></td></tr>`).join("");mobile.innerHTML=rows.map(item=>`<div class="mobile-card"><div class="mobile-title">${escapeHtml(item.club)}</div><div class="mobile-sub">${escapeHtml(item.category)}</div><div class="mobile-info"><div>${item.configured?"✅ 已設定雲端":"尚未設定雲端"}</div><div>最後修改：${escapeHtml(formatDate(item.updatedAt))}</div></div><div class="mobile-actions"><button class="btn btn-edit small" onclick="openCloud('${encodeValue(item.club)}')">${item.configured?"修改":"設定"}</button>${item.configured?`<button class="btn btn-danger small" onclick="openClearCloud('${encodeValue(item.club)}')">清除</button>`:""}</div></div>`).join("")}
 
-    try{
+function openCloud(encodedClub){const club=decodeURIComponent(encodedClub),item=S.clouds.find(cloud=>cloud.club===club);if(!item)return;S.pendingCloud=item;get("cloudModalInfo").innerHTML=`<b>社團：</b>${escapeHtml(item.club)}<br><b>屬性：</b>${escapeHtml(item.category)}`;get("cloudUrlInput").value=item.url||"";get("cloudModalError").textContent="";openModal("cloudModal")}
 
-        const result =
-        await admin(
-            "adminListCloudLinks"
-        );
+function closeCloudModal(){if(S.busy)return;S.pendingCloud=null;closeModal("cloudModal")}
 
+async function saveCloudLink(){if(S.busy||!S.pendingCloud)return;const item=S.pendingCloud,url=value("cloudUrlInput"),errorBox=get("cloudModalError"),button=get("saveCloudBtn");if(!/^https:\/\/\S+$/i.test(url)){errorBox.textContent="請輸入有效的 https:// 網址。";return}try{S.busy=true;button.disabled=true;button.textContent="儲存中...";const result=await admin("adminSetCloudLink",{clubName:item.club,url});if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"儲存失敗");closeModal("cloudModal");S.pendingCloud=null;await loadClouds();toast("✅ 雲端連結已更新")}catch(error){errorBox.textContent=error.message}finally{S.busy=false;button.disabled=false;button.textContent="儲存連結"}}
 
-        if(
-            unauthorized(result)
-        ){
-            return;
-        }
+function openClearCloud(encodedClub){const club=decodeURIComponent(encodedClub),item=S.clouds.find(cloud=>cloud.club===club);if(!item)return;S.pendingClear=item;get("clearCloudInfo").innerHTML=`<b>社團：</b>${escapeHtml(item.club)}<br><b>屬性：</b>${escapeHtml(item.category)}`;openModal("clearCloudModal")}
 
+function closeClearCloudModal(){if(S.busy)return;S.pendingClear=null;closeModal("clearCloudModal")}
 
-        if(!result.success){
+async function confirmClearCloud(){if(S.busy||!S.pendingClear)return;const item=S.pendingClear,button=get("clearCloudBtn");try{S.busy=true;button.disabled=true;button.textContent="清除中...";const result=await admin("adminClearCloudLink",{clubName:item.club});if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"清除失敗");closeModal("clearCloudModal");S.pendingClear=null;await loadClouds();toast("✅ 雲端連結已清除")}catch(error){toast("❌ "+error.message)}finally{S.busy=false;button.disabled=false;button.textContent="確認清除"}}
 
-            throw new Error(
-                result.message ||
-                "無法取得雲端資料"
-            );
+/* ============================================================
+   評審帳號
+   ============================================================ */
 
-        }
+async function loadJudges(){loading("judgeState","judgeDesktop","正在讀取評審資料...");try{const result=await admin("adminListJudges");if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"無法取得評審資料");S.judgeCategories=Array.isArray(result.categories)&&result.categories.length?result.categories:FALLBACK_CATEGORIES;S.judges=Array.isArray(result.judges)?result.judges:[];S.fJudges=[...S.judges];get("judgeCountPill").textContent=(result.activeCount??S.judges.filter(item=>item.active!==false).length)+" / "+(result.total??S.judges.length);renderJudges()}catch(error){fail("judgeState",error.message)}}
 
+function filterJudges(){const query=value("judgeSearch").toLowerCase();S.fJudges=S.judges.filter(item=>!query||[item.displayName,item.username,...(Array.isArray(item.categories)?item.categories:[])].join(" ").toLowerCase().includes(query));renderJudges()}
 
-        S.clouds =
-        Array.isArray(
-            result.clubs
-        )
-            ? result.clubs
-            : [];
+function renderJudges(){const rows=S.fJudges,state=get("judgeState"),desktop=get("judgeDesktop"),mobile=get("judgeMobile");if(!rows.length){state.style.display="block";state.textContent="目前沒有符合條件的評審帳號。";desktop.style.display="none";mobile.innerHTML="";return}state.style.display="none";desktop.style.display="block";get("judgeTable").innerHTML=rows.map(item=>{const categories=Array.isArray(item.categories)?item.categories:[],categoryHtml=categories.length?categories.map(category=>`<span class="chip chip-muted" style="margin:2px">${escapeHtml(category)}</span>`).join(""):"-";return `<tr><td class="name">${escapeHtml(item.displayName)}</td><td class="mono">${escapeHtml(item.username)}</td><td>${categoryHtml}</td><td>${item.active!==false?'<span class="chip chip-success">✅ 啟用</span>':'<span class="chip chip-danger">⛔ 停用</span>'}</td><td class="muted">${escapeHtml(formatDate(item.updatedAt))}</td><td><div class="actions"><button class="btn btn-edit small" onclick="openEditJudge('${encodeValue(item.id)}')">修改</button><button class="btn small" onclick="openResetJudgePassword('${encodeValue(item.id)}')">🔑 密碼</button>${item.active!==false?`<button class="btn btn-danger small" onclick="toggleJudgeActive('${encodeValue(item.id)}',false)">停用</button>`:`<button class="btn btn-success small" onclick="toggleJudgeActive('${encodeValue(item.id)}',true)">啟用</button>`}<button class="btn btn-danger small" onclick="openDeleteJudge('${encodeValue(item.id)}')">刪除</button></div></td></tr>`}).join("");mobile.innerHTML=rows.map(item=>{const categories=Array.isArray(item.categories)?item.categories:[];return `<div class="mobile-card"><div class="mobile-title">${escapeHtml(item.displayName)}</div><div class="mobile-sub">@${escapeHtml(item.username)}</div><div class="mobile-info"><div>${categories.map(category=>escapeHtml(category)).join("、")||"尚未指派"}</div><div>${item.active!==false?"✅ 帳號啟用":"⛔ 帳號停用"}</div><div>最後修改：${escapeHtml(formatDate(item.updatedAt))}</div></div><div class="mobile-actions"><button class="btn btn-edit small" onclick="openEditJudge('${encodeValue(item.id)}')">修改</button><button class="btn small" onclick="openResetJudgePassword('${encodeValue(item.id)}')">🔑 密碼</button>${item.active!==false?`<button class="btn btn-danger small" onclick="toggleJudgeActive('${encodeValue(item.id)}',false)">停用</button>`:`<button class="btn btn-success small" onclick="toggleJudgeActive('${encodeValue(item.id)}',true)">啟用</button>`}</div></div>`}).join("")}
 
+function renderJudgeCategories(selected=[]){const categories=S.judgeCategories.length?S.judgeCategories:FALLBACK_CATEGORIES,box=get("judgeCategoryChoices");box.innerHTML=categories.map(category=>`<label style="display:flex;align-items:center;gap:7px;padding:9px;border:1px solid #e4e7ec;border-radius:9px;background:#fff;cursor:pointer"><input type="checkbox" name="judgeCategory" value="${escapeAttribute(category)}" ${selected.includes(category)?"checked":""}><span>${escapeHtml(category)}</span></label>`).join("")}
 
-        S.fClouds = [
-            ...S.clouds
-        ];
+function getJudgeSelectedCategories(){return Array.from(document.querySelectorAll('input[name="judgeCategory"]:checked')).map(item=>item.value)}
 
+function openAddJudge(){S.pendingJudge={mode:"add",judgeId:null};get("judgeModalTitle").textContent="新增評審";get("judgeModalDesc").textContent="建立新的評審登入帳號，並設定負責的社團屬性。";get("judgeDisplayNameInput").value="";get("judgeUsernameInput").value="";get("judgePasswordInput").value="";get("judgePasswordGroup").style.display="block";get("judgeActiveInput").checked=true;get("judgeEditError").textContent="";renderJudgeCategories();get("saveJudgeBtn").textContent="新增評審";openModal("judgeEditModal")}
 
-        get(
-            "statClouds"
-        ).textContent =
-        result.configuredCount
-        ??
-        S.clouds.filter(
-            item =>
-                item.configured
-        ).length;
+function openEditJudge(encodedId){const judgeId=decodeURIComponent(encodedId),item=S.judges.find(judge=>judge.id===judgeId);if(!item){toast("找不到評審資料");return}S.pendingJudge={mode:"edit",judgeId:item.id};get("judgeModalTitle").textContent="修改評審";get("judgeModalDesc").textContent="修改評審名稱、登入帳號與負責屬性。密碼請使用獨立的重設功能。";get("judgeDisplayNameInput").value=item.displayName||"";get("judgeUsernameInput").value=item.username||"";get("judgePasswordInput").value="";get("judgePasswordGroup").style.display="none";get("judgeActiveInput").checked=item.active!==false;get("judgeEditError").textContent="";renderJudgeCategories(Array.isArray(item.categories)?item.categories:[]);get("saveJudgeBtn").textContent="儲存修改";openModal("judgeEditModal")}
 
+function closeJudgeEdit(){if(S.busy)return;S.pendingJudge=null;closeModal("judgeEditModal")}
 
-        get(
-            "cloudCountPill"
-        ).textContent =
-        (
-            result.configuredCount ??
-            0
-        )
-        +
-        "/"
-        +
-        (
-            result.total ??
-            S.clouds.length
-        );
+async function saveJudge(){if(S.busy||!S.pendingJudge)return;const displayName=value("judgeDisplayNameInput"),username=value("judgeUsernameInput"),password=get("judgePasswordInput").value,categories=getJudgeSelectedCategories(),active=get("judgeActiveInput").checked,errorBox=get("judgeEditError"),button=get("saveJudgeBtn");if(!displayName){errorBox.textContent="請輸入評審名稱。";return}if(!username){errorBox.textContent="請輸入登入帳號。";return}if(categories.length===0){errorBox.textContent="請至少勾選一個負責的社團屬性。";return}if(S.pendingJudge.mode==="add"&&password.length<6){errorBox.textContent="評審密碼至少需要 6 個字元。";return}try{S.busy=true;button.disabled=true;button.textContent="儲存中...";errorBox.textContent="";let result;if(S.pendingJudge.mode==="add")result=await admin("adminAddJudge",{displayName,username,password,categories,active});else result=await admin("adminUpdateJudge",{judgeId:S.pendingJudge.judgeId,displayName,username,categories,active});if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"儲存評審失敗");closeModal("judgeEditModal");S.pendingJudge=null;await loadJudges();toast("✅ 評審資料已儲存")}catch(error){errorBox.textContent=error.message}finally{S.busy=false;button.disabled=false;button.textContent="儲存"}}
 
+async function toggleJudgeActive(encodedId,active){const judgeId=decodeURIComponent(encodedId),item=S.judges.find(judge=>judge.id===judgeId);if(!item)return;const message=active?`確定要啟用「${item.displayName}」的評審帳號嗎？`:`確定要停用「${item.displayName}」的評審帳號嗎？`;if(!window.confirm(message))return;try{const result=await admin("adminSetJudgeActive",{judgeId,active});if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"修改帳號狀態失敗");await loadJudges();toast(active?"✅ 評審帳號已啟用":"⛔ 評審帳號已停用")}catch(error){toast("❌ "+error.message)}}
 
-        renderClouds();
+function openResetJudgePassword(encodedId){const judgeId=decodeURIComponent(encodedId),item=S.judges.find(judge=>judge.id===judgeId);if(!item)return;S.pendingJudgePassword=item;get("judgePasswordInfo").innerHTML=`<b>評審：</b>${escapeHtml(item.displayName)}<br><b>帳號：</b>${escapeHtml(item.username)}`;get("judgeNewPasswordInput").value="";get("judgePasswordError").textContent="";openModal("judgePasswordModal")}
 
-    }
-    catch(error){
+function closeJudgePasswordModal(){if(S.busy)return;S.pendingJudgePassword=null;closeModal("judgePasswordModal")}
 
-        fail(
-            "cloudState",
-            error.message
-        );
+async function confirmResetJudgePassword(){if(S.busy||!S.pendingJudgePassword)return;const password=get("judgeNewPasswordInput").value,errorBox=get("judgePasswordError"),button=get("resetJudgePasswordBtn");if(password.length<6){errorBox.textContent="新密碼至少需要 6 個字元。";return}try{S.busy=true;button.disabled=true;button.textContent="重設中...";const result=await admin("adminResetJudgePassword",{judgeId:S.pendingJudgePassword.id,newPassword:password});if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"重設密碼失敗");closeModal("judgePasswordModal");S.pendingJudgePassword=null;toast("✅ 評審密碼已重設")}catch(error){errorBox.textContent=error.message}finally{S.busy=false;button.disabled=false;button.textContent="重設密碼"}}
 
-    }
+function openDeleteJudge(encodedId){const judgeId=decodeURIComponent(encodedId),item=S.judges.find(judge=>judge.id===judgeId);if(!item)return;S.pendingJudgeDelete=item;get("judgeDeleteInfo").innerHTML=`<b>評審：</b>${escapeHtml(item.displayName)}<br><b>帳號：</b>${escapeHtml(item.username)}<br><b>負責屬性：</b>${escapeHtml(Array.isArray(item.categories)?item.categories.join("、"):"")}`;get("judgeDeleteError").textContent="";openModal("judgeDeleteModal")}
 
-}
+function closeJudgeDeleteModal(){if(S.busy)return;S.pendingJudgeDelete=null;closeModal("judgeDeleteModal")}
 
-
-function filterClouds(){
-
-    const query =
-    value(
-        "cloudSearch"
-    )
-    .toLowerCase();
-
-
-    S.fClouds =
-    S.clouds.filter(
-        item =>
-            !query
-            ||
-            (
-                item.club +
-                " " +
-                item.category
-            )
-            .toLowerCase()
-            .includes(
-                query
-            )
-    );
-
-
-    renderClouds();
-
-}
-
-
-function renderClouds(){
-
-    const rows =
-    S.fClouds;
-
-
-    const state =
-    get(
-        "cloudState"
-    );
-
-
-    const desktop =
-    get(
-        "cloudDesktop"
-    );
-
-
-    const mobile =
-    get(
-        "cloudMobile"
-    );
-
-
-    if(!rows.length){
-
-        state.style.display =
-        "block";
-
-
-        state.textContent =
-        "目前沒有符合條件的雲端資料。";
-
-
-        desktop.style.display =
-        "none";
-
-
-        mobile.innerHTML =
-        "";
-
-
-        return;
-
-    }
-
-
-    state.style.display =
-    "none";
-
-
-    desktop.style.display =
-    "block";
-
-
-    get(
-        "cloudTable"
-    ).innerHTML =
-    rows.map(
-        item => `
-
-        <tr>
-
-        <td class="name">
-
-        ${escapeHtml(item.club)}
-
-        </td>
-
-        <td>
-
-        <span class="chip chip-muted">
-
-        ${escapeHtml(item.category)}
-
-        </span>
-
-        </td>
-
-        <td>
-
-        ${
-            item.configured
-
-                ? `
-                <span class="chip chip-success">
-                ✅ 已設定
-                </span>
-                `
-
-                : `
-                <span class="chip chip-muted">
-                尚未設定
-                </span>
-                `
-        }
-
-        </td>
-
-        <td>
-
-        ${
-            item.configured &&
-            item.url
-
-                ? `
-
-                <a
-                    class="link"
-                    href="${escapeAttribute(item.url)}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-
-                ${escapeHtml(item.url)}
-
-                </a>
-
-                `
-
-                : "-"
-        }
-
-        </td>
-
-        <td class="muted">
-
-        ${escapeHtml(
-            formatDate(
-                item.updatedAt
-            )
-        )}
-
-        </td>
-
-        <td>
-
-        <div class="actions">
-
-        <button
-            class="btn btn-edit small"
-            onclick="openCloud('${encodeValue(item.club)}')"
-        >
-
-        ${
-            item.configured
-                ? "修改"
-                : "設定"
-        }
-
-        </button>
-
-        ${
-            item.configured
-
-                ? `
-
-                <button
-                    class="btn btn-danger small"
-                    onclick="openClearCloud('${encodeValue(item.club)}')"
-                >
-                清除
-                </button>
-
-                `
-
-                : ""
-        }
-
-        </div>
-
-        </td>
-
-        </tr>
-
-        `
-    )
-    .join("");
-
-
-    mobile.innerHTML =
-    rows.map(
-        item => `
-
-        <div class="mobile-card">
-
-        <div class="mobile-title">
-
-        ${escapeHtml(item.club)}
-
-        </div>
-
-        <div class="mobile-sub">
-
-        ${escapeHtml(item.category)}
-
-        </div>
-
-        <div class="mobile-info">
-
-        <div>
-
-        ${
-            item.configured
-                ? "✅ 已設定雲端"
-                : "尚未設定雲端"
-        }
-
-        </div>
-
-        <div>
-
-        最後修改：
-
-        ${escapeHtml(
-            formatDate(
-                item.updatedAt
-            )
-        )}
-
-        </div>
-
-        </div>
-
-        <div class="mobile-actions">
-
-        <button
-            class="btn btn-edit small"
-            onclick="openCloud('${encodeValue(item.club)}')"
-        >
-
-        ${
-            item.configured
-                ? "修改"
-                : "設定"
-        }
-
-        </button>
-
-        ${
-            item.configured
-
-                ? `
-
-                <button
-                    class="btn btn-danger small"
-                    onclick="openClearCloud('${encodeValue(item.club)}')"
-                >
-                清除
-                </button>
-
-                `
-
-                : ""
-        }
-
-        </div>
-
-        </div>
-
-        `
-    )
-    .join("");
-
-}
-
-
-function openCloud(
-    encodedClub
-){
-
-    const club =
-    decodeURIComponent(
-        encodedClub
-    );
-
-
-    const item =
-    S.clouds.find(
-        cloud =>
-            cloud.club ===
-            club
-    );
-
-
-    if(!item){
-        return;
-    }
-
-
-    S.pendingCloud =
-    item;
-
-
-    get(
-        "cloudModalInfo"
-    ).innerHTML = `
-
-    <b>社團：</b>
-
-    ${escapeHtml(item.club)}
-
-    <br>
-
-    <b>屬性：</b>
-
-    ${escapeHtml(item.category)}
-
-    `;
-
-
-    get(
-        "cloudUrlInput"
-    ).value =
-    item.url ||
-    "";
-
-
-    get(
-        "cloudModalError"
-    ).textContent =
-    "";
-
-
-    openModal(
-        "cloudModal"
-    );
-
-}
-
-
-function closeCloudModal(){
-
-    if(S.busy){
-        return;
-    }
-
-
-    S.pendingCloud =
-    null;
-
-
-    closeModal(
-        "cloudModal"
-    );
-
-}
-
-
-async function saveCloudLink(){
-
-    if(
-        S.busy ||
-        !S.pendingCloud
-    ){
-        return;
-    }
-
-
-    const item =
-    S.pendingCloud;
-
-
-    const url =
-    value(
-        "cloudUrlInput"
-    );
-
-
-    const errorBox =
-    get(
-        "cloudModalError"
-    );
-
-
-    const button =
-    get(
-        "saveCloudBtn"
-    );
-
-
-    if(
-        !/^https:\/\/\S+$/i.test(
-            url
-        )
-    ){
-
-        errorBox.textContent =
-        "請輸入有效的 https:// 網址。";
-
-
-        return;
-
-    }
-
-
-    try{
-
-        S.busy =
-        true;
-
-
-        button.disabled =
-        true;
-
-
-        button.textContent =
-        "儲存中...";
-
-
-        const result =
-        await admin(
-            "adminSetCloudLink",
-            {
-                clubName:item.club,
-                url
-            }
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
-            return;
-        }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "儲存失敗"
-            );
-
-        }
-
-
-        closeModal(
-            "cloudModal"
-        );
-
-
-        S.pendingCloud =
-        null;
-
-
-        await loadClouds();
-
-
-        toast(
-            "✅ 雲端連結已更新"
-        );
-
-    }
-    catch(error){
-
-        errorBox.textContent =
-        error.message;
-
-    }
-    finally{
-
-        S.busy =
-        false;
-
-
-        button.disabled =
-        false;
-
-
-        button.textContent =
-        "儲存連結";
-
-    }
-
-}
-
-
-function openClearCloud(
-    encodedClub
-){
-
-    const club =
-    decodeURIComponent(
-        encodedClub
-    );
-
-
-    const item =
-    S.clouds.find(
-        cloud =>
-            cloud.club ===
-            club
-    );
-
-
-    if(!item){
-        return;
-    }
-
-
-    S.pendingClear =
-    item;
-
-
-    get(
-        "clearCloudInfo"
-    ).innerHTML = `
-
-    <b>社團：</b>
-
-    ${escapeHtml(item.club)}
-
-    <br>
-
-    <b>屬性：</b>
-
-    ${escapeHtml(item.category)}
-
-    `;
-
-
-    openModal(
-        "clearCloudModal"
-    );
-
-}
-
-
-function closeClearCloudModal(){
-
-    if(S.busy){
-        return;
-    }
-
-
-    S.pendingClear =
-    null;
-
-
-    closeModal(
-        "clearCloudModal"
-    );
-
-}
-
-
-async function confirmClearCloud(){
-
-    if(
-        S.busy ||
-        !S.pendingClear
-    ){
-        return;
-    }
-
-
-    const item =
-    S.pendingClear;
-
-
-    const button =
-    get(
-        "clearCloudBtn"
-    );
-
-
-    try{
-
-        S.busy =
-        true;
-
-
-        button.disabled =
-        true;
-
-
-        button.textContent =
-        "清除中...";
-
-
-        const result =
-        await admin(
-            "adminClearCloudLink",
-            {
-                clubName:item.club
-            }
-        );
-
-
-        if(
-            unauthorized(result)
-        ){
-            return;
-        }
-
-
-        if(!result.success){
-
-            throw new Error(
-                result.message ||
-                "清除失敗"
-            );
-
-        }
-
-
-        closeModal(
-            "clearCloudModal"
-        );
-
-
-        S.pendingClear =
-        null;
-
-
-        await loadClouds();
-
-
-        toast(
-            "✅ 雲端連結已清除"
-        );
-
-    }
-    catch(error){
-
-        toast(
-            "❌ " +
-            error.message
-        );
-
-    }
-    finally{
-
-        S.busy =
-        false;
-
-
-        button.disabled =
-        false;
-
-
-        button.textContent =
-        "確認清除";
-
-    }
-
-}
-
+async function confirmDeleteJudge(){if(S.busy||!S.pendingJudgeDelete)return;const button=get("deleteJudgeBtn"),errorBox=get("judgeDeleteError");try{S.busy=true;button.disabled=true;button.textContent="刪除中...";const result=await admin("adminDeleteJudge",{judgeId:S.pendingJudgeDelete.id});if(unauthorized(result))return;if(!result.success)throw new Error(result.message||"刪除評審失敗");closeModal("judgeDeleteModal");S.pendingJudgeDelete=null;await loadJudges();toast("✅ 評審帳號已刪除")}catch(error){errorBox.textContent=error.message}finally{S.busy=false;button.disabled=false;button.textContent="確認刪除"}}
 
 /* ============================================================
    共用
    ============================================================ */
 
 function get(id){
-
-    return document.getElementById(
-        id
-    );
-
+    return document.getElementById(id);
 }
-
 
 function value(id){
-
-    return get(
-        id
-    )
-    .value
-    .trim();
-
+    return get(id).value.trim();
 }
-
 
 function encodeValue(v){
-
     return encodeURIComponent(
-        String(
-            v ??
-            ""
-        )
-    )
-    .replaceAll(
-        "'",
-        "%27"
-    );
-
+        String(v??"")
+    ).replaceAll("'","%27");
 }
-
 
 function escapeHtml(v){
-
-    return String(
-        v ??
-        ""
-    )
-    .replaceAll(
-        "&",
-        "&amp;"
-    )
-    .replaceAll(
-        "<",
-        "&lt;"
-    )
-    .replaceAll(
-        ">",
-        "&gt;"
-    )
-    .replaceAll(
-        '"',
-        "&quot;"
-    )
-    .replaceAll(
-        "'",
-        "&#039;"
-    );
-
+    return String(v??"")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
 }
-
 
 function escapeAttribute(v){
-
-    return escapeHtml(
-        v
-    );
-
+    return escapeHtml(v);
 }
 
-
 function formatDate(v){
+    if(!v)return "-";
 
-    if(!v){
-        return "-";
+    const d=new Date(v);
+
+    if(Number.isNaN(d.getTime())){
+        return String(v);
     }
-
-
-    const d =
-    new Date(
-        v
-    );
-
-
-    if(
-        Number.isNaN(
-            d.getTime()
-        )
-    ){
-
-        return String(
-            v
-        );
-
-    }
-
 
     return new Intl.DateTimeFormat(
         "zh-TW",
@@ -7933,139 +1055,55 @@ function formatDate(v){
             minute:"2-digit",
             hour12:false
         }
-    )
-    .format(
-        d
-    );
-
+    ).format(d);
 }
 
+function loading(stateId,desktopId,text){
+    const state=get(stateId);
 
-function loading(
-    stateId,
-    desktopId,
-    text
-){
+    state.style.display="block";
 
-    const state =
-    get(
-        stateId
-    );
-
-
-    state.style.display =
-    "block";
-
-
-    state.innerHTML = `
-
-    <div class="spinner"></div>
-
-    ${escapeHtml(text)}
-
-    `;
-
+    state.innerHTML=
+        `<div class="spinner"></div>${escapeHtml(text)}`;
 
     if(desktopId){
-
-        get(
-            desktopId
-        ).style.display =
-        "none";
-
+        get(desktopId).style.display="none";
     }
-
 }
 
+function fail(stateId,message){
+    const state=get(stateId);
 
-function fail(
-    stateId,
-    message
-){
+    state.style.display="block";
 
-    const state =
-    get(
-        stateId
-    );
-
-
-    state.style.display =
-    "block";
-
-
-    state.innerHTML = `
-
-    ⚠️
-
-    ${escapeHtml(
-        message ||
-        "讀取失敗"
-    )}
-
-    `;
-
+    state.innerHTML=
+        `⚠️ ${escapeHtml(message||"讀取失敗")}`;
 }
-
 
 function openModal(id){
-
-    get(
-        id
-    ).style.display =
-    "flex";
-
+    get(id).style.display="flex";
 }
-
 
 function closeModal(id){
-
-    get(
-        id
-    ).style.display =
-    "none";
-
+    get(id).style.display="none";
 }
 
-
-let toastTimer =
-null;
-
+let toastTimer=null;
 
 function toast(message){
+    const element=get("toast");
 
-    const element =
-    get(
-        "toast"
-    );
+    element.textContent=message;
 
+    element.classList.add("show");
 
-    element.textContent =
-    message;
+    clearTimeout(toastTimer);
 
-
-    element.classList.add(
-        "show"
-    );
-
-
-    clearTimeout(
-        toastTimer
-    );
-
-
-    toastTimer =
-    setTimeout(
-        () =>
-            element.classList.remove(
-                "show"
-            ),
+    toastTimer=setTimeout(
+        ()=>element.classList.remove("show"),
         2600
     );
-
 }
-
-
-/* 點背景關閉 */
 
 [
     "clubEditModal",
@@ -8077,49 +1115,27 @@ function toast(message){
     "clearCloudModal",
     "unbindModal"
 ]
-.forEach(
-    modalId => {
-
-        get(
-            modalId
-        )
-        .addEventListener(
-            "click",
-            function(event){
-
-                if(
-                    event.target ===
-                    this
-                    &&
-                    !S.busy
-                ){
-
-                    closeModal(
-                        modalId
-                    );
-
-                }
-
+.forEach(modalId=>{
+    get(modalId).addEventListener(
+        "click",
+        function(event){
+            if(
+                event.target===this&&
+                !S.busy
+            ){
+                closeModal(modalId);
             }
-        );
-
-    }
-);
-
-
-/* ESC */
+        }
+    );
+});
 
 document.addEventListener(
     "keydown",
-    event => {
-
+    event=>{
         if(
-            event.key ===
-            "Escape"
-            &&
+            event.key==="Escape"&&
             !S.busy
         ){
-
             [
                 "clubEditModal",
                 "clubDeleteModal",
@@ -8130,16 +1146,10 @@ document.addEventListener(
                 "clearCloudModal",
                 "unbindModal"
             ]
-            .forEach(
-                closeModal
-            );
-
+            .forEach(closeModal);
         }
-
     }
 );
-
 </script>
-
 </body>
 </html>
