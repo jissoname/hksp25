@@ -23,20 +23,13 @@
 <style>
 
 * {
-    box-sizing:
-        border-box;
+    box-sizing: border-box;
 }
-
 
 html,
 body {
-
-    margin:
-        0;
-
-    min-height:
-        100%;
-
+    margin: 0;
+    min-height: 100%;
     font-family:
         -apple-system,
         BlinkMacSystemFont,
@@ -44,83 +37,39 @@ body {
         "Noto Sans TC",
         Roboto,
         sans-serif;
-
-    background:
-        #f5f7fb;
-
-    color:
-        #202124;
-
+    background: #f5f7fb;
+    color: #202124;
 }
-
 
 button,
 input,
 select {
-
-    font:
-        inherit;
-
+    font: inherit;
 }
-
 
 button {
-
-    cursor:
-        pointer;
-
+    cursor: pointer;
 }
-
 
 :root {
-
-    --p:
-        #1a73e8;
-
-    --pd:
-        #1557b0;
-
-    --bd:
-        #e4e7ec;
-
-    --muted:
-        #667085;
-
-    --ok:
-        #167542;
-
-    --okbg:
-        #e7f6ec;
-
-    --warn:
-        #b54708;
-
-    --warnbg:
-        #fff6e8;
-
-    --bad:
-        #d92d20;
-
-    --badbg:
-        #fff1f0;
-
-    --violet:
-        #6941c6;
-
-    --violetbg:
-        #f4f0ff;
-
-    --shadow:
-        0 8px 28px rgba(16,24,40,.07);
-
+    --p: #1a73e8;
+    --pd: #1557b0;
+    --bd: #e4e7ec;
+    --muted: #667085;
+    --ok: #167542;
+    --okbg: #e7f6ec;
+    --warn: #b54708;
+    --warnbg: #fff6e8;
+    --bad: #d92d20;
+    --badbg: #fff1f0;
+    --violet: #6941c6;
+    --violetbg: #f4f0ff;
+    --graybg: #f2f4f7;
+    --shadow: 0 8px 28px rgba(16,24,40,.07);
 }
 
-
 .hidden {
-
-    display:
-        none !important;
-
+    display: none !important;
 }
 
 
@@ -129,255 +78,110 @@ button {
    ============================================================ */
 
 .login-screen {
-
-    min-height:
-        100vh;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    padding:
-        24px;
-
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
 }
-
 
 .login-card {
-
-    width:
-        min(430px,100%);
-
-    background:
-        #fff;
-
-    border:
-        1px solid var(--bd);
-
-    border-radius:
-        22px;
-
-    padding:
-        32px;
-
-    box-shadow:
-        0 20px 60px rgba(16,24,40,.12);
-
+    width: min(430px,100%);
+    background: #fff;
+    border: 1px solid var(--bd);
+    border-radius: 22px;
+    padding: 32px;
+    box-shadow: 0 20px 60px rgba(16,24,40,.12);
 }
-
 
 .login-icon {
-
-    font-size:
-        34px;
-
+    font-size: 34px;
 }
-
 
 .login-title {
-
-    font-size:
-        26px;
-
-    font-weight:
-        900;
-
-    margin:
-        12px 0 5px;
-
+    font-size: 26px;
+    font-weight: 900;
+    margin: 12px 0 5px;
 }
-
 
 .muted {
-
-    color:
-        var(--muted);
-
+    color: var(--muted);
 }
-
 
 .field {
-
-    width:
-        100%;
-
-    height:
-        42px;
-
-    border:
-        1px solid #d0d5dd;
-
-    border-radius:
-        9px;
-
-    padding:
-        0 11px;
-
-    outline:
-        none;
-
-    background:
-        #fff;
-
+    width: 100%;
+    height: 42px;
+    border: 1px solid #d0d5dd;
+    border-radius: 9px;
+    padding: 0 11px;
+    outline: none;
+    background: #fff;
 }
-
 
 .field:focus {
-
-    border-color:
-        var(--p);
-
-    box-shadow:
-        0 0 0 3px rgba(26,115,232,.08);
-
+    border-color: var(--p);
+    box-shadow: 0 0 0 3px rgba(26,115,232,.08);
 }
-
 
 .label {
-
-    display:
-        block;
-
-    font-size:
-        12px;
-
-    font-weight:
-        800;
-
-    margin:
-        14px 0 6px;
-
+    display: block;
+    font-size: 12px;
+    font-weight: 800;
+    margin: 14px 0 6px;
 }
-
 
 .btn {
-
-    min-height:
-        38px;
-
-    border:
-        1px solid var(--bd);
-
-    border-radius:
-        9px;
-
-    background:
-        #fff;
-
-    padding:
-        0 12px;
-
-    font-weight:
-        800;
-
-    color:
-        #344054;
-
+    min-height: 38px;
+    border: 1px solid var(--bd);
+    border-radius: 9px;
+    background: #fff;
+    padding: 0 12px;
+    font-weight: 800;
+    color: #344054;
 }
-
 
 .btn:hover {
-
-    background:
-        #f9fafb;
-
+    background: #f9fafb;
 }
-
 
 .btn-primary {
-
-    background:
-        var(--p);
-
-    border-color:
-        var(--p);
-
-    color:
-        #fff;
-
+    background: var(--p);
+    border-color: var(--p);
+    color: #fff;
 }
-
 
 .btn-primary:hover {
-
-    background:
-        var(--pd);
-
+    background: var(--pd);
 }
-
 
 .btn-danger {
-
-    background:
-        var(--badbg);
-
-    border-color:
-        #f5c7c4;
-
-    color:
-        var(--bad);
-
+    background: var(--badbg);
+    border-color: #f5c7c4;
+    color: var(--bad);
 }
-
 
 .btn-success {
-
-    background:
-        var(--okbg);
-
-    border-color:
-        #cce7d5;
-
-    color:
-        var(--ok);
-
+    background: var(--okbg);
+    border-color: #cce7d5;
+    color: var(--ok);
 }
-
 
 .btn:disabled {
-
-    opacity:
-        .5;
-
-    cursor:
-        not-allowed;
-
+    opacity: .5;
+    cursor: not-allowed;
 }
-
 
 .login-btn {
-
-    width:
-        100%;
-
-    margin-top:
-        20px;
-
-    height:
-        46px;
-
+    width: 100%;
+    margin-top: 20px;
+    height: 46px;
 }
 
-
 .error {
-
-    color:
-        var(--bad);
-
-    font-size:
-        12px;
-
-    line-height:
-        1.6;
-
-    margin-top:
-        9px;
-
+    color: var(--bad);
+    font-size: 12px;
+    line-height: 1.6;
+    margin-top: 9px;
 }
 
 
@@ -386,132 +190,61 @@ button {
    ============================================================ */
 
 .app {
-
-    display:
-        none;
-
+    display: none;
 }
-
 
 .topbar {
-
-    position:
-        sticky;
-
-    top:
-        0;
-
-    z-index:
-        40;
-
-    background:
-        rgba(255,255,255,.96);
-
-    backdrop-filter:
-        blur(10px);
-
-    border-bottom:
-        1px solid var(--bd);
-
-    display:
-        flex;
-
-    justify-content:
-        space-between;
-
-    align-items:
-        center;
-
-    padding:
-        12px max(
-            16px,
-            calc((100vw - 1200px)/2)
-        );
-
-    gap:
-        12px;
-
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(255,255,255,.96);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--bd);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px max(
+        16px,
+        calc((100vw - 1200px)/2)
+    );
+    gap: 12px;
 }
-
 
 .brand {
-
-    font-weight:
-        900;
-
+    font-weight: 900;
 }
-
 
 .sub {
-
-    font-size:
-        11px;
-
-    color:
-        var(--muted);
-
-    margin-top:
-        2px;
-
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
 }
-
 
 .top-actions {
-
-    display:
-        flex;
-
-    gap:
-        8px;
-
+    display: flex;
+    gap: 8px;
 }
-
 
 .main {
-
-    width:
-        min(
-            1200px,
-            calc(100% - 28px)
-        );
-
-    margin:
-        auto;
-
-    padding:
-        24px 0 50px;
-
+    width: min(
+        1200px,
+        calc(100% - 28px)
+    );
+    margin: auto;
+    padding: 24px 0 50px;
 }
-
 
 .hero {
-
-    display:
-        flex;
-
-    justify-content:
-        space-between;
-
-    gap:
-        14px;
-
-    align-items:
-        end;
-
-    margin-bottom:
-        15px;
-
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: end;
+    margin-bottom: 15px;
 }
 
-
 .hero h1 {
-
-    margin:
-        0;
-
-    font-size:
-        27px;
-
+    margin: 0;
+    font-size: 27px;
 }
 
 
@@ -520,67 +253,30 @@ button {
    ============================================================ */
 
 .stats {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        repeat(4,1fr);
-
-    gap:
-        10px;
-
-    margin-bottom:
-        15px;
-
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 10px;
+    margin-bottom: 15px;
 }
-
 
 .stat {
-
-    background:
-        #fff;
-
-    border:
-        1px solid var(--bd);
-
-    border-radius:
-        14px;
-
-    padding:
-        14px;
-
-    box-shadow:
-        var(--shadow);
-
+    background: #fff;
+    border: 1px solid var(--bd);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: var(--shadow);
 }
-
 
 .stat-label {
-
-    font-size:
-        11px;
-
-    color:
-        var(--muted);
-
-    font-weight:
-        800;
-
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 800;
 }
 
-
 .stat-value {
-
-    font-size:
-        22px;
-
-    font-weight:
-        900;
-
-    margin-top:
-        4px;
-
+    font-size: 22px;
+    font-weight: 900;
+    margin-top: 4px;
 }
 
 
@@ -589,111 +285,50 @@ button {
    ============================================================ */
 
 .panel {
-
-    background:
-        #fff;
-
-    border:
-        1px solid var(--bd);
-
-    border-radius:
-        15px;
-
-    box-shadow:
-        var(--shadow);
-
-    margin-bottom:
-        12px;
-
-    overflow:
-        hidden;
-
+    background: #fff;
+    border: 1px solid var(--bd);
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+    overflow: hidden;
 }
-
 
 .panel-head {
-
-    width:
-        100%;
-
-    border:
-        0;
-
-    background:
-        #fff;
-
-    padding:
-        15px 17px;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        space-between;
-
-    text-align:
-        left;
-
+    width: 100%;
+    border: 0;
+    background: #fff;
+    padding: 15px 17px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
 }
-
 
 .panel-title {
-
-    font-size:
-        15px;
-
-    font-weight:
-        900;
-
+    font-size: 15px;
+    font-weight: 900;
 }
-
 
 .panel-meta {
-
-    font-size:
-        11px;
-
-    color:
-        var(--muted);
-
+    font-size: 11px;
+    color: var(--muted);
 }
-
 
 .panel-body {
-
-    border-top:
-        1px solid var(--bd);
-
-    padding:
-        16px;
-
+    border-top: 1px solid var(--bd);
+    padding: 16px;
 }
-
 
 .chev {
-
-    transition:
-        .2s;
-
+    transition: .2s;
 }
-
 
 .panel.closed .panel-body {
-
-    display:
-        none;
-
+    display: none;
 }
 
-
 .panel.closed .chev {
-
-    transform:
-        rotate(-90deg);
-
+    transform: rotate(-90deg);
 }
 
 
@@ -702,109 +337,48 @@ button {
    ============================================================ */
 
 .toolbar {
-
-    display:
-        flex;
-
-    flex-wrap:
-        wrap;
-
-    gap:
-        8px;
-
-    align-items:
-        center;
-
-    margin-bottom:
-        12px;
-
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
 }
-
 
 .toolbar .field {
-
-    width:
-        auto;
-
-    min-width:
-        180px;
-
+    width: auto;
+    min-width: 180px;
 }
-
 
 .grow {
-
-    flex:
-        1;
-
+    flex: 1;
 }
-
 
 .notice {
-
-    padding:
-        11px 12px;
-
-    border:
-        1px solid #bfd7ff;
-
-    background:
-        #f5f9ff;
-
-    border-radius:
-        10px;
-
-    color:
-        #174b88;
-
-    font-size:
-        12px;
-
-    line-height:
-        1.7;
-
+    padding: 11px 12px;
+    border: 1px solid #bfd7ff;
+    background: #f5f9ff;
+    border-radius: 10px;
+    color: #174b88;
+    font-size: 12px;
+    line-height: 1.7;
 }
-
 
 .okbox {
-
-    background:
-        var(--okbg);
-
-    border-color:
-        #cce7d5;
-
-    color:
-        var(--ok);
-
+    background: var(--okbg);
+    border-color: #cce7d5;
+    color: var(--ok);
 }
-
 
 .warnbox {
-
-    background:
-        var(--warnbg);
-
-    border-color:
-        #f5d6a4;
-
-    color:
-        #8a4b08;
-
+    background: var(--warnbg);
+    border-color: #f5d6a4;
+    color: #8a4b08;
 }
 
-
 .badbox {
-
-    background:
-        var(--badbg);
-
-    border-color:
-        #f5c7c4;
-
-    color:
-        #7a271a;
-
+    background: var(--badbg);
+    border-color: #f5c7c4;
+    color: #7a271a;
 }
 
 
@@ -813,375 +387,512 @@ button {
    ============================================================ */
 
 .score-top {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        1fr 160px auto;
-
-    gap:
-        10px;
-
-    align-items:
-        end;
-
-    margin-bottom:
-        12px;
-
+    display: grid;
+    grid-template-columns: 1fr 160px auto;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 12px;
 }
-
 
 .score-section {
-
-    border:
-        1px solid #dce5f2;
-
-    border-radius:
-        14px;
-
-    margin:
-        12px 0;
-
-    background:
-        #fbfdff;
-
-    overflow:
-        hidden;
-
+    border: 1px solid #dce5f2;
+    border-radius: 14px;
+    margin: 12px 0;
+    background: #fbfdff;
+    overflow: hidden;
 }
-
 
 .score-section-head {
-
-    padding:
-        12px;
-
-    background:
-        #f4f8ff;
-
-    border-bottom:
-        1px solid #dce5f2;
-
+    padding: 12px;
+    background: #f4f8ff;
+    border-bottom: 1px solid #dce5f2;
 }
-
 
 .section-grid {
-
-    display:
-        grid;
-
+    display: grid;
     grid-template-columns:
-        68px minmax(180px,1fr) 130px 135px auto;
-
-    gap:
-        8px;
-
-    align-items:
-        end;
-
+        68px
+        minmax(180px,1fr)
+        130px
+        135px
+        auto;
+    gap: 8px;
+    align-items: end;
 }
-
 
 .mini-label {
-
-    font-size:
-        10px;
-
-    color:
-        var(--muted);
-
-    font-weight:
-        800;
-
-    margin-bottom:
-        4px;
-
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 800;
+    margin-bottom: 4px;
 }
-
 
 .mini {
-
-    height:
-        38px;
-
+    height: 38px;
 }
-
 
 .toggle-row {
-
-    display:
-        flex;
-
-    gap:
-        7px;
-
-    align-items:
-        center;
-
-    font-size:
-        11px;
-
-    font-weight:
-        800;
-
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 800;
 }
-
 
 .badge {
-
-    display:
-        inline-flex;
-
-    padding:
-        5px 8px;
-
-    border-radius:
-        999px;
-
-    font-size:
-        10px;
-
-    font-weight:
-        900;
-
+    display: inline-flex;
+    padding: 5px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 900;
 }
-
 
 .b-pub {
-
-    background:
-        var(--okbg);
-
-    color:
-        var(--ok);
-
+    background: var(--okbg);
+    color: var(--ok);
 }
-
 
 .b-draft {
-
-    background:
-        #f2f4f7;
-
-    color:
-        #667085;
-
+    background: #f2f4f7;
+    color: #667085;
 }
-
 
 .b-manual {
-
-    background:
-        var(--violetbg);
-
-    color:
-        var(--violet);
-
+    background: var(--violetbg);
+    color: var(--violet);
 }
-
 
 .score-section-body {
-
-    padding:
-        12px;
-
+    padding: 12px;
 }
-
 
 .score-group {
-
-    border:
-        1px solid var(--bd);
-
-    border-radius:
-        11px;
-
-    margin-bottom:
-        9px;
-
-    overflow:
-        hidden;
-
-    background:
-        #fff;
-
+    border: 1px solid var(--bd);
+    border-radius: 11px;
+    margin-bottom: 9px;
+    overflow: hidden;
+    background: #fff;
 }
-
 
 .group-head {
-
-    display:
-        grid;
-
+    display: grid;
     grid-template-columns:
-        minmax(150px,1fr) 120px auto;
-
-    gap:
-        8px;
-
-    align-items:
-        end;
-
-    padding:
-        10px;
-
-    background:
-        #fcfcfd;
-
-    border-bottom:
-        1px solid var(--bd);
-
+        minmax(150px,1fr)
+        120px
+        auto;
+    gap: 8px;
+    align-items: end;
+    padding: 10px;
+    background: #fcfcfd;
+    border-bottom: 1px solid var(--bd);
 }
-
 
 .criteria {
-
-    padding:
-        8px;
-
+    padding: 8px;
 }
-
 
 .criterion {
-
-    display:
-        grid;
-
+    display: grid;
     grid-template-columns:
-        minmax(160px,1fr) 110px auto;
-
-    gap:
-        8px;
-
-    align-items:
-        end;
-
-    padding:
-        7px;
-
-    border-bottom:
-        1px dashed #e8eaed;
-
+        minmax(160px,1fr)
+        110px
+        auto;
+    gap: 8px;
+    align-items: end;
+    padding: 7px;
+    border-bottom: 1px dashed #e8eaed;
 }
-
 
 .criterion:last-child {
-
-    border-bottom:
-        0;
-
+    border-bottom: 0;
 }
-
 
 .calc {
-
-    font-size:
-        11px;
-
-    font-weight:
-        800;
-
-    margin-top:
-        7px;
-
+    font-size: 11px;
+    font-weight: 800;
+    margin-top: 7px;
 }
-
 
 .calc.good {
-
-    color:
-        var(--ok);
-
+    color: var(--ok);
 }
-
 
 .calc.bad {
-
-    color:
-        var(--bad);
-
+    color: var(--bad);
 }
-
 
 .row-actions {
-
-    display:
-        flex;
-
-    gap:
-        5px;
-
-    flex-wrap:
-        wrap;
-
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
 }
-
 
 .icon-btn {
-
-    width:
-        34px;
-
-    height:
-        34px;
-
-    border:
-        1px solid var(--bd);
-
-    border-radius:
-        8px;
-
-    background:
-        #fff;
-
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    background: #fff;
 }
-
 
 .danger-icon {
-
-    color:
-        var(--bad);
-
+    color: var(--bad);
 }
-
 
 .score-footer {
-
-    display:
-        flex;
-
-    justify-content:
-        space-between;
-
-    gap:
-        10px;
-
-    align-items:
-        flex-start;
-
-    margin-top:
-        12px;
-
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: flex-start;
+    margin-top: 12px;
 }
-
 
 .validation {
+    flex: 1;
+}
 
-    flex:
-        1;
-
+.validation ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
 }
 
 
-.validation ul {
+/* ============================================================
+   行政評分
+   ============================================================ */
 
-    margin:
-        6px 0 0;
+.admin-score-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin: 12px 0;
+}
 
-    padding-left:
-        18px;
+.admin-score-tab {
+    flex: 0 0 auto;
+    min-height: 40px;
+    border: 1px solid var(--bd);
+    background: #fff;
+    border-radius: 10px;
+    padding: 0 13px;
+    font-size: 12px;
+    font-weight: 900;
+    color: #475467;
+}
 
+.admin-score-tab.active {
+    background: #eef4ff;
+    border-color: #a9c8ff;
+    color: #1557b0;
+}
+
+.admin-score-stats {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 8px;
+    margin: 10px 0 12px;
+}
+
+.admin-score-stat {
+    padding: 11px;
+    border: 1px solid var(--bd);
+    border-radius: 11px;
+    background: #fafafa;
+}
+
+.admin-score-stat-label {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.admin-score-stat-value {
+    margin-top: 3px;
+    font-size: 19px;
+    font-weight: 900;
+}
+
+.score-filter-btn {
+    min-height: 38px;
+    border: 1px solid var(--bd);
+    border-radius: 9px;
+    background: #fff;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 850;
+}
+
+.score-filter-btn.active {
+    background: #eef4ff;
+    border-color: #b8d1ff;
+    color: #1557b0;
+}
+
+.admin-score-category {
+    margin: 15px 0 18px;
+}
+
+.admin-score-category-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 2px 8px;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.admin-score-club-list {
+    display: grid;
+    gap: 8px;
+}
+
+.admin-score-club {
+    border: 1px solid var(--bd);
+    border-radius: 11px;
+    background: #fff;
+    padding: 11px;
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.admin-score-club-name {
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.admin-score-club-sub {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.score-status {
+    display: inline-flex;
+    padding: 4px 7px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 900;
+    margin-left: 5px;
+}
+
+.score-status-none {
+    background: var(--graybg);
+    color: #667085;
+}
+
+.score-status-draft {
+    background: var(--warnbg);
+    color: var(--warn);
+}
+
+.score-status-submitted {
+    background: var(--okbg);
+    color: var(--ok);
+}
+
+
+/* ============================================================
+   行政評分 Modal
+   ============================================================ */
+
+.score-modal {
+    width: min(720px,100%);
+    padding: 0;
+    overflow: auto;
+    max-height: 94vh;
+}
+
+.score-modal-head {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #fff;
+    border-bottom: 1px solid var(--bd);
+    padding: 16px 18px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.score-modal-title {
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.score-modal-sub {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.close-btn {
+    width: 35px;
+    height: 35px;
+    border: 1px solid var(--bd);
+    background: #fff;
+    border-radius: 8px;
+}
+
+.admin-score-modal-body {
+    padding: 15px;
+}
+
+.admin-score-summary {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+    border: 1px solid #bfd7ff;
+    background: #f5f9ff;
+    border-radius: 11px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.admin-score-total-label {
+    font-size: 10px;
+    color: #475467;
+    font-weight: 800;
+}
+
+.admin-score-total {
+    font-size: 25px;
+    font-weight: 900;
+    color: #174b88;
+}
+
+.admin-score-group-box {
+    border: 1px solid var(--bd);
+    border-radius: 11px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.admin-score-group-head {
+    background: #f9fafb;
+    border-bottom: 1px solid var(--bd);
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.admin-score-criteria {
+    padding: 4px 11px;
+}
+
+.admin-score-criterion {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) 140px;
+    gap: 10px;
+    align-items: center;
+    padding: 11px 0;
+    border-bottom: 1px dashed #e4e7ec;
+}
+
+.admin-score-criterion:last-child {
+    border-bottom: 0;
+}
+
+.admin-score-criterion-name {
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.admin-score-max {
+    margin-top: 3px;
+    font-size: 9px;
+    color: var(--muted);
+}
+
+.admin-score-input-wrap {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.admin-score-input {
+    width: 92px;
+    height: 40px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    text-align: right;
+    padding: 0 8px;
+    font-weight: 900;
+    outline: none;
+}
+
+.admin-score-input:focus {
+    border-color: var(--p);
+    box-shadow: 0 0 0 3px rgba(26,115,232,.08);
+}
+
+.admin-score-input.invalid {
+    border-color: var(--bad);
+    background: var(--badbg);
+}
+
+.admin-score-input:disabled {
+    background: #f2f4f7;
+}
+
+.admin-score-outof {
+    font-size: 10px;
+    color: var(--muted);
+}
+
+.admin-score-warning {
+    display: none;
+    border: 1px solid #f5c7c4;
+    background: var(--badbg);
+    color: #7a271a;
+    border-radius: 9px;
+    padding: 10px;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.admin-score-warning.show {
+    display: block;
+}
+
+.admin-score-locked {
+    border: 1px solid #cce7d5;
+    background: var(--okbg);
+    color: var(--ok);
+    border-radius: 9px;
+    padding: 10px;
+    margin-bottom: 11px;
+    font-size: 11px;
+    font-weight: 850;
+}
+
+.admin-score-modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    border-top: 1px solid var(--bd);
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+}
+
+.admin-score-save-info {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.admin-score-footer-actions {
+    display: flex;
+    gap: 7px;
 }
 
 
@@ -1190,146 +901,63 @@ button {
    ============================================================ */
 
 .list {
-
-    display:
-        grid;
-
-    gap:
-        8px;
-
+    display: grid;
+    gap: 8px;
 }
-
 
 .list-row {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        minmax(0,1fr) auto;
-
-    gap:
-        10px;
-
-    align-items:
-        center;
-
-    padding:
-        11px;
-
-    border:
-        1px solid var(--bd);
-
-    border-radius:
-        10px;
-
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 11px;
+    border: 1px solid var(--bd);
+    border-radius: 10px;
 }
-
 
 .list-title {
-
-    font-weight:
-        900;
-
-    font-size:
-        13px;
-
+    font-weight: 900;
+    font-size: 13px;
 }
-
 
 .list-sub {
-
-    color:
-        var(--muted);
-
-    font-size:
-        11px;
-
-    margin-top:
-        3px;
-
-    line-height:
-        1.5;
-
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 3px;
+    line-height: 1.5;
 }
-
 
 .chips {
-
-    display:
-        flex;
-
-    gap:
-        5px;
-
-    flex-wrap:
-        wrap;
-
-    margin-top:
-        5px;
-
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 5px;
 }
-
 
 .chip {
-
-    padding:
-        4px 7px;
-
-    background:
-        #eef4ff;
-
-    color:
-        #1557b0;
-
-    border-radius:
-        999px;
-
-    font-size:
-        10px;
-
-    font-weight:
-        850;
-
+    padding: 4px 7px;
+    background: #eef4ff;
+    color: #1557b0;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 850;
 }
-
 
 .chip-score {
-
-    background:
-        #f4f0ff;
-
-    color:
-        #6941c6;
-
+    background: #f4f0ff;
+    color: #6941c6;
 }
-
 
 .chip-empty {
-
-    background:
-        #fff1f0;
-
-    color:
-        #b42318;
-
+    background: #fff1f0;
+    color: #b42318;
 }
 
-
 .permission-title {
-
-    margin-top:
-        8px;
-
-    font-size:
-        10px;
-
-    font-weight:
-        900;
-
-    color:
-        #475467;
-
+    margin-top: 8px;
+    font-size: 10px;
+    font-weight: 900;
+    color: #475467;
 }
 
 
@@ -1338,30 +966,15 @@ button {
    ============================================================ */
 
 .grid2 {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    gap:
-        10px;
-
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 }
 
-
 .grid4 {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        repeat(4,1fr);
-
-    gap:
-        8px;
-
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 8px;
 }
 
 
@@ -1370,55 +983,26 @@ button {
    ============================================================ */
 
 .state {
-
-    text-align:
-        center;
-
-    color:
-        var(--muted);
-
-    padding:
-        28px 12px;
-
-    font-size:
-        12px;
-
+    text-align: center;
+    color: var(--muted);
+    padding: 28px 12px;
+    font-size: 12px;
 }
-
 
 .spinner {
-
-    width:
-        26px;
-
-    height:
-        26px;
-
-    margin:
-        0 auto 8px;
-
-    border:
-        3px solid #e8eef7;
-
-    border-top-color:
-        var(--p);
-
-    border-radius:
-        50%;
-
-    animation:
-        spin .8s linear infinite;
-
+    width: 26px;
+    height: 26px;
+    margin: 0 auto 8px;
+    border: 3px solid #e8eef7;
+    border-top-color: var(--p);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
 }
 
-
 @keyframes spin {
-
     to {
-        transform:
-            rotate(360deg);
+        transform: rotate(360deg);
     }
-
 }
 
 
@@ -1427,278 +1011,120 @@ button {
    ============================================================ */
 
 .modal-bg {
-
-    position:
-        fixed;
-
-    inset:
-        0;
-
-    z-index:
-        1000;
-
-    display:
-        none;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    padding:
-        18px;
-
-    background:
-        rgba(16,24,40,.58);
-
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(16,24,40,.58);
 }
-
 
 .modal {
-
-    width:
-        min(560px,100%);
-
-    max-height:
-        90vh;
-
-    overflow:
-        auto;
-
-    background:
-        #fff;
-
-    border-radius:
-        16px;
-
-    padding:
-        18px;
-
-    box-shadow:
-        0 25px 70px rgba(16,24,40,.28);
-
+    width: min(560px,100%);
+    max-height: 90vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 25px 70px rgba(16,24,40,.28);
 }
-
 
 .modal h3 {
-
-    margin:
-        0 0 10px;
-
+    margin: 0 0 10px;
 }
 
-
 .modal-actions {
-
-    display:
-        flex;
-
-    justify-content:
-        flex-end;
-
-    gap:
-        8px;
-
-    margin-top:
-        16px;
-
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
 }
 
 
 /* ============================================================
-   權限勾選
+   權限
    ============================================================ */
 
 .check-grid {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    gap:
-        7px;
-
-    margin-top:
-        8px;
-
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    margin-top: 8px;
 }
-
 
 .check {
-
-    display:
-        flex;
-
-    align-items:
-        flex-start;
-
-    gap:
-        7px;
-
-    padding:
-        9px;
-
-    border:
-        1px solid var(--bd);
-
-    border-radius:
-        9px;
-
-    font-size:
-        11px;
-
-    line-height:
-        1.5;
-
-    background:
-        #fff;
-
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 9px;
+    border: 1px solid var(--bd);
+    border-radius: 9px;
+    font-size: 11px;
+    line-height: 1.5;
+    background: #fff;
 }
-
 
 .check:hover {
-
-    background:
-        #f9fafb;
-
+    background: #f9fafb;
 }
-
 
 .check input {
-
-    margin-top:
-        2px;
-
+    margin-top: 2px;
 }
-
 
 .check-main {
-
-    font-weight:
-        850;
-
+    font-weight: 850;
 }
-
 
 .check-sub {
-
-    color:
-        var(--muted);
-
-    font-size:
-        9px;
-
-    margin-top:
-        2px;
-
+    color: var(--muted);
+    font-size: 9px;
+    margin-top: 2px;
 }
-
 
 .permission-box {
-
-    margin-top:
-        14px;
-
-    padding:
-        12px;
-
-    border:
-        1px solid #d6c9ff;
-
-    background:
-        #faf8ff;
-
-    border-radius:
-        11px;
-
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid #d6c9ff;
+    background: #faf8ff;
+    border-radius: 11px;
 }
-
 
 .permission-head {
-
-    display:
-        flex;
-
-    justify-content:
-        space-between;
-
-    align-items:
-        center;
-
-    gap:
-        8px;
-
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
 }
-
 
 .permission-head-title {
-
-    font-size:
-        12px;
-
-    font-weight:
-        900;
-
-    color:
-        #53389e;
-
+    font-size: 12px;
+    font-weight: 900;
+    color: #53389e;
 }
-
 
 .permission-actions {
-
-    display:
-        flex;
-
-    gap:
-        5px;
-
+    display: flex;
+    gap: 5px;
 }
-
 
 .tiny-btn {
-
-    min-height:
-        28px;
-
-    border:
-        1px solid var(--bd);
-
-    background:
-        #fff;
-
-    border-radius:
-        7px;
-
-    padding:
-        0 8px;
-
-    font-size:
-        9px;
-
-    font-weight:
-        800;
-
+    min-height: 28px;
+    border: 1px solid var(--bd);
+    background: #fff;
+    border-radius: 7px;
+    padding: 0 8px;
+    font-size: 9px;
+    font-weight: 800;
 }
 
-
 .permission-note {
-
-    color:
-        var(--muted);
-
-    font-size:
-        10px;
-
-    line-height:
-        1.5;
-
-    margin-top:
-        5px;
-
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.5;
+    margin-top: 5px;
 }
 
 
@@ -1707,60 +1133,25 @@ button {
    ============================================================ */
 
 .toast {
-
-    position:
-        fixed;
-
-    right:
-        18px;
-
-    bottom:
-        18px;
-
-    z-index:
-        2000;
-
-    padding:
-        11px 15px;
-
-    background:
-        #101828;
-
-    color:
-        #fff;
-
-    border-radius:
-        9px;
-
-    opacity:
-        0;
-
-    transform:
-        translateY(10px);
-
-    transition:
-        .2s;
-
-    pointer-events:
-        none;
-
-    max-width:
-        390px;
-
-    font-size:
-        12px;
-
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 2000;
+    padding: 11px 15px;
+    background: #101828;
+    color: #fff;
+    border-radius: 9px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: .2s;
+    pointer-events: none;
+    max-width: 390px;
+    font-size: 12px;
 }
 
-
 .toast.show {
-
-    opacity:
-        1;
-
-    transform:
-        none;
-
+    opacity: 1;
+    transform: none;
 }
 
 
@@ -1770,139 +1161,107 @@ button {
 
 @media(max-width:780px) {
 
-    .stats {
-
-        grid-template-columns:
-            1fr 1fr;
-
+    .stats,
+    .admin-score-stats {
+        grid-template-columns: 1fr 1fr;
     }
-
 
     .section-grid {
-
-        grid-template-columns:
-            60px 1fr 100px;
-
+        grid-template-columns: 60px 1fr 100px;
     }
-
 
     .section-grid .mode-wrap,
     .section-grid .section-actions {
-
-        grid-column:
-            1/-1;
-
+        grid-column: 1/-1;
     }
-
 
     .group-head {
-
-        grid-template-columns:
-            1fr 100px;
-
+        grid-template-columns: 1fr 100px;
     }
-
 
     .group-head .row-actions {
-
-        grid-column:
-            1/-1;
-
+        grid-column: 1/-1;
     }
-
 
     .criterion {
-
-        grid-template-columns:
-            1fr 90px;
-
+        grid-template-columns: 1fr 90px;
     }
-
 
     .criterion .row-actions {
-
-        grid-column:
-            1/-1;
-
+        grid-column: 1/-1;
     }
-
 
     .grid2,
     .grid4 {
-
-        grid-template-columns:
-            1fr;
-
+        grid-template-columns: 1fr;
     }
-
 
     .score-top {
-
-        grid-template-columns:
-            1fr;
-
+        grid-template-columns: 1fr;
     }
-
 
     .score-footer {
-
-        flex-direction:
-            column;
-
+        flex-direction: column;
     }
-
 
     .topbar .sub {
-
-        display:
-            none;
-
+        display: none;
     }
-
 
     .hero {
-
-        align-items:
-            flex-start;
-
-        flex-direction:
-            column;
-
+        align-items: flex-start;
+        flex-direction: column;
     }
-
 
     .toolbar .field {
-
-        width:
-            100%;
-
+        width: 100%;
     }
-
 
     .toolbar .grow {
-
-        flex:
-            auto;
-
-        width:
-            100%;
-
+        flex: auto;
+        width: 100%;
     }
 
-
-    .list-row {
-
-        grid-template-columns:
-            1fr;
-
+    .list-row,
+    .admin-score-club {
+        grid-template-columns: 1fr;
     }
-
 
     .check-grid {
+        grid-template-columns: 1fr;
+    }
 
-        grid-template-columns:
-            1fr;
+    .admin-score-club .btn {
+        width: 100%;
+    }
 
+    .admin-score-criterion {
+        grid-template-columns: minmax(0,1fr) 125px;
+    }
+
+    .admin-score-input {
+        width: 80px;
+    }
+
+    #adminScoreModal {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    #adminScoreModal .score-modal {
+        width: 100%;
+        max-height: 96vh;
+        border-radius: 17px 17px 0 0;
+    }
+
+    .admin-score-modal-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-score-footer-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
     }
 
 }
@@ -1938,7 +1297,6 @@ button {
         社團評選暨觀摩活動管理系統
     </div>
 
-
     <form id="loginForm">
 
         <label class="label">
@@ -1954,7 +1312,6 @@ button {
             placeholder="請輸入管理員密碼"
         >
 
-
         <button
             id="loginBtn"
             class="btn btn-primary login-btn"
@@ -1962,7 +1319,6 @@ button {
         >
             登入管理後台
         </button>
-
 
         <div
             id="loginError"
@@ -1976,14 +1332,13 @@ button {
 
 
 <!-- ============================================================
-     App
+     主系統
      ============================================================ -->
 
 <div
     id="adminApp"
     class="app"
 >
-
 
 <header class="topbar">
 
@@ -1999,7 +1354,6 @@ button {
 
     </div>
 
-
     <div class="top-actions">
 
         <button
@@ -2008,7 +1362,6 @@ button {
         >
             🔄 重新整理
         </button>
-
 
         <button
             class="btn btn-danger"
@@ -2034,11 +1387,10 @@ button {
         </h1>
 
         <div class="sub">
-            評分架構、評審、社團、活動與資料管理
+            評分架構、行政評分、評審、社團、活動與資料管理
         </div>
 
     </div>
-
 
     <div
         id="lastRefresh"
@@ -2067,7 +1419,6 @@ button {
 
     </div>
 
-
     <div class="stat">
 
         <div class="stat-label">
@@ -2083,7 +1434,6 @@ button {
 
     </div>
 
-
     <div class="stat">
 
         <div class="stat-label">
@@ -2098,7 +1448,6 @@ button {
         </div>
 
     </div>
-
 
     <div class="stat">
 
@@ -2135,7 +1484,7 @@ button {
     <div>
 
         <div class="panel-title">
-            ⚙️ 評分機制設定 v2
+            ⚙️ 評分機制設定
         </div>
 
         <div
@@ -2165,7 +1514,6 @@ button {
 
     </div>
 
-
     <div
         id="scoreState"
         class="state"
@@ -2176,7 +1524,6 @@ button {
         正在讀取評分設定...
 
     </div>
-
 
     <div
         id="scoreEditor"
@@ -2204,7 +1551,6 @@ button {
 
             </div>
 
-
             <div>
 
                 <div class="mini-label">
@@ -2222,7 +1568,6 @@ button {
 
             </div>
 
-
             <button
                 class="btn"
                 onclick="addSection()"
@@ -2232,11 +1577,9 @@ button {
 
         </div>
 
-
         <div
             id="sectionsEditor"
         ></div>
-
 
         <div class="score-footer">
 
@@ -2244,7 +1587,6 @@ button {
                 id="scoreValidation"
                 class="validation notice"
             ></div>
-
 
             <button
                 id="saveScoreBtn"
@@ -2255,6 +1597,206 @@ button {
             </button>
 
         </div>
+
+    </div>
+
+</div>
+
+</section>
+
+
+<!-- ============================================================
+     行政／平時表現評分
+     ============================================================ -->
+
+<section
+    class="panel"
+    data-panel="adminScore"
+>
+
+<button
+    class="panel-head"
+    onclick="togglePanel(this)"
+>
+
+    <div>
+
+        <div class="panel-title">
+            🧾 行政／平時表現評分
+        </div>
+
+        <div
+            id="adminScoreMeta"
+            class="panel-meta"
+        >
+            載入中...
+        </div>
+
+    </div>
+
+    <span class="chev">
+        ▼
+    </span>
+
+</button>
+
+
+<div class="panel-body">
+
+    <div class="notice">
+
+        這裡只顯示評分方式設為
+        <b>「行政／人工」</b>
+        的大項。
+        0 分是有效分數，空白代表尚未評分。
+        正式送出後會鎖定。
+
+    </div>
+
+    <div
+        id="adminScoreInvalidNotice"
+        class="notice badbox hidden"
+        style="margin-top:10px"
+    ></div>
+
+    <div
+        id="adminScoreState"
+        class="state"
+    >
+
+        <div class="spinner"></div>
+
+        正在讀取行政評分資料...
+
+    </div>
+
+    <div
+        id="adminScoreArea"
+        class="hidden"
+    >
+
+        <div
+            id="adminScoreTabs"
+            class="admin-score-tabs"
+        ></div>
+
+        <div class="admin-score-stats">
+
+            <div class="admin-score-stat">
+
+                <div class="admin-score-stat-label">
+                    社團總數
+                </div>
+
+                <div
+                    id="adminScoreStatTotal"
+                    class="admin-score-stat-value"
+                >
+                    -
+                </div>
+
+            </div>
+
+            <div class="admin-score-stat">
+
+                <div class="admin-score-stat-label">
+                    已正式送出
+                </div>
+
+                <div
+                    id="adminScoreStatSubmitted"
+                    class="admin-score-stat-value"
+                >
+                    -
+                </div>
+
+            </div>
+
+            <div class="admin-score-stat">
+
+                <div class="admin-score-stat-label">
+                    草稿
+                </div>
+
+                <div
+                    id="adminScoreStatDraft"
+                    class="admin-score-stat-value"
+                >
+                    -
+                </div>
+
+            </div>
+
+            <div class="admin-score-stat">
+
+                <div class="admin-score-stat-label">
+                    尚未開始
+                </div>
+
+                <div
+                    id="adminScoreStatNone"
+                    class="admin-score-stat-value"
+                >
+                    -
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="toolbar">
+
+            <input
+                id="adminScoreSearch"
+                class="field grow"
+                placeholder="搜尋社團名稱或屬性"
+                oninput="renderAdminScoreCurrentSection()"
+            >
+
+            <button
+                class="score-filter-btn active"
+                data-admin-score-filter="all"
+                onclick="setAdminScoreFilter('all',this)"
+            >
+                全部
+            </button>
+
+            <button
+                class="score-filter-btn"
+                data-admin-score-filter="notStarted"
+                onclick="setAdminScoreFilter('notStarted',this)"
+            >
+                未開始
+            </button>
+
+            <button
+                class="score-filter-btn"
+                data-admin-score-filter="draft"
+                onclick="setAdminScoreFilter('draft',this)"
+            >
+                草稿
+            </button>
+
+            <button
+                class="score-filter-btn"
+                data-admin-score-filter="submitted"
+                onclick="setAdminScoreFilter('submitted',this)"
+            >
+                已送出
+            </button>
+
+            <button
+                class="btn"
+                onclick="loadAdminScoreDashboard()"
+            >
+                🔄
+            </button>
+
+        </div>
+
+        <div
+            id="adminScoreClubArea"
+        ></div>
 
     </div>
 
@@ -2307,7 +1849,6 @@ button {
             ＋ 新增評審
         </button>
 
-
         <button
             class="btn"
             onclick="loadJudges()"
@@ -2316,7 +1857,6 @@ button {
         </button>
 
     </div>
-
 
     <div class="notice">
 
@@ -2327,7 +1867,6 @@ button {
         兩種權限會同時套用。
 
     </div>
-
 
     <div
         id="judgeList"
@@ -2390,7 +1929,6 @@ button {
             oninput="renderClubs()"
         >
 
-
         <button
             class="btn btn-primary"
             onclick="openClubModal()"
@@ -2399,7 +1937,6 @@ button {
         </button>
 
     </div>
-
 
     <div
         id="clubList"
@@ -2468,7 +2005,6 @@ button {
 
         </div>
 
-
         <div>
 
             <label class="label">
@@ -2483,7 +2019,6 @@ button {
 
         </div>
 
-
         <div>
 
             <label class="label">
@@ -2497,7 +2032,6 @@ button {
             >
 
         </div>
-
 
         <div>
 
@@ -2515,7 +2049,6 @@ button {
 
     </div>
 
-
     <div
         class="toolbar"
         style="margin-top:12px"
@@ -2530,7 +2063,6 @@ button {
 
     </div>
 
-
     <div
         id="eventError"
         class="error"
@@ -2542,7 +2074,7 @@ button {
 
 
 <!-- ============================================================
-     Form
+     Google Form
      ============================================================ -->
 
 <section class="panel closed">
@@ -2585,7 +2117,6 @@ button {
             oninput="renderForms()"
         >
 
-
         <select
             id="formFilter"
             class="field"
@@ -2610,7 +2141,6 @@ button {
 
         </select>
 
-
         <button
             class="btn"
             onclick="syncForms()"
@@ -2619,7 +2149,6 @@ button {
         </button>
 
     </div>
-
 
     <div
         id="formList"
@@ -2683,7 +2212,6 @@ button {
 
     </div>
 
-
     <div
         id="bindingList"
         class="list"
@@ -2746,7 +2274,6 @@ button {
 
     </div>
 
-
     <div
         id="cloudList"
         class="list"
@@ -2768,6 +2295,90 @@ button {
 
 
 <!-- ============================================================
+     行政評分 Modal
+     ============================================================ -->
+
+<div
+    id="adminScoreModal"
+    class="modal-bg"
+>
+
+<div class="modal score-modal">
+
+    <div class="score-modal-head">
+
+        <div>
+
+            <div
+                id="adminScoreModalTitle"
+                class="score-modal-title"
+            >
+                行政評分
+            </div>
+
+            <div
+                id="adminScoreModalSub"
+                class="score-modal-sub"
+            >
+                -
+            </div>
+
+        </div>
+
+        <button
+            class="close-btn"
+            type="button"
+            onclick="closeAdminScoreModal()"
+        >
+            ✕
+        </button>
+
+    </div>
+
+    <div
+        id="adminScoreModalBody"
+        class="admin-score-modal-body"
+    ></div>
+
+    <div class="admin-score-modal-footer">
+
+        <div
+            id="adminScoreSaveInfo"
+            class="admin-score-save-info"
+        >
+            尚未儲存
+        </div>
+
+        <div
+            id="adminScoreFooterActions"
+            class="admin-score-footer-actions"
+        >
+
+            <button
+                id="adminSaveDraftBtn"
+                class="btn"
+                onclick="saveAdminScoreDraft()"
+            >
+                💾 儲存草稿
+            </button>
+
+            <button
+                id="adminSubmitScoreBtn"
+                class="btn btn-primary"
+                onclick="submitAdminScore()"
+            >
+                ✅ 正式送出
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+</div>
+
+
+<!-- ============================================================
      Judge Modal
      ============================================================ -->
 
@@ -2784,12 +2395,10 @@ button {
         新增評審
     </h3>
 
-
     <input
         id="judgeId"
         type="hidden"
     >
-
 
     <label class="label">
         顯示名稱
@@ -2801,7 +2410,6 @@ button {
         placeholder="例如：王老師"
     >
 
-
     <label class="label">
         登入帳號
     </label>
@@ -2811,7 +2419,6 @@ button {
         class="field"
         placeholder="至少 3 個字元"
     >
-
 
     <div
         id="judgePasswordWrap"
@@ -2830,28 +2437,18 @@ button {
 
     </div>
 
-
-    <!-- 社團屬性 -->
-
     <label class="label">
         負責社團屬性
     </label>
 
-
     <div class="permission-note">
-
         勾選後，此評審需要評完該屬性中的所有社團。
-
     </div>
-
 
     <div
         id="judgeCategories"
         class="check-grid"
     ></div>
-
-
-    <!-- 評分大項 -->
 
     <div class="permission-box">
 
@@ -2860,7 +2457,6 @@ button {
             <div class="permission-head-title">
                 🎯 可評分大項
             </div>
-
 
             <div class="permission-actions">
 
@@ -2871,7 +2467,6 @@ button {
                 >
                     全選
                 </button>
-
 
                 <button
                     class="tiny-btn"
@@ -2885,14 +2480,9 @@ button {
 
         </div>
 
-
         <div class="permission-note">
-
             評審登入後，只會看到這裡勾選的大項。
-            後端也會阻擋沒有權限的大項。
-
         </div>
-
 
         <div
             id="judgeScoreSections"
@@ -2901,12 +2491,10 @@ button {
 
     </div>
 
-
     <div
         id="judgeError"
         class="error"
     ></div>
-
 
     <div class="modal-actions">
 
@@ -2916,7 +2504,6 @@ button {
         >
             取消
         </button>
-
 
         <button
             class="btn btn-primary"
@@ -2946,12 +2533,10 @@ button {
         新增社團
     </h3>
 
-
     <input
         id="clubOldName"
         type="hidden"
     >
-
 
     <label class="label">
         社團完整名稱
@@ -2962,7 +2547,6 @@ button {
         class="field"
     >
 
-
     <label class="label">
         社團屬性
     </label>
@@ -2972,12 +2556,10 @@ button {
         class="field"
     ></select>
 
-
     <div
         id="clubError"
         class="error"
     ></div>
-
 
     <div class="modal-actions">
 
@@ -2987,7 +2569,6 @@ button {
         >
             取消
         </button>
-
 
         <button
             class="btn btn-primary"
@@ -3017,18 +2598,15 @@ button {
         設定社團雲端
     </h3>
 
-
     <div
         id="cloudModalClub"
         class="muted"
     ></div>
 
-
     <input
         id="cloudClubName"
         type="hidden"
     >
-
 
     <label class="label">
         HTTPS 網址
@@ -3040,12 +2618,10 @@ button {
         placeholder="https://..."
     >
 
-
     <div
         id="cloudError"
         class="error"
     ></div>
-
 
     <div class="modal-actions">
 
@@ -3055,7 +2631,6 @@ button {
         >
             取消
         </button>
-
 
         <button
             class="btn btn-primary"
@@ -3132,6 +2707,30 @@ const S = {
     eventConfig:
         null,
 
+    adminScoreDashboard:
+        null,
+
+    adminScoreSections:
+        [],
+
+    adminScoreCurrentSectionId:
+        null,
+
+    adminScoreFilter:
+        "all",
+
+    currentAdminScoreClub:
+        null,
+
+    currentAdminScoreSection:
+        null,
+
+    currentAdminScoreRecord:
+        null,
+
+    currentAdminScoreLocked:
+        false,
+
     busy:
         false
 
@@ -3181,9 +2780,7 @@ const attr =
    共用
    ============================================================ */
 
-function uid(
-    prefix
-) {
+function uid(prefix) {
 
     return (
 
@@ -3196,9 +2793,7 @@ function uid(
         +
 
         Date.now()
-            .toString(
-                36
-            )
+            .toString(36)
 
         +
 
@@ -3207,22 +2802,15 @@ function uid(
         +
 
         Math.random()
-            .toString(
-                36
-            )
-            .slice(
-                2,
-                9
-            )
+            .toString(36)
+            .slice(2,9)
 
     );
 
 }
 
 
-function num(
-    value
-) {
+function num(value) {
 
     if (
         value === ""
@@ -3238,15 +2826,11 @@ function num(
 
 
     const number =
-        Number(
-            value
-        );
+        Number(value);
 
 
     if (
-        !Number.isFinite(
-            number
-        )
+        !Number.isFinite(number)
     ) {
 
         return 0;
@@ -3270,44 +2854,30 @@ function num(
 }
 
 
-function fmt(
-    value
-) {
+function fmt(value) {
 
     return String(
-        num(
-            value
-        )
+        num(value)
     );
 
 }
 
 
-function deep(
-    value
-) {
+function deep(value) {
 
     return JSON.parse(
-        JSON.stringify(
-            value
-        )
+        JSON.stringify(value)
     );
 
 }
 
 
-function togglePanel(
-    button
-) {
+function togglePanel(button) {
 
     button
-        .closest(
-            ".panel"
-        )
+        .closest(".panel")
         .classList
-        .toggle(
-            "closed"
-        );
+        .toggle("closed");
 
 }
 
@@ -3344,9 +2914,7 @@ function showLogin() {
 }
 
 
-function closeModal(
-    id
-) {
+function closeModal(id) {
 
     $(id)
         .style
@@ -3356,9 +2924,7 @@ function closeModal(
 }
 
 
-function openModal(
-    id
-) {
+function openModal(id) {
 
     $(id)
         .style
@@ -3372,9 +2938,7 @@ function openModal(
    Toast
    ============================================================ */
 
-function toast(
-    message
-) {
+function toast(message) {
 
     const element =
         $("toast");
@@ -3386,9 +2950,7 @@ function toast(
 
     element
         .classList
-        .add(
-            "show"
-        );
+        .add("show");
 
 
     clearTimeout(
@@ -3402,9 +2964,7 @@ function toast(
 
                 element
                     .classList
-                    .remove(
-                        "show"
-                    );
+                    .remove("show");
 
             },
             2600
@@ -3417,9 +2977,7 @@ function toast(
    Backend
    ============================================================ */
 
-async function post(
-    payload
-) {
+async function post(payload) {
 
     const controller =
         new AbortController();
@@ -3446,9 +3004,7 @@ async function post(
                         "POST",
 
                     body:
-                        JSON.stringify(
-                            payload
-                        ),
+                        JSON.stringify(payload),
 
                     redirect:
                         "follow",
@@ -3479,18 +3035,13 @@ async function post(
 
         try {
 
-            return JSON.parse(
-                text
-            );
+            return JSON.parse(text);
 
         }
 
         catch (error) {
 
-            console.error(
-                text
-            );
-
+            console.error(text);
 
             throw new Error(
                 "後端回傳格式錯誤"
@@ -3520,9 +3071,7 @@ async function post(
 
     finally {
 
-        clearTimeout(
-            timeout
-        );
+        clearTimeout(timeout);
 
     }
 
@@ -3553,9 +3102,7 @@ async function api(
    Unauthorized
    ============================================================ */
 
-function unauthorized(
-    result
-) {
+function unauthorized(result) {
 
     if (
         result &&
@@ -3611,9 +3158,7 @@ $("loginForm")
             event.preventDefault();
 
 
-            if (
-                S.busy
-            ) {
+            if (S.busy) {
 
                 return;
 
@@ -3629,9 +3174,7 @@ $("loginForm")
                 $("loginBtn");
 
 
-            if (
-                !password
-            ) {
+            if (!password) {
 
                 return;
 
@@ -3697,11 +3240,8 @@ $("loginForm")
 
                 sessionStorage
                     .setItem(
-
                         SESSION_KEY,
-
                         S.token
-
                     );
 
 
@@ -3754,9 +3294,7 @@ async function logoutAdmin() {
 
     try {
 
-        if (
-            S.token
-        ) {
+        if (S.token) {
 
             await api(
                 "adminLogout"
@@ -3793,9 +3331,7 @@ async function init() {
             );
 
 
-    if (
-        !token
-    ) {
+    if (!token) {
 
         showLogin();
 
@@ -3820,9 +3356,7 @@ async function init() {
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return;
@@ -3862,9 +3396,7 @@ document.addEventListener(
 
 async function refreshAllData() {
 
-    if (
-        !S.token
-    ) {
+    if (!S.token) {
 
         return;
 
@@ -3874,6 +3406,8 @@ async function refreshAllData() {
     const jobs = [
 
         loadScoreConfig(),
+
+        loadAdminScoreDashboard(),
 
         loadJudges(),
 
@@ -3958,7 +3492,15 @@ function syncAvailableScoreSectionsFromConfig() {
 
                     &&
 
-                    section.scoringMode ===
+                    String(
+                        section.scoringMode
+                        ||
+                        section.scoreMode
+                        ||
+                        ""
+                    )
+                    .toLowerCase()
+                    ===
                     "judge"
             )
 
@@ -4002,9 +3544,7 @@ async function loadScoreConfig() {
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return;
@@ -4053,16 +3593,12 @@ async function loadScoreConfig() {
 
         $("scoreState")
             .classList
-            .add(
-                "hidden"
-            );
+            .add("hidden");
 
 
         $("scoreEditor")
             .classList
-            .remove(
-                "hidden"
-            );
+            .remove("hidden");
 
 
         renderScoreEditor();
@@ -4073,9 +3609,7 @@ async function loadScoreConfig() {
 
         $("scoreState")
             .classList
-            .remove(
-                "hidden"
-            );
+            .remove("hidden");
 
 
         $("scoreState")
@@ -4092,14 +3626,10 @@ async function loadScoreConfig() {
 }
 
 
-function setTotalMaxScore(
-    value
-) {
+function setTotalMaxScore(value) {
 
     S.scoreConfig.totalMaxScore =
-        num(
-            value
-        );
+        num(value);
 
 
     renderScoreValidation();
@@ -4176,9 +3706,7 @@ function addSection() {
         .push({
 
             id:
-                uid(
-                    "section"
-                ),
+                uid("section"),
 
             name:
                 "新評分大項",
@@ -4206,9 +3734,7 @@ function addSection() {
                 {
 
                     id:
-                        uid(
-                            "group"
-                        ),
+                        uid("group"),
 
                     name:
                         "新分類",
@@ -4224,9 +3750,7 @@ function addSection() {
                         {
 
                             id:
-                                uid(
-                                    "criterion"
-                                ),
+                                uid("criterion"),
 
                             name:
                                 "新評分小項",
@@ -4255,15 +3779,11 @@ function addSection() {
 }
 
 
-function deleteSection(
-    index
-) {
+function deleteSection(index) {
 
     const section =
         S.scoreConfig
-            .sections[
-                index
-            ];
+            .sections[index];
 
 
     if (
@@ -4342,9 +3862,7 @@ function setSection(
 
     const section =
         S.scoreConfig
-            .sections[
-                index
-            ];
+            .sections[index];
 
 
     if (
@@ -4353,9 +3871,7 @@ function setSection(
     ) {
 
         value =
-            num(
-                value
-            );
+            num(value);
 
     }
 
@@ -4366,16 +3882,12 @@ function setSection(
     ) {
 
         value =
-            Boolean(
-                value
-            );
+            Boolean(value);
 
     }
 
 
-    section[
-        key
-    ] =
+    section[key] =
         value;
 
 
@@ -4388,21 +3900,15 @@ function setSection(
    Group
    ============================================================ */
 
-function addGroup(
-    sectionIndex
-) {
+function addGroup(sectionIndex) {
 
     S.scoreConfig
-        .sections[
-            sectionIndex
-        ]
+        .sections[sectionIndex]
         .groups
         .push({
 
             id:
-                uid(
-                    "group"
-                ),
+                uid("group"),
 
             name:
                 "新分類",
@@ -4418,9 +3924,7 @@ function addGroup(
                 {
 
                     id:
-                        uid(
-                            "criterion"
-                        ),
+                        uid("criterion"),
 
                     name:
                         "新評分小項",
@@ -4452,12 +3956,8 @@ function deleteGroup(
 
     const group =
         S.scoreConfig
-            .sections[
-                sectionIndex
-            ]
-            .groups[
-                groupIndex
-            ];
+            .sections[sectionIndex]
+            .groups[groupIndex];
 
 
     if (
@@ -4472,9 +3972,7 @@ function deleteGroup(
 
 
     S.scoreConfig
-        .sections[
-            sectionIndex
-        ]
+        .sections[sectionIndex]
         .groups
         .splice(
             groupIndex,
@@ -4497,9 +3995,7 @@ function moveGroup(
 
     const groups =
         S.scoreConfig
-            .sections[
-                sectionIndex
-            ]
+            .sections[sectionIndex]
             .groups;
 
 
@@ -4545,12 +4041,8 @@ function setGroup(
 
     const group =
         S.scoreConfig
-            .sections[
-                sectionIndex
-            ]
-            .groups[
-                groupIndex
-            ];
+            .sections[sectionIndex]
+            .groups[groupIndex];
 
 
     if (
@@ -4559,9 +4051,7 @@ function setGroup(
     ) {
 
         value =
-            num(
-                value
-            );
+            num(value);
 
     }
 
@@ -4572,16 +4062,12 @@ function setGroup(
     ) {
 
         value =
-            Boolean(
-                value
-            );
+            Boolean(value);
 
     }
 
 
-    group[
-        key
-    ] =
+    group[key] =
         value;
 
 
@@ -4600,19 +4086,13 @@ function addCriterion(
 ) {
 
     S.scoreConfig
-        .sections[
-            sectionIndex
-        ]
-        .groups[
-            groupIndex
-        ]
+        .sections[sectionIndex]
+        .groups[groupIndex]
         .criteria
         .push({
 
             id:
-                uid(
-                    "criterion"
-                ),
+                uid("criterion"),
 
             name:
                 "新評分小項",
@@ -4641,15 +4121,9 @@ function deleteCriterion(
 
     const criterion =
         S.scoreConfig
-            .sections[
-                sectionIndex
-            ]
-            .groups[
-                groupIndex
-            ]
-            .criteria[
-                criterionIndex
-            ];
+            .sections[sectionIndex]
+            .groups[groupIndex]
+            .criteria[criterionIndex];
 
 
     if (
@@ -4664,12 +4138,8 @@ function deleteCriterion(
 
 
     S.scoreConfig
-        .sections[
-            sectionIndex
-        ]
-        .groups[
-            groupIndex
-        ]
+        .sections[sectionIndex]
+        .groups[groupIndex]
         .criteria
         .splice(
             criterionIndex,
@@ -4693,12 +4163,8 @@ function moveCriterion(
 
     const criteria =
         S.scoreConfig
-            .sections[
-                sectionIndex
-            ]
-            .groups[
-                groupIndex
-            ]
+            .sections[sectionIndex]
+            .groups[groupIndex]
             .criteria;
 
 
@@ -4720,19 +4186,11 @@ function moveCriterion(
 
 
     [
-        criteria[
-            criterionIndex
-        ],
-        criteria[
-            target
-        ]
+        criteria[criterionIndex],
+        criteria[target]
     ] = [
-        criteria[
-            target
-        ],
-        criteria[
-            criterionIndex
-        ]
+        criteria[target],
+        criteria[criterionIndex]
     ];
 
 
@@ -4753,15 +4211,9 @@ function setCriterion(
 
     const criterion =
         S.scoreConfig
-            .sections[
-                sectionIndex
-            ]
-            .groups[
-                groupIndex
-            ]
-            .criteria[
-                criterionIndex
-            ];
+            .sections[sectionIndex]
+            .groups[groupIndex]
+            .criteria[criterionIndex];
 
 
     if (
@@ -4770,9 +4222,7 @@ function setCriterion(
     ) {
 
         value =
-            num(
-                value
-            );
+            num(value);
 
     }
 
@@ -4783,16 +4233,12 @@ function setCriterion(
     ) {
 
         value =
-            Boolean(
-                value
-            );
+            Boolean(value);
 
     }
 
 
-    criterion[
-        key
-    ] =
+    criterion[key] =
         value;
 
 
@@ -4805,9 +4251,7 @@ function setCriterion(
    Score Calculate
    ============================================================ */
 
-function criteriaTotal(
-    group
-) {
+function criteriaTotal(group) {
 
     return num(
 
@@ -4843,9 +4287,7 @@ function criteriaTotal(
 }
 
 
-function groupsTotal(
-    section
-) {
+function groupsTotal(section) {
 
     return num(
 
@@ -4936,20 +4378,6 @@ function validateClientScore() {
         };
 
 
-    if (
-        num(
-            config.totalMaxScore
-        ) <
-        0
-    ) {
-
-        errors.push(
-            "總配分不得小於 0。"
-        );
-
-    }
-
-
     (
         config.sections
         ||
@@ -4962,22 +4390,6 @@ function validateClientScore() {
     )
     .forEach(
         section => {
-
-            if (
-                !String(
-                    section.name
-                    ||
-                    ""
-                )
-                .trim()
-            ) {
-
-                errors.push(
-                    "有大項尚未填寫名稱。"
-                );
-
-            }
-
 
             const groups =
                 (
@@ -4998,8 +4410,7 @@ function validateClientScore() {
 
                 errors.push(
 
-                    `大項「${section.name}」` +
-                    `至少需要一個啟用分類。`
+                    `大項「${section.name}」至少需要一個啟用分類。`
 
                 );
 
@@ -5008,25 +4419,6 @@ function validateClientScore() {
 
             groups.forEach(
                 group => {
-
-                    if (
-                        !String(
-                            group.name
-                            ||
-                            ""
-                        )
-                        .trim()
-                    ) {
-
-                        errors.push(
-
-                            `「${section.name}」` +
-                            `有分類未命名。`
-
-                        );
-
-                    }
-
 
                     const criteria =
                         (
@@ -5047,72 +4439,22 @@ function validateClientScore() {
 
                         errors.push(
 
-                            `分類「${section.name} → ${group.name}」` +
-                            `至少需要一個啟用小項。`
+                            `分類「${section.name} → ${group.name}」至少需要一個啟用小項。`
 
                         );
 
                     }
 
 
-                    criteria.forEach(
-                        criterion => {
-
-                            if (
-                                !String(
-                                    criterion.name
-                                    ||
-                                    ""
-                                )
-                                .trim()
-                            ) {
-
-                                errors.push(
-
-                                    `「${section.name} → ${group.name}」` +
-                                    `有小項未命名。`
-
-                                );
-
-                            }
-
-
-                            if (
-                                num(
-                                    criterion.maxScore
-                                ) <
-                                0
-                            ) {
-
-                                errors.push(
-
-                                    `小項「${criterion.name}」不得為負分。`
-
-                                );
-
-                            }
-
-                        }
-                    );
-
-
                     const current =
-                        criteriaTotal(
-                            group
-                        );
+                        criteriaTotal(group);
 
 
                     if (
                         Math.abs(
-
                             current
-
                             -
-
-                            num(
-                                group.maxScore
-                            )
-
+                            num(group.maxScore)
                         )
                         >
                         0.000001
@@ -5120,9 +4462,7 @@ function validateClientScore() {
 
                         errors.push(
 
-                            `分類「${section.name} → ${group.name}」：` +
-                            `設定 ${fmt(group.maxScore)}，` +
-                            `小項合計 ${fmt(current)}。`
+                            `分類「${section.name} → ${group.name}」：設定 ${fmt(group.maxScore)}，小項合計 ${fmt(current)}。`
 
                         );
 
@@ -5133,22 +4473,14 @@ function validateClientScore() {
 
 
             const current =
-                groupsTotal(
-                    section
-                );
+                groupsTotal(section);
 
 
             if (
                 Math.abs(
-
                     current
-
                     -
-
-                    num(
-                        section.maxScore
-                    )
-
+                    num(section.maxScore)
                 )
                 >
                 0.000001
@@ -5156,9 +4488,7 @@ function validateClientScore() {
 
                 errors.push(
 
-                    `大項「${section.name}」：` +
-                    `設定 ${fmt(section.maxScore)}，` +
-                    `分類合計 ${fmt(current)}。`
+                    `大項「${section.name}」：設定 ${fmt(section.maxScore)}，分類合計 ${fmt(current)}。`
 
                 );
 
@@ -5174,15 +4504,9 @@ function validateClientScore() {
 
     if (
         Math.abs(
-
             sectionSum
-
             -
-
-            num(
-                config.totalMaxScore
-            )
-
+            num(config.totalMaxScore)
         )
         >
         0.000001
@@ -5190,8 +4514,7 @@ function validateClientScore() {
 
         errors.push(
 
-            `總配分設定 ${fmt(config.totalMaxScore)}，` +
-            `啟用大項合計 ${fmt(sectionSum)}。`
+            `總配分設定 ${fmt(config.totalMaxScore)}，啟用大項合計 ${fmt(sectionSum)}。`
 
         );
 
@@ -5255,9 +4578,7 @@ function renderScoreEditor() {
                     sectionIndex
                 )
         )
-        .join(
-            ""
-        );
+        .join("");
 
 
     renderScoreValidation();
@@ -5270,8 +4591,17 @@ function sectionHtml(
     sectionIndex
 ) {
 
-    const published =
+    const modeValue =
+        String(
+            section.scoringMode
+            ||
+            section.scoreMode
+            ||
+            "judge"
+        );
 
+
+    const published =
         section.published
 
         ? `
@@ -5285,16 +4615,6 @@ function sectionHtml(
               草稿
           </span>
           `;
-
-
-    const mode =
-
-        section.scoringMode ===
-        "judge"
-
-        ? "評審評分"
-
-        : "行政／人工";
 
 
     return `
@@ -5319,7 +4639,6 @@ function sectionHtml(
 
                 </div>
 
-
                 <div>
 
                     <div class="mini-label">
@@ -5333,7 +4652,6 @@ function sectionHtml(
                     >
 
                 </div>
-
 
                 <div>
 
@@ -5352,7 +4670,6 @@ function sectionHtml(
 
                 </div>
 
-
                 <div class="mode-wrap">
 
                     <div class="mini-label">
@@ -5366,12 +4683,7 @@ function sectionHtml(
 
                         <option
                             value="judge"
-                            ${
-                                section.scoringMode ===
-                                "judge"
-                                ? "selected"
-                                : ""
-                            }
+                            ${modeValue === "judge" ? "selected" : ""}
                         >
                             評審評分
                         </option>
@@ -5379,8 +4691,9 @@ function sectionHtml(
                         <option
                             value="manual"
                             ${
-                                section.scoringMode ===
-                                "manual"
+                                modeValue === "manual"
+                                ||
+                                modeValue === "admin"
                                 ? "selected"
                                 : ""
                             }
@@ -5391,7 +4704,6 @@ function sectionHtml(
                     </select>
 
                 </div>
-
 
                 <div class="section-actions">
 
@@ -5423,7 +4735,6 @@ function sectionHtml(
                 </div>
 
             </div>
-
 
             <div
                 style="
@@ -5457,15 +4768,17 @@ function sectionHtml(
                     ${published}
 
                     <span class="badge b-manual">
-                        ${mode}
+                        ${
+                            modeValue === "judge"
+                            ? "評審評分"
+                            : "行政／人工"
+                        }
                     </span>
 
                 </div>
 
-
                 ${
-                    section.scoringMode ===
-                    "judge"
+                    modeValue === "judge"
 
                     ? `
                       <button
@@ -5486,7 +4799,7 @@ function sectionHtml(
 
                     : `
                       <span class="sub">
-                          此大項不顯示於評審端
+                          此大項由管理後台輸入
                       </span>
                       `
                 }
@@ -5494,7 +4807,6 @@ function sectionHtml(
             </div>
 
         </div>
-
 
         <div class="score-section-body">
 
@@ -5515,11 +4827,8 @@ function sectionHtml(
                             groupIndex
                         )
                 )
-                .join(
-                    ""
-                )
+                .join("")
             }
-
 
             <button
                 class="btn"
@@ -5527,7 +4836,6 @@ function sectionHtml(
             >
                 ＋ 新增分類
             </button>
-
 
             <div
                 class="calc ${
@@ -5586,7 +4894,6 @@ function groupHtml(
 
             </div>
 
-
             <div>
 
                 <div class="mini-label">
@@ -5603,7 +4910,6 @@ function groupHtml(
                 >
 
             </div>
-
 
             <div class="row-actions">
 
@@ -5623,7 +4929,6 @@ function groupHtml(
                     啟用
 
                 </label>
-
 
                 <button
                     class="icon-btn"
@@ -5650,7 +4955,6 @@ function groupHtml(
 
         </div>
 
-
         <div class="criteria">
 
             ${
@@ -5671,11 +4975,8 @@ function groupHtml(
                             criterionIndex
                         )
                 )
-                .join(
-                    ""
-                )
+                .join("")
             }
-
 
             <button
                 class="btn"
@@ -5683,7 +4984,6 @@ function groupHtml(
             >
                 ＋ 新增小項
             </button>
-
 
             <div
                 class="calc ${
@@ -5741,7 +5041,6 @@ function criterionHtml(
 
         </div>
 
-
         <div>
 
             <div class="mini-label">
@@ -5758,7 +5057,6 @@ function criterionHtml(
             >
 
         </div>
-
 
         <div class="row-actions">
 
@@ -5778,7 +5076,6 @@ function criterionHtml(
                 啟用
 
             </label>
-
 
             <button
                 class="icon-btn"
@@ -5863,19 +5160,20 @@ function renderScoreValidation() {
 
         box.innerHTML =
 
-            `❌ 目前配分尚未通過發布檢查，` +
-            `但仍可儲存草稿。` +
+            `❌ 目前配分尚未通過發布檢查，但仍可儲存草稿。`
 
-            `<ul>` +
+            +
+
+            `<ul>`
+
+            +
 
             validation.errors
                 .map(
                     item =>
                         `<li>${esc(item)}</li>`
                 )
-                .join(
-                    ""
-                )
+                .join("")
 
             +
 
@@ -5932,9 +5230,7 @@ async function saveScoreConfig(
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return null;
@@ -5965,7 +5261,6 @@ async function saveScoreConfig(
 
         syncAvailableScoreSectionsFromConfig();
 
-
         renderScoreEditor();
 
 
@@ -5982,9 +5277,15 @@ async function saveScoreConfig(
             `版本 ${S.scoreConfig.revision ?? "-"}｜總配分 ${fmt(S.scoreConfig.totalMaxScore)}`;
 
 
-        if (
-            !silent
-        ) {
+        await Promise.allSettled([
+
+            loadJudges(),
+            loadAdminScoreDashboard()
+
+        ]);
+
+
+        if (!silent) {
 
             toast(
 
@@ -6007,11 +5308,8 @@ async function saveScoreConfig(
     catch (error) {
 
         toast(
-
             "❌ " +
-
             error.message
-
         );
 
 
@@ -6044,9 +5342,7 @@ async function togglePublish(
             ];
 
 
-    if (
-        !before
-    ) {
+    if (!before) {
 
         return;
 
@@ -6087,9 +5383,7 @@ async function togglePublish(
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return;
@@ -6102,17 +5396,13 @@ async function togglePublish(
         ) {
 
             toast(
-
                 "❌ " +
-
                 (
                     result.message
                     ||
                     "取消發布失敗"
                 )
-
             );
-
 
             return;
 
@@ -6127,8 +5417,9 @@ async function togglePublish(
 
         syncAvailableScoreSectionsFromConfig();
 
-
         renderScoreEditor();
+
+        await loadJudges();
 
 
         toast(
@@ -6147,9 +5438,7 @@ async function togglePublish(
         );
 
 
-    if (
-        !saved
-    ) {
+    if (!saved) {
 
         return;
 
@@ -6181,9 +5470,7 @@ async function togglePublish(
             );
 
 
-    if (
-        !current
-    ) {
+    if (!current) {
 
         return;
 
@@ -6209,9 +5496,7 @@ async function togglePublish(
 
 
     if (
-        unauthorized(
-            result
-        )
+        unauthorized(result)
     ) {
 
         return;
@@ -6224,17 +5509,13 @@ async function togglePublish(
     ) {
 
         toast(
-
             "❌ " +
-
             (
                 result.message
                 ||
                 "發布失敗"
             )
-
         );
-
 
         return;
 
@@ -6249,13 +5530,2063 @@ async function togglePublish(
 
     syncAvailableScoreSectionsFromConfig();
 
-
     renderScoreEditor();
+
+    await loadJudges();
 
 
     toast(
         "✅ 已發布給評審"
     );
+
+}
+
+
+/* ============================================================
+   行政評分 Dashboard
+   ============================================================ */
+
+function normalizeAdminScoreSections(
+    sections
+) {
+
+    if (
+        Array.isArray(sections)
+    ) {
+
+        return sections;
+
+    }
+
+
+    if (
+        sections &&
+        typeof sections ===
+        "object"
+    ) {
+
+        return Object.values(
+            sections
+        );
+
+    }
+
+
+    return [];
+
+}
+
+
+async function loadAdminScoreDashboard() {
+
+    $("adminScoreState")
+        .classList
+        .remove("hidden");
+
+
+    $("adminScoreState")
+        .innerHTML = `
+
+            <div class="spinner"></div>
+
+            正在讀取行政評分資料...
+
+        `;
+
+
+    try {
+
+        const result =
+            await api(
+                "adminScoreDashboard"
+            );
+
+
+        if (
+            unauthorized(result)
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message
+                ||
+                "無法取得行政評分資料"
+
+            );
+
+        }
+
+
+        S.adminScoreDashboard =
+            result;
+
+
+        S.adminScoreSections =
+            normalizeAdminScoreSections(
+                result.sections
+            );
+
+
+        const invalidNotice =
+            $("adminScoreInvalidNotice");
+
+
+        if (
+            result.configValid ===
+            false
+        ) {
+
+            invalidNotice
+                .classList
+                .remove("hidden");
+
+
+            invalidNotice.innerHTML =
+
+                `❌ 目前配分架構尚未通過合理性檢查，暫時不能進行行政評分。`
+
+                +
+
+                (
+                    Array.isArray(
+                        result.configErrors
+                    )
+                    &&
+                    result.configErrors.length
+
+                    ? `<br>${result.configErrors.map(esc).join("<br>")}`
+
+                    : ""
+                );
+
+        }
+
+        else {
+
+            invalidNotice
+                .classList
+                .add("hidden");
+
+        }
+
+
+        if (
+            !S.adminScoreCurrentSectionId
+            ||
+            !S.adminScoreSections.some(
+                section =>
+                    section.sectionId ===
+                    S.adminScoreCurrentSectionId
+            )
+        ) {
+
+            S.adminScoreCurrentSectionId =
+                S.adminScoreSections[
+                    0
+                ]
+                ?.sectionId
+                ||
+                null;
+
+        }
+
+
+        $("adminScoreMeta")
+            .textContent =
+
+            `${S.adminScoreSections.length} 個行政評分大項｜${result.clubCount ?? 0} 個社團`;
+
+
+        $("adminScoreState")
+            .classList
+            .add("hidden");
+
+
+        $("adminScoreArea")
+            .classList
+            .remove("hidden");
+
+
+        renderAdminScoreTabs();
+
+        renderAdminScoreCurrentSection();
+
+    }
+
+    catch (error) {
+
+        $("adminScoreArea")
+            .classList
+            .add("hidden");
+
+
+        $("adminScoreState")
+            .classList
+            .remove("hidden");
+
+
+        $("adminScoreState")
+            .innerHTML =
+            "⚠️ " +
+            esc(
+                error.message
+            );
+
+
+        $("adminScoreMeta")
+            .textContent =
+            "讀取失敗";
+
+    }
+
+}
+
+
+/* ============================================================
+   行政評分 Tabs
+   ============================================================ */
+
+function renderAdminScoreTabs() {
+
+    const container =
+        $("adminScoreTabs");
+
+
+    if (
+        !S.adminScoreSections.length
+    ) {
+
+        container.innerHTML =
+            "";
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+
+        S.adminScoreSections
+            .map(
+                section => `
+
+                <button
+                    class="admin-score-tab ${
+                        section.sectionId ===
+                        S.adminScoreCurrentSectionId
+                        ? "active"
+                        : ""
+                    }"
+                    onclick="selectAdminScoreSection('${encodeURIComponent(section.sectionId)}')"
+                >
+
+                    ${esc(section.icon || "🧾")}
+
+                    ${esc(section.sectionName || section.stageName || section.sectionId)}
+
+                </button>
+
+                `
+            )
+            .join("");
+
+}
+
+
+function selectAdminScoreSection(
+    encoded
+) {
+
+    S.adminScoreCurrentSectionId =
+        decodeURIComponent(
+            encoded
+        );
+
+
+    S.adminScoreFilter =
+        "all";
+
+
+    document
+        .querySelectorAll(
+            "[data-admin-score-filter]"
+        )
+        .forEach(
+            button => {
+
+                button.classList.toggle(
+
+                    "active",
+
+                    button.dataset.adminScoreFilter ===
+                    "all"
+
+                );
+
+            }
+        );
+
+
+    renderAdminScoreTabs();
+
+    renderAdminScoreCurrentSection();
+
+}
+
+
+function getCurrentAdminScoreDashboardSection() {
+
+    return (
+
+        S.adminScoreSections
+            .find(
+                section =>
+                    section.sectionId ===
+                    S.adminScoreCurrentSectionId
+            )
+
+        ||
+
+        null
+
+    );
+
+}
+
+
+/* ============================================================
+   行政評分 Filter
+   ============================================================ */
+
+function setAdminScoreFilter(
+    value,
+    button
+) {
+
+    S.adminScoreFilter =
+        value;
+
+
+    document
+        .querySelectorAll(
+            "[data-admin-score-filter]"
+        )
+        .forEach(
+            item =>
+                item.classList.remove(
+                    "active"
+                )
+        );
+
+
+    button.classList.add(
+        "active"
+    );
+
+
+    renderAdminScoreCurrentSection();
+
+}
+
+
+/* ============================================================
+   行政評分 Render
+   ============================================================ */
+
+function renderAdminScoreCurrentSection() {
+
+    const section =
+        getCurrentAdminScoreDashboardSection();
+
+
+    if (!section) {
+
+        $("adminScoreStatTotal")
+            .textContent =
+            "0";
+
+        $("adminScoreStatSubmitted")
+            .textContent =
+            "0";
+
+        $("adminScoreStatDraft")
+            .textContent =
+            "0";
+
+        $("adminScoreStatNone")
+            .textContent =
+            "0";
+
+
+        $("adminScoreClubArea")
+            .innerHTML = `
+
+                <div class="state">
+
+                    目前沒有行政／人工評分大項。
+                    <br><br>
+                    請先到「評分機制設定」，
+                    將平時表現的評分方式設為「行政／人工」。
+
+                </div>
+
+            `;
+
+        return;
+
+    }
+
+
+    $("adminScoreStatTotal")
+        .textContent =
+        section.totalClubs
+        ??
+        0;
+
+
+    $("adminScoreStatSubmitted")
+        .textContent =
+        section.submittedCount
+        ??
+        0;
+
+
+    $("adminScoreStatDraft")
+        .textContent =
+        section.draftCount
+        ??
+        0;
+
+
+    $("adminScoreStatNone")
+        .textContent =
+        section.notStartedCount
+        ??
+        0;
+
+
+    const query =
+        (
+            $("adminScoreSearch")
+                .value
+            ||
+            ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+    const clubs =
+        (
+            section.clubs
+            ||
+            []
+        )
+        .filter(
+            club => {
+
+                const searchMatched =
+
+                    !query
+
+                    ||
+
+                    (
+                        `${club.name} ${club.category}`
+                    )
+                    .toLowerCase()
+                    .includes(query);
+
+
+                const statusMatched =
+
+                    S.adminScoreFilter ===
+                    "all"
+
+                    ||
+
+                    club.status ===
+                    S.adminScoreFilter;
+
+
+                return (
+                    searchMatched
+                    &&
+                    statusMatched
+                );
+
+            }
+        );
+
+
+    if (
+        !clubs.length
+    ) {
+
+        $("adminScoreClubArea")
+            .innerHTML = `
+
+                <div class="state">
+                    找不到符合條件的社團。
+                </div>
+
+            `;
+
+        return;
+
+    }
+
+
+    const grouped =
+        {};
+
+
+    clubs.forEach(
+        club => {
+
+            const category =
+                club.category
+                ||
+                "未分類";
+
+
+            if (
+                !grouped[category]
+            ) {
+
+                grouped[category] =
+                    [];
+
+            }
+
+
+            grouped[category]
+                .push(club);
+
+        }
+    );
+
+
+    $("adminScoreClubArea")
+        .innerHTML =
+
+        Object
+            .entries(grouped)
+            .map(
+                (
+                    [
+                        category,
+                        categoryClubs
+                    ]
+                ) => `
+
+                <section class="admin-score-category">
+
+                    <div class="admin-score-category-head">
+
+                        <span>
+                            📂 ${esc(category)}
+                        </span>
+
+                        <span class="sub">
+                            ${categoryClubs.length} 個社團
+                        </span>
+
+                    </div>
+
+                    <div class="admin-score-club-list">
+
+                        ${
+                            categoryClubs
+                                .map(
+                                    club =>
+                                        adminScoreClubHtml(
+                                            club,
+                                            section
+                                        )
+                                )
+                                .join("")
+                        }
+
+                    </div>
+
+                </section>
+
+                `
+            )
+            .join("");
+
+}
+
+
+function adminScoreClubHtml(
+    club,
+    section
+) {
+
+    let statusHtml =
+        "";
+
+    let buttonText =
+        "開始評分";
+
+
+    if (
+        club.status ===
+        "submitted"
+    ) {
+
+        statusHtml = `
+
+            <span class="score-status score-status-submitted">
+                ✅ 已送出
+            </span>
+
+        `;
+
+
+        buttonText =
+            "查看成績";
+
+    }
+
+    else if (
+        club.status ===
+        "draft"
+    ) {
+
+        statusHtml = `
+
+            <span class="score-status score-status-draft">
+                📝 草稿
+            </span>
+
+        `;
+
+
+        buttonText =
+            "繼續評分";
+
+    }
+
+    else {
+
+        statusHtml = `
+
+            <span class="score-status score-status-none">
+                尚未開始
+            </span>
+
+        `;
+
+    }
+
+
+    const scoreText =
+
+        club.totalScore !==
+        null
+        &&
+        club.totalScore !==
+        undefined
+
+        ? `｜目前 ${fmt(club.totalScore)} / ${fmt(section.maxScore)}`
+
+        : "";
+
+
+    const configInvalid =
+        S.adminScoreDashboard
+        &&
+        S.adminScoreDashboard.configValid ===
+        false;
+
+
+    return `
+
+    <div class="admin-score-club">
+
+        <div>
+
+            <div class="admin-score-club-name">
+
+                ${esc(club.name)}
+
+                ${statusHtml}
+
+            </div>
+
+            <div class="admin-score-club-sub">
+
+                ${esc(club.category)}
+
+                ${scoreText}
+
+                ${
+                    club.criterionCount
+
+                    ? `｜已填 ${club.answeredCount || 0}/${club.criterionCount} 項`
+
+                    : ""
+                }
+
+            </div>
+
+        </div>
+
+        <button
+            class="btn ${
+                club.status ===
+                "submitted"
+                ? ""
+                : "btn-primary"
+            }"
+            ${configInvalid ? "disabled" : ""}
+            onclick="openAdminScore('${encodeURIComponent(club.name)}')"
+        >
+
+            ${
+                configInvalid
+                ? "配分未通過"
+                : buttonText
+            }
+
+        </button>
+
+    </div>
+
+    `;
+
+}
+
+
+/* ============================================================
+   開啟行政評分
+   ============================================================ */
+
+async function openAdminScore(
+    encodedClubName
+) {
+
+    const clubName =
+        decodeURIComponent(
+            encodedClubName
+        );
+
+
+    const dashboardSection =
+        getCurrentAdminScoreDashboardSection();
+
+
+    if (
+        !dashboardSection
+    ) {
+
+        return;
+
+    }
+
+
+    S.currentAdminScoreClub =
+        null;
+
+    S.currentAdminScoreSection =
+        null;
+
+    S.currentAdminScoreRecord =
+        null;
+
+    S.currentAdminScoreLocked =
+        false;
+
+
+    $("adminScoreModalTitle")
+        .textContent =
+        clubName;
+
+
+    $("adminScoreModalSub")
+        .textContent =
+        "正在讀取行政評分資料...";
+
+
+    $("adminScoreModalBody")
+        .innerHTML = `
+
+            <div class="state">
+
+                <div class="spinner"></div>
+
+                載入中...
+
+            </div>
+
+        `;
+
+
+    $("adminScoreFooterActions")
+        .style
+        .display =
+        "none";
+
+
+    $("adminScoreSaveInfo")
+        .textContent =
+        "";
+
+
+    openModal(
+        "adminScoreModal"
+    );
+
+
+    try {
+
+        const result =
+            await api(
+
+                "adminGetScore",
+
+                {
+
+                    sectionId:
+                        dashboardSection.sectionId,
+
+                    clubName:
+                        clubName
+
+                }
+
+            );
+
+
+        if (
+            unauthorized(result)
+        ) {
+
+            closeAdminScoreModal();
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message
+                ||
+                "無法取得行政評分資料"
+
+            );
+
+        }
+
+
+        S.currentAdminScoreClub =
+            result.club;
+
+
+        S.currentAdminScoreSection =
+            result.section
+            ||
+            result.stage;
+
+
+        S.currentAdminScoreRecord =
+            result.record;
+
+
+        S.currentAdminScoreLocked =
+            Boolean(
+                result.locked
+            );
+
+
+        $("adminScoreModalTitle")
+            .textContent =
+            result.club.name;
+
+
+        $("adminScoreModalSub")
+            .textContent =
+
+            `${result.club.category}｜${result.section.icon || "🧾"} ${result.section.name}`;
+
+
+        renderAdminScoreModal();
+
+
+        if (
+            result.staleDraft
+        ) {
+
+            toast(
+                "⚠️ 此草稿使用舊版評分規則，請重新確認"
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        $("adminScoreModalBody")
+            .innerHTML = `
+
+                <div class="state">
+                    ⚠️ ${esc(error.message)}
+                </div>
+
+            `;
+
+    }
+
+}
+
+
+function closeAdminScoreModal() {
+
+    closeModal(
+        "adminScoreModal"
+    );
+
+}
+
+
+/* ============================================================
+   行政評分目前值
+   ============================================================ */
+
+function getAdminScoreCurrentValue(
+    criterionId
+) {
+
+    const record =
+        S.currentAdminScoreRecord;
+
+
+    if (
+        !record
+        ||
+        !record.scores
+    ) {
+
+        return "";
+
+    }
+
+
+    const value =
+        record.scores[
+            criterionId
+        ];
+
+
+    if (
+        value === null
+        ||
+        value === undefined
+        ||
+        value === ""
+    ) {
+
+        return "";
+
+    }
+
+
+    return value;
+
+}
+
+
+/* ============================================================
+   行政評分 Modal Render
+   ============================================================ */
+
+function renderAdminScoreModal() {
+
+    const section =
+        S.currentAdminScoreSection;
+
+
+    if (!section) {
+
+        return;
+
+    }
+
+
+    const groups =
+        (
+            Array.isArray(
+                section.groups
+            )
+
+            ? section.groups
+
+            : []
+        )
+        .filter(
+            group =>
+                group.enabled !==
+                false
+        );
+
+
+    let html =
+        "";
+
+
+    if (
+        S.currentAdminScoreLocked
+    ) {
+
+        html += `
+
+            <div class="admin-score-locked">
+
+                🔒 此社團的行政評分已正式送出並鎖定，
+                目前只能查看。
+
+            </div>
+
+        `;
+
+    }
+
+
+    html += `
+
+        <div class="admin-score-summary">
+
+            <div>
+
+                <div class="admin-score-total-label">
+                    ${esc(section.name)}目前總分
+                </div>
+
+                <div class="admin-score-total">
+
+                    <span id="adminCurrentTotal">
+                        0
+                    </span>
+
+                    /
+
+                    ${fmt(section.maxScore)}
+
+                </div>
+
+            </div>
+
+            <div
+                id="adminAnsweredProgress"
+                class="admin-score-total-label"
+            >
+                0 / 0 項
+            </div>
+
+        </div>
+
+    `;
+
+
+    groups.forEach(
+        group => {
+
+            html += `
+
+                <section class="admin-score-group-box">
+
+                    <div class="admin-score-group-head">
+
+                        <span>
+                            ${esc(group.name)}
+                        </span>
+
+                        <span>
+
+                            <span
+                                id="adminGroupScore_${attr(group.id)}"
+                            >
+                                0
+                            </span>
+
+                            /
+
+                            ${fmt(group.maxScore)}
+
+                        </span>
+
+                    </div>
+
+                    <div class="admin-score-criteria">
+
+            `;
+
+
+            (
+                group.criteria
+                ||
+                []
+            )
+            .filter(
+                criterion =>
+                    criterion.enabled !==
+                    false
+            )
+            .forEach(
+                criterion => {
+
+                    const value =
+                        getAdminScoreCurrentValue(
+                            criterion.id
+                        );
+
+
+                    html += `
+
+                        <div class="admin-score-criterion">
+
+                            <div>
+
+                                <div class="admin-score-criterion-name">
+                                    ${esc(criterion.name)}
+                                </div>
+
+                                <div class="admin-score-max">
+                                    最高 ${fmt(criterion.maxScore)} 分
+                                </div>
+
+                            </div>
+
+                            <div class="admin-score-input-wrap">
+
+                                <input
+                                    id="adminScoreInput_${attr(criterion.id)}"
+                                    class="admin-score-input"
+                                    type="number"
+                                    min="0"
+                                    max="${fmt(criterion.maxScore)}"
+                                    step="0.01"
+                                    value="${attr(value)}"
+                                    data-criterion-id="${attr(criterion.id)}"
+                                    data-group-id="${attr(group.id)}"
+                                    data-max="${fmt(criterion.maxScore)}"
+                                    ${S.currentAdminScoreLocked ? "disabled" : ""}
+                                    oninput="adminScoreChanged(this)"
+                                >
+
+                                <span class="admin-score-outof">
+                                    / ${fmt(criterion.maxScore)}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+            );
+
+
+            html += `
+
+                    </div>
+
+                </section>
+
+            `;
+
+        }
+    );
+
+
+    html += `
+
+        <div
+            id="adminScoreWarning"
+            class="admin-score-warning"
+        ></div>
+
+    `;
+
+
+    $("adminScoreModalBody")
+        .innerHTML =
+        html;
+
+
+    if (
+        S.currentAdminScoreLocked
+    ) {
+
+        $("adminScoreFooterActions")
+            .style
+            .display =
+            "none";
+
+
+        $("adminScoreSaveInfo")
+            .textContent =
+
+            S.currentAdminScoreRecord
+            &&
+            S.currentAdminScoreRecord.submittedAt
+
+            ? "正式送出：" +
+              formatDate(
+                  S.currentAdminScoreRecord.submittedAt
+              )
+
+            : "已正式送出";
+
+    }
+
+    else {
+
+        $("adminScoreFooterActions")
+            .style
+            .display =
+            "flex";
+
+
+        $("adminScoreSaveInfo")
+            .textContent =
+
+            S.currentAdminScoreRecord
+            &&
+            S.currentAdminScoreRecord.updatedAt
+
+            ? "草稿更新：" +
+              formatDate(
+                  S.currentAdminScoreRecord.updatedAt
+              )
+
+            : "尚未儲存";
+
+    }
+
+
+    recalculateAdminScore();
+
+}
+
+
+/* ============================================================
+   行政評分輸入
+   ============================================================ */
+
+function adminScoreChanged(input) {
+
+    input.classList.remove(
+        "invalid"
+    );
+
+
+    recalculateAdminScore();
+
+}
+
+
+function collectAdminScores() {
+
+    const scores =
+        {};
+
+
+    document
+        .querySelectorAll(
+            "#adminScoreModalBody .admin-score-input"
+        )
+        .forEach(
+            input => {
+
+                const id =
+                    input.dataset
+                        .criterionId;
+
+
+                const raw =
+                    input.value
+                        .trim();
+
+
+                scores[id] =
+
+                    raw === ""
+
+                    ? null
+
+                    : Number(raw);
+
+            }
+        );
+
+
+    return scores;
+
+}
+
+
+/* ============================================================
+   行政評分前端計算
+   ============================================================ */
+
+function calculateAdminScoreClient() {
+
+    const section =
+        S.currentAdminScoreSection;
+
+
+    const scores =
+        collectAdminScores();
+
+
+    let total =
+        0;
+
+    let answered =
+        0;
+
+    let criterionCount =
+        0;
+
+    let valid =
+        true;
+
+    const errors =
+        [];
+
+    const groupResults =
+        [];
+
+
+    (
+        section.groups
+        ||
+        []
+    )
+    .filter(
+        group =>
+            group.enabled !==
+            false
+    )
+    .forEach(
+        group => {
+
+            let groupTotal =
+                0;
+
+            let groupAnswered =
+                0;
+
+            let groupCount =
+                0;
+
+
+            (
+                group.criteria
+                ||
+                []
+            )
+            .filter(
+                criterion =>
+                    criterion.enabled !==
+                    false
+            )
+            .forEach(
+                criterion => {
+
+                    criterionCount++;
+
+                    groupCount++;
+
+
+                    const value =
+                        scores[
+                            criterion.id
+                        ];
+
+
+                    const input =
+                        $(
+                            "adminScoreInput_" +
+                            criterion.id
+                        );
+
+
+                    if (
+                        value === null
+                        ||
+                        value === undefined
+                        ||
+                        value === ""
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    answered++;
+
+                    groupAnswered++;
+
+
+                    const number =
+                        Number(value);
+
+
+                    if (
+                        !Number.isFinite(number)
+                    ) {
+
+                        valid =
+                            false;
+
+
+                        errors.push(
+                            `「${criterion.name}」不是有效數字。`
+                        );
+
+
+                        input
+                            ?.classList
+                            .add("invalid");
+
+
+                        return;
+
+                    }
+
+
+                    if (
+                        number < 0
+                    ) {
+
+                        valid =
+                            false;
+
+
+                        errors.push(
+                            `「${criterion.name}」不能低於 0 分。`
+                        );
+
+
+                        input
+                            ?.classList
+                            .add("invalid");
+
+                    }
+
+
+                    if (
+                        number >
+                        num(
+                            criterion.maxScore
+                        )
+                    ) {
+
+                        valid =
+                            false;
+
+
+                        errors.push(
+
+                            `「${criterion.name}」最高只能輸入 ${fmt(criterion.maxScore)} 分。`
+
+                        );
+
+
+                        input
+                            ?.classList
+                            .add("invalid");
+
+                    }
+
+
+                    groupTotal +=
+                        number;
+
+                }
+            );
+
+
+            groupTotal =
+                num(
+                    groupTotal
+                );
+
+
+            if (
+                groupTotal >
+                num(
+                    group.maxScore
+                )
+            ) {
+
+                valid =
+                    false;
+
+
+                errors.push(
+
+                    `分類「${group.name}」已超過上限 ${fmt(group.maxScore)} 分。`
+
+                );
+
+            }
+
+
+            total +=
+                groupTotal;
+
+
+            groupResults.push({
+
+                id:
+                    group.id,
+
+                score:
+                    groupTotal,
+
+                answered:
+                    groupAnswered,
+
+                count:
+                    groupCount
+
+            });
+
+        }
+    );
+
+
+    total =
+        num(total);
+
+
+    if (
+        total >
+        num(
+            section.maxScore
+        )
+    ) {
+
+        valid =
+            false;
+
+
+        errors.push(
+
+            `「${section.name}」總分超過上限 ${fmt(section.maxScore)} 分。`
+
+        );
+
+    }
+
+
+    return {
+
+        scores:
+            scores,
+
+        total:
+            total,
+
+        answered:
+            answered,
+
+        criterionCount:
+            criterionCount,
+
+        complete:
+            answered ===
+            criterionCount,
+
+        valid:
+            valid,
+
+        errors:
+            errors,
+
+        groups:
+            groupResults
+
+    };
+
+}
+
+
+/* ============================================================
+   行政評分重新計算
+   ============================================================ */
+
+function recalculateAdminScore() {
+
+    if (
+        !S.currentAdminScoreSection
+    ) {
+
+        return;
+
+    }
+
+
+    document
+        .querySelectorAll(
+            ".admin-score-input"
+        )
+        .forEach(
+            input =>
+                input.classList.remove(
+                    "invalid"
+                )
+        );
+
+
+    const result =
+        calculateAdminScoreClient();
+
+
+    $("adminCurrentTotal")
+        .textContent =
+        fmt(
+            result.total
+        );
+
+
+    $("adminAnsweredProgress")
+        .textContent =
+
+        `${result.answered} / ${result.criterionCount} 項`;
+
+
+    result.groups.forEach(
+        group => {
+
+            const element =
+                $(
+                    "adminGroupScore_" +
+                    group.id
+                );
+
+
+            if (element) {
+
+                element.textContent =
+                    fmt(
+                        group.score
+                    );
+
+            }
+
+        }
+    );
+
+
+    const warning =
+        $("adminScoreWarning");
+
+
+    if (
+        result.errors.length
+    ) {
+
+        warning
+            .classList
+            .add("show");
+
+
+        warning.innerHTML =
+
+            "⚠️ 請確認以下分數：<br>"
+
+            +
+
+            result.errors
+                .map(
+                    error =>
+                        "• " +
+                        esc(error)
+                )
+                .join("<br>");
+
+    }
+
+    else {
+
+        warning
+            .classList
+            .remove("show");
+
+
+        warning.innerHTML =
+            "";
+
+    }
+
+
+    $("adminSaveDraftBtn")
+        .disabled =
+        !result.valid;
+
+
+    $("adminSubmitScoreBtn")
+        .disabled =
+        !result.valid;
+
+}
+
+
+/* ============================================================
+   儲存行政草稿
+   ============================================================ */
+
+async function saveAdminScoreDraft() {
+
+    if (
+        S.currentAdminScoreLocked
+        ||
+        !S.currentAdminScoreClub
+        ||
+        !S.currentAdminScoreSection
+    ) {
+
+        return;
+
+    }
+
+
+    const calculated =
+        calculateAdminScoreClient();
+
+
+    if (
+        !calculated.valid
+    ) {
+
+        toast(
+            "❌ 有分數超過限制，請先修正"
+        );
+
+        return;
+
+    }
+
+
+    const button =
+        $("adminSaveDraftBtn");
+
+
+    try {
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "儲存中...";
+
+
+        const result =
+            await api(
+
+                "adminSaveScoreDraft",
+
+                {
+
+                    sectionId:
+                        S.currentAdminScoreSection.id
+                        ||
+                        S.currentAdminScoreSection.key,
+
+                    clubName:
+                        S.currentAdminScoreClub.name,
+
+                    scores:
+                        calculated.scores
+
+                }
+
+            );
+
+
+        if (
+            unauthorized(result)
+        ) {
+
+            closeAdminScoreModal();
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message
+                ||
+                "草稿儲存失敗"
+
+            );
+
+        }
+
+
+        S.currentAdminScoreRecord =
+            result.record;
+
+
+        $("adminScoreSaveInfo")
+            .textContent =
+
+            "草稿更新：" +
+
+            formatDate(
+                result.record.updatedAt
+            );
+
+
+        toast(
+            "✅ 行政評分草稿已儲存"
+        );
+
+
+        await loadAdminScoreDashboard();
+
+    }
+
+    catch (error) {
+
+        toast(
+            "❌ " +
+            error.message
+        );
+
+    }
+
+    finally {
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "💾 儲存草稿";
+
+
+        recalculateAdminScore();
+
+    }
+
+}
+
+
+/* ============================================================
+   正式送出行政評分
+   ============================================================ */
+
+async function submitAdminScore() {
+
+    if (
+        S.currentAdminScoreLocked
+        ||
+        !S.currentAdminScoreClub
+        ||
+        !S.currentAdminScoreSection
+    ) {
+
+        return;
+
+    }
+
+
+    const calculated =
+        calculateAdminScoreClient();
+
+
+    if (
+        !calculated.valid
+    ) {
+
+        toast(
+            "❌ 有分數超過限制，請先修正"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !calculated.complete
+    ) {
+
+        toast(
+            "⚠️ 尚有小項未填寫；0 分可以，但不能留白"
+        );
+
+        return;
+
+    }
+
+
+    const confirmed =
+        confirm(
+
+            `確定正式送出？\n\n`
+
+            +
+
+            `社團：${S.currentAdminScoreClub.name}\n`
+
+            +
+
+            `項目：${S.currentAdminScoreSection.name}\n`
+
+            +
+
+            `總分：${fmt(calculated.total)} / ${fmt(S.currentAdminScoreSection.maxScore)}\n\n`
+
+            +
+
+            `送出後將鎖定。`
+
+        );
+
+
+    if (
+        !confirmed
+    ) {
+
+        return;
+
+    }
+
+
+    const button =
+        $("adminSubmitScoreBtn");
+
+
+    try {
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "送出中...";
+
+
+        const result =
+            await api(
+
+                "adminSubmitScore",
+
+                {
+
+                    sectionId:
+                        S.currentAdminScoreSection.id
+                        ||
+                        S.currentAdminScoreSection.key,
+
+                    clubName:
+                        S.currentAdminScoreClub.name,
+
+                    scores:
+                        calculated.scores
+
+                }
+
+            );
+
+
+        if (
+            unauthorized(result)
+        ) {
+
+            closeAdminScoreModal();
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message
+                ||
+                "正式送出失敗"
+
+            );
+
+        }
+
+
+        S.currentAdminScoreRecord =
+            result.record;
+
+
+        S.currentAdminScoreLocked =
+            true;
+
+
+        toast(
+            "✅ 行政評分已正式送出並鎖定"
+        );
+
+
+        await loadAdminScoreDashboard();
+
+
+        renderAdminScoreModal();
+
+    }
+
+    catch (error) {
+
+        toast(
+            "❌ " +
+            error.message
+        );
+
+    }
+
+    finally {
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "✅ 正式送出";
+
+    }
 
 }
 
@@ -6277,9 +7608,7 @@ function getAvailableJudgeScoreSections() {
 }
 
 
-function scoreSectionById(
-    id
-) {
+function scoreSectionById(id) {
 
     return (
 
@@ -6299,19 +7628,13 @@ function scoreSectionById(
 }
 
 
-function scoreSectionLabel(
-    id
-) {
+function scoreSectionLabel(id) {
 
     const section =
-        scoreSectionById(
-            id
-        );
+        scoreSectionById(id);
 
 
-    if (
-        !section
-    ) {
+    if (!section) {
 
         return id;
 
@@ -6344,7 +7667,7 @@ function scoreSectionLabel(
 
 
 /* ============================================================
-   Judge：屬性 Checkbox
+   Judge Checkbox
    ============================================================ */
 
 function renderCategoryChecks(
@@ -6378,16 +7701,10 @@ function renderCategoryChecks(
 
                 `
             )
-            .join(
-                ""
-            );
+            .join("");
 
 }
 
-
-/* ============================================================
-   Judge：大項 Checkbox
-   ============================================================ */
 
 function renderJudgeScoreSectionChecks(
     selected = []
@@ -6415,7 +7732,6 @@ function renderJudgeScoreSectionChecks(
             </div>
 
         `;
-
 
         return;
 
@@ -6486,9 +7802,7 @@ function renderJudgeScoreSectionChecks(
                             </div>
 
                             <div class="check-sub">
-
                                 ${esc(statusText)}
-
                             </div>
 
                         </div>
@@ -6499,9 +7813,7 @@ function renderJudgeScoreSectionChecks(
 
                 }
             )
-            .join(
-                ""
-            );
+            .join("");
 
 }
 
@@ -6518,9 +7830,7 @@ function setAllJudgeScoreSections(
             input => {
 
                 input.checked =
-                    Boolean(
-                        checked
-                    );
+                    Boolean(checked);
 
             }
         );
@@ -6532,9 +7842,7 @@ function setAllJudgeScoreSections(
    Judge Load
    ============================================================ */
 
-function judgeIdOf(
-    judge
-) {
+function judgeIdOf(judge) {
 
     return (
 
@@ -6564,9 +7872,7 @@ async function loadJudges() {
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return;
@@ -6637,9 +7943,7 @@ async function loadJudges() {
         $("judgeMeta")
             .textContent =
 
-            `${S.judges.length} 位評審｜` +
-
-            `${getAvailableJudgeScoreSections().length} 個可分配評分大項`;
+            `${S.judges.length} 位評審｜${getAvailableJudgeScoreSections().length} 個可分配評分大項`;
 
 
         renderJudges();
@@ -6659,7 +7963,7 @@ async function loadJudges() {
 
 
 /* ============================================================
-   Judge List Render
+   Judge List
    ============================================================ */
 
 function renderJudges() {
@@ -6721,9 +8025,7 @@ function renderJudges() {
                                 category =>
                                     `<span class="chip">${esc(category)}</span>`
                             )
-                            .join(
-                                ""
-                            )
+                            .join("")
 
                         : `
                           <span class="chip chip-empty">
@@ -6745,9 +8047,7 @@ function renderJudges() {
                                     </span>
                                     `
                             )
-                            .join(
-                                ""
-                            )
+                            .join("")
 
                         : `
                           <span class="chip chip-empty">
@@ -6788,14 +8088,10 @@ function renderJudges() {
 
                             </div>
 
-
                             <div class="list-sub">
-
                                 帳號：
                                 ${esc(judge.username || "-")}
-
                             </div>
-
 
                             <div class="permission-title">
                                 負責社團屬性
@@ -6804,7 +8100,6 @@ function renderJudges() {
                             <div class="chips">
                                 ${categoryHtml}
                             </div>
-
 
                             <div class="permission-title">
                                 可評分大項
@@ -6816,7 +8111,6 @@ function renderJudges() {
 
                         </div>
 
-
                         <div class="row-actions">
 
                             <button
@@ -6826,14 +8120,12 @@ function renderJudges() {
                                 編輯
                             </button>
 
-
                             <button
                                 class="btn"
                                 onclick="resetJudgePassword('${encodeURIComponent(id)}')"
                             >
                                 重設密碼
                             </button>
-
 
                             <button
                                 class="btn"
@@ -6845,7 +8137,6 @@ function renderJudges() {
                                     : "啟用"
                                 }
                             </button>
-
 
                             <button
                                 class="btn btn-danger"
@@ -6862,9 +8153,7 @@ function renderJudges() {
 
                 }
             )
-            .join(
-                ""
-            )
+            .join("")
 
         : `
           <div class="state">
@@ -6894,9 +8183,8 @@ function openJudgeModal(
         S.judges
             .find(
                 item =>
-                    judgeIdOf(
-                        item
-                    ) ===
+                    judgeIdOf(item)
+                    ===
                     id
             );
 
@@ -6938,9 +8226,7 @@ function openJudgeModal(
 
     $("judgeUsername")
         .disabled =
-        Boolean(
-            judge
-        );
+        Boolean(judge);
 
 
     $("judgePasswordWrap")
@@ -6987,13 +8273,6 @@ function openJudgeModal(
 
     );
 
-
-    /*
-     * 新增評審時：
-     * 預設勾選目前全部大項。
-     *
-     * 管理員仍可自行取消。
-     */
 
     const selectedSections =
 
@@ -7094,9 +8373,7 @@ async function saveJudge() {
         let result;
 
 
-        if (
-            id
-        ) {
+        if (id) {
 
             result =
                 await api(
@@ -7161,9 +8438,7 @@ async function saveJudge() {
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return;
@@ -7263,9 +8538,7 @@ async function resetJudgePassword(
 
 
     if (
-        unauthorized(
-            result
-        )
+        unauthorized(result)
     ) {
 
         return;
@@ -7325,9 +8598,7 @@ async function setJudgeActive(
 
 
     if (
-        unauthorized(
-            result
-        )
+        unauthorized(result)
     ) {
 
         return;
@@ -7340,17 +8611,13 @@ async function setJudgeActive(
     ) {
 
         toast(
-
             "❌ " +
-
             (
                 result.message
                 ||
                 "操作失敗"
             )
-
         );
-
 
         return;
 
@@ -7408,9 +8675,7 @@ async function deleteJudge(
 
 
     if (
-        unauthorized(
-            result
-        )
+        unauthorized(result)
     ) {
 
         return;
@@ -7423,17 +8688,13 @@ async function deleteJudge(
     ) {
 
         toast(
-
             "❌ " +
-
             (
                 result.message
                 ||
                 "刪除失敗"
             )
-
         );
-
 
         return;
 
@@ -7465,9 +8726,7 @@ async function loadClubs() {
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return;
@@ -7519,7 +8778,6 @@ async function loadClubs() {
 
         $("clubList")
             .innerHTML =
-
             `<div class="state">⚠️ ${esc(error.message)}</div>`;
 
     }
@@ -7530,7 +8788,6 @@ async function loadClubs() {
 function renderClubs() {
 
     const query =
-
         (
             $("clubSearch")
             ?.value
@@ -7545,18 +8802,13 @@ function renderClubs() {
         S.clubs
             .filter(
                 item =>
-
                     !query
-
                     ||
-
                     (
                         `${item.name} ${item.category}`
                     )
                     .toLowerCase()
-                    .includes(
-                        query
-                    )
+                    .includes(query)
             );
 
 
@@ -7583,7 +8835,6 @@ function renderClubs() {
 
                     </div>
 
-
                     <div class="row-actions">
 
                         <button
@@ -7606,9 +8857,7 @@ function renderClubs() {
 
                 `
             )
-            .join(
-                ""
-            )
+            .join("")
 
         : `
           <div class="state">
@@ -7676,9 +8925,7 @@ function openClubModal(
 
                 `
             )
-            .join(
-                ""
-            );
+            .join("");
 
 
     $("clubModalTitle")
@@ -7764,9 +9011,7 @@ async function saveClub() {
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return;
@@ -7797,8 +9042,12 @@ async function saveClub() {
         await Promise.all([
 
             loadClubs(),
+
             loadClouds(),
-            loadForms()
+
+            loadForms(),
+
+            loadAdminScoreDashboard()
 
         ]);
 
@@ -7832,7 +9081,7 @@ async function deleteClub(
 
     if (
         !confirm(
-            `確定刪除「${name}」？這可能一併清理綁定、雲端與表單關聯。`
+            `確定刪除「${name}」？`
         )
     ) {
 
@@ -7857,9 +9106,7 @@ async function deleteClub(
 
 
     if (
-        unauthorized(
-            result
-        )
+        unauthorized(result)
     ) {
 
         return;
@@ -7872,17 +9119,13 @@ async function deleteClub(
     ) {
 
         toast(
-
             "❌ " +
-
             (
                 result.message
                 ||
                 "刪除失敗"
             )
-
         );
-
 
         return;
 
@@ -7892,9 +9135,14 @@ async function deleteClub(
     await Promise.all([
 
         loadClubs(),
+
         loadClouds(),
+
         loadForms(),
-        loadBindings()
+
+        loadBindings(),
+
+        loadAdminScoreDashboard()
 
     ]);
 
@@ -7910,13 +9158,9 @@ async function deleteClub(
    Event
    ============================================================ */
 
-function isoToLocal(
-    value
-) {
+function isoToLocal(value) {
 
-    if (
-        !value
-    ) {
+    if (!value) {
 
         return "";
 
@@ -7924,9 +9168,7 @@ function isoToLocal(
 
 
     const date =
-        new Date(
-            value
-        );
+        new Date(value);
 
 
     if (
@@ -7978,9 +9220,7 @@ function isoToLocal(
 
 
     formatter
-        .formatToParts(
-            date
-        )
+        .formatToParts(date)
         .forEach(
             item => {
 
@@ -7989,9 +9229,7 @@ function isoToLocal(
                     "literal"
                 ) {
 
-                    parts[
-                        item.type
-                    ] =
+                    parts[item.type] =
                         item.value;
 
                 }
@@ -8010,9 +9248,7 @@ function isoToLocal(
 }
 
 
-function localToTaipei(
-    value
-) {
+function localToTaipei(value) {
 
     return (
 
@@ -8064,8 +9300,11 @@ async function loadEvent() {
         [
 
             "dataDeadline",
+
             "formDeadline",
+
             "eventStart",
+
             "eventEnd"
 
         ]
@@ -8075,9 +9314,7 @@ async function loadEvent() {
                 $(key)
                     .value =
                     isoToLocal(
-                        result.config[
-                            key
-                        ]
+                        result.config[key]
                     );
 
             }
@@ -8113,29 +9350,25 @@ async function saveEventConfig() {
 
     const dataDeadline =
         localToTaipei(
-            $("dataDeadline")
-                .value
+            $("dataDeadline").value
         );
 
 
     const formDeadline =
         localToTaipei(
-            $("formDeadline")
-                .value
+            $("formDeadline").value
         );
 
 
     const eventStart =
         localToTaipei(
-            $("eventStart")
-                .value
+            $("eventStart").value
         );
 
 
     const eventEnd =
         localToTaipei(
-            $("eventEnd")
-                .value
+            $("eventEnd").value
         );
 
 
@@ -8171,9 +9404,7 @@ async function saveEventConfig() {
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return;
@@ -8227,13 +9458,9 @@ async function saveEventConfig() {
 }
 
 
-function formatDate(
-    value
-) {
+function formatDate(value) {
 
-    if (
-        !value
-    ) {
+    if (!value) {
 
         return "-";
 
@@ -8241,9 +9468,7 @@ function formatDate(
 
 
     const date =
-        new Date(
-            value
-        );
+        new Date(value);
 
 
     if (
@@ -8252,9 +9477,7 @@ function formatDate(
         )
     ) {
 
-        return String(
-            value
-        );
+        return String(value);
 
     }
 
@@ -8289,9 +9512,7 @@ function formatDate(
         }
 
     )
-    .format(
-        date
-    );
+    .format(date);
 
 }
 
@@ -8311,9 +9532,7 @@ async function loadForms() {
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return;
@@ -8397,7 +9616,6 @@ async function loadForms() {
 function renderForms() {
 
     const query =
-
         (
             $("formSearch")
             ?.value
@@ -8430,9 +9648,7 @@ function renderForms() {
                             `${item.club} ${item.category}`
                         )
                         .toLowerCase()
-                        .includes(
-                            query
-                        );
+                        .includes(query);
 
 
                     const statusMatched =
@@ -8447,13 +9663,9 @@ function renderForms() {
 
 
                     return (
-
                         searchMatched
-
                         &&
-
                         statusMatched
-
                     );
 
                 }
@@ -8511,7 +9723,6 @@ function renderForms() {
 
                         </div>
 
-
                         <div class="list-sub">
 
                             ${esc(item.category)}
@@ -8540,9 +9751,7 @@ function renderForms() {
 
                 `
             )
-            .join(
-                ""
-            )
+            .join("")
 
         : `
           <div class="state">
@@ -8567,9 +9776,7 @@ async function syncForms() {
 
 
     if (
-        unauthorized(
-            result
-        )
+        unauthorized(result)
     ) {
 
         return;
@@ -8582,17 +9789,13 @@ async function syncForms() {
     ) {
 
         toast(
-
             "❌ " +
-
             (
                 result.message
                 ||
                 "同步失敗"
             )
-
         );
-
 
         return;
 
@@ -8624,9 +9827,7 @@ async function loadBindings() {
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return;
@@ -8684,7 +9885,6 @@ async function loadBindings() {
 function renderBindings() {
 
     const query =
-
         (
             $("bindingSearch")
             ?.value
@@ -8708,9 +9908,7 @@ function renderBindings() {
                         `${item.displayName} ${item.club} ${item.category} ${item.userId}`
                     )
                     .toLowerCase()
-                    .includes(
-                        query
-                    )
+                    .includes(query)
             );
 
 
@@ -8745,7 +9943,6 @@ function renderBindings() {
 
                         </div>
 
-
                         <div class="list-sub">
 
                             ${esc(
@@ -8766,7 +9963,6 @@ function renderBindings() {
 
                     </div>
 
-
                     <button
                         class="btn btn-danger"
                         onclick="unbindLine('${encodeURIComponent(item.userId || "")}')"
@@ -8778,9 +9974,7 @@ function renderBindings() {
 
                 `
             )
-            .join(
-                ""
-            )
+            .join("")
 
         : `
           <div class="state">
@@ -8828,9 +10022,7 @@ async function unbindLine(
 
 
     if (
-        unauthorized(
-            result
-        )
+        unauthorized(result)
     ) {
 
         return;
@@ -8843,17 +10035,13 @@ async function unbindLine(
     ) {
 
         toast(
-
             "❌ " +
-
             (
                 result.message
                 ||
                 "解除失敗"
             )
-
         );
-
 
         return;
 
@@ -8885,9 +10073,7 @@ async function loadClouds() {
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return;
@@ -8953,7 +10139,6 @@ async function loadClouds() {
 function renderClouds() {
 
     const query =
-
         (
             $("cloudSearch")
             ?.value
@@ -8977,9 +10162,7 @@ function renderClouds() {
                         `${item.club} ${item.category}`
                     )
                     .toLowerCase()
-                    .includes(
-                        query
-                    )
+                    .includes(query)
             );
 
 
@@ -9016,7 +10199,6 @@ function renderClouds() {
 
                         </div>
 
-
                         <div class="list-sub">
 
                             ${esc(item.category)}
@@ -9038,7 +10220,6 @@ function renderClouds() {
                         </div>
 
                     </div>
-
 
                     <div class="row-actions">
 
@@ -9070,9 +10251,7 @@ function renderClouds() {
 
                 `
             )
-            .join(
-                ""
-            )
+            .join("")
 
         : `
           <div class="state">
@@ -9180,9 +10359,7 @@ async function saveCloud() {
 
 
         if (
-            unauthorized(
-                result
-            )
+            unauthorized(result)
         ) {
 
             return;
@@ -9267,9 +10444,7 @@ async function clearCloud(
 
 
     if (
-        unauthorized(
-            result
-        )
+        unauthorized(result)
     ) {
 
         return;
@@ -9282,17 +10457,13 @@ async function clearCloud(
     ) {
 
         toast(
-
             "❌ " +
-
             (
                 result.message
                 ||
                 "清除失敗"
             )
-
         );
-
 
         return;
 
@@ -9314,6 +10485,7 @@ async function clearCloud(
    ============================================================ */
 
 [
+    "adminScoreModal",
     "judgeModal",
     "clubModal",
     "cloudModal"
@@ -9333,9 +10505,20 @@ async function clearCloud(
                         event.currentTarget
                     ) {
 
-                        closeModal(
-                            id
-                        );
+                        if (
+                            id ===
+                            "adminScoreModal"
+                        ) {
+
+                            closeAdminScoreModal();
+
+                        }
+
+                        else {
+
+                            closeModal(id);
+
+                        }
 
                     }
 
@@ -9358,13 +10541,18 @@ document.addEventListener(
             "Escape"
         ) {
 
-            [
-                "judgeModal",
-                "clubModal",
+            closeAdminScoreModal();
+
+            closeModal(
+                "judgeModal"
+            );
+
+            closeModal(
+                "clubModal"
+            );
+
+            closeModal(
                 "cloudModal"
-            ]
-            .forEach(
-                closeModal
             );
 
         }
