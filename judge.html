@@ -1,5456 +1,1768 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1a73e8">
-<title>社團評選｜評審系統</title>
+
+<meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+>
+
+<meta
+    name="theme-color"
+    content="#1a73e8"
+>
+
+<title>
+    社團評選－評審系統
+</title>
+
 
 <style>
-*{box-sizing:border-box}
 
-html,body{
-  margin:0;
-  min-height:100%;
-  background:#f5f7fb;
-  color:#202124;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,sans-serif
+* {
+    box-sizing: border-box;
 }
 
-button,input,select{
-  font:inherit
-}
-
-button{
-  cursor:pointer
-}
-
-:root{
-  --p:#1a73e8;
-  --pd:#1557b0;
-  --border:#e4e7ec;
-  --muted:#667085;
-  --success:#167542;
-  --successbg:#e7f6ec;
-  --warning:#b54708;
-  --warningbg:#fff6e8;
-  --danger:#d92d20;
-  --dangerbg:#fff1f0;
-  --draft:#6941c6;
-  --draftbg:#f4f0ff;
-  --shadow:0 10px 30px rgba(16,24,40,.07)
-}
-
-.hidden{
-  display:none!important
-}
-
-.login-screen{
-  min-height:100vh;
-  min-height:100dvh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
-  background:
-    radial-gradient(circle at top left,rgba(26,115,232,.11),transparent 34%),
-    radial-gradient(circle at bottom right,rgba(74,144,226,.08),transparent 34%),
-    #f5f7fb
-}
-
-.login-card{
-  width:100%;
-  max-width:430px;
-  padding:34px;
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:24px;
-  box-shadow:0 20px 60px rgba(16,24,40,.12)
-}
-
-.login-logo{
-  width:64px;
-  height:64px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  margin-bottom:20px;
-  border-radius:18px;
-  background:#e8f0fe;
-  font-size:31px
-}
-
-.login-title{
-  margin:0;
-  font-size:26px;
-  font-weight:900
-}
-
-.login-subtitle{
-  margin:8px 0 24px;
-  color:var(--muted);
-  font-size:14px;
-  line-height:1.7
-}
-
-.form-group{
-  margin-top:15px
-}
-
-.form-label{
-  display:block;
-  margin-bottom:7px;
-  font-size:13px;
-  font-weight:800
-}
-
-.field-wrap{
-  position:relative
-}
-
-.field{
-  width:100%;
-  height:46px;
-  padding:0 14px;
-  border:1px solid #d0d5dd;
-  border-radius:11px;
-  outline:none;
-  background:#fff;
-  color:#202124;
-  font-size:14px
-}
-
-.field:focus{
-  border-color:var(--p);
-  box-shadow:0 0 0 3px rgba(26,115,232,.1)
-}
-
-.password-field{
-  padding-right:52px
-}
-
-.eye-btn{
-  position:absolute;
-  top:50%;
-  right:6px;
-  transform:translateY(-50%);
-  width:38px;
-  height:34px;
-  border:0;
-  border-radius:8px;
-  background:transparent
-}
-
-.eye-btn:hover{
-  background:#f2f4f7
-}
-
-.login-btn{
-  width:100%;
-  height:48px;
-  margin-top:20px;
-  border:0;
-  border-radius:11px;
-  background:var(--p);
-  color:#fff;
-  font-weight:850
-}
-
-.login-btn:disabled,
-.btn:disabled{
-  opacity:.5;
-  cursor:not-allowed
-}
-
-.login-error{
-  min-height:20px;
-  margin-top:10px;
-  color:var(--danger);
-  font-size:12px;
-  line-height:1.6
-}
-
-.login-foot{
-  margin-top:22px;
-  padding-top:18px;
-  border-top:1px solid var(--border);
-  color:var(--muted);
-  font-size:11px;
-  line-height:1.7;
-  text-align:center
-}
-
-.app{
-  display:none;
-  min-height:100vh
-}
-
-.topbar{
-  position:sticky;
-  top:0;
-  z-index:30;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:16px;
-  padding:13px max(18px,calc((100vw - 1160px)/2));
-  background:rgba(255,255,255,.96);
-  border-bottom:1px solid var(--border);
-  backdrop-filter:blur(10px)
-}
-
-.brand-title{
-  font-size:17px;
-  font-weight:900
-}
-
-.brand-subtitle{
-  margin-top:2px;
-  color:var(--muted);
-  font-size:11px
-}
-
-.top-actions{
-  display:flex;
-  align-items:center;
-  gap:8px
-}
-
-.user-chip{
-  max-width:220px;
-  padding:8px 11px;
-  border-radius:10px;
-  background:#f2f4f7;
-  color:#344054;
-  font-size:12px;
-  font-weight:800;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap
-}
-
-.btn{
-  min-height:38px;
-  padding:0 14px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:#fff;
-  color:#344054;
-  font-size:13px;
-  font-weight:800
-}
-
-.btn:hover{
-  background:#f9fafb
-}
-
-.btn-primary{
-  border-color:var(--p);
-  background:var(--p);
-  color:#fff
-}
-
-.btn-primary:hover{
-  background:var(--pd)
-}
-
-.btn-danger{
-  border-color:#f5c7c4;
-  background:var(--dangerbg);
-  color:var(--danger)
-}
-
-.btn-success{
-  border-color:#cfe8d7;
-  background:var(--successbg);
-  color:var(--success)
-}
-
-.main{
-  width:min(1160px,calc(100% - 30px));
-  margin:auto;
-  padding:26px 0 50px
-}
-
-.hero{
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:18px;
-  margin-bottom:16px
-}
-
-.hero-title{
-  margin:0;
-  font-size:27px;
-  font-weight:950
-}
-
-.hero-desc{
-  margin-top:6px;
-  color:var(--muted);
-  font-size:13px
-}
-
-.session-text{
-  color:var(--muted);
-  font-size:11px;
-  text-align:right
-}
-
-.profile-card{
-  display:grid;
-  grid-template-columns:auto minmax(0,1fr) auto;
-  gap:16px;
-  align-items:center;
-  padding:18px;
-  margin-bottom:14px;
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:17px;
-  box-shadow:var(--shadow)
-}
-
-.avatar{
-  width:56px;
-  height:56px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:16px;
-  background:#e8f0fe;
-  font-size:27px
-}
-
-.profile-name{
-  font-size:18px;
-  font-weight:900
-}
-
-.profile-username{
-  margin-top:3px;
-  color:var(--muted);
-  font-size:12px
-}
-
-.chips{
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  margin-top:8px
-}
-
-.chip{
-  display:inline-flex;
-  align-items:center;
-  padding:5px 9px;
-  border-radius:999px;
-  background:#eef4ff;
-  color:var(--pd);
-  font-size:11px;
-  font-weight:850
-}
-
-.must-score{
-  padding:12px 14px;
-  border:1px solid #bcd5ff;
-  border-radius:12px;
-  background:#f5f9ff;
-  color:#174b88;
-  font-size:12px;
-  font-weight:700;
-  line-height:1.7
-}
-
-.tabs{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin:16px 0 12px
-}
-
-.tab{
-  padding:14px;
-  border:1px solid var(--border);
-  border-radius:13px;
-  background:#fff;
-  text-align:left
-}
-
-.tab.active{
-  border-color:#9ec4ff;
-  background:#f5f9ff;
-  box-shadow:0 0 0 2px rgba(26,115,232,.07)
-}
-
-.tab-title{
-  font-size:14px;
-  font-weight:900
-}
-
-.tab-progress{
-  margin-top:4px;
-  color:var(--muted);
-  font-size:11px
-}
-
-.stage-panel{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:17px;
-  box-shadow:var(--shadow);
-  overflow:hidden
-}
-
-.stage-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:17px 18px;
-  border-bottom:1px solid var(--border)
-}
-
-.stage-title{
-  font-size:17px;
-  font-weight:900
-}
-
-.stage-sub{
-  margin-top:4px;
-  color:var(--muted);
-  font-size:11px
-}
-
-.status-pill{
-  padding:6px 9px;
-  border-radius:999px;
-  font-size:10px;
-  font-weight:900
-}
-
-.status-open{
-  background:var(--successbg);
-  color:var(--success)
-}
-
-.status-closed{
-  background:#f2f4f7;
-  color:#667085
-}
-
-.progress-area{
-  padding:15px 18px;
-  border-bottom:1px solid var(--border);
-  background:#fcfcfd
-}
-
-.progress-top{
-  display:flex;
-  justify-content:space-between;
-  gap:12px;
-  align-items:center
-}
-
-.progress-text{
-  font-size:13px;
-  font-weight:900
-}
-
-.progress-meta{
-  color:var(--muted);
-  font-size:11px
-}
-
-.progress-track{
-  height:9px;
-  margin-top:10px;
-  background:#eaecf0;
-  border-radius:999px;
-  overflow:hidden
-}
-
-.progress-bar{
-  height:100%;
-  width:0;
-  background:var(--p);
-  transition:.25s
-}
-
-.summary-grid{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:8px;
-  margin-top:12px
-}
-
-.summary-card{
-  padding:10px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:#fff
-}
-
-.summary-label{
-  color:var(--muted);
-  font-size:10px;
-  font-weight:800
-}
-
-.summary-value{
-  margin-top:4px;
-  font-size:18px;
-  font-weight:900
-}
-
-.toolbar{
-  display:flex;
-  gap:8px;
-  padding:12px 18px;
-  border-bottom:1px solid var(--border)
-}
-
-.search{
-  flex:1
-}
-
-.filter{
-  width:170px
-}
-
-.club-list{
-  display:grid;
-  gap:8px;
-  padding:14px 18px 18px
-}
-
-.category-group{
-  display:grid;
-  gap:8px
-}
-
-.category-heading{
-  margin:5px 0 1px;
-  padding:8px 10px;
-  border-radius:9px;
-  background:#f2f4f7;
-  color:#475467;
-  font-size:11px;
-  font-weight:900
-}
-
-.club-row{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto auto;
-  gap:10px;
-  align-items:center;
-  padding:13px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  background:#fff
-}
-
-.club-row:hover{
-  background:#fafcff
-}
-
-.club-name{
-  font-size:13px;
-  font-weight:900
-}
-
-.club-meta{
-  margin-top:3px;
-  color:var(--muted);
-  font-size:10px
-}
-
-.score-status{
-  min-width:86px;
-  text-align:center;
-  padding:6px 8px;
-  border-radius:999px;
-  font-size:10px;
-  font-weight:900
-}
-
-.s-not{
-  background:#f2f4f7;
-  color:#667085
-}
-
-.s-draft{
-  background:var(--draftbg);
-  color:var(--draft)
-}
-
-.s-sub{
-  background:var(--successbg);
-  color:var(--success)
-}
-
-.state{
-  padding:38px 18px;
-  text-align:center;
-  color:var(--muted);
-  font-size:13px
-}
-
-.spinner{
-  width:29px;
-  height:29px;
-  margin:0 auto 10px;
-  border:3px solid #e8eef7;
-  border-top-color:var(--p);
-  border-radius:50%;
-  animation:spin .8s linear infinite
-}
-
-@keyframes spin{
-  to{transform:rotate(360deg)}
-}
-
-.modal-backdrop{
-  position:fixed;
-  inset:0;
-  z-index:1000;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-  background:rgba(16,24,40,.58)
-}
-
-.score-modal{
-  width:min(760px,100%);
-  max-height:92vh;
-  background:#fff;
-  border-radius:18px;
-  overflow:hidden;
-  box-shadow:0 24px 60px rgba(16,24,40,.26);
-  display:flex;
-  flex-direction:column
-}
-
-.modal-head{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-  padding:17px 19px;
-  border-bottom:1px solid var(--border)
-}
-
-.modal-title{
-  font-size:17px;
-  font-weight:950
-}
-
-.modal-sub{
-  margin-top:4px;
-  color:var(--muted);
-  font-size:11px
-}
-
-.modal-close{
-  width:36px;
-  height:36px;
-  flex-shrink:0;
-  border:0;
-  border-radius:9px;
-  background:#f2f4f7;
-  font-size:18px
-}
-
-.modal-body{
-  padding:16px 19px;
-  overflow:auto
-}
-
-.score-banner{
-  padding:11px 12px;
-  margin-bottom:12px;
-  border:1px solid #bcd5ff;
-  border-radius:10px;
-  background:#f5f9ff;
-  color:#174b88;
-  font-size:11px;
-  line-height:1.7
-}
-
-.score-banner.warning{
-  border-color:#f7d7a5;
-  background:var(--warningbg);
-  color:#8a4b08
-}
-
-.score-banner.locked{
-  border-color:#cfe8d7;
-  background:var(--successbg);
-  color:var(--success)
-}
-
-.score-total-box{
-  position:sticky;
-  top:-16px;
-  z-index:3;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:12px 13px;
-  margin-bottom:12px;
-  border:1px solid #bcd5ff;
-  border-radius:11px;
-  background:#f5f9ff
-}
-
-.score-total-label{
-  font-size:11px;
-  color:#475467;
-  font-weight:800
-}
-
-.score-total-value{
-  font-size:23px;
-  font-weight:950;
-  color:var(--p)
-}
-
-.criteria-list{
-  display:grid;
-  gap:9px
-}
-
-.criterion{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 150px;
-  gap:12px;
-  align-items:center;
-  padding:12px;
-  border:1px solid var(--border);
-  border-radius:11px;
-  background:#fcfcfd
-}
-
-.criterion-name{
-  font-size:13px;
-  font-weight:850
-}
-
-.criterion-max{
-  margin-top:4px;
-  color:var(--muted);
-  font-size:10px
-}
-
-.score-input-wrap{
-  display:flex;
-  align-items:center;
-  gap:6px
-}
-
-.score-input{
-  width:100%;
-  height:42px;
-  padding:0 10px;
-  border:1px solid #d0d5dd;
-  border-radius:9px;
-  outline:none;
-  text-align:right;
-  font-weight:850
-}
-
-.score-input:focus{
-  border-color:var(--p);
-  box-shadow:0 0 0 3px rgba(26,115,232,.09)
-}
-
-.score-input.invalid{
-  border-color:var(--danger);
-  background:#fff8f7
-}
-
-.score-unit{
-  flex-shrink:0;
-  color:var(--muted);
-  font-size:11px
-}
-
-.modal-error{
-  min-height:18px;
-  margin-top:10px;
-  color:var(--danger);
-  font-size:11px;
-  line-height:1.6
-}
-
-.modal-footer{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:13px 19px;
-  border-top:1px solid var(--border);
-  background:#fcfcfd
-}
-
-.footer-left{
-  color:var(--muted);
-  font-size:10px;
-  line-height:1.5
-}
-
-.footer-actions{
-  display:flex;
-  gap:8px
-}
-
-.confirm-backdrop{
-  position:fixed;
-  inset:0;
-  z-index:1200;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  background:rgba(16,24,40,.64)
-}
-
-.confirm-box{
-  width:min(430px,100%);
-  padding:22px;
-  background:#fff;
-  border-radius:17px;
-  box-shadow:0 24px 70px rgba(16,24,40,.3)
-}
-
-.confirm-title{
-  font-size:18px;
-  font-weight:950
-}
-
-.confirm-text{
-  margin-top:8px;
-  color:#475467;
-  font-size:12px;
-  line-height:1.8
-}
-
-.confirm-warning{
-  margin-top:12px;
-  padding:10px 12px;
-  border-radius:10px;
-  background:var(--dangerbg);
-  color:#7a271a;
-  font-size:11px;
-  line-height:1.7
-}
-
-.confirm-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:8px;
-  margin-top:16px
-}
-
-.toast{
-  position:fixed;
-  right:20px;
-  bottom:20px;
-  z-index:2000;
-  max-width:min(390px,calc(100% - 40px));
-  padding:12px 16px;
-  border-radius:10px;
-  background:#101828;
-  color:#fff;
-  font-size:13px;
-  box-shadow:0 10px 35px rgba(16,24,40,.22);
-  opacity:0;
-  transform:translateY(12px);
-  pointer-events:none;
-  transition:.25s
-}
-
-.toast.show{
-  opacity:1;
-  transform:translateY(0)
-}
-
-@media(max-width:760px){
-
-  .topbar{
-    padding:11px 12px
-  }
-
-  .brand-subtitle,
-  .user-chip{
-    display:none
-  }
-
-  .top-actions .btn span{
-    display:none
-  }
-
-  .main{
-    width:calc(100% - 20px);
-    padding:18px 0 35px
-  }
-
-  .hero{
-    align-items:flex-start;
-    flex-direction:column
-  }
-
-  .hero-title{
-    font-size:23px
-  }
-
-  .session-text{
-    text-align:left
-  }
-
-  .profile-card{
-    grid-template-columns:auto 1fr
-  }
-
-  .profile-card .must-score{
-    grid-column:1/3
-  }
-
-  .summary-grid{
-    grid-template-columns:1fr 1fr
-  }
-
-  .toolbar{
-    flex-direction:column
-  }
-
-  .filter{
-    width:100%
-  }
-
-  .club-row{
-    grid-template-columns:minmax(0,1fr) auto
-  }
-
-  .club-row .btn{
-    grid-column:1/3;
-    width:100%
-  }
-
-  .criterion{
-    grid-template-columns:1fr
-  }
-
-  .modal-footer{
-    align-items:stretch;
-    flex-direction:column
-  }
-
-  .footer-actions{
-    width:100%
-  }
-
-  .footer-actions .btn{
-    flex:1
-  }
-
-  .score-modal{
-    max-height:96vh
-  }
-
-}
-</style>
-</head>
-
-<body>
-
-<section
-  id="loginScreen"
-  class="login-screen"
->
-
-  <div class="login-card">
-
-    <div class="login-logo">
-      👨‍⚖️
-    </div>
-
-    <h1 class="login-title">
-      評審登入
-    </h1>
-
-    <div class="login-subtitle">
-      弘光科技大學<br>
-      115學年度第一學期全校學生社團評選暨觀摩活動
-    </div>
-
-    <form id="loginForm">
-
-      <div class="form-group">
-
-        <label
-          class="form-label"
-          for="username"
-        >
-          評審帳號
-        </label>
-
-        <input
-          id="username"
-          class="field"
-          type="text"
-          autocomplete="username"
-          maxlength="40"
-          placeholder="請輸入評審帳號"
-          required
-        >
-
-      </div>
-
-      <div class="form-group">
-
-        <label
-          class="form-label"
-          for="password"
-        >
-          密碼
-        </label>
-
-        <div class="field-wrap">
-
-          <input
-            id="password"
-            class="field password-field"
-            type="password"
-            autocomplete="current-password"
-            maxlength="200"
-            placeholder="請輸入密碼"
-            required
-          >
-
-          <button
-            id="passwordToggle"
-            class="eye-btn"
-            type="button"
-          >
-            👁️
-          </button>
-
-        </div>
-
-      </div>
-
-      <button
-        id="loginBtn"
-        class="login-btn"
-        type="submit"
-      >
-        登入評審系統
-      </button>
-
-      <div
-        id="loginError"
-        class="login-error"
-      ></div>
-
-    </form>
-
-    <div class="login-foot">
-      僅限本活動授權評審使用。<br>
-      若無法登入，請聯絡活動管理人員。
-    </div>
-
-  </div>
-
-</section>
-
-
-<div
-  id="judgeApp"
-  class="app"
->
-
-  <header class="topbar">
-
-    <div>
-
-      <div class="brand-title">
-        👨‍⚖️ 社團評選評審系統
-      </div>
-
-      <div class="brand-subtitle">
-        115學年度第一學期全校學生社團評選暨觀摩活動
-      </div>
-
-    </div>
-
-    <div class="top-actions">
-
-      <div
-        id="topUserName"
-        class="user-chip"
-      >
-        評審
-      </div>
-
-      <button
-        id="refreshBtn"
-        class="btn"
-        type="button"
-      >
-        🔄
-        <span>重新整理</span>
-      </button>
-
-      <button
-        id="logoutBtn"
-        class="btn btn-danger"
-        type="button"
-      >
-        🚪
-        <span>登出</span>
-      </button>
-
-    </div>
-
-  </header>
-
-
-  <main class="main">
-
-    <div class="hero">
-
-      <div>
-
-        <h1 class="hero-title">
-          評審中心
-        </h1>
-
-        <div class="hero-desc">
-          您被指派的屬性，其底下所有社團都必須完成評分。
-        </div>
-
-      </div>
-
-      <div
-        id="sessionText"
-        class="session-text"
-      >
-        Session 驗證中
-      </div>
-
-    </div>
-
-
-    <section class="profile-card">
-
-      <div class="avatar">
-        👨‍⚖️
-      </div>
-
-      <div>
-
-        <div
-          id="profileName"
-          class="profile-name"
-        >
-          -
-        </div>
-
-        <div
-          id="profileUsername"
-          class="profile-username"
-        >
-          -
-        </div>
-
-        <div
-          id="categoryChips"
-          class="chips"
-        ></div>
-
-      </div>
-
-      <div
-        id="mustScoreText"
-        class="must-score"
-      >
-        正在讀取必評社團...
-      </div>
-
-    </section>
-
-
-    <div class="tabs">
-
-      <button
-        id="tabData"
-        class="tab active"
-        type="button"
-        onclick="switchStage('dataReview')"
-      >
-
-        <div class="tab-title">
-          📄 資料審查
-        </div>
-
-        <div
-          id="tabDataProgress"
-          class="tab-progress"
-        >
-          讀取中...
-        </div>
-
-      </button>
-
-
-      <button
-        id="tabField"
-        class="tab"
-        type="button"
-        onclick="switchStage('fieldReview')"
-      >
-
-        <div class="tab-title">
-          🏫 實地審查
-        </div>
-
-        <div
-          id="tabFieldProgress"
-          class="tab-progress"
-        >
-          讀取中...
-        </div>
-
-      </button>
-
-    </div>
-
-
-    <div
-      id="dashboardState"
-      class="state"
-    >
-
-      <div class="spinner"></div>
-
-      正在讀取評分清單...
-
-    </div>
-
-
-    <section
-      id="stagePanel"
-      class="stage-panel hidden"
-    >
-
-      <div class="stage-head">
-
-        <div>
-
-          <div
-            id="stageTitle"
-            class="stage-title"
-          >
-            -
-          </div>
-
-          <div
-            id="stageSub"
-            class="stage-sub"
-          >
-            -
-          </div>
-
-        </div>
-
-        <span
-          id="stageStatus"
-          class="status-pill status-closed"
-        >
-          -
-        </span>
-
-      </div>
-
-
-      <div
-        id="progressArea"
-        class="progress-area"
-      >
-
-        <div class="progress-top">
-
-          <div
-            id="progressText"
-            class="progress-text"
-          >
-            0 / 0 已完成
-          </div>
-
-          <div
-            id="progressMeta"
-            class="progress-meta"
-          >
-            -
-          </div>
-
-        </div>
-
-
-        <div class="progress-track">
-
-          <div
-            id="progressBar"
-            class="progress-bar"
-          ></div>
-
-        </div>
-
-
-        <div class="summary-grid">
-
-          <div class="summary-card">
-
-            <div class="summary-label">
-              必評社團
-            </div>
-
-            <div
-              id="sumTotal"
-              class="summary-value"
-            >
-              0
-            </div>
-
-          </div>
-
-
-          <div class="summary-card">
-
-            <div class="summary-label">
-              ✅ 已送出
-            </div>
-
-            <div
-              id="sumSubmitted"
-              class="summary-value"
-            >
-              0
-            </div>
-
-          </div>
-
-
-          <div class="summary-card">
-
-            <div class="summary-label">
-              📝 草稿
-            </div>
-
-            <div
-              id="sumDraft"
-              class="summary-value"
-            >
-              0
-            </div>
-
-          </div>
-
-
-          <div class="summary-card">
-
-            <div class="summary-label">
-              ⚪ 未開始
-            </div>
-
-            <div
-              id="sumNot"
-              class="summary-value"
-            >
-              0
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div class="toolbar">
-
-        <input
-          id="clubSearch"
-          class="field search"
-          type="search"
-          placeholder="搜尋社團名稱或屬性"
-        >
-
-        <select
-          id="statusFilter"
-          class="field filter"
-        >
-
-          <option value="all">
-            全部狀態
-          </option>
-
-          <option value="unfinished">
-            尚未完成
-          </option>
-
-          <option value="notStarted">
-            ⚪ 未開始
-          </option>
-
-          <option value="draft">
-            📝 草稿
-          </option>
-
-          <option value="submitted">
-            ✅ 已送出
-          </option>
-
-        </select>
-
-      </div>
-
-
-      <div
-        id="clubList"
-        class="club-list"
-      ></div>
-
-    </section>
-
-  </main>
-
-</div>
-
-
-<div
-  id="scoreModal"
-  class="modal-backdrop"
->
-
-  <div class="score-modal">
-
-    <div class="modal-head">
-
-      <div>
-
-        <div
-          id="scoreModalTitle"
-          class="modal-title"
-        >
-          評分
-        </div>
-
-        <div
-          id="scoreModalSub"
-          class="modal-sub"
-        >
-          -
-        </div>
-
-      </div>
-
-      <button
-        class="modal-close"
-        type="button"
-        onclick="closeScoreModal()"
-      >
-        ×
-      </button>
-
-    </div>
-
-
-    <div class="modal-body">
-
-      <div
-        id="scoreBanner"
-        class="score-banner"
-      >
-        -
-      </div>
-
-
-      <div class="score-total-box">
-
-        <div>
-
-          <div class="score-total-label">
-            目前總分
-          </div>
-
-          <div
-            id="answerProgress"
-            class="modal-sub"
-          >
-            0 / 0 項已填
-          </div>
-
-        </div>
-
-        <div
-          id="liveTotal"
-          class="score-total-value"
-        >
-          0 / 0
-        </div>
-
-      </div>
-
-
-      <div
-        id="criteriaList"
-        class="criteria-list"
-      ></div>
-
-
-      <div
-        id="scoreError"
-        class="modal-error"
-      ></div>
-
-    </div>
-
-
-    <div class="modal-footer">
-
-      <div
-        id="scoreUpdatedText"
-        class="footer-left"
-      >
-        尚未儲存
-      </div>
-
-      <div class="footer-actions">
-
-        <button
-          id="saveDraftBtn"
-          class="btn"
-          type="button"
-          onclick="saveDraft()"
-        >
-          💾 儲存草稿
-        </button>
-
-        <button
-          id="submitScoreBtn"
-          class="btn btn-primary"
-          type="button"
-          onclick="openSubmitConfirm()"
-        >
-          ✅ 正式送出
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-
-<div
-  id="confirmModal"
-  class="confirm-backdrop"
->
-
-  <div class="confirm-box">
-
-    <div class="confirm-title">
-      確認正式送出？
-    </div>
-
-    <div
-      id="confirmText"
-      class="confirm-text"
-    >
-      -
-    </div>
-
-    <div class="confirm-warning">
-      ⚠️ 正式送出後，此筆評分會立即鎖定，評審本人不能再修改。
-      若真的需要修改，必須由管理員解鎖。
-    </div>
-
-    <div class="confirm-actions">
-
-      <button
-        class="btn"
-        type="button"
-        onclick="closeSubmitConfirm()"
-      >
-        取消
-      </button>
-
-      <button
-        id="confirmSubmitBtn"
-        class="btn btn-primary"
-        type="button"
-        onclick="submitScore()"
-      >
-        確認送出並鎖定
-      </button>
-
-    </div>
-
-  </div>
-
-</div>
-
-
-<div
-  id="toast"
-  class="toast"
-></div>
-
-
-<script>
-
-const BACKEND_URL =
-  "https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
-
-
-const SESSION_KEY =
-  "HKSP_JUDGE_SESSION";
-
-
-const APP = {
-
-  sessionToken:
-    null,
-
-  judge:
-    null,
-
-  expiresAt:
-    null,
-
-  dashboard:
-    null,
-
-  currentStage:
-    "dataReview",
-
-  filteredClubs:
-    [],
-
-  scoreContext:
-    null,
-
-  busy:
-    false
-
-};
-
-
-document.addEventListener(
-  "DOMContentLoaded",
-  initializeApp
-);
-
-
-/* ============================================================
-   共用
-   ============================================================ */
-
-function byId(
-  id
-) {
-
-  return document
-    .getElementById(
-      id
-    );
-
-}
-
-
-/* ============================================================
-   初始化
-   ============================================================ */
-
-async function initializeApp() {
-
-  bindEvents();
-
-
-  const token =
-
-    sessionStorage
-      .getItem(
-        SESSION_KEY
-      );
-
-
-  if (!token) {
-
-    showLogin();
-
-    return;
-
-  }
-
-
-  APP.sessionToken =
-    token;
-
-
-  showApp();
-
-
-  const ok =
-    await restoreSession();
-
-
-  if (!ok) {
-
-    clearSession();
-
-    showLogin();
-
-
-    byId(
-      "loginError"
-    )
-    .textContent =
-      "登入已失效，請重新登入。";
-
-  }
-
-}
-
-
-/* ============================================================
-   Events
-   ============================================================ */
-
-function bindEvents() {
-
-  byId(
-    "loginForm"
-  )
-  .addEventListener(
-    "submit",
-    handleLogin
-  );
-
-
-  byId(
-    "passwordToggle"
-  )
-  .addEventListener(
-    "click",
-    togglePassword
-  );
-
-
-  byId(
-    "logoutBtn"
-  )
-  .addEventListener(
-    "click",
-    logoutJudge
-  );
-
-
-  byId(
-    "refreshBtn"
-  )
-  .addEventListener(
-    "click",
-    refreshDashboard
-  );
-
-
-  byId(
-    "clubSearch"
-  )
-  .addEventListener(
-    "input",
-    filterAndRenderClubs
-  );
-
-
-  byId(
-    "statusFilter"
-  )
-  .addEventListener(
-    "change",
-    filterAndRenderClubs
-  );
-
-
-  byId(
-    "scoreModal"
-  )
-  .addEventListener(
-
-    "click",
-
-    event => {
-
-      if (
-        event.target ===
-        event.currentTarget
-        &&
-        !APP.busy
-      ) {
-
-        closeScoreModal();
-
-      }
-
-    }
-
-  );
-
-
-  byId(
-    "confirmModal"
-  )
-  .addEventListener(
-
-    "click",
-
-    event => {
-
-      if (
-        event.target ===
-        event.currentTarget
-        &&
-        !APP.busy
-      ) {
-
-        closeSubmitConfirm();
-
-      }
-
-    }
-
-  );
-
-
-  document.addEventListener(
-
-    "keydown",
-
-    event => {
-
-      if (
-        event.key ===
-        "Escape"
-        &&
-        !APP.busy
-      ) {
-
-        closeSubmitConfirm();
-        closeScoreModal();
-
-      }
-
-    }
-
-  );
-
-}
-
-
-/* ============================================================
-   POST
-   ============================================================ */
-
-async function post(
-  payload
-) {
-
-  const controller =
-    new AbortController();
-
-
-  const timer =
-
-    setTimeout(
-
-      () =>
-        controller.abort(),
-
-      15000
-
-    );
-
-
-  try {
-
-    const response =
-
-      await fetch(
-
-        BACKEND_URL,
-
-        {
-
-          method:
-            "POST",
-
-          body:
-            JSON.stringify(
-              payload
-            ),
-
-          redirect:
-            "follow",
-
-          signal:
-            controller.signal
-
-        }
 
-      );
+html,
+body {
 
+    margin: 0;
 
-    if (!response.ok) {
+    min-height: 100%;
 
-      throw new Error(
-        "HTTP " +
-        response.status
-      );
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Noto Sans TC",
+        Roboto,
+        sans-serif;
 
-    }
+    background:
+        #f5f7fb;
 
+    color:
+        #202124;
 
-    const text =
-      await response.text();
-
-
-    try {
-
-      return JSON.parse(
-        text
-      );
-
-    }
-
-    catch {
-
-      console.error(
-        "後端原始回應：",
-        text
-      );
-
-
-      throw new Error(
-        "後端回傳格式錯誤"
-      );
-
-    }
-
-  }
-
-  catch (error) {
-
-    if (
-      error.name ===
-      "AbortError"
-    ) {
-
-      throw new Error(
-        "後端連線逾時"
-      );
-
-    }
-
-
-    throw error;
-
-  }
-
-  finally {
-
-    clearTimeout(
-      timer
-    );
-
-  }
-
-}
-
-
-/* ============================================================
-   Judge API
-   ============================================================ */
-
-function judgeApi(
-  action,
-  extra = {}
-) {
-
-  return post({
-
-    action:
-      action,
-
-    sessionToken:
-      APP.sessionToken,
-
-    ...extra
-
-  });
-
-}
-
-
-/* ============================================================
-   Unauthorized
-   ============================================================ */
-
-function isUnauthorized(
-  result
-) {
-
-  return (
-
-    result &&
-
-    [
-      "JUDGE_UNAUTHORIZED",
-      "JUDGE_SESSION_INVALID",
-      "JUDGE_SESSION_EXPIRED"
-    ]
-    .includes(
-      result.error
-    )
-
-  );
-
-}
-
-
-function handleUnauthorized(
-  message =
-    "評審登入已失效，請重新登入。"
-) {
-
-  clearSession();
-
-  showLogin();
-
-
-  byId(
-    "loginError"
-  )
-  .textContent =
-    message;
-
-}
-
-
-/* ============================================================
-   Login
-   ============================================================ */
-
-async function handleLogin(
-  event
-) {
-
-  event.preventDefault();
-
-
-  if (
-    APP.busy
-  ) {
-
-    return;
-
-  }
-
-
-  const username =
-
-    byId(
-      "username"
-    )
-    .value
-    .trim();
-
-
-  const passwordInput =
-
-    byId(
-      "password"
-    );
-
-
-  const password =
-    passwordInput.value;
-
-
-  const button =
-
-    byId(
-      "loginBtn"
-    );
-
-
-  const error =
-
-    byId(
-      "loginError"
-    );
-
-
-  if (
-    !username ||
-    !password
-  ) {
-
-    error.textContent =
-      "請輸入評審帳號與密碼。";
-
-    return;
-
-  }
-
-
-  try {
-
-    APP.busy =
-      true;
-
-
-    button.disabled =
-      true;
-
-
-    button.textContent =
-      "登入中...";
-
-
-    error.textContent =
-      "";
-
-
-    const result =
-
-      await post({
-
-        action:
-          "judgeLogin",
-
-        username:
-          username,
-
-        password:
-          password
-
-      });
-
-
-    passwordInput.value =
-      "";
-
-
-    if (
-      !result ||
-      !result.success ||
-      !result.sessionToken
-    ) {
-
-      throw new Error(
-
-        result &&
-        result.message
-
-          ? result.message
-
-          : "登入失敗，請確認帳號與密碼。"
-
-      );
-
-    }
-
-
-    APP.sessionToken =
-      result.sessionToken;
-
-
-    APP.expiresAt =
-      result.expiresAt ||
-      null;
-
-
-    sessionStorage
-      .setItem(
-
-        SESSION_KEY,
-
-        APP.sessionToken
-
-      );
-
-
-    showApp();
-
-
-    const ok =
-      await restoreSession();
-
-
-    if (!ok) {
-
-      throw new Error(
-        "登入成功，但無法取得評審資料。"
-      );
-
-    }
-
-
-    toast(
-      "✅ 登入成功"
-    );
-
-  }
-
-  catch (errorMessage) {
-
-    clearSession();
-
-    showLogin();
-
-
-    error.textContent =
-
-      errorMessage.message ||
-      "登入失敗。";
-
-  }
-
-  finally {
-
-    APP.busy =
-      false;
-
-
-    button.disabled =
-      false;
-
-
-    button.textContent =
-      "登入評審系統";
-
-  }
-
 }
-
-
-/* ============================================================
-   Restore Session
-   ============================================================ */
-
-async function restoreSession() {
-
-  try {
-
-    setDashboardLoading(
-      "正在驗證評審身分..."
-    );
-
-
-    const me =
-
-      await judgeApi(
-        "judgeMe"
-      );
-
-
-    if (
-      !me ||
-      !me.success
-    ) {
-
-      return false;
-
-    }
-
-
-    APP.judge =
-
-      me.judge ||
-      me.user ||
-      null;
-
-
-    APP.expiresAt =
-
-      me.expiresAt ||
-
-      (
-        me.session &&
-        me.session.expiresAt
-      )
-
-      ||
-
-      APP.expiresAt;
-
-
-    if (
-      !APP.judge
-    ) {
-
-      return false;
-
-    }
-
-
-    renderProfile();
-
-
-    const dash =
-
-      await judgeApi(
-        "judgeScoreDashboard"
-      );
-
-
-    if (
-      isUnauthorized(
-        dash
-      )
-    ) {
-
-      return false;
-
-    }
-
-
-    if (
-      !dash ||
-      !dash.success
-    ) {
-
-      throw new Error(
-
-        dash &&
-        dash.message
-
-          ? dash.message
-
-          : "無法取得評分清單"
-
-      );
-
-    }
-
-
-    APP.dashboard =
-      dash;
-
-
-    if (
-      dash.judge
-    ) {
-
-      APP.judge =
-        dash.judge;
-
-    }
-
-
-    renderProfile();
-    renderDashboard();
-
-
-    return true;
-
-  }
-
-  catch (error) {
-
-    console.error(
-      error
-    );
 
 
-    byId(
-      "dashboardState"
-    )
-    .innerHTML =
+button,
+input {
 
-      "⚠️ " +
+    font: inherit;
 
-      escapeHtml(
-        error.message ||
-        "讀取失敗"
-      );
-
-
-    return false;
-
-  }
-
 }
-
-
-/* ============================================================
-   Refresh
-   ============================================================ */
-
-async function refreshDashboard() {
-
-  if (
-    APP.busy ||
-    !APP.sessionToken
-  ) {
-
-    return;
-
-  }
-
-
-  const button =
-    byId(
-      "refreshBtn"
-    );
-
-
-  try {
-
-    APP.busy =
-      true;
-
-
-    button.disabled =
-      true;
-
-
-    setDashboardLoading(
-      "正在重新整理..."
-    );
-
-
-    const dash =
-
-      await judgeApi(
-        "judgeScoreDashboard"
-      );
-
-
-    if (
-      isUnauthorized(
-        dash
-      )
-    ) {
-
-      handleUnauthorized();
-
-      return;
-
-    }
-
-
-    if (
-      !dash ||
-      !dash.success
-    ) {
-
-      throw new Error(
-
-        dash &&
-        dash.message
-
-          ? dash.message
 
-          : "重新整理失敗"
 
-      );
+button {
 
-    }
+    cursor: pointer;
 
-
-    APP.dashboard =
-      dash;
-
-
-    if (
-      dash.judge
-    ) {
-
-      APP.judge =
-        dash.judge;
-
-    }
-
-
-    renderProfile();
-    renderDashboard();
-
-
-    toast(
-      "✅ 已重新整理"
-    );
-
-  }
-
-  catch (error) {
-
-    byId(
-      "dashboardState"
-    )
-    .style
-    .display =
-      "block";
-
-
-    byId(
-      "dashboardState"
-    )
-    .innerHTML =
-
-      "⚠️ " +
-
-      escapeHtml(
-        error.message ||
-        "重新整理失敗"
-      );
-
-
-    toast(
-
-      "❌ " +
-
-      (
-        error.message ||
-        "重新整理失敗"
-      )
-
-    );
-
-  }
-
-  finally {
-
-    APP.busy =
-      false;
-
-
-    button.disabled =
-      false;
-
-  }
-
 }
-
-
-/* ============================================================
-   Profile
-   ============================================================ */
-
-function renderProfile() {
-
-  const judge =
-    APP.judge ||
-    {};
-
 
-  const name =
 
-    String(
+:root {
 
-      judge.displayName ||
-      judge.name ||
-      "評審"
+    --primary:
+        #1a73e8;
 
-    );
+    --primary-dark:
+        #1557b0;
 
+    --border:
+        #e4e7ec;
 
-  const username =
+    --muted:
+        #667085;
 
-    String(
-      judge.username ||
-      ""
-    );
+    --success:
+        #167542;
 
+    --success-bg:
+        #e7f6ec;
 
-  const categories =
+    --warning:
+        #b54708;
 
-    Array.isArray(
-      judge.categories
-    )
+    --warning-bg:
+        #fff6e8;
 
-      ? judge.categories
+    --danger:
+        #d92d20;
 
-      : (
-          APP.dashboard &&
-          Array.isArray(
-            APP.dashboard
-              .assignedCategories
-          )
+    --danger-bg:
+        #fff1f0;
 
-            ? APP.dashboard
-                .assignedCategories
+    --gray-bg:
+        #f2f4f7;
 
-            : []
+    --shadow:
+        0 8px 28px
+        rgba(
+            16,
+            24,
+            40,
+            .07
         );
 
-
-  byId(
-    "profileName"
-  )
-  .textContent =
-    name;
+}
 
 
-  byId(
-    "profileUsername"
-  )
-  .textContent =
+.hidden {
 
-    username
-
-      ? "登入帳號：" +
-        username
-
-      : "評審帳號";
-
-
-  byId(
-    "topUserName"
-  )
-  .textContent =
-    name;
-
-
-  byId(
-    "categoryChips"
-  )
-  .innerHTML =
-
-    categories.length
-
-      ? categories
-
-          .map(
-
-            category =>
-
-              `<span class="chip">${escapeHtml(category)}</span>`
-
-          )
-          .join("")
-
-      : '<span class="chip">尚未指派屬性</span>';
-
-
-  byId(
-    "sessionText"
-  )
-  .textContent =
-
-    APP.expiresAt
-
-      ? "登入有效期限：" +
-        formatDate(
-          APP.expiresAt
-        )
-
-      : "評審身分已驗證";
-
-
-  const total =
-
-    Number(
-
-      APP.dashboard &&
-      APP.dashboard.assignedClubCount
-
-        ? APP.dashboard.assignedClubCount
-
-        : 0
-
-    );
-
-
-  byId(
-    "mustScoreText"
-  )
-  .textContent =
-
-    total
-
-      ? "📌 您負責的屬性共有 " +
-        total +
-        " 個社團；資料審查與實地審查都必須把這 " +
-        total +
-        " 個社團全部評完。"
-
-      : "📌 目前沒有指派到任何必評社團。";
+    display: none !important;
 
 }
 
 
 /* ============================================================
-   Dashboard
+   登入
    ============================================================ */
 
-function renderDashboard() {
+.login-screen {
 
-  byId(
-    "dashboardState"
-  )
-  .style
-  .display =
-    "none";
+    min-height:
+        100vh;
 
+    display:
+        flex;
 
-  byId(
-    "stagePanel"
-  )
-  .classList
-  .remove(
-    "hidden"
-  );
+    align-items:
+        center;
 
+    justify-content:
+        center;
 
-  updateTabLabels();
-
-  renderCurrentStage();
+    padding:
+        24px;
 
 }
 
 
-/* ============================================================
-   Tab
-   ============================================================ */
-
-function updateTabLabels() {
-
-  const data =
-
-    APP.dashboard &&
-    APP.dashboard.stages
-
-      ? APP.dashboard
-          .stages
-          .dataReview
-
-      : null;
-
-
-  const field =
-
-    APP.dashboard &&
-    APP.dashboard.stages
-
-      ? APP.dashboard
-          .stages
-          .fieldReview
-
-      : null;
-
-
-  byId(
-    "tabDataProgress"
-  )
-  .textContent =
-    stageTabText(
-      data
-    );
-
-
-  byId(
-    "tabFieldProgress"
-  )
-  .textContent =
-    stageTabText(
-      field
-    );
-
-}
-
-
-function stageTabText(
-  stage
-) {
-
-  if (!stage) {
-
-    return "尚無資料";
-
-  }
-
-
-  if (
-    !stage.available
-  ) {
-
-    return "尚未開放";
-
-  }
-
-
-  return (
-
-    String(
-      stage.submittedCount ||
-      0
-    )
-
-    +
-
-    " / " +
-
-    String(
-      stage.totalClubs ||
-      0
-    )
-
-    +
-
-    " 已完成"
-
-  );
-
-}
-
-
-function switchStage(
-  stageKey
-) {
-
-  APP.currentStage =
-    stageKey;
-
-
-  byId(
-    "tabData"
-  )
-  .classList
-  .toggle(
-
-    "active",
-
-    stageKey ===
-    "dataReview"
-
-  );
-
-
-  byId(
-    "tabField"
-  )
-  .classList
-  .toggle(
-
-    "active",
-
-    stageKey ===
-    "fieldReview"
-
-  );
-
-
-  byId(
-    "clubSearch"
-  )
-  .value =
-    "";
-
-
-  byId(
-    "statusFilter"
-  )
-  .value =
-    "all";
-
-
-  renderCurrentStage();
-
-}
-
-
-/* ============================================================
-   Current Stage
-   ============================================================ */
-
-function renderCurrentStage() {
-
-  const stage =
-
-    APP.dashboard &&
-    APP.dashboard.stages
-
-      ? APP.dashboard
-          .stages[
-            APP.currentStage
-          ]
-
-      : null;
-
-
-  const icon =
-
-    APP.currentStage ===
-    "dataReview"
-
-      ? "📄"
-
-      : "🏫";
-
-
-  const fallback =
-
-    APP.currentStage ===
-    "dataReview"
-
-      ? "資料審查"
-
-      : "實地審查";
-
-
-  byId(
-    "stageTitle"
-  )
-  .textContent =
-
-    icon +
-    " " +
-    (
-      stage &&
-      stage.stageName
-
-        ? stage.stageName
-
-        : fallback
-    );
-
-
-  if (
-    !stage ||
-    !stage.available
-  ) {
-
-    byId(
-      "stageStatus"
-    )
-    .className =
-      "status-pill status-closed";
-
-
-    byId(
-      "stageStatus"
-    )
-    .textContent =
-      "尚未開放";
-
-
-    byId(
-      "stageSub"
-    )
-    .textContent =
-      "管理員尚未發布此階段評分標準。";
-
-
-    byId(
-      "progressArea"
-    )
-    .style
-    .display =
-      "none";
-
-
-    byId(
-      "clubList"
-    )
-    .innerHTML =
-      '<div class="state">此階段目前尚未開放評分。</div>';
-
-
-    return;
-
-  }
-
-
-  byId(
-    "stageStatus"
-  )
-  .className =
-    "status-pill status-open";
-
-
-  byId(
-    "stageStatus"
-  )
-  .textContent =
-    "✅ 已開放";
-
-
-  let stageSubText =
-
-    "評分設定 v" +
-    String(
-      stage.configRevision ||
-      "-"
-    )
-
-    +
-
-    "｜階段總分 " +
-
-    formatNumber(
-      stage.totalScore
-    )
-
-    +
-
-    " 分";
-
-
-  if (
-    stage.weight !==
-    null
-
-    &&
-
-    stage.weight !==
-    undefined
-  ) {
-
-    stageSubText +=
-
-      "｜最終權重 " +
-
-      formatNumber(
-        stage.weight
-      )
-
-      +
-
-      "%";
-
-  }
-
-
-  byId(
-    "stageSub"
-  )
-  .textContent =
-    stageSubText;
-
-
-  byId(
-    "progressArea"
-  )
-  .style
-  .display =
-    "block";
-
-
-  const total =
-    Number(
-      stage.totalClubs ||
-      0
-    );
-
-
-  const submitted =
-    Number(
-      stage.submittedCount ||
-      0
-    );
-
-
-  const draft =
-    Number(
-      stage.draftCount ||
-      0
-    );
-
-
-  const notStarted =
-    Number(
-      stage.notStartedCount ||
-      0
-    );
-
-
-  const percent =
-
-    total
-
-      ? Math.round(
-          submitted /
-          total *
-          100
-        )
-
-      : 0;
-
-
-  byId(
-    "progressText"
-  )
-  .textContent =
-
-    submitted +
-    " / " +
-    total +
-    " 已完成";
-
-
-  byId(
-    "progressMeta"
-  )
-  .textContent =
-
-    "完成率 " +
-    percent +
-    "%";
-
-
-  byId(
-    "progressBar"
-  )
-  .style
-  .width =
-
-    percent +
-    "%";
-
-
-  byId(
-    "sumTotal"
-  )
-  .textContent =
-    total;
-
-
-  byId(
-    "sumSubmitted"
-  )
-  .textContent =
-    submitted;
-
-
-  byId(
-    "sumDraft"
-  )
-  .textContent =
-    draft;
-
-
-  byId(
-    "sumNot"
-  )
-  .textContent =
-    notStarted;
-
-
-  filterAndRenderClubs();
-
-}
-
-
-/* ============================================================
-   Filter
-   ============================================================ */
-
-function filterAndRenderClubs() {
-
-  const stage =
-
-    APP.dashboard &&
-    APP.dashboard.stages
-
-      ? APP.dashboard
-          .stages[
-            APP.currentStage
-          ]
-
-      : null;
-
-
-  if (
-    !stage ||
-    !stage.available
-  ) {
-
-    return;
-
-  }
-
-
-  const query =
-
-    byId(
-      "clubSearch"
-    )
-    .value
-    .trim()
-    .toLowerCase();
-
-
-  const filter =
-
-    byId(
-      "statusFilter"
-    )
-    .value;
-
-
-  const clubs =
-
-    Array.isArray(
-      stage.clubs
-    )
-
-      ? stage.clubs
-
-      : [];
-
-
-  APP.filteredClubs =
-
-    clubs.filter(
-
-      club => {
-
-        const searchable =
-
-          (
-            String(
-              club.name ||
-              ""
-            )
-
-            +
-
-            " " +
-
-            String(
-              club.category ||
-              ""
-            )
-          )
-          .toLowerCase();
-
-
-        const searchMatched =
-
-          !query ||
-          searchable.includes(
-            query
-          );
-
-
-        let statusMatched =
-          true;
-
-
-        if (
-          filter ===
-          "unfinished"
-        ) {
-
-          statusMatched =
-
-            club.status !==
-            "submitted";
-
-        }
-
-        else if (
-          filter !==
-          "all"
-        ) {
-
-          statusMatched =
-
-            club.status ===
-            filter;
-
-        }
-
-
-        return (
-
-          searchMatched &&
-          statusMatched
-
+.login-card {
+
+    width:
+        min(
+            430px,
+            100%
         );
 
-      }
+    background:
+        #fff;
 
-    );
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        22px;
+
+    padding:
+        32px;
+
+    box-shadow:
+        0 20px 60px
+        rgba(
+            16,
+            24,
+            40,
+            .12
+        );
+
+}
 
 
-  renderClubList();
+.login-icon {
+
+    font-size:
+        38px;
+
+}
+
+
+.login-title {
+
+    font-size:
+        26px;
+
+    font-weight:
+        900;
+
+    margin:
+        12px 0 5px;
+
+}
+
+
+.login-subtitle {
+
+    color:
+        var(--muted);
+
+    font-size:
+        13px;
+
+    line-height:
+        1.7;
+
+}
+
+
+.label {
+
+    display:
+        block;
+
+    font-size:
+        12px;
+
+    font-weight:
+        800;
+
+    margin:
+        15px 0 6px;
+
+}
+
+
+.input {
+
+    width:
+        100%;
+
+    height:
+        44px;
+
+    border:
+        1px solid
+        #d0d5dd;
+
+    border-radius:
+        10px;
+
+    padding:
+        0 12px;
+
+    outline:
+        none;
+
+    background:
+        #fff;
+
+}
+
+
+.input:focus {
+
+    border-color:
+        var(--primary);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(
+            26,
+            115,
+            232,
+            .08
+        );
+
+}
+
+
+.login-btn {
+
+    width:
+        100%;
+
+    margin-top:
+        20px;
+
+    min-height:
+        46px;
+
+    border:
+        0;
+
+    border-radius:
+        10px;
+
+    background:
+        var(--primary);
+
+    color:
+        #fff;
+
+    font-weight:
+        900;
+
+}
+
+
+.login-btn:hover {
+
+    background:
+        var(--primary-dark);
+
+}
+
+
+.login-btn:disabled {
+
+    opacity:
+        .6;
+
+    cursor:
+        not-allowed;
+
+}
+
+
+.error-text {
+
+    color:
+        var(--danger);
+
+    font-size:
+        12px;
+
+    line-height:
+        1.6;
+
+    margin-top:
+        10px;
 
 }
 
 
 /* ============================================================
-   Club List
+   主系統
    ============================================================ */
 
-function renderClubList() {
+.app {
 
-  const box =
-    byId(
-      "clubList"
-    );
-
-
-  const rows =
-    APP.filteredClubs;
-
-
-  if (
-    !rows.length
-  ) {
-
-    box.innerHTML =
-      '<div class="state">目前沒有符合條件的社團。</div>';
-
-    return;
-
-  }
-
-
-  const groups =
-    {};
-
-
-  rows.forEach(
-
-    club => {
-
-      const category =
-
-        club.category ||
-        "未分類";
-
-
-      if (
-        !groups[
-          category
-        ]
-      ) {
-
-        groups[
-          category
-        ] =
-          [];
-
-      }
-
-
-      groups[
-        category
-      ]
-      .push(
-        club
-      );
-
-    }
-
-  );
-
-
-  box.innerHTML =
-
-    Object
-      .entries(
-        groups
-      )
-      .map(
-
-        (
-          [
-            category,
-            clubs
-          ]
-        ) => `
-
-          <div class="category-group">
-
-            <div class="category-heading">
-
-              ${escapeHtml(category)}
-              ｜
-              ${clubs.length}
-              個社團
-
-            </div>
-
-            ${clubs
-              .map(
-                club =>
-                  clubRowHtml(
-                    club
-                  )
-              )
-              .join("")}
-
-          </div>
-
-        `
-
-      )
-      .join("");
+    display:
+        none;
 
 }
 
 
-/* ============================================================
-   Club Row
-   ============================================================ */
+.topbar {
 
-function clubRowHtml(
-  club
-) {
+    position:
+        sticky;
 
-  const ui =
-    statusUi(
-      club.status
-    );
+    top:
+        0;
 
+    z-index:
+        50;
 
-  const action =
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .96
+        );
 
-    club.status ===
-    "submitted"
+    backdrop-filter:
+        blur(
+            10px
+        );
 
-      ? "查看評分"
+    border-bottom:
+        1px solid
+        var(--border);
 
-      : club.status ===
-        "draft"
+    display:
+        flex;
 
-        ? "繼續評分"
+    align-items:
+        center;
 
-        : "開始評分";
+    justify-content:
+        space-between;
 
+    gap:
+        12px;
 
-  const time =
-
-    club.status ===
-    "submitted"
-
-      ? (
-          club.submittedAt ||
-          club.updatedAt
-        )
-
-      : club.updatedAt;
-
-
-  return `
-
-    <div class="club-row">
-
-      <div>
-
-        <div class="club-name">
-          ${escapeHtml(club.name)}
-        </div>
-
-        <div class="club-meta">
-
-          ${escapeHtml(
-            club.category ||
-            ""
-          )}
-
-          ${
-            time
-
-              ? "｜最後更新：" +
-                escapeHtml(
-                  formatDate(
-                    time
-                  )
+    padding:
+        12px
+        max(
+            16px,
+            calc(
+                (
+                    100vw
+                    -
+                    1100px
                 )
-
-              : ""
-          }
-
-        </div>
-
-      </div>
-
-
-      <div
-        class="score-status ${ui.cls}"
-      >
-
-        ${ui.label}
-
-      </div>
-
-
-      <button
-        class="btn ${club.status === "submitted" ? "" : "btn-primary"}"
-        type="button"
-        onclick="
-          openScore(
-            '${encodeURIComponent(APP.currentStage)}',
-            '${encodeURIComponent(club.name)}'
-          )
-        "
-      >
-
-        ${action}
-
-      </button>
-
-    </div>
-
-  `;
-
-}
-
-
-function statusUi(
-  status
-) {
-
-  if (
-    status ===
-    "submitted"
-  ) {
-
-    return {
-
-      label:
-        "✅ 已送出",
-
-      cls:
-        "s-sub"
-
-    };
-
-  }
-
-
-  if (
-    status ===
-    "draft"
-  ) {
-
-    return {
-
-      label:
-        "📝 草稿",
-
-      cls:
-        "s-draft"
-
-    };
-
-  }
-
-
-  return {
-
-    label:
-      "⚪ 未開始",
-
-    cls:
-      "s-not"
-
-  };
-
-}
-
-
-/* ============================================================
-   Open Score
-   ============================================================ */
-
-async function openScore(
-  encodedStage,
-  encodedClub
-) {
-
-  if (
-    APP.busy
-  ) {
-
-    return;
-
-  }
-
-
-  const stageKey =
-    decodeURIComponent(
-      encodedStage
-    );
-
-
-  const clubName =
-    decodeURIComponent(
-      encodedClub
-    );
-
-
-  try {
-
-    APP.busy =
-      true;
-
-
-    byId(
-      "scoreError"
-    )
-    .textContent =
-      "";
-
-
-    byId(
-      "scoreModal"
-    )
-    .style
-    .display =
-      "flex";
-
-
-    byId(
-      "scoreModalTitle"
-    )
-    .textContent =
-      "正在讀取評分資料...";
-
-
-    byId(
-      "scoreModalSub"
-    )
-    .textContent =
-      "";
-
-
-    byId(
-      "criteriaList"
-    )
-    .innerHTML = `
-
-      <div class="state">
-
-        <div class="spinner"></div>
-
-        正在讀取...
-
-      </div>
-
-    `;
-
-
-    byId(
-      "saveDraftBtn"
-    )
-    .disabled =
-      true;
-
-
-    byId(
-      "submitScoreBtn"
-    )
-    .disabled =
-      true;
-
-
-    const result =
-
-      await judgeApi(
-
-        "judgeGetScore",
-
-        {
-
-          stageKey:
-            stageKey,
-
-          clubName:
-            clubName
-
-        }
-
-      );
-
-
-    if (
-      isUnauthorized(
-        result
-      )
-    ) {
-
-      closeScoreModal(
-        true
-      );
-
-
-      handleUnauthorized();
-
-      return;
-
-    }
-
-
-    if (
-      !result ||
-      !result.success
-    ) {
-
-      throw new Error(
-
-        result &&
-        result.message
-
-          ? result.message
-
-          : "無法取得評分資料"
-
-      );
-
-    }
-
-
-    APP.scoreContext = {
-
-      stageKey:
-        stageKey,
-
-      clubName:
-        clubName,
-
-      result:
-        result
-
-    };
-
-
-    renderScoreModal();
-
-  }
-
-  catch (error) {
-
-    byId(
-      "scoreModalTitle"
-    )
-    .textContent =
-      "評分資料讀取失敗";
-
-
-    byId(
-      "criteriaList"
-    )
-    .innerHTML =
-      "";
-
-
-    byId(
-      "scoreError"
-    )
-    .textContent =
-
-      error.message ||
-      "讀取失敗";
-
-  }
-
-  finally {
-
-    APP.busy =
-      false;
-
-  }
-
-}
-
-
-/* ============================================================
-   Render Score Modal
-   ============================================================ */
-
-function renderScoreModal() {
-
-  const context =
-    APP.scoreContext;
-
-
-  if (!context) {
-
-    return;
-
-  }
-
-
-  const result =
-    context.result;
-
-
-  const stage =
-    result.stage ||
-    {};
-
-
-  const record =
-    result.record ||
-    null;
-
-
-  const criteria =
-
-    Array.isArray(
-      stage.criteria
-    )
-
-      ? stage.criteria
-
-      : [];
-
-
-  const locked =
-
-    result.locked ===
-    true;
-
-
-  byId(
-    "scoreModalTitle"
-  )
-  .textContent =
-
-    (
-      context.stageKey ===
-      "dataReview"
-
-        ? "📄 "
-
-        : "🏫 "
-    )
-
-    +
-
-    context.clubName;
-
-
-  byId(
-    "scoreModalSub"
-  )
-  .textContent =
-
-    String(
-      result.club &&
-      result.club.category
-
-        ? result.club.category
-
-        : ""
-    )
-
-    +
-
-    "｜" +
-
-    String(
-      stage.name ||
-      "評分"
-    )
-
-    +
-
-    "｜設定 v" +
-
-    String(
-      stage.configRevision ||
-      "-"
-    );
-
-
-  const banner =
-    byId(
-      "scoreBanner"
-    );
-
-
-  if (
-    locked
-  ) {
-
-    banner.className =
-      "score-banner locked";
-
-
-    banner.textContent =
-      "🔒 此筆評分已正式送出並鎖定，只能查看，不能修改。";
-
-  }
-
-  else if (
-    result.staleDraft
-  ) {
-
-    banner.className =
-      "score-banner warning";
-
-
-    banner.textContent =
-      "⚠️ 此草稿是舊版評分規則建立的，請重新確認每一項分數後再儲存。";
-
-  }
-
-  else {
-
-    banner.className =
-      "score-banner";
-
-
-    banner.textContent =
-      "💡 可以先儲存草稿；全部項目填完後才能正式送出。正式送出後會鎖定。";
-
-  }
-
-
-  const scoreMap =
-
-    record &&
-    record.scores
-
-      ? record.scores
-
-      : {};
-
-
-  byId(
-    "criteriaList"
-  )
-  .innerHTML =
-
-    criteria
-
-      .map(
-
-        (
-          item,
-          index
-        ) => {
-
-          const raw =
-            scoreMap[
-              item.id
-            ];
-
-
-          const value =
-
-            raw ===
-            null
-
-            ||
-
-            raw ===
-            undefined
-
-              ? ""
-
-              : raw;
-
-
-          return `
-
-            <div class="criterion">
-
-              <div>
-
-                <div class="criterion-name">
-
-                  ${index + 1}.
-                  ${escapeHtml(item.name)}
-
-                </div>
-
-                <div class="criterion-max">
-
-                  本項最高
-                  ${formatNumber(item.maxScore)}
-                  分
-
-                </div>
-
-              </div>
-
-
-              <div class="score-input-wrap">
-
-                <input
-                  class="score-input"
-                  data-criterion-id="${escapeAttribute(item.id)}"
-                  data-max="${escapeAttribute(item.maxScore)}"
-                  type="number"
-                  min="0"
-                  max="${escapeAttribute(item.maxScore)}"
-                  step="0.01"
-                  value="${escapeAttribute(value)}"
-                  ${locked ? "disabled" : ""}
-                  oninput="updateLiveScore()"
-                >
-
-                <span class="score-unit">
-
-                  /
-                  ${formatNumber(item.maxScore)}
-
-                </span>
-
-              </div>
-
-            </div>
-
-          `;
-
-        }
-
-      )
-      .join("");
-
-
-  byId(
-    "saveDraftBtn"
-  )
-  .disabled =
-    locked;
-
-
-  byId(
-    "submitScoreBtn"
-  )
-  .disabled =
-    locked;
-
-
-  byId(
-    "saveDraftBtn"
-  )
-  .style
-  .display =
-
-    locked
-
-      ? "none"
-
-      : "";
-
-
-  byId(
-    "submitScoreBtn"
-  )
-  .style
-  .display =
-
-    locked
-
-      ? "none"
-
-      : "";
-
-
-  byId(
-    "scoreUpdatedText"
-  )
-  .textContent =
-
-    locked
-
-      ? "正式送出：" +
-        formatDate(
-          record &&
-          record.submittedAt
-        )
-
-      : record &&
-        record.updatedAt
-
-        ? "草稿更新：" +
-          formatDate(
-            record.updatedAt
-          )
-
-        : "尚未儲存";
-
-
-  byId(
-    "scoreError"
-  )
-  .textContent =
-    "";
-
-
-  updateLiveScore();
-
-}
-
-
-/* ============================================================
-   Collect Scores
-   ============================================================ */
-
-function collectScores(
-  requireAll =
-    false
-) {
-
-  const inputs =
-
-    Array.from(
-
-      document
-        .querySelectorAll(
-          "#criteriaList .score-input"
-        )
-
-    );
-
-
-  const scores =
-    {};
-
-
-  let total =
-    0;
-
-
-  let answered =
-    0;
-
-
-  let firstError =
-    null;
-
-
-  inputs.forEach(
-
-    input => {
-
-      input
-        .classList
-        .remove(
-          "invalid"
+                /
+                2
+            )
         );
 
-
-      const id =
-        input.dataset
-          .criterionId;
+}
 
 
-      const max =
-        Number(
-          input.dataset.max
+.brand {
+
+    font-weight:
+        900;
+
+    font-size:
+        16px;
+
+}
+
+
+.brand-subtitle {
+
+    font-size:
+        11px;
+
+    color:
+        var(--muted);
+
+    margin-top:
+        2px;
+
+}
+
+
+.top-actions {
+
+    display:
+        flex;
+
+    gap:
+        8px;
+
+}
+
+
+.btn {
+
+    min-height:
+        38px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        9px;
+
+    background:
+        #fff;
+
+    padding:
+        0 12px;
+
+    font-weight:
+        800;
+
+    color:
+        #344054;
+
+}
+
+
+.btn:hover {
+
+    background:
+        #f9fafb;
+
+}
+
+
+.btn-primary {
+
+    background:
+        var(--primary);
+
+    border-color:
+        var(--primary);
+
+    color:
+        #fff;
+
+}
+
+
+.btn-primary:hover {
+
+    background:
+        var(--primary-dark);
+
+}
+
+
+.btn-success {
+
+    background:
+        var(--success-bg);
+
+    border-color:
+        #cce7d5;
+
+    color:
+        var(--success);
+
+}
+
+
+.btn-danger {
+
+    background:
+        var(--danger-bg);
+
+    border-color:
+        #f5c7c4;
+
+    color:
+        var(--danger);
+
+}
+
+
+.btn:disabled {
+
+    opacity:
+        .55;
+
+    cursor:
+        not-allowed;
+
+}
+
+
+.main {
+
+    width:
+        min(
+            1100px,
+            calc(
+                100%
+                -
+                28px
+            )
         );
 
+    margin:
+        auto;
 
-      const text =
-        input.value
-          .trim();
+    padding:
+        22px 0 60px;
 
-
-      if (
-        text ===
-        ""
-      ) {
-
-        scores[
-          id
-        ] =
-          null;
+}
 
 
-        if (
-          requireAll &&
-          !firstError
-        ) {
+/* ============================================================
+   評審資料
+   ============================================================ */
 
-          firstError =
-            "還有評分項目尚未填寫。";
+.welcome-card {
+
+    background:
+        linear-gradient(
+            135deg,
+            #1a73e8,
+            #3f8df5
+        );
+
+    color:
+        #fff;
+
+    border-radius:
+        18px;
+
+    padding:
+        19px;
+
+    box-shadow:
+        var(--shadow);
+
+    margin-bottom:
+        14px;
+
+}
 
 
-          input
-            .classList
-            .add(
-              "invalid"
+.welcome-title {
+
+    font-size:
+        22px;
+
+    font-weight:
+        900;
+
+}
+
+
+.welcome-sub {
+
+    margin-top:
+        5px;
+
+    font-size:
+        12px;
+
+    opacity:
+        .9;
+
+}
+
+
+.category-chips {
+
+    display:
+        flex;
+
+    flex-wrap:
+        wrap;
+
+    gap:
+        6px;
+
+    margin-top:
+        12px;
+
+}
+
+
+.category-chip {
+
+    display:
+        inline-flex;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .18
+        );
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .3
+        );
+
+    border-radius:
+        999px;
+
+    padding:
+        6px 10px;
+
+    font-size:
+        11px;
+
+    font-weight:
+        850;
+
+}
+
+
+/* ============================================================
+   統計
+   ============================================================ */
+
+.stats {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            1fr
+        );
+
+    gap:
+        9px;
+
+    margin-bottom:
+        14px;
+
+}
+
+
+.stat {
+
+    background:
+        #fff;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        14px;
+
+    padding:
+        14px;
+
+    box-shadow:
+        var(--shadow);
+
+}
+
+
+.stat-label {
+
+    font-size:
+        11px;
+
+    color:
+        var(--muted);
+
+    font-weight:
+        800;
+
+}
+
+
+.stat-value {
+
+    font-size:
+        22px;
+
+    font-weight:
+        900;
+
+    margin-top:
+        4px;
+
+}
+
+
+/* ============================================================
+   階段 Tabs
+   ============================================================ */
+
+.stage-tabs {
+
+    display:
+        flex;
+
+    gap:
+        8px;
+
+    overflow-x:
+        auto;
+
+    padding-bottom:
+        6px;
+
+    margin-bottom:
+        12px;
+
+}
+
+
+.stage-tab {
+
+    flex:
+        0 0 auto;
+
+    min-height:
+        42px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        11px;
+
+    background:
+        #fff;
+
+    padding:
+        0 14px;
+
+    font-weight:
+        900;
+
+    color:
+        #475467;
+
+}
+
+
+.stage-tab.active {
+
+    background:
+        #eef4ff;
+
+    border-color:
+        #a9c8ff;
+
+    color:
+        #1557b0;
+
+}
+
+
+/* ============================================================
+   Toolbar
+   ============================================================ */
+
+.toolbar {
+
+    display:
+        flex;
+
+    gap:
+        8px;
+
+    align-items:
+        center;
+
+    flex-wrap:
+        wrap;
+
+    margin-bottom:
+        12px;
+
+}
+
+
+.search {
+
+    flex:
+        1;
+
+    min-width:
+        180px;
+
+    height:
+        40px;
+
+    border:
+        1px solid
+        #d0d5dd;
+
+    border-radius:
+        9px;
+
+    padding:
+        0 11px;
+
+    outline:
+        none;
+
+}
+
+
+.search:focus {
+
+    border-color:
+        var(--primary);
+
+}
+
+
+.filter-btn {
+
+    min-height:
+        40px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        9px;
+
+    background:
+        #fff;
+
+    padding:
+        0 11px;
+
+    font-size:
+        12px;
+
+    font-weight:
+        800;
+
+}
+
+
+.filter-btn.active {
+
+    background:
+        #eef4ff;
+
+    border-color:
+        #b8d1ff;
+
+    color:
+        #1557b0;
+
+}
+
+
+/* ============================================================
+   屬性標題
+   ============================================================ */
+
+.category-block {
+
+    margin-bottom:
+        18px;
+
+}
+
+
+.category-title {
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    gap:
+        10px;
+
+    font-size:
+        15px;
+
+    font-weight:
+        900;
+
+    padding:
+        5px 2px 9px;
+
+}
+
+
+.category-count {
+
+    color:
+        var(--muted);
+
+    font-size:
+        11px;
+
+}
+
+
+/* ============================================================
+   社團卡
+   ============================================================ */
+
+.club-list {
+
+    display:
+        grid;
+
+    gap:
+        8px;
+
+}
+
+
+.club-card {
+
+    background:
+        #fff;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        13px;
+
+    padding:
+        13px;
+
+    display:
+        grid;
+
+    grid-template-columns:
+        minmax(
+            0,
+            1fr
+        )
+        auto;
+
+    gap:
+        10px;
+
+    align-items:
+        center;
+
+    box-shadow:
+        0 2px 9px
+        rgba(
+            16,
+            24,
+            40,
+            .035
+        );
+
+}
+
+
+.club-name {
+
+    font-size:
+        14px;
+
+    font-weight:
+        900;
+
+}
+
+
+.club-meta {
+
+    margin-top:
+        4px;
+
+    color:
+        var(--muted);
+
+    font-size:
+        11px;
+
+    line-height:
+        1.6;
+
+}
+
+
+.status {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    border-radius:
+        999px;
+
+    padding:
+        5px 8px;
+
+    font-size:
+        10px;
+
+    font-weight:
+        900;
+
+}
+
+
+.status-none {
+
+    background:
+        var(--gray-bg);
+
+    color:
+        #667085;
+
+}
+
+
+.status-draft {
+
+    background:
+        var(--warning-bg);
+
+    color:
+        var(--warning);
+
+}
+
+
+.status-submitted {
+
+    background:
+        var(--success-bg);
+
+    color:
+        var(--success);
+
+}
+
+
+/* ============================================================
+   空狀態
+   ============================================================ */
+
+.state {
+
+    background:
+        #fff;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        13px;
+
+    padding:
+        32px 16px;
+
+    text-align:
+        center;
+
+    color:
+        var(--muted);
+
+    font-size:
+        12px;
+
+}
+
+
+.spinner {
+
+    width:
+        27px;
+
+    height:
+        27px;
+
+    margin:
+        0 auto 9px;
+
+    border:
+        3px solid
+        #e8eef7;
+
+    border-top-color:
+        var(--primary);
+
+    border-radius:
+        50%;
+
+    animation:
+        spin .8s linear infinite;
+
+}
+
+
+@keyframes spin {
+
+    to {
+
+        transform:
+            rotate(
+                360deg
             );
 
-        }
+    }
+
+}
 
 
-        return;
+/* ============================================================
+   Modal
+   ============================================================ */
 
-      }
+.modal-bg {
 
+    position:
+        fixed;
 
-      const number =
-        Number(
-          text
+    inset:
+        0;
+
+    z-index:
+        1000;
+
+    display:
+        none;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        14px;
+
+    background:
+        rgba(
+            16,
+            24,
+            40,
+            .62
         );
 
+}
 
-      if (
 
-        !Number.isFinite(
-          number
+.modal {
+
+    width:
+        min(
+            720px,
+            100%
+        );
+
+    max-height:
+        94vh;
+
+    overflow:
+        auto;
+
+    background:
+        #fff;
+
+    border-radius:
+        18px;
+
+    box-shadow:
+        0 30px 80px
+        rgba(
+            16,
+            24,
+            40,
+            .3
+        );
+
+}
+
+
+.modal-head {
+
+    position:
+        sticky;
+
+    top:
+        0;
+
+    z-index:
+        2;
+
+    background:
+        #fff;
+
+    border-bottom:
+        1px solid
+        var(--border);
+
+    padding:
+        16px 18px;
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    gap:
+        12px;
+
+    align-items:
+        flex-start;
+
+}
+
+
+.modal-title {
+
+    font-size:
+        18px;
+
+    font-weight:
+        900;
+
+}
+
+
+.modal-sub {
+
+    font-size:
+        11px;
+
+    color:
+        var(--muted);
+
+    margin-top:
+        4px;
+
+}
+
+
+.close-btn {
+
+    width:
+        36px;
+
+    height:
+        36px;
+
+    border:
+        1px solid
+        var(--border);
+
+    background:
+        #fff;
+
+    border-radius:
+        9px;
+
+}
+
+
+.modal-body {
+
+    padding:
+        16px;
+
+}
+
+
+/* ============================================================
+   分類評分
+   ============================================================ */
+
+.score-summary {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        1fr auto;
+
+    gap:
+        12px;
+
+    align-items:
+        center;
+
+    padding:
+        13px;
+
+    border:
+        1px solid
+        #bfd7ff;
+
+    background:
+        #f5f9ff;
+
+    border-radius:
+        12px;
+
+    margin-bottom:
+        12px;
+
+}
+
+
+.summary-label {
+
+    color:
+        #475467;
+
+    font-size:
+        11px;
+
+    font-weight:
+        800;
+
+}
+
+
+.summary-score {
+
+    font-size:
+        26px;
+
+    font-weight:
+        900;
+
+    color:
+        #174b88;
+
+}
+
+
+.score-group {
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        13px;
+
+    margin-bottom:
+        12px;
+
+    overflow:
+        hidden;
+
+}
+
+
+.group-head {
+
+    padding:
+        11px 13px;
+
+    background:
+        #f9fafb;
+
+    border-bottom:
+        1px solid
+        var(--border);
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    gap:
+        12px;
+
+    align-items:
+        center;
+
+}
+
+
+.group-name {
+
+    font-size:
+        13px;
+
+    font-weight:
+        900;
+
+}
+
+
+.group-score {
+
+    font-size:
+        12px;
+
+    font-weight:
+        900;
+
+}
+
+
+.criteria-list {
+
+    padding:
+        4px 12px;
+
+}
+
+
+.criterion {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        minmax(
+            0,
+            1fr
         )
+        135px;
 
-        ||
+    align-items:
+        center;
 
-        number <
-        0
+    gap:
+        12px;
 
-        ||
+    padding:
+        12px 0;
 
-        number >
-        max
+    border-bottom:
+        1px dashed
+        #e4e7ec;
 
-      ) {
-
-        if (
-          !firstError
-        ) {
-
-          firstError =
-
-            "分數必須介於 0～" +
-            formatNumber(
-              max
-            ) +
-            " 分。";
-
-        }
+}
 
 
-        input
-          .classList
-          .add(
-            "invalid"
-          );
+.criterion:last-child {
+
+    border-bottom:
+        0;
+
+}
 
 
-        return;
+.criterion-name {
 
-      }
+    font-size:
+        13px;
 
+    font-weight:
+        850;
 
-      const rounded =
-
-        Math.round(
-          number *
-          100
-        )
-
-        /
-
-        100;
+}
 
 
-      scores[
-        id
-      ] =
-        rounded;
+.criterion-max {
+
+    font-size:
+        10px;
+
+    color:
+        var(--muted);
+
+    margin-top:
+        3px;
+
+}
 
 
-      total +=
-        rounded;
+.score-input-wrap {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        6px;
+
+}
 
 
-      answered++;
+.score-input {
 
-    }
+    width:
+        90px;
 
-  );
+    height:
+        42px;
+
+    border:
+        1px solid
+        #d0d5dd;
+
+    border-radius:
+        9px;
+
+    padding:
+        0 9px;
+
+    text-align:
+        right;
+
+    font-weight:
+        900;
+
+    outline:
+        none;
+
+}
 
 
-  return {
+.score-input:focus {
 
-    success:
-      !firstError,
+    border-color:
+        var(--primary);
 
-    error:
-      firstError,
+    box-shadow:
+        0 0 0 3px
+        rgba(
+            26,
+            115,
+            232,
+            .08
+        );
 
-    scores:
-      scores,
+}
 
-    total:
 
-      Math.round(
-        total *
-        100
-      )
+.score-input.invalid {
 
-      /
+    border-color:
+        var(--danger);
 
-      100,
+    background:
+        var(--danger-bg);
 
-    answered:
-      answered,
+}
 
-    count:
-      inputs.length
 
-  };
+.score-input:disabled {
+
+    background:
+        #f2f4f7;
+
+    color:
+        #475467;
+
+}
+
+
+.out-of {
+
+    font-size:
+        11px;
+
+    color:
+        var(--muted);
+
+    min-width:
+        35px;
+
+}
+
+
+.score-warning {
+
+    display:
+        none;
+
+    margin-top:
+        10px;
+
+    padding:
+        10px 11px;
+
+    border:
+        1px solid
+        #f5c7c4;
+
+    background:
+        var(--danger-bg);
+
+    color:
+        #7a271a;
+
+    border-radius:
+        9px;
+
+    font-size:
+        11px;
+
+    line-height:
+        1.6;
+
+}
+
+
+.score-warning.show {
+
+    display:
+        block;
 
 }
 
 
 /* ============================================================
-   Live Total
+   Modal Footer
    ============================================================ */
 
-function updateLiveScore() {
+.modal-footer {
 
-  const context =
-    APP.scoreContext;
+    position:
+        sticky;
 
+    bottom:
+        0;
 
-  if (!context) {
+    background:
+        #fff;
 
-    return;
+    border-top:
+        1px solid
+        var(--border);
 
-  }
+    padding:
+        13px 16px;
 
+    display:
+        flex;
 
-  const data =
-    collectScores(
-      false
-    );
+    justify-content:
+        space-between;
 
+    gap:
+        9px;
 
-  const max =
+    align-items:
+        center;
 
-    Number(
-
-      context.result &&
-      context.result.stage
-
-        ? context.result
-            .stage
-            .totalScore
-
-        : 0
-
-    );
+}
 
 
-  byId(
-    "liveTotal"
-  )
-  .textContent =
+.save-info {
 
-    formatNumber(
-      data.total
-    )
+    font-size:
+        10px;
 
-    +
+    color:
+        var(--muted);
 
-    " / " +
-
-    formatNumber(
-      max
-    );
+}
 
 
-  byId(
-    "answerProgress"
-  )
-  .textContent =
+.footer-actions {
 
-    data.answered +
-    " / " +
-    data.count +
-    " 項已填";
+    display:
+        flex;
 
-
-  byId(
-    "scoreError"
-  )
-  .textContent =
-
-    data.error ||
-    "";
+    gap:
+        8px;
 
 }
 
 
 /* ============================================================
-   Save Draft
+   已鎖定
    ============================================================ */
 
-async function saveDraft() {
+.locked-box {
 
-  if (
-    APP.busy ||
-    !APP.scoreContext
-  ) {
+    padding:
+        11px;
 
-    return;
+    border:
+        1px solid
+        #cce7d5;
 
-  }
+    background:
+        var(--success-bg);
 
+    color:
+        var(--success);
 
-  const data =
-    collectScores(
-      false
-    );
+    border-radius:
+        10px;
 
+    font-size:
+        12px;
 
-  if (
-    !data.success
-  ) {
+    font-weight:
+        800;
 
-    byId(
-      "scoreError"
-    )
-    .textContent =
-      data.error;
-
-
-    return;
-
-  }
-
-
-  const button =
-    byId(
-      "saveDraftBtn"
-    );
-
-
-  const context =
-    APP.scoreContext;
-
-
-  try {
-
-    APP.busy =
-      true;
-
-
-    button.disabled =
-      true;
-
-
-    button.textContent =
-      "儲存中...";
-
-
-    const result =
-
-      await judgeApi(
-
-        "judgeSaveScoreDraft",
-
-        {
-
-          stageKey:
-            context.stageKey,
-
-          clubName:
-            context.clubName,
-
-          scores:
-            data.scores
-
-        }
-
-      );
-
-
-    if (
-      isUnauthorized(
-        result
-      )
-    ) {
-
-      closeScoreModal(
-        true
-      );
-
-
-      handleUnauthorized();
-
-      return;
-
-    }
-
-
-    if (
-      !result ||
-      !result.success
-    ) {
-
-      throw new Error(
-
-        result &&
-        result.message
-
-          ? result.message
-
-          : "草稿儲存失敗"
-
-      );
-
-    }
-
-
-    context.result.record =
-      result.record;
-
-
-    context.result.locked =
-      false;
-
-
-    byId(
-      "scoreUpdatedText"
-    )
-    .textContent =
-
-      "草稿更新：" +
-
-      formatDate(
-        result.record &&
-        result.record.updatedAt
-      );
-
-
-    toast(
-      "💾 草稿已儲存"
-    );
-
-
-    await refreshDashboardSilently();
-
-  }
-
-  catch (error) {
-
-    byId(
-      "scoreError"
-    )
-    .textContent =
-
-      error.message ||
-      "草稿儲存失敗";
-
-  }
-
-  finally {
-
-    APP.busy =
-      false;
-
-
-    button.disabled =
-      false;
-
-
-    button.textContent =
-      "💾 儲存草稿";
-
-  }
-
-}
-
-
-/* ============================================================
-   Submit Confirm
-   ============================================================ */
-
-function openSubmitConfirm() {
-
-  if (
-    APP.busy ||
-    !APP.scoreContext
-  ) {
-
-    return;
-
-  }
-
-
-  const data =
-    collectScores(
-      true
-    );
-
-
-  if (
-    !data.success
-  ) {
-
-    byId(
-      "scoreError"
-    )
-    .textContent =
-      data.error;
-
-
-    return;
-
-  }
-
-
-  const context =
-    APP.scoreContext;
-
-
-  const max =
-
-    Number(
-
-      context.result &&
-      context.result.stage
-
-        ? context.result
-            .stage
-            .totalScore
-
-        : 0
-
-    );
-
-
-  context.pendingSubmitScores =
-    data.scores;
-
-
-  byId(
-    "confirmText"
-  )
-  .innerHTML =
-
-    "社團：<b>" +
-
-    escapeHtml(
-      context.clubName
-    )
-
-    +
-
-    "</b><br>" +
-
-    "階段：<b>" +
-
-    escapeHtml(
-
-      context.result &&
-      context.result.stage
-
-        ? context.result
-            .stage
-            .name
-
-        : ""
-
-    )
-
-    +
-
-    "</b><br>" +
-
-    "總分：<b>" +
-
-    formatNumber(
-      data.total
-    )
-
-    +
-
-    " / " +
-
-    formatNumber(
-      max
-    )
-
-    +
-
-    "</b>";
-
-
-  byId(
-    "confirmModal"
-  )
-  .style
-  .display =
-    "flex";
-
-}
-
-
-function closeSubmitConfirm() {
-
-  if (
-    APP.busy
-  ) {
-
-    return;
-
-  }
-
-
-  byId(
-    "confirmModal"
-  )
-  .style
-  .display =
-    "none";
-
-}
-
-
-/* ============================================================
-   Submit Score
-   ============================================================ */
-
-async function submitScore() {
-
-  if (
-    APP.busy ||
-    !APP.scoreContext
-  ) {
-
-    return;
-
-  }
-
-
-  const context =
-    APP.scoreContext;
-
-
-  const collected =
-    collectScores(
-      true
-    );
-
-
-  if (
-    !collected.success
-  ) {
-
-    byId(
-      "confirmModal"
-    )
-    .style
-    .display =
-      "none";
-
-
-    byId(
-      "scoreError"
-    )
-    .textContent =
-      collected.error;
-
-
-    return;
-
-  }
-
-
-  const scores =
-
-    context
-      .pendingSubmitScores
-
-      ||
-
-      collected.scores;
-
-
-  const button =
-    byId(
-      "confirmSubmitBtn"
-    );
-
-
-  try {
-
-    APP.busy =
-      true;
-
-
-    button.disabled =
-      true;
-
-
-    button.textContent =
-      "送出中...";
-
-
-    const result =
-
-      await judgeApi(
-
-        "judgeSubmitScore",
-
-        {
-
-          stageKey:
-            context.stageKey,
-
-          clubName:
-            context.clubName,
-
-          scores:
-            scores
-
-        }
-
-      );
-
-
-    if (
-      isUnauthorized(
-        result
-      )
-    ) {
-
-      byId(
-        "confirmModal"
-      )
-      .style
-      .display =
-        "none";
-
-
-      closeScoreModal(
-        true
-      );
-
-
-      handleUnauthorized();
-
-      return;
-
-    }
-
-
-    if (
-      !result ||
-      !result.success
-    ) {
-
-      throw new Error(
-
-        result &&
-        result.message
-
-          ? result.message
-
-          : "正式送出失敗"
-
-      );
-
-    }
-
-
-    byId(
-      "confirmModal"
-    )
-    .style
-    .display =
-      "none";
-
-
-    toast(
-      "✅ 評分已正式送出並鎖定"
-    );
-
-
-    await refreshDashboardSilently();
-
-
-    closeScoreModal(
-      true
-    );
-
-  }
-
-  catch (error) {
-
-    byId(
-      "confirmModal"
-    )
-    .style
-    .display =
-      "none";
-
-
-    byId(
-      "scoreError"
-    )
-    .textContent =
-
-      error.message ||
-      "正式送出失敗";
-
-
-    toast(
-
-      "❌ " +
-
-      (
-        error.message ||
-        "正式送出失敗"
-      )
-
-    );
-
-  }
-
-  finally {
-
-    APP.busy =
-      false;
-
-
-    button.disabled =
-      false;
-
-
-    button.textContent =
-      "確認送出並鎖定";
-
-  }
-
-}
-
-
-/* ============================================================
-   Silent Refresh
-   ============================================================ */
-
-async function refreshDashboardSilently() {
-
-  const dash =
-
-    await judgeApi(
-      "judgeScoreDashboard"
-    );
-
-
-  if (
-    isUnauthorized(
-      dash
-    )
-  ) {
-
-    handleUnauthorized();
-
-    return false;
-
-  }
-
-
-  if (
-    !dash ||
-    !dash.success
-  ) {
-
-    throw new Error(
-
-      dash &&
-      dash.message
-
-        ? dash.message
-
-        : "無法更新進度"
-
-    );
-
-  }
-
-
-  APP.dashboard =
-    dash;
-
-
-  if (
-    dash.judge
-  ) {
-
-    APP.judge =
-      dash.judge;
-
-  }
-
-
-  renderProfile();
-
-  renderDashboard();
-
-
-  return true;
-
-}
-
-
-/* ============================================================
-   Close Score Modal
-   ============================================================ */
-
-function closeScoreModal(
-  force =
-    false
-) {
-
-  if (
-    APP.busy &&
-    !force
-  ) {
-
-    return;
-
-  }
-
-
-  byId(
-    "scoreModal"
-  )
-  .style
-  .display =
-    "none";
-
-
-  byId(
-    "confirmModal"
-  )
-  .style
-  .display =
-    "none";
-
-
-  APP.scoreContext =
-    null;
-
-}
-
-
-/* ============================================================
-   Logout
-   ============================================================ */
-
-async function logoutJudge() {
-
-  if (
-    APP.busy
-  ) {
-
-    return;
-
-  }
-
-
-  const button =
-    byId(
-      "logoutBtn"
-    );
-
-
-  try {
-
-    APP.busy =
-      true;
-
-
-    button.disabled =
-      true;
-
-
-    if (
-      APP.sessionToken
-    ) {
-
-      await judgeApi(
-        "judgeLogout"
-      );
-
-    }
-
-  }
-
-  catch (error) {
-
-    console.warn(
-      error
-    );
-
-  }
-
-  finally {
-
-    clearSession();
-
-    showLogin();
-
-
-    APP.busy =
-      false;
-
-
-    button.disabled =
-      false;
-
-
-    toast(
-      "已登出評審系統"
-    );
-
-  }
-
-}
-
-
-/* ============================================================
-   Clear Session
-   ============================================================ */
-
-function clearSession() {
-
-  APP.sessionToken =
-    null;
-
-
-  APP.judge =
-    null;
-
-
-  APP.expiresAt =
-    null;
-
-
-  APP.dashboard =
-    null;
-
-
-  APP.scoreContext =
-    null;
-
-
-  sessionStorage
-    .removeItem(
-      SESSION_KEY
-    );
-
-}
-
-
-/* ============================================================
-   Views
-   ============================================================ */
-
-function showLogin() {
-
-  byId(
-    "loginScreen"
-  )
-  .style
-  .display =
-    "flex";
-
-
-  byId(
-    "judgeApp"
-  )
-  .style
-  .display =
-    "none";
-
-
-  setTimeout(
-
-    () =>
-      byId(
-        "username"
-      )
-      .focus(),
-
-    0
-
-  );
-
-}
-
-
-function showApp() {
-
-  byId(
-    "loginScreen"
-  )
-  .style
-  .display =
-    "none";
-
-
-  byId(
-    "judgeApp"
-  )
-  .style
-  .display =
-    "block";
-
-}
-
-
-/* ============================================================
-   Loading
-   ============================================================ */
-
-function setDashboardLoading(
-  text
-) {
-
-  byId(
-    "stagePanel"
-  )
-  .classList
-  .add(
-    "hidden"
-  );
-
-
-  byId(
-    "dashboardState"
-  )
-  .style
-  .display =
-    "block";
-
-
-  byId(
-    "dashboardState"
-  )
-  .innerHTML = `
-
-    <div class="spinner"></div>
-
-    ${escapeHtml(text)}
-
-  `;
-
-}
-
-
-/* ============================================================
-   Password
-   ============================================================ */
-
-function togglePassword() {
-
-  const input =
-    byId(
-      "password"
-    );
-
-
-  const show =
-
-    input.type ===
-    "password";
-
-
-  input.type =
-
-    show
-
-      ? "text"
-
-      : "password";
-
-
-  byId(
-    "passwordToggle"
-  )
-  .textContent =
-
-    show
-
-      ? "🙈"
-
-      : "👁️";
-
-}
-
-
-/* ============================================================
-   Date
-   ============================================================ */
-
-function formatDate(
-  value
-) {
-
-  if (!value) {
-
-    return "-";
-
-  }
-
-
-  const date =
-    new Date(
-      value
-    );
-
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-
-    return String(
-      value
-    );
-
-  }
-
-
-  return new Intl.DateTimeFormat(
-
-    "zh-TW",
-
-    {
-
-      timeZone:
-        "Asia/Taipei",
-
-      year:
-        "numeric",
-
-      month:
-        "2-digit",
-
-      day:
-        "2-digit",
-
-      hour:
-        "2-digit",
-
-      minute:
-        "2-digit",
-
-      hour12:
-        false
-
-    }
-
-  )
-  .format(
-    date
-  );
-
-}
-
-
-/* ============================================================
-   Number
-   ============================================================ */
-
-function formatNumber(
-  value
-) {
-
-  const number =
-    Number(
-      value
-    );
-
-
-  if (
-    !Number.isFinite(
-      number
-    )
-  ) {
-
-    return "0";
-
-  }
-
-
-  return String(
-
-    Math.round(
-      number *
-      100
-    )
-
-    /
-
-    100
-
-  );
-
-}
-
-
-/* ============================================================
-   Escape
-   ============================================================ */
-
-function escapeHtml(
-  value
-) {
-
-  return String(
-    value ??
-    ""
-  )
-
-  .replaceAll(
-    "&",
-    "&amp;"
-  )
-
-  .replaceAll(
-    "<",
-    "&lt;"
-  )
-
-  .replaceAll(
-    ">",
-    "&gt;"
-  )
-
-  .replaceAll(
-    '"',
-    "&quot;"
-  )
-
-  .replaceAll(
-    "'",
-    "&#039;"
-  );
-
-}
-
-
-function escapeAttribute(
-  value
-) {
-
-  return escapeHtml(
-    value
-  );
+    margin-bottom:
+        12px;
 
 }
 
@@ -5459,52 +1771,3799 @@ function escapeAttribute(
    Toast
    ============================================================ */
 
-let toastTimer =
-  null;
+.toast {
+
+    position:
+        fixed;
+
+    right:
+        18px;
+
+    bottom:
+        18px;
+
+    z-index:
+        2000;
+
+    padding:
+        11px 15px;
+
+    background:
+        #101828;
+
+    color:
+        #fff;
+
+    border-radius:
+        9px;
+
+    opacity:
+        0;
+
+    transform:
+        translateY(
+            10px
+        );
+
+    transition:
+        .2s;
+
+    pointer-events:
+        none;
+
+    max-width:
+        390px;
+
+    font-size:
+        12px;
+
+    line-height:
+        1.5;
+
+}
 
 
-function toast(
-  message
+.toast.show {
+
+    opacity:
+        1;
+
+    transform:
+        none;
+
+}
+
+
+/* ============================================================
+   RWD
+   ============================================================ */
+
+@media (
+    max-width: 700px
 ) {
 
-  const element =
-    byId(
-      "toast"
+    .stats {
+
+        grid-template-columns:
+            1fr 1fr;
+
+    }
+
+
+    .topbar {
+
+        align-items:
+            flex-start;
+
+    }
+
+
+    .brand-subtitle {
+
+        display:
+            none;
+
+    }
+
+
+    .top-actions .refresh-text {
+
+        display:
+            none;
+
+    }
+
+
+    .club-card {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .club-card .btn {
+
+        width:
+            100%;
+
+    }
+
+
+    .criterion {
+
+        grid-template-columns:
+            minmax(
+                0,
+                1fr
+            )
+            125px;
+
+    }
+
+
+    .score-input {
+
+        width:
+            82px;
+
+    }
+
+
+    .modal-bg {
+
+        padding:
+            0;
+
+        align-items:
+            flex-end;
+
+    }
+
+
+    .modal {
+
+        width:
+            100%;
+
+        max-height:
+            96vh;
+
+        border-radius:
+            18px 18px 0 0;
+
+    }
+
+
+    .modal-footer {
+
+        flex-direction:
+            column;
+
+        align-items:
+            stretch;
+
+    }
+
+
+    .footer-actions {
+
+        display:
+            grid;
+
+        grid-template-columns:
+            1fr 1fr;
+
+    }
+
+
+    .footer-actions .btn {
+
+        width:
+            100%;
+
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- ============================================================
+     登入
+     ============================================================ -->
+
+<section
+    id="loginScreen"
+    class="login-screen"
+>
+
+<div class="login-card">
+
+    <div class="login-icon">
+        👨‍⚖️
+    </div>
+
+
+    <h1 class="login-title">
+        評審登入
+    </h1>
+
+
+    <div class="login-subtitle">
+        115學年度第一學期
+        <br>
+        全校學生社團評選暨觀摩活動
+    </div>
+
+
+    <form
+        id="loginForm"
+    >
+
+        <label
+            class="label"
+            for="judgeUsername"
+        >
+            評審帳號
+        </label>
+
+
+        <input
+            id="judgeUsername"
+            class="input"
+            type="text"
+            autocomplete="username"
+            required
+            placeholder="請輸入帳號"
+        >
+
+
+        <label
+            class="label"
+            for="judgePassword"
+        >
+            密碼
+        </label>
+
+
+        <input
+            id="judgePassword"
+            class="input"
+            type="password"
+            autocomplete="current-password"
+            required
+            placeholder="請輸入密碼"
+        >
+
+
+        <button
+            id="loginBtn"
+            class="login-btn"
+            type="submit"
+        >
+            登入評審系統
+        </button>
+
+
+        <div
+            id="loginError"
+            class="error-text"
+        ></div>
+
+    </form>
+
+</div>
+</section>
+
+
+<!-- ============================================================
+     主系統
+     ============================================================ -->
+
+<div
+    id="judgeApp"
+    class="app"
+>
+
+
+<header class="topbar">
+
+    <div>
+
+        <div class="brand">
+            👨‍⚖️ 社團評選評審系統
+        </div>
+
+        <div class="brand-subtitle">
+            弘光科技大學
+        </div>
+
+    </div>
+
+
+    <div class="top-actions">
+
+        <button
+            class="btn"
+            onclick="loadDashboard()"
+        >
+            🔄
+            <span class="refresh-text">
+                重新整理
+            </span>
+        </button>
+
+
+        <button
+            class="btn btn-danger"
+            onclick="logoutJudge()"
+        >
+            登出
+        </button>
+
+    </div>
+
+</header>
+
+
+<main class="main">
+
+
+<!-- 評審資料 -->
+
+<section
+    id="welcomeCard"
+    class="welcome-card"
+>
+
+    <div
+        id="judgeDisplayName"
+        class="welcome-title"
+    >
+        評審
+    </div>
+
+
+    <div class="welcome-sub">
+        您需要完成下列負責屬性中的所有社團評分。
+    </div>
+
+
+    <div
+        id="judgeCategories"
+        class="category-chips"
+    ></div>
+
+</section>
+
+
+<!-- 統計 -->
+
+<div class="stats">
+
+    <div class="stat">
+
+        <div class="stat-label">
+            必評社團
+        </div>
+
+        <div
+            id="statTotalClubs"
+            class="stat-value"
+        >
+            -
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-label">
+            已正式送出
+        </div>
+
+        <div
+            id="statSubmitted"
+            class="stat-value"
+        >
+            -
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-label">
+            草稿
+        </div>
+
+        <div
+            id="statDraft"
+            class="stat-value"
+        >
+            -
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-label">
+            尚未開始
+        </div>
+
+        <div
+            id="statNotStarted"
+            class="stat-value"
+        >
+            -
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- 大項 Tab -->
+
+<div
+    id="stageTabs"
+    class="stage-tabs"
+></div>
+
+
+<!-- 搜尋與篩選 -->
+
+<div class="toolbar">
+
+    <input
+        id="clubSearch"
+        class="search"
+        placeholder="搜尋社團名稱或屬性"
+        oninput="renderCurrentStage()"
+    >
+
+
+    <button
+        class="filter-btn active"
+        data-filter="all"
+        onclick="setStatusFilter('all',this)"
+    >
+        全部
+    </button>
+
+
+    <button
+        class="filter-btn"
+        data-filter="notStarted"
+        onclick="setStatusFilter('notStarted',this)"
+    >
+        未開始
+    </button>
+
+
+    <button
+        class="filter-btn"
+        data-filter="draft"
+        onclick="setStatusFilter('draft',this)"
+    >
+        草稿
+    </button>
+
+
+    <button
+        class="filter-btn"
+        data-filter="submitted"
+        onclick="setStatusFilter('submitted',this)"
+    >
+        已送出
+    </button>
+
+</div>
+
+
+<div
+    id="clubArea"
+    class="state"
+>
+
+    <div class="spinner"></div>
+
+    正在讀取評分資料...
+
+</div>
+
+
+</main>
+</div>
+
+
+<!-- ============================================================
+     評分 Modal
+     ============================================================ -->
+
+<div
+    id="scoreModalBg"
+    class="modal-bg"
+>
+
+<div
+    id="scoreModal"
+    class="modal"
+>
+
+    <div class="modal-head">
+
+        <div>
+
+            <div
+                id="scoreModalTitle"
+                class="modal-title"
+            >
+                社團評分
+            </div>
+
+
+            <div
+                id="scoreModalSub"
+                class="modal-sub"
+            >
+                -
+            </div>
+
+        </div>
+
+
+        <button
+            class="close-btn"
+            onclick="closeScoreModal()"
+            type="button"
+        >
+            ✕
+        </button>
+
+    </div>
+
+
+    <div
+        id="scoreModalBody"
+        class="modal-body"
+    ></div>
+
+
+    <div class="modal-footer">
+
+        <div
+            id="saveInfo"
+            class="save-info"
+        >
+            尚未儲存
+        </div>
+
+
+        <div
+            id="scoreFooterActions"
+            class="footer-actions"
+        >
+
+            <button
+                id="saveDraftBtn"
+                class="btn"
+                onclick="saveDraft()"
+            >
+                💾 儲存草稿
+            </button>
+
+
+            <button
+                id="submitScoreBtn"
+                class="btn btn-primary"
+                onclick="submitScore()"
+            >
+                ✅ 正式送出
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+</div>
+
+
+<div
+    id="toast"
+    class="toast"
+></div>
+
+
+<script>
+
+
+/* ============================================================
+   系統設定
+   ============================================================ */
+
+const BACKEND_URL =
+    "https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
+
+
+const SESSION_KEY =
+    "HKSP_JUDGE_SESSION";
+
+
+const STATE = {
+
+    sessionToken:
+        null,
+
+    judge:
+        null,
+
+    dashboard:
+        null,
+
+    stages:
+        [],
+
+    currentStageKey:
+        null,
+
+    statusFilter:
+        "all",
+
+    currentClub:
+        null,
+
+    currentStage:
+        null,
+
+    currentRecord:
+        null,
+
+    locked:
+        false,
+
+    requestRunning:
+        false
+
+};
+
+
+/* ============================================================
+   DOM
+   ============================================================ */
+
+const $ =
+    id =>
+        document.getElementById(
+            id
+        );
+
+
+/* ============================================================
+   Escape
+   ============================================================ */
+
+function escapeHtml(
+    value
+) {
+
+    return String(
+        value ??
+        ""
+    )
+    .replaceAll(
+        "&",
+        "&amp;"
+    )
+    .replaceAll(
+        "<",
+        "&lt;"
+    )
+    .replaceAll(
+        ">",
+        "&gt;"
+    )
+    .replaceAll(
+        '"',
+        "&quot;"
+    )
+    .replaceAll(
+        "'",
+        "&#039;"
+    );
+
+}
+
+
+/* ============================================================
+   數字
+   ============================================================ */
+
+function numberValue(
+    value
+) {
+
+    const number =
+        Number(
+            value
+        );
+
+
+    return Number.isFinite(
+        number
+    )
+        ? Math.round(
+            number *
+            10000
+          ) /
+          10000
+
+        : 0;
+
+}
+
+
+function formatScore(
+    value
+) {
+
+    return String(
+        numberValue(
+            value
+        )
+    );
+
+}
+
+
+/* ============================================================
+   Toast
+   ============================================================ */
+
+function showToast(
+    message
+) {
+
+    const toast =
+        $("toast");
+
+
+    toast.textContent =
+        message;
+
+
+    toast.classList.add(
+        "show"
     );
 
 
-  element.textContent =
-    message;
-
-
-  element
-    .classList
-    .add(
-      "show"
+    clearTimeout(
+        showToast.timer
     );
 
 
-  clearTimeout(
-    toastTimer
-  );
+    showToast.timer =
+        setTimeout(
+            () => {
+
+                toast.classList.remove(
+                    "show"
+                );
+
+            },
+            2600
+        );
+
+}
 
 
-  toastTimer =
+/* ============================================================
+   Backend
+   ============================================================ */
 
-    setTimeout(
+async function postBackend(
+    payload
+) {
 
-      () =>
-        element
-          .classList
-          .remove(
-            "show"
-          ),
+    const controller =
+        new AbortController();
 
-      2600
+
+    const timeout =
+        setTimeout(
+            () => {
+
+                controller.abort();
+
+            },
+            15000
+        );
+
+
+    try {
+
+        const response =
+            await fetch(
+
+                BACKEND_URL,
+
+                {
+
+                    method:
+                        "POST",
+
+                    body:
+                        JSON.stringify(
+                            payload
+                        ),
+
+                    redirect:
+                        "follow",
+
+                    signal:
+                        controller.signal
+
+                }
+
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            throw new Error(
+                "HTTP " +
+                response.status
+            );
+
+        }
+
+
+        const text =
+            await response.text();
+
+
+        try {
+
+            return JSON.parse(
+                text
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "後端原始回應：",
+                text
+            );
+
+
+            throw new Error(
+                "後端回傳格式錯誤"
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        if (
+            error.name ===
+            "AbortError"
+        ) {
+
+            throw new Error(
+                "後端連線逾時"
+            );
+
+        }
+
+
+        throw error;
+
+    }
+
+    finally {
+
+        clearTimeout(
+            timeout
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   Judge API
+   ============================================================ */
+
+async function judgeApi(
+    action,
+    extra = {}
+) {
+
+    return postBackend({
+
+        action:
+            action,
+
+        sessionToken:
+            STATE.sessionToken,
+
+        ...extra
+
+    });
+
+}
+
+
+/* ============================================================
+   Session
+   ============================================================ */
+
+function saveSession(
+    token
+) {
+
+    STATE.sessionToken =
+        token;
+
+
+    sessionStorage.setItem(
+        SESSION_KEY,
+        token
+    );
+
+}
+
+
+function clearSession() {
+
+    STATE.sessionToken =
+        null;
+
+
+    STATE.judge =
+        null;
+
+
+    STATE.dashboard =
+        null;
+
+
+    sessionStorage.removeItem(
+        SESSION_KEY
+    );
+
+}
+
+
+function isUnauthorized(
+    result
+) {
+
+    if (
+        !result
+    ) {
+
+        return false;
+
+    }
+
+
+    const unauthorizedCodes = [
+
+        "JUDGE_UNAUTHORIZED",
+
+        "JUDGE_SESSION_INVALID",
+
+        "JUDGE_SESSION_EXPIRED",
+
+        "JUDGE_NOT_LOGGED_IN"
+
+    ];
+
+
+    if (
+        unauthorizedCodes.includes(
+            result.error
+        )
+    ) {
+
+        clearSession();
+
+        showLogin();
+
+
+        $("loginError")
+            .textContent =
+            "評審登入已失效，請重新登入。";
+
+
+        return true;
+
+    }
+
+
+    return false;
+
+}
+
+
+/* ============================================================
+   登入畫面
+   ============================================================ */
+
+function showLogin() {
+
+    $("loginScreen")
+        .style
+        .display =
+        "flex";
+
+
+    $("judgeApp")
+        .style
+        .display =
+        "none";
+
+}
+
+
+function showApp() {
+
+    $("loginScreen")
+        .style
+        .display =
+        "none";
+
+
+    $("judgeApp")
+        .style
+        .display =
+        "block";
+
+}
+
+
+/* ============================================================
+   登入
+   ============================================================ */
+
+$("loginForm")
+    .addEventListener(
+
+        "submit",
+
+        async event => {
+
+            event.preventDefault();
+
+
+            if (
+                STATE.requestRunning
+            ) {
+
+                return;
+
+            }
+
+
+            const username =
+                $("judgeUsername")
+                    .value
+                    .trim();
+
+
+            const password =
+                $("judgePassword")
+                    .value;
+
+
+            const button =
+                $("loginBtn");
+
+
+            if (
+                !username
+                ||
+                !password
+            ) {
+
+                $("loginError")
+                    .textContent =
+                    "請輸入帳號與密碼。";
+
+
+                return;
+
+            }
+
+
+            try {
+
+                STATE.requestRunning =
+                    true;
+
+
+                button.disabled =
+                    true;
+
+
+                button.textContent =
+                    "登入中...";
+
+
+                $("loginError")
+                    .textContent =
+                    "";
+
+
+                const result =
+                    await postBackend({
+
+                        action:
+                            "judgeLogin",
+
+                        username:
+                            username,
+
+                        password:
+                            password
+
+                    });
+
+
+                if (
+                    !result.success
+                ) {
+
+                    throw new Error(
+
+                        result.message
+                        ||
+                        "登入失敗"
+
+                    );
+
+                }
+
+
+                const token =
+
+                    result.sessionToken
+
+                    ||
+
+                    (
+                        result.session &&
+                        result.session.token
+                    )
+
+                    ||
+
+                    result.token;
+
+
+                if (
+                    !token
+                ) {
+
+                    throw new Error(
+                        "後端沒有回傳評審登入憑證。"
+                    );
+
+                }
+
+
+                saveSession(
+                    token
+                );
+
+
+                $("judgePassword")
+                    .value =
+                    "";
+
+
+                showApp();
+
+
+                await loadDashboard();
+
+
+                showToast(
+                    "✅ 評審登入成功"
+                );
+
+            }
+
+            catch (error) {
+
+                clearSession();
+
+
+                showLogin();
+
+
+                $("loginError")
+                    .textContent =
+                    error.message;
+
+            }
+
+            finally {
+
+                STATE.requestRunning =
+                    false;
+
+
+                button.disabled =
+                    false;
+
+
+                button.textContent =
+                    "登入評審系統";
+
+            }
+
+        }
+
+    );
+
+
+/* ============================================================
+   登出
+   ============================================================ */
+
+async function logoutJudge() {
+
+    try {
+
+        if (
+            STATE.sessionToken
+        ) {
+
+            await judgeApi(
+                "judgeLogout"
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            error
+        );
+
+    }
+
+
+    clearSession();
+
+    showLogin();
+
+
+    showToast(
+        "已登出評審系統"
+    );
+
+}
+
+
+/* ============================================================
+   啟動
+   ============================================================ */
+
+async function initializeJudgePage() {
+
+    const token =
+        sessionStorage.getItem(
+            SESSION_KEY
+        );
+
+
+    if (
+        !token
+    ) {
+
+        showLogin();
+
+        return;
+
+    }
+
+
+    STATE.sessionToken =
+        token;
+
+
+    try {
+
+        const result =
+            await judgeApi(
+                "judgeMe"
+            );
+
+
+        if (
+            isUnauthorized(
+                result
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+                result.message
+                ||
+                "登入已失效"
+            );
+
+        }
+
+
+        STATE.judge =
+            result.judge
+            ||
+            result.user
+            ||
+            null;
+
+
+        showApp();
+
+
+        await loadDashboard();
+
+    }
+
+    catch (error) {
+
+        clearSession();
+
+        showLogin();
+
+
+        $("loginError")
+            .textContent =
+            "登入已失效，請重新登入。";
+
+    }
+
+}
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initializeJudgePage
+);
+
+
+/* ============================================================
+   Dashboard
+   ============================================================ */
+
+async function loadDashboard() {
+
+    $("clubArea")
+        .className =
+        "state";
+
+
+    $("clubArea")
+        .innerHTML = `
+
+            <div class="spinner"></div>
+
+            正在讀取評分資料...
+
+        `;
+
+
+    try {
+
+        const result =
+            await judgeApi(
+                "judgeScoreDashboard"
+            );
+
+
+        if (
+            isUnauthorized(
+                result
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message
+                ||
+                "無法取得評分資料"
+
+            );
+
+        }
+
+
+        STATE.dashboard =
+            result;
+
+
+        STATE.judge =
+            result.judge
+            ||
+            STATE.judge;
+
+
+        STATE.stages =
+            normalizeDashboardStages(
+                result.stages
+            );
+
+
+        if (
+            !STATE.currentStageKey
+
+            ||
+
+            !STATE.stages.some(
+                stage =>
+                    stage.stageKey ===
+                    STATE.currentStageKey
+            )
+        ) {
+
+            const firstAvailable =
+                STATE.stages.find(
+                    stage =>
+                        stage.available
+                );
+
+
+            STATE.currentStageKey =
+
+                firstAvailable
+
+                ? firstAvailable.stageKey
+
+                : (
+                    STATE.stages[
+                        0
+                    ]
+                    ?.stageKey
+                    ||
+                    null
+                  );
+
+        }
+
+
+        renderJudgeInfo();
+
+        renderStageTabs();
+
+        renderCurrentStage();
+
+    }
+
+    catch (error) {
+
+        $("clubArea")
+            .className =
+            "state";
+
+
+        $("clubArea")
+            .innerHTML =
+
+            "⚠️ " +
+            escapeHtml(
+                error.message
+            );
+
+    }
+
+}
+
+
+/* ============================================================
+   Dashboard stages 正規化
+   ============================================================ */
+
+function normalizeDashboardStages(
+    stages
+) {
+
+    if (
+        Array.isArray(
+            stages
+        )
+    ) {
+
+        return stages;
+
+    }
+
+
+    if (
+        stages &&
+        typeof stages ===
+        "object"
+    ) {
+
+        return Object
+            .values(
+                stages
+            );
+
+    }
+
+
+    return [];
+
+}
+
+
+/* ============================================================
+   評審資料
+   ============================================================ */
+
+function renderJudgeInfo() {
+
+    const judge =
+        STATE.judge
+        ||
+        {};
+
+
+    $("judgeDisplayName")
+        .textContent =
+
+        judge.displayName
+
+        ||
+
+        judge.name
+
+        ||
+
+        judge.username
+
+        ||
+
+        "評審";
+
+
+    const categories =
+
+        STATE.dashboard &&
+        Array.isArray(
+            STATE.dashboard
+                .assignedCategories
+        )
+
+        ? STATE.dashboard
+            .assignedCategories
+
+        : (
+            Array.isArray(
+                judge.categories
+            )
+
+            ? judge.categories
+
+            : []
+          );
+
+
+    $("judgeCategories")
+        .innerHTML =
+
+        categories.length
+
+        ? categories
+            .map(
+                category => `
+
+                    <span class="category-chip">
+                        ${escapeHtml(category)}
+                    </span>
+
+                `
+            )
+            .join(
+                ""
+            )
+
+        : `
+          <span class="category-chip">
+              尚未設定負責屬性
+          </span>
+          `;
+
+
+    $("statTotalClubs")
+        .textContent =
+
+        STATE.dashboard
+            ?.assignedClubCount
+
+        ??
+
+        0;
+
+}
+
+
+/* ============================================================
+   Stage Tabs
+   ============================================================ */
+
+function renderStageTabs() {
+
+    const container =
+        $("stageTabs");
+
+
+    if (
+        !STATE.stages.length
+    ) {
+
+        container.innerHTML =
+            "";
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+
+        STATE.stages
+            .map(
+                stage => {
+
+                    const active =
+
+                        stage.stageKey ===
+                        STATE.currentStageKey;
+
+
+                    return `
+
+                    <button
+                        class="stage-tab ${active ? "active" : ""}"
+                        onclick="selectStage('${encodeURIComponent(stage.stageKey)}')"
+                    >
+
+                        ${escapeHtml(stage.icon || "📌")}
+
+                        ${escapeHtml(stage.stageName || stage.stageKey)}
+
+                        ${
+                            stage.published
+
+                            ? ""
+
+                            : " 🔒"
+                        }
+
+                    </button>
+
+                    `;
+
+                }
+            )
+            .join(
+                ""
+            );
+
+}
+
+
+function selectStage(
+    encoded
+) {
+
+    STATE.currentStageKey =
+        decodeURIComponent(
+            encoded
+        );
+
+
+    STATE.statusFilter =
+        "all";
+
+
+    document
+        .querySelectorAll(
+            ".filter-btn"
+        )
+        .forEach(
+            button => {
+
+                button.classList.toggle(
+
+                    "active",
+
+                    button.dataset.filter ===
+                    "all"
+
+                );
+
+            }
+        );
+
+
+    renderStageTabs();
+
+    renderCurrentStage();
+
+}
+
+
+/* ============================================================
+   目前 Stage
+   ============================================================ */
+
+function getCurrentStageDashboard() {
+
+    return (
+
+        STATE.stages
+            .find(
+                stage =>
+                    stage.stageKey ===
+                    STATE.currentStageKey
+            )
+
+        ||
+
+        null
 
     );
 
 }
+
+
+/* ============================================================
+   篩選
+   ============================================================ */
+
+function setStatusFilter(
+    value,
+    button
+) {
+
+    STATE.statusFilter =
+        value;
+
+
+    document
+        .querySelectorAll(
+            ".filter-btn"
+        )
+        .forEach(
+            item => {
+
+                item.classList.remove(
+                    "active"
+                );
+
+            }
+        );
+
+
+    button.classList.add(
+        "active"
+    );
+
+
+    renderCurrentStage();
+
+}
+
+
+/* ============================================================
+   Render 社團
+   ============================================================ */
+
+function renderCurrentStage() {
+
+    const stage =
+        getCurrentStageDashboard();
+
+
+    if (
+        !stage
+    ) {
+
+        $("statSubmitted")
+            .textContent =
+            "0";
+
+
+        $("statDraft")
+            .textContent =
+            "0";
+
+
+        $("statNotStarted")
+            .textContent =
+            "0";
+
+
+        $("clubArea")
+            .className =
+            "state";
+
+
+        $("clubArea")
+            .innerHTML =
+            "目前沒有評分大項。";
+
+
+        return;
+
+    }
+
+
+    $("statSubmitted")
+        .textContent =
+        stage.submittedCount
+        ??
+        0;
+
+
+    $("statDraft")
+        .textContent =
+        stage.draftCount
+        ??
+        0;
+
+
+    $("statNotStarted")
+        .textContent =
+        stage.notStartedCount
+        ??
+        0;
+
+
+    if (
+        !stage.available
+    ) {
+
+        $("clubArea")
+            .className =
+            "state";
+
+
+        $("clubArea")
+            .innerHTML = `
+
+            🔒
+            <br><br>
+
+            「${escapeHtml(stage.stageName)}」
+            目前尚未開放評分。
+
+        `;
+
+
+        return;
+
+    }
+
+
+    const query =
+
+        (
+            $("clubSearch")
+                .value
+            ||
+            ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+    const clubs =
+        (
+            stage.clubs
+            ||
+            []
+        )
+        .filter(
+            club => {
+
+                const searchMatched =
+
+                    !query
+
+                    ||
+
+                    (
+                        `${club.name} ${club.category}`
+                    )
+                    .toLowerCase()
+                    .includes(
+                        query
+                    );
+
+
+                const statusMatched =
+
+                    STATE.statusFilter ===
+                    "all"
+
+                    ||
+
+                    club.status ===
+                    STATE.statusFilter;
+
+
+                return (
+
+                    searchMatched
+
+                    &&
+
+                    statusMatched
+
+                );
+
+            }
+        );
+
+
+    if (
+        !clubs.length
+    ) {
+
+        $("clubArea")
+            .className =
+            "state";
+
+
+        $("clubArea")
+            .innerHTML =
+            "找不到符合條件的社團。";
+
+
+        return;
+
+    }
+
+
+    const grouped =
+        {};
+
+
+    clubs.forEach(
+        club => {
+
+            const category =
+                club.category
+                ||
+                "未分類";
+
+
+            if (
+                !grouped[
+                    category
+                ]
+            ) {
+
+                grouped[
+                    category
+                ] =
+                    [];
+
+            }
+
+
+            grouped[
+                category
+            ]
+            .push(
+                club
+            );
+
+        }
+    );
+
+
+    $("clubArea")
+        .className =
+        "";
+
+
+    $("clubArea")
+        .innerHTML =
+
+        Object
+            .entries(
+                grouped
+            )
+            .map(
+                (
+                    [
+                        category,
+                        categoryClubs
+                    ]
+                ) => `
+
+                <section class="category-block">
+
+                    <div class="category-title">
+
+                        <span>
+                            📂
+                            ${escapeHtml(category)}
+                        </span>
+
+                        <span class="category-count">
+                            ${categoryClubs.length} 個社團
+                        </span>
+
+                    </div>
+
+
+                    <div class="club-list">
+
+                        ${
+                            categoryClubs
+                                .map(
+                                    club =>
+                                        clubCardHtml(
+                                            club,
+                                            stage
+                                        )
+                                )
+                                .join(
+                                    ""
+                                )
+                        }
+
+                    </div>
+
+                </section>
+
+                `
+            )
+            .join(
+                ""
+            );
+
+}
+
+
+/* ============================================================
+   社團卡
+   ============================================================ */
+
+function clubCardHtml(
+    club,
+    stage
+) {
+
+    let statusHtml =
+        "";
+
+
+    let buttonText =
+        "開始評分";
+
+
+    if (
+        club.status ===
+        "submitted"
+    ) {
+
+        statusHtml = `
+
+            <span class="status status-submitted">
+                ✅ 已送出
+            </span>
+
+        `;
+
+
+        buttonText =
+            "查看成績";
+
+    }
+
+    else if (
+        club.status ===
+        "draft"
+    ) {
+
+        statusHtml = `
+
+            <span class="status status-draft">
+                📝 草稿
+            </span>
+
+        `;
+
+
+        buttonText =
+            "繼續評分";
+
+    }
+
+    else {
+
+        statusHtml = `
+
+            <span class="status status-none">
+                尚未開始
+            </span>
+
+        `;
+
+    }
+
+
+    const scoreText =
+
+        club.totalScore !==
+        null
+
+        &&
+
+        club.totalScore !==
+        undefined
+
+        ? `｜目前 ${formatScore(club.totalScore)} / ${formatScore(stage.maxScore)}`
+
+        : "";
+
+
+    return `
+
+    <div class="club-card">
+
+        <div>
+
+            <div class="club-name">
+
+                ${escapeHtml(club.name)}
+
+                ${statusHtml}
+
+            </div>
+
+
+            <div class="club-meta">
+
+                ${escapeHtml(club.category)}
+
+                ${scoreText}
+
+                ${
+                    club.criterionCount
+
+                    ? `｜已評 ${club.answeredCount || 0}/${club.criterionCount} 項`
+
+                    : ""
+                }
+
+            </div>
+
+        </div>
+
+
+        <button
+            class="btn ${
+                club.status ===
+                "submitted"
+                ? ""
+                : "btn-primary"
+            }"
+            onclick="openScore('${encodeURIComponent(club.name)}')"
+        >
+            ${buttonText}
+        </button>
+
+    </div>
+
+    `;
+
+}
+
+
+/* ============================================================
+   開啟評分
+   ============================================================ */
+
+async function openScore(
+    encodedClubName
+) {
+
+    const clubName =
+        decodeURIComponent(
+            encodedClubName
+        );
+
+
+    const stage =
+        getCurrentStageDashboard();
+
+
+    if (
+        !stage
+    ) {
+
+        return;
+
+    }
+
+
+    STATE.currentClub =
+        null;
+
+
+    STATE.currentStage =
+        null;
+
+
+    STATE.currentRecord =
+        null;
+
+
+    STATE.locked =
+        false;
+
+
+    $("scoreModalTitle")
+        .textContent =
+        clubName;
+
+
+    $("scoreModalSub")
+        .textContent =
+        "正在讀取評分資料...";
+
+
+    $("scoreModalBody")
+        .innerHTML = `
+
+            <div class="state">
+
+                <div class="spinner"></div>
+
+                載入中...
+
+            </div>
+
+        `;
+
+
+    $("scoreFooterActions")
+        .style
+        .display =
+        "none";
+
+
+    $("saveInfo")
+        .textContent =
+        "";
+
+
+    openScoreModal();
+
+
+    try {
+
+        const result =
+            await judgeApi(
+
+                "judgeGetScore",
+
+                {
+
+                    stageKey:
+                        stage.stageKey,
+
+                    clubName:
+                        clubName
+
+                }
+
+            );
+
+
+        if (
+            isUnauthorized(
+                result
+            )
+        ) {
+
+            closeScoreModal();
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message
+
+                ||
+
+                "無法取得評分資料"
+
+            );
+
+        }
+
+
+        STATE.currentClub =
+            result.club;
+
+
+        STATE.currentStage =
+            result.stage;
+
+
+        STATE.currentRecord =
+            result.record;
+
+
+        STATE.locked =
+            Boolean(
+                result.locked
+            );
+
+
+        $("scoreModalTitle")
+            .textContent =
+            result.club.name;
+
+
+        $("scoreModalSub")
+            .textContent =
+
+            `${result.club.category}｜${result.stage.icon || "📌"} ${result.stage.name}`;
+
+
+        renderScoreModal();
+
+
+        if (
+            result.staleDraft
+        ) {
+
+            showToast(
+                "⚠️ 此草稿使用的是舊版評分規則，請重新確認分數"
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        $("scoreModalBody")
+            .innerHTML = `
+
+                <div class="state">
+                    ⚠️
+                    ${escapeHtml(error.message)}
+                </div>
+
+            `;
+
+    }
+
+}
+
+
+/* ============================================================
+   Modal 開關
+   ============================================================ */
+
+function openScoreModal() {
+
+    $("scoreModalBg")
+        .style
+        .display =
+        "flex";
+
+}
+
+
+function closeScoreModal() {
+
+    $("scoreModalBg")
+        .style
+        .display =
+        "none";
+
+}
+
+
+/* ============================================================
+   取得小項目前分數
+   ============================================================ */
+
+function getCurrentScoreValue(
+    criterionId
+) {
+
+    const record =
+        STATE.currentRecord;
+
+
+    if (
+        !record
+
+        ||
+
+        !record.scores
+    ) {
+
+        return "";
+
+    }
+
+
+    const value =
+        record.scores[
+            criterionId
+        ];
+
+
+    if (
+        value ===
+        null
+
+        ||
+
+        value ===
+        undefined
+
+        ||
+
+        value ===
+        ""
+    ) {
+
+        return "";
+
+    }
+
+
+    return value;
+
+}
+
+
+/* ============================================================
+   評分畫面
+   ============================================================ */
+
+function renderScoreModal() {
+
+    const stage =
+        STATE.currentStage;
+
+
+    if (
+        !stage
+    ) {
+
+        return;
+
+    }
+
+
+    const groups =
+        Array.isArray(
+            stage.groups
+        )
+
+        ? stage.groups.filter(
+            group =>
+                group.enabled !==
+                false
+          )
+
+        : [];
+
+
+    let body =
+        "";
+
+
+    if (
+        STATE.locked
+    ) {
+
+        body += `
+
+        <div class="locked-box">
+
+            🔒 此評分已正式送出並鎖定，
+            目前只能查看，無法再修改。
+
+        </div>
+
+        `;
+
+    }
+
+
+    body += `
+
+    <div class="score-summary">
+
+        <div>
+
+            <div class="summary-label">
+                ${escapeHtml(stage.name)}目前總分
+            </div>
+
+            <div class="summary-score">
+
+                <span id="currentTotal">
+                    0
+                </span>
+
+                /
+
+                ${formatScore(stage.maxScore)}
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="answeredProgress"
+            class="summary-label"
+        >
+            0 / 0 項
+        </div>
+
+    </div>
+
+    `;
+
+
+    groups.forEach(
+        group => {
+
+            body += `
+
+            <section class="score-group">
+
+                <div class="group-head">
+
+                    <div class="group-name">
+                        ${escapeHtml(group.name)}
+                    </div>
+
+                    <div class="group-score">
+
+                        <span
+                            id="groupScore_${escapeHtml(group.id)}"
+                        >
+                            0
+                        </span>
+
+                        /
+
+                        ${formatScore(group.maxScore)}
+
+                    </div>
+
+                </div>
+
+
+                <div class="criteria-list">
+
+            `;
+
+
+            (
+                group.criteria
+                ||
+                []
+            )
+            .filter(
+                criterion =>
+                    criterion.enabled !==
+                    false
+            )
+            .forEach(
+                criterion => {
+
+                    const value =
+                        getCurrentScoreValue(
+                            criterion.id
+                        );
+
+
+                    body += `
+
+                    <div class="criterion">
+
+                        <div>
+
+                            <div class="criterion-name">
+                                ${escapeHtml(criterion.name)}
+                            </div>
+
+                            <div class="criterion-max">
+                                最高 ${formatScore(criterion.maxScore)} 分
+                            </div>
+
+                        </div>
+
+
+                        <div class="score-input-wrap">
+
+                            <input
+                                id="score_${escapeHtml(criterion.id)}"
+                                class="score-input"
+                                type="number"
+                                min="0"
+                                max="${formatScore(criterion.maxScore)}"
+                                step="0.01"
+                                value="${escapeHtml(value)}"
+                                data-criterion-id="${escapeHtml(criterion.id)}"
+                                data-group-id="${escapeHtml(group.id)}"
+                                data-max="${formatScore(criterion.maxScore)}"
+                                ${STATE.locked ? "disabled" : ""}
+                                oninput="scoreChanged(this)"
+                            >
+
+                            <span class="out-of">
+                                /
+                                ${formatScore(criterion.maxScore)}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    `;
+
+                }
+            );
+
+
+            body += `
+
+                </div>
+
+            </section>
+
+            `;
+
+        }
+    );
+
+
+    body += `
+
+    <div
+        id="scoreWarning"
+        class="score-warning"
+    ></div>
+
+    `;
+
+
+    $("scoreModalBody")
+        .innerHTML =
+        body;
+
+
+    if (
+        STATE.locked
+    ) {
+
+        $("scoreFooterActions")
+            .style
+            .display =
+            "none";
+
+
+        $("saveInfo")
+            .textContent =
+
+            STATE.currentRecord &&
+            STATE.currentRecord.submittedAt
+
+            ? "正式送出：" +
+              formatDateTime(
+                  STATE.currentRecord.submittedAt
+              )
+
+            : "已正式送出";
+
+    }
+
+    else {
+
+        $("scoreFooterActions")
+            .style
+            .display =
+            "flex";
+
+
+        $("saveInfo")
+            .textContent =
+
+            STATE.currentRecord &&
+            STATE.currentRecord.updatedAt
+
+            ? "草稿更新：" +
+              formatDateTime(
+                  STATE.currentRecord.updatedAt
+              )
+
+            : "尚未儲存";
+
+    }
+
+
+    recalculateScore();
+
+}
+
+
+/* ============================================================
+   輸入變化
+   ============================================================ */
+
+function scoreChanged(
+    input
+) {
+
+    input.classList.remove(
+        "invalid"
+    );
+
+
+    recalculateScore();
+
+}
+
+
+/* ============================================================
+   取得畫面分數
+   ============================================================ */
+
+function collectScores() {
+
+    const scores =
+        {};
+
+
+    document
+        .querySelectorAll(
+            "#scoreModalBody .score-input"
+        )
+        .forEach(
+            input => {
+
+                const id =
+                    input.dataset
+                        .criterionId;
+
+
+                const raw =
+                    input.value.trim();
+
+
+                scores[
+                    id
+                ] =
+
+                    raw ===
+                    ""
+
+                    ? null
+
+                    : Number(
+                        raw
+                    );
+
+            }
+        );
+
+
+    return scores;
+
+}
+
+
+/* ============================================================
+   前端即時計算
+   ============================================================ */
+
+function calculateCurrentScore() {
+
+    const stage =
+        STATE.currentStage;
+
+
+    const scores =
+        collectScores();
+
+
+    let total =
+        0;
+
+
+    let answered =
+        0;
+
+
+    let criterionCount =
+        0;
+
+
+    const groupResults =
+        [];
+
+
+    let valid =
+        true;
+
+
+    const errors =
+        [];
+
+
+    (
+        stage.groups
+        ||
+        []
+    )
+    .filter(
+        group =>
+            group.enabled !==
+            false
+    )
+    .forEach(
+        group => {
+
+            let groupTotal =
+                0;
+
+
+            let groupAnswered =
+                0;
+
+
+            let groupCount =
+                0;
+
+
+            (
+                group.criteria
+                ||
+                []
+            )
+            .filter(
+                criterion =>
+                    criterion.enabled !==
+                    false
+            )
+            .forEach(
+                criterion => {
+
+                    criterionCount++;
+
+                    groupCount++;
+
+
+                    const value =
+                        scores[
+                            criterion.id
+                        ];
+
+
+                    const input =
+                        $(
+                            "score_" +
+                            criterion.id
+                        );
+
+
+                    if (
+                        value ===
+                        null
+
+                        ||
+
+                        value ===
+                        undefined
+
+                        ||
+
+                        value ===
+                        ""
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    answered++;
+
+                    groupAnswered++;
+
+
+                    const number =
+                        Number(
+                            value
+                        );
+
+
+                    if (
+                        !Number.isFinite(
+                            number
+                        )
+                    ) {
+
+                        valid =
+                            false;
+
+
+                        errors.push(
+                            `「${criterion.name}」不是有效數字。`
+                        );
+
+
+                        if (
+                            input
+                        ) {
+
+                            input.classList.add(
+                                "invalid"
+                            );
+
+                        }
+
+
+                        return;
+
+                    }
+
+
+                    if (
+                        number <
+                        0
+                    ) {
+
+                        valid =
+                            false;
+
+
+                        errors.push(
+                            `「${criterion.name}」不能低於 0 分。`
+                        );
+
+
+                        if (
+                            input
+                        ) {
+
+                            input.classList.add(
+                                "invalid"
+                            );
+
+                        }
+
+                    }
+
+
+                    if (
+                        number >
+                        numberValue(
+                            criterion.maxScore
+                        )
+                    ) {
+
+                        valid =
+                            false;
+
+
+                        errors.push(
+
+                            `「${criterion.name}」最高只能給 ` +
+                            `${formatScore(criterion.maxScore)} 分。`
+
+                        );
+
+
+                        if (
+                            input
+                        ) {
+
+                            input.classList.add(
+                                "invalid"
+                            );
+
+                        }
+
+                    }
+
+
+                    groupTotal +=
+                        number;
+
+                }
+            );
+
+
+            groupTotal =
+                numberValue(
+                    groupTotal
+                );
+
+
+            if (
+                groupTotal >
+                numberValue(
+                    group.maxScore
+                )
+            ) {
+
+                valid =
+                    false;
+
+
+                errors.push(
+
+                    `分類「${group.name}」目前 ${formatScore(groupTotal)} 分，` +
+                    `超過上限 ${formatScore(group.maxScore)} 分。`
+
+                );
+
+            }
+
+
+            total +=
+                groupTotal;
+
+
+            groupResults.push({
+
+                id:
+                    group.id,
+
+                name:
+                    group.name,
+
+                score:
+                    groupTotal,
+
+                maxScore:
+                    numberValue(
+                        group.maxScore
+                    ),
+
+                answered:
+                    groupAnswered,
+
+                count:
+                    groupCount
+
+            });
+
+        }
+    );
+
+
+    total =
+        numberValue(
+            total
+        );
+
+
+    if (
+        total >
+        numberValue(
+            stage.maxScore
+        )
+    ) {
+
+        valid =
+            false;
+
+
+        errors.push(
+
+            `「${stage.name}」目前總分 ${formatScore(total)}，` +
+            `超過上限 ${formatScore(stage.maxScore)} 分。`
+
+        );
+
+    }
+
+
+    return {
+
+        scores:
+            scores,
+
+        total:
+            total,
+
+        answered:
+            answered,
+
+        criterionCount:
+            criterionCount,
+
+        complete:
+            answered ===
+            criterionCount,
+
+        groups:
+            groupResults,
+
+        valid:
+            valid,
+
+        errors:
+            errors
+
+    };
+
+}
+
+
+/* ============================================================
+   更新即時計算
+   ============================================================ */
+
+function recalculateScore() {
+
+    if (
+        !STATE.currentStage
+    ) {
+
+        return;
+
+    }
+
+
+    document
+        .querySelectorAll(
+            ".score-input"
+        )
+        .forEach(
+            input => {
+
+                input.classList.remove(
+                    "invalid"
+                );
+
+            }
+        );
+
+
+    const result =
+        calculateCurrentScore();
+
+
+    $("currentTotal")
+        .textContent =
+        formatScore(
+            result.total
+        );
+
+
+    $("answeredProgress")
+        .textContent =
+
+        `${result.answered} / ${result.criterionCount} 項`;
+
+
+    result.groups.forEach(
+        group => {
+
+            const element =
+                $(
+                    "groupScore_" +
+                    group.id
+                );
+
+
+            if (
+                element
+            ) {
+
+                element.textContent =
+                    formatScore(
+                        group.score
+                    );
+
+            }
+
+        }
+    );
+
+
+    const warning =
+        $("scoreWarning");
+
+
+    if (
+        result.errors.length
+    ) {
+
+        warning.classList.add(
+            "show"
+        );
+
+
+        warning.innerHTML =
+
+            "⚠️ 請確認以下分數：<br>" +
+
+            result.errors
+                .map(
+                    error =>
+                        "• " +
+                        escapeHtml(
+                            error
+                        )
+                )
+                .join(
+                    "<br>"
+                );
+
+    }
+
+    else {
+
+        warning.classList.remove(
+            "show"
+        );
+
+
+        warning.innerHTML =
+            "";
+
+    }
+
+
+    $("saveDraftBtn")
+        .disabled =
+        !result.valid;
+
+
+    $("submitScoreBtn")
+        .disabled =
+        !result.valid;
+
+}
+
+
+/* ============================================================
+   儲存草稿
+   ============================================================ */
+
+async function saveDraft() {
+
+    if (
+        STATE.locked
+        ||
+        !STATE.currentClub
+        ||
+        !STATE.currentStage
+    ) {
+
+        return;
+
+    }
+
+
+    const calculated =
+        calculateCurrentScore();
+
+
+    if (
+        !calculated.valid
+    ) {
+
+        showToast(
+            "❌ 有分數超過限制，請先修正"
+        );
+
+        return;
+
+    }
+
+
+    const button =
+        $("saveDraftBtn");
+
+
+    try {
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "儲存中...";
+
+
+        const result =
+            await judgeApi(
+
+                "judgeSaveScoreDraft",
+
+                {
+
+                    stageKey:
+                        STATE.currentStage.id
+                        ||
+                        STATE.currentStage.key,
+
+                    clubName:
+                        STATE.currentClub.name,
+
+                    scores:
+                        calculated.scores
+
+                }
+
+            );
+
+
+        if (
+            isUnauthorized(
+                result
+            )
+        ) {
+
+            closeScoreModal();
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message
+                ||
+                "草稿儲存失敗"
+
+            );
+
+        }
+
+
+        STATE.currentRecord =
+            result.record;
+
+
+        $("saveInfo")
+            .textContent =
+
+            "草稿更新：" +
+
+            formatDateTime(
+                result.record.updatedAt
+            );
+
+
+        showToast(
+            "✅ 草稿已儲存"
+        );
+
+
+        await loadDashboard();
+
+    }
+
+    catch (error) {
+
+        showToast(
+
+            "❌ " +
+
+            error.message
+
+        );
+
+    }
+
+    finally {
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "💾 儲存草稿";
+
+
+        recalculateScore();
+
+    }
+
+}
+
+
+/* ============================================================
+   正式送出
+   ============================================================ */
+
+async function submitScore() {
+
+    if (
+        STATE.locked
+        ||
+        !STATE.currentClub
+        ||
+        !STATE.currentStage
+    ) {
+
+        return;
+
+    }
+
+
+    const calculated =
+        calculateCurrentScore();
+
+
+    if (
+        !calculated.valid
+    ) {
+
+        showToast(
+            "❌ 有分數超過限制，請先修正"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !calculated.complete
+    ) {
+
+        showToast(
+            "⚠️ 尚有評分小項未填寫；0 分可以，但不能留白"
+        );
+
+        return;
+
+    }
+
+
+    const clubName =
+        STATE.currentClub.name;
+
+
+    const stageName =
+        STATE.currentStage.name;
+
+
+    const total =
+        calculated.total;
+
+
+    const max =
+        STATE.currentStage.maxScore;
+
+
+    const confirmed =
+        confirm(
+
+            `確定正式送出？\n\n` +
+
+            `社團：${clubName}\n` +
+
+            `項目：${stageName}\n` +
+
+            `總分：${formatScore(total)} / ${formatScore(max)}\n\n` +
+
+            `送出後將鎖定，評審端不能自行修改。`
+
+        );
+
+
+    if (
+        !confirmed
+    ) {
+
+        return;
+
+    }
+
+
+    const button =
+        $("submitScoreBtn");
+
+
+    try {
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "送出中...";
+
+
+        const result =
+            await judgeApi(
+
+                "judgeSubmitScore",
+
+                {
+
+                    stageKey:
+                        STATE.currentStage.id
+                        ||
+                        STATE.currentStage.key,
+
+                    clubName:
+                        clubName,
+
+                    scores:
+                        calculated.scores
+
+                }
+
+            );
+
+
+        if (
+            isUnauthorized(
+                result
+            )
+        ) {
+
+            closeScoreModal();
+
+            return;
+
+        }
+
+
+        if (
+            !result.success
+        ) {
+
+            throw new Error(
+
+                result.message
+                ||
+                "正式送出失敗"
+
+            );
+
+        }
+
+
+        STATE.currentRecord =
+            result.record;
+
+
+        STATE.locked =
+            true;
+
+
+        showToast(
+            "✅ 評分已正式送出並鎖定"
+        );
+
+
+        await loadDashboard();
+
+
+        renderScoreModal();
+
+    }
+
+    catch (error) {
+
+        showToast(
+
+            "❌ " +
+
+            error.message
+
+        );
+
+    }
+
+    finally {
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "✅ 正式送出";
+
+    }
+
+}
+
+
+/* ============================================================
+   日期
+   ============================================================ */
+
+function formatDateTime(
+    value
+) {
+
+    if (
+        !value
+    ) {
+
+        return "-";
+
+    }
+
+
+    const date =
+        new Date(
+            value
+        );
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return String(
+            value
+        );
+
+    }
+
+
+    return new Intl.DateTimeFormat(
+
+        "zh-TW",
+
+        {
+
+            timeZone:
+                "Asia/Taipei",
+
+            year:
+                "numeric",
+
+            month:
+                "2-digit",
+
+            day:
+                "2-digit",
+
+            hour:
+                "2-digit",
+
+            minute:
+                "2-digit",
+
+            hour12:
+                false
+
+        }
+
+    )
+    .format(
+        date
+    );
+
+}
+
+
+/* ============================================================
+   Modal 背景點擊
+   ============================================================ */
+
+$("scoreModalBg")
+    .addEventListener(
+
+        "click",
+
+        event => {
+
+            if (
+                event.target ===
+                event.currentTarget
+            ) {
+
+                closeScoreModal();
+
+            }
+
+        }
+
+    );
+
+
+/* ============================================================
+   ESC
+   ============================================================ */
+
+document.addEventListener(
+
+    "keydown",
+
+    event => {
+
+        if (
+            event.key ===
+            "Escape"
+        ) {
+
+            closeScoreModal();
+
+        }
+
+    }
+
+);
 
 </script>
 
