@@ -1,26 +1,1950 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1a73e8">
-<title>社團評選管理後台</title>
+
+<meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+>
+
+<meta
+    name="theme-color"
+    content="#1a73e8"
+>
+
+<title>
+    社團評選管理後台
+</title>
+
 
 <style>
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,sans-serif;background:#f5f7fb;color:#202124}button,input,select{font:inherit}button{cursor:pointer}:root{--p:#1a73e8;--pd:#1557b0;--bd:#e4e7ec;--muted:#667085;--ok:#167542;--okbg:#e7f6ec;--warn:#b54708;--warnbg:#fff6e8;--bad:#d92d20;--badbg:#fff1f0;--violet:#6941c6;--violetbg:#f4f0ff;--shadow:0 8px 28px rgba(16,24,40,.07)}.hidden{display:none!important}.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--bd);border-radius:22px;padding:32px;box-shadow:0 20px 60px rgba(16,24,40,.12)}.login-icon{font-size:34px}.login-title{font-size:26px;font-weight:900;margin:12px 0 5px}.muted{color:var(--muted)}.field{width:100%;height:42px;border:1px solid #d0d5dd;border-radius:9px;padding:0 11px;outline:none;background:#fff}.field:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(26,115,232,.08)}.label{display:block;font-size:12px;font-weight:800;margin:14px 0 6px}.btn{min-height:38px;border:1px solid var(--bd);border-radius:9px;background:#fff;padding:0 12px;font-weight:800;color:#344054}.btn:hover{background:#f9fafb}.btn-primary{background:var(--p);border-color:var(--p);color:#fff}.btn-primary:hover{background:var(--pd)}.btn-danger{background:var(--badbg);border-color:#f5c7c4;color:var(--bad)}.btn-success{background:var(--okbg);border-color:#cce7d5;color:var(--ok)}.btn:disabled{opacity:.5;cursor:not-allowed}.login-btn{width:100%;margin-top:20px;height:46px}.error{color:var(--bad);font-size:12px;line-height:1.6;margin-top:9px}.app{display:none}.topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;padding:12px max(16px,calc((100vw - 1200px)/2));gap:12px}.brand{font-weight:900}.sub{font-size:11px;color:var(--muted);margin-top:2px}.top-actions{display:flex;gap:8px}.main{width:min(1200px,calc(100% - 28px));margin:auto;padding:24px 0 50px}.hero{display:flex;justify-content:space-between;gap:14px;align-items:end;margin-bottom:15px}.hero h1{margin:0;font-size:27px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:15px}.stat{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:14px;box-shadow:var(--shadow)}.stat-label{font-size:11px;color:var(--muted);font-weight:800}.stat-value{font-size:22px;font-weight:900;margin-top:4px}.panel{background:#fff;border:1px solid var(--bd);border-radius:15px;box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}.panel-head{width:100%;border:0;background:#fff;padding:15px 17px;display:flex;align-items:center;justify-content:space-between;text-align:left}.panel-title{font-size:15px;font-weight:900}.panel-meta{font-size:11px;color:var(--muted)}.panel-body{border-top:1px solid var(--bd);padding:16px}.chev{transition:.2s}.panel.closed .panel-body{display:none}.panel.closed .chev{transform:rotate(-90deg)}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}.toolbar .field{width:auto;min-width:180px}.grow{flex:1}.card{border:1px solid var(--bd);border-radius:12px;padding:13px;background:#fff}.notice{padding:11px 12px;border:1px solid #bfd7ff;background:#f5f9ff;border-radius:10px;color:#174b88;font-size:12px;line-height:1.7}.okbox{background:var(--okbg);border-color:#cce7d5;color:var(--ok)}.warnbox{background:var(--warnbg);border-color:#f5d6a4;color:#8a4b08}.badbox{background:var(--badbg);border-color:#f5c7c4;color:#7a271a}.score-top{display:grid;grid-template-columns:1fr 160px auto;gap:10px;align-items:end;margin-bottom:12px}.score-section{border:1px solid #dce5f2;border-radius:14px;margin:12px 0;background:#fbfdff;overflow:hidden}.score-section-head{padding:12px;background:#f4f8ff;border-bottom:1px solid #dce5f2}.section-grid{display:grid;grid-template-columns:68px minmax(180px,1fr) 130px 135px auto;gap:8px;align-items:end}.mini-label{font-size:10px;color:var(--muted);font-weight:800;margin-bottom:4px}.mini{height:38px}.toggle-row{display:flex;gap:7px;align-items:center;font-size:11px;font-weight:800}.badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}.b-pub{background:var(--okbg);color:var(--ok)}.b-draft{background:#f2f4f7;color:#667085}.b-manual{background:var(--violetbg);color:var(--violet)}.score-section-body{padding:12px}.score-group{border:1px solid var(--bd);border-radius:11px;margin-bottom:9px;overflow:hidden;background:#fff}.group-head{display:grid;grid-template-columns:minmax(150px,1fr) 120px auto;gap:8px;align-items:end;padding:10px;background:#fcfcfd;border-bottom:1px solid var(--bd)}.criteria{padding:8px}.criterion{display:grid;grid-template-columns:minmax(160px,1fr) 110px auto;gap:8px;align-items:end;padding:7px;border-bottom:1px dashed #e8eaed}.criterion:last-child{border-bottom:0}.calc{font-size:11px;font-weight:800;margin-top:7px}.calc.good{color:var(--ok)}.calc.bad{color:var(--bad)}.row-actions{display:flex;gap:5px;flex-wrap:wrap}.icon-btn{width:34px;height:34px;border:1px solid var(--bd);border-radius:8px;background:#fff}.danger-icon{color:var(--bad)}.score-footer{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-top:12px}.validation{flex:1}.validation ul{margin:6px 0 0;padding-left:18px}.list{display:grid;gap:8px}.list-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px;border:1px solid var(--bd);border-radius:10px}.list-title{font-weight:900;font-size:13px}.list-sub{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.5}.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.chip{padding:4px 7px;background:#eef4ff;color:#1557b0;border-radius:999px;font-size:10px;font-weight:850}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.table-wrap{overflow:auto;border:1px solid var(--bd);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left;font-size:12px;vertical-align:top}th{background:#f9fafb;font-size:11px;color:#475467}.state{text-align:center;color:var(--muted);padding:28px 12px;font-size:12px}.spinner{width:26px;height:26px;margin:0 auto 8px;border:3px solid #e8eef7;border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.modal-bg{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(16,24,40,.58)}.modal{width:min(520px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:18px;box-shadow:0 25px 70px rgba(16,24,40,.28)}.modal h3{margin:0 0 10px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.check{display:flex;align-items:center;gap:6px;padding:7px;border:1px solid var(--bd);border-radius:8px;font-size:11px}.toast{position:fixed;right:18px;bottom:18px;z-index:2000;padding:11px 15px;background:#101828;color:#fff;border-radius:9px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;max-width:390px;font-size:12px}.toast.show{opacity:1;transform:none}@media(max-width:780px){.stats{grid-template-columns:1fr 1fr}.section-grid{grid-template-columns:60px 1fr 100px}.section-grid .mode-wrap,.section-grid .section-actions{grid-column:1/-1}.group-head{grid-template-columns:1fr 100px}.group-head .row-actions{grid-column:1/-1}.criterion{grid-template-columns:1fr 90px}.criterion .row-actions{grid-column:1/-1}.grid2,.grid4{grid-template-columns:1fr}.score-top{grid-template-columns:1fr}.score-footer{flex-direction:column}.topbar .sub{display:none}.hero{align-items:flex-start;flex-direction:column}.toolbar .field{width:100%}.toolbar .grow{flex:auto;width:100%}.list-row{grid-template-columns:1fr}.check-grid{grid-template-columns:1fr}}
+
+* {
+    box-sizing:
+        border-box;
+}
+
+
+html,
+body {
+
+    margin:
+        0;
+
+    min-height:
+        100%;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Noto Sans TC",
+        Roboto,
+        sans-serif;
+
+    background:
+        #f5f7fb;
+
+    color:
+        #202124;
+
+}
+
+
+button,
+input,
+select {
+
+    font:
+        inherit;
+
+}
+
+
+button {
+
+    cursor:
+        pointer;
+
+}
+
+
+:root {
+
+    --p:
+        #1a73e8;
+
+    --pd:
+        #1557b0;
+
+    --bd:
+        #e4e7ec;
+
+    --muted:
+        #667085;
+
+    --ok:
+        #167542;
+
+    --okbg:
+        #e7f6ec;
+
+    --warn:
+        #b54708;
+
+    --warnbg:
+        #fff6e8;
+
+    --bad:
+        #d92d20;
+
+    --badbg:
+        #fff1f0;
+
+    --violet:
+        #6941c6;
+
+    --violetbg:
+        #f4f0ff;
+
+    --shadow:
+        0 8px 28px rgba(16,24,40,.07);
+
+}
+
+
+.hidden {
+
+    display:
+        none !important;
+
+}
+
+
+/* ============================================================
+   登入
+   ============================================================ */
+
+.login-screen {
+
+    min-height:
+        100vh;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        24px;
+
+}
+
+
+.login-card {
+
+    width:
+        min(430px,100%);
+
+    background:
+        #fff;
+
+    border:
+        1px solid var(--bd);
+
+    border-radius:
+        22px;
+
+    padding:
+        32px;
+
+    box-shadow:
+        0 20px 60px rgba(16,24,40,.12);
+
+}
+
+
+.login-icon {
+
+    font-size:
+        34px;
+
+}
+
+
+.login-title {
+
+    font-size:
+        26px;
+
+    font-weight:
+        900;
+
+    margin:
+        12px 0 5px;
+
+}
+
+
+.muted {
+
+    color:
+        var(--muted);
+
+}
+
+
+.field {
+
+    width:
+        100%;
+
+    height:
+        42px;
+
+    border:
+        1px solid #d0d5dd;
+
+    border-radius:
+        9px;
+
+    padding:
+        0 11px;
+
+    outline:
+        none;
+
+    background:
+        #fff;
+
+}
+
+
+.field:focus {
+
+    border-color:
+        var(--p);
+
+    box-shadow:
+        0 0 0 3px rgba(26,115,232,.08);
+
+}
+
+
+.label {
+
+    display:
+        block;
+
+    font-size:
+        12px;
+
+    font-weight:
+        800;
+
+    margin:
+        14px 0 6px;
+
+}
+
+
+.btn {
+
+    min-height:
+        38px;
+
+    border:
+        1px solid var(--bd);
+
+    border-radius:
+        9px;
+
+    background:
+        #fff;
+
+    padding:
+        0 12px;
+
+    font-weight:
+        800;
+
+    color:
+        #344054;
+
+}
+
+
+.btn:hover {
+
+    background:
+        #f9fafb;
+
+}
+
+
+.btn-primary {
+
+    background:
+        var(--p);
+
+    border-color:
+        var(--p);
+
+    color:
+        #fff;
+
+}
+
+
+.btn-primary:hover {
+
+    background:
+        var(--pd);
+
+}
+
+
+.btn-danger {
+
+    background:
+        var(--badbg);
+
+    border-color:
+        #f5c7c4;
+
+    color:
+        var(--bad);
+
+}
+
+
+.btn-success {
+
+    background:
+        var(--okbg);
+
+    border-color:
+        #cce7d5;
+
+    color:
+        var(--ok);
+
+}
+
+
+.btn:disabled {
+
+    opacity:
+        .5;
+
+    cursor:
+        not-allowed;
+
+}
+
+
+.login-btn {
+
+    width:
+        100%;
+
+    margin-top:
+        20px;
+
+    height:
+        46px;
+
+}
+
+
+.error {
+
+    color:
+        var(--bad);
+
+    font-size:
+        12px;
+
+    line-height:
+        1.6;
+
+    margin-top:
+        9px;
+
+}
+
+
+/* ============================================================
+   主畫面
+   ============================================================ */
+
+.app {
+
+    display:
+        none;
+
+}
+
+
+.topbar {
+
+    position:
+        sticky;
+
+    top:
+        0;
+
+    z-index:
+        40;
+
+    background:
+        rgba(255,255,255,.96);
+
+    backdrop-filter:
+        blur(10px);
+
+    border-bottom:
+        1px solid var(--bd);
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    padding:
+        12px max(
+            16px,
+            calc((100vw - 1200px)/2)
+        );
+
+    gap:
+        12px;
+
+}
+
+
+.brand {
+
+    font-weight:
+        900;
+
+}
+
+
+.sub {
+
+    font-size:
+        11px;
+
+    color:
+        var(--muted);
+
+    margin-top:
+        2px;
+
+}
+
+
+.top-actions {
+
+    display:
+        flex;
+
+    gap:
+        8px;
+
+}
+
+
+.main {
+
+    width:
+        min(
+            1200px,
+            calc(100% - 28px)
+        );
+
+    margin:
+        auto;
+
+    padding:
+        24px 0 50px;
+
+}
+
+
+.hero {
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    gap:
+        14px;
+
+    align-items:
+        end;
+
+    margin-bottom:
+        15px;
+
+}
+
+
+.hero h1 {
+
+    margin:
+        0;
+
+    font-size:
+        27px;
+
+}
+
+
+/* ============================================================
+   統計
+   ============================================================ */
+
+.stats {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap:
+        10px;
+
+    margin-bottom:
+        15px;
+
+}
+
+
+.stat {
+
+    background:
+        #fff;
+
+    border:
+        1px solid var(--bd);
+
+    border-radius:
+        14px;
+
+    padding:
+        14px;
+
+    box-shadow:
+        var(--shadow);
+
+}
+
+
+.stat-label {
+
+    font-size:
+        11px;
+
+    color:
+        var(--muted);
+
+    font-weight:
+        800;
+
+}
+
+
+.stat-value {
+
+    font-size:
+        22px;
+
+    font-weight:
+        900;
+
+    margin-top:
+        4px;
+
+}
+
+
+/* ============================================================
+   Panel
+   ============================================================ */
+
+.panel {
+
+    background:
+        #fff;
+
+    border:
+        1px solid var(--bd);
+
+    border-radius:
+        15px;
+
+    box-shadow:
+        var(--shadow);
+
+    margin-bottom:
+        12px;
+
+    overflow:
+        hidden;
+
+}
+
+
+.panel-head {
+
+    width:
+        100%;
+
+    border:
+        0;
+
+    background:
+        #fff;
+
+    padding:
+        15px 17px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+    text-align:
+        left;
+
+}
+
+
+.panel-title {
+
+    font-size:
+        15px;
+
+    font-weight:
+        900;
+
+}
+
+
+.panel-meta {
+
+    font-size:
+        11px;
+
+    color:
+        var(--muted);
+
+}
+
+
+.panel-body {
+
+    border-top:
+        1px solid var(--bd);
+
+    padding:
+        16px;
+
+}
+
+
+.chev {
+
+    transition:
+        .2s;
+
+}
+
+
+.panel.closed .panel-body {
+
+    display:
+        none;
+
+}
+
+
+.panel.closed .chev {
+
+    transform:
+        rotate(-90deg);
+
+}
+
+
+/* ============================================================
+   共用
+   ============================================================ */
+
+.toolbar {
+
+    display:
+        flex;
+
+    flex-wrap:
+        wrap;
+
+    gap:
+        8px;
+
+    align-items:
+        center;
+
+    margin-bottom:
+        12px;
+
+}
+
+
+.toolbar .field {
+
+    width:
+        auto;
+
+    min-width:
+        180px;
+
+}
+
+
+.grow {
+
+    flex:
+        1;
+
+}
+
+
+.notice {
+
+    padding:
+        11px 12px;
+
+    border:
+        1px solid #bfd7ff;
+
+    background:
+        #f5f9ff;
+
+    border-radius:
+        10px;
+
+    color:
+        #174b88;
+
+    font-size:
+        12px;
+
+    line-height:
+        1.7;
+
+}
+
+
+.okbox {
+
+    background:
+        var(--okbg);
+
+    border-color:
+        #cce7d5;
+
+    color:
+        var(--ok);
+
+}
+
+
+.warnbox {
+
+    background:
+        var(--warnbg);
+
+    border-color:
+        #f5d6a4;
+
+    color:
+        #8a4b08;
+
+}
+
+
+.badbox {
+
+    background:
+        var(--badbg);
+
+    border-color:
+        #f5c7c4;
+
+    color:
+        #7a271a;
+
+}
+
+
+/* ============================================================
+   Score Editor
+   ============================================================ */
+
+.score-top {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        1fr 160px auto;
+
+    gap:
+        10px;
+
+    align-items:
+        end;
+
+    margin-bottom:
+        12px;
+
+}
+
+
+.score-section {
+
+    border:
+        1px solid #dce5f2;
+
+    border-radius:
+        14px;
+
+    margin:
+        12px 0;
+
+    background:
+        #fbfdff;
+
+    overflow:
+        hidden;
+
+}
+
+
+.score-section-head {
+
+    padding:
+        12px;
+
+    background:
+        #f4f8ff;
+
+    border-bottom:
+        1px solid #dce5f2;
+
+}
+
+
+.section-grid {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        68px minmax(180px,1fr) 130px 135px auto;
+
+    gap:
+        8px;
+
+    align-items:
+        end;
+
+}
+
+
+.mini-label {
+
+    font-size:
+        10px;
+
+    color:
+        var(--muted);
+
+    font-weight:
+        800;
+
+    margin-bottom:
+        4px;
+
+}
+
+
+.mini {
+
+    height:
+        38px;
+
+}
+
+
+.toggle-row {
+
+    display:
+        flex;
+
+    gap:
+        7px;
+
+    align-items:
+        center;
+
+    font-size:
+        11px;
+
+    font-weight:
+        800;
+
+}
+
+
+.badge {
+
+    display:
+        inline-flex;
+
+    padding:
+        5px 8px;
+
+    border-radius:
+        999px;
+
+    font-size:
+        10px;
+
+    font-weight:
+        900;
+
+}
+
+
+.b-pub {
+
+    background:
+        var(--okbg);
+
+    color:
+        var(--ok);
+
+}
+
+
+.b-draft {
+
+    background:
+        #f2f4f7;
+
+    color:
+        #667085;
+
+}
+
+
+.b-manual {
+
+    background:
+        var(--violetbg);
+
+    color:
+        var(--violet);
+
+}
+
+
+.score-section-body {
+
+    padding:
+        12px;
+
+}
+
+
+.score-group {
+
+    border:
+        1px solid var(--bd);
+
+    border-radius:
+        11px;
+
+    margin-bottom:
+        9px;
+
+    overflow:
+        hidden;
+
+    background:
+        #fff;
+
+}
+
+
+.group-head {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        minmax(150px,1fr) 120px auto;
+
+    gap:
+        8px;
+
+    align-items:
+        end;
+
+    padding:
+        10px;
+
+    background:
+        #fcfcfd;
+
+    border-bottom:
+        1px solid var(--bd);
+
+}
+
+
+.criteria {
+
+    padding:
+        8px;
+
+}
+
+
+.criterion {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        minmax(160px,1fr) 110px auto;
+
+    gap:
+        8px;
+
+    align-items:
+        end;
+
+    padding:
+        7px;
+
+    border-bottom:
+        1px dashed #e8eaed;
+
+}
+
+
+.criterion:last-child {
+
+    border-bottom:
+        0;
+
+}
+
+
+.calc {
+
+    font-size:
+        11px;
+
+    font-weight:
+        800;
+
+    margin-top:
+        7px;
+
+}
+
+
+.calc.good {
+
+    color:
+        var(--ok);
+
+}
+
+
+.calc.bad {
+
+    color:
+        var(--bad);
+
+}
+
+
+.row-actions {
+
+    display:
+        flex;
+
+    gap:
+        5px;
+
+    flex-wrap:
+        wrap;
+
+}
+
+
+.icon-btn {
+
+    width:
+        34px;
+
+    height:
+        34px;
+
+    border:
+        1px solid var(--bd);
+
+    border-radius:
+        8px;
+
+    background:
+        #fff;
+
+}
+
+
+.danger-icon {
+
+    color:
+        var(--bad);
+
+}
+
+
+.score-footer {
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    gap:
+        10px;
+
+    align-items:
+        flex-start;
+
+    margin-top:
+        12px;
+
+}
+
+
+.validation {
+
+    flex:
+        1;
+
+}
+
+
+.validation ul {
+
+    margin:
+        6px 0 0;
+
+    padding-left:
+        18px;
+
+}
+
+
+/* ============================================================
+   清單
+   ============================================================ */
+
+.list {
+
+    display:
+        grid;
+
+    gap:
+        8px;
+
+}
+
+
+.list-row {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        minmax(0,1fr) auto;
+
+    gap:
+        10px;
+
+    align-items:
+        center;
+
+    padding:
+        11px;
+
+    border:
+        1px solid var(--bd);
+
+    border-radius:
+        10px;
+
+}
+
+
+.list-title {
+
+    font-weight:
+        900;
+
+    font-size:
+        13px;
+
+}
+
+
+.list-sub {
+
+    color:
+        var(--muted);
+
+    font-size:
+        11px;
+
+    margin-top:
+        3px;
+
+    line-height:
+        1.5;
+
+}
+
+
+.chips {
+
+    display:
+        flex;
+
+    gap:
+        5px;
+
+    flex-wrap:
+        wrap;
+
+    margin-top:
+        5px;
+
+}
+
+
+.chip {
+
+    padding:
+        4px 7px;
+
+    background:
+        #eef4ff;
+
+    color:
+        #1557b0;
+
+    border-radius:
+        999px;
+
+    font-size:
+        10px;
+
+    font-weight:
+        850;
+
+}
+
+
+.chip-score {
+
+    background:
+        #f4f0ff;
+
+    color:
+        #6941c6;
+
+}
+
+
+.chip-empty {
+
+    background:
+        #fff1f0;
+
+    color:
+        #b42318;
+
+}
+
+
+.permission-title {
+
+    margin-top:
+        8px;
+
+    font-size:
+        10px;
+
+    font-weight:
+        900;
+
+    color:
+        #475467;
+
+}
+
+
+/* ============================================================
+   Grid
+   ============================================================ */
+
+.grid2 {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap:
+        10px;
+
+}
+
+
+.grid4 {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap:
+        8px;
+
+}
+
+
+/* ============================================================
+   State
+   ============================================================ */
+
+.state {
+
+    text-align:
+        center;
+
+    color:
+        var(--muted);
+
+    padding:
+        28px 12px;
+
+    font-size:
+        12px;
+
+}
+
+
+.spinner {
+
+    width:
+        26px;
+
+    height:
+        26px;
+
+    margin:
+        0 auto 8px;
+
+    border:
+        3px solid #e8eef7;
+
+    border-top-color:
+        var(--p);
+
+    border-radius:
+        50%;
+
+    animation:
+        spin .8s linear infinite;
+
+}
+
+
+@keyframes spin {
+
+    to {
+        transform:
+            rotate(360deg);
+    }
+
+}
+
+
+/* ============================================================
+   Modal
+   ============================================================ */
+
+.modal-bg {
+
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    z-index:
+        1000;
+
+    display:
+        none;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        18px;
+
+    background:
+        rgba(16,24,40,.58);
+
+}
+
+
+.modal {
+
+    width:
+        min(560px,100%);
+
+    max-height:
+        90vh;
+
+    overflow:
+        auto;
+
+    background:
+        #fff;
+
+    border-radius:
+        16px;
+
+    padding:
+        18px;
+
+    box-shadow:
+        0 25px 70px rgba(16,24,40,.28);
+
+}
+
+
+.modal h3 {
+
+    margin:
+        0 0 10px;
+
+}
+
+
+.modal-actions {
+
+    display:
+        flex;
+
+    justify-content:
+        flex-end;
+
+    gap:
+        8px;
+
+    margin-top:
+        16px;
+
+}
+
+
+/* ============================================================
+   權限勾選
+   ============================================================ */
+
+.check-grid {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap:
+        7px;
+
+    margin-top:
+        8px;
+
+}
+
+
+.check {
+
+    display:
+        flex;
+
+    align-items:
+        flex-start;
+
+    gap:
+        7px;
+
+    padding:
+        9px;
+
+    border:
+        1px solid var(--bd);
+
+    border-radius:
+        9px;
+
+    font-size:
+        11px;
+
+    line-height:
+        1.5;
+
+    background:
+        #fff;
+
+}
+
+
+.check:hover {
+
+    background:
+        #f9fafb;
+
+}
+
+
+.check input {
+
+    margin-top:
+        2px;
+
+}
+
+
+.check-main {
+
+    font-weight:
+        850;
+
+}
+
+
+.check-sub {
+
+    color:
+        var(--muted);
+
+    font-size:
+        9px;
+
+    margin-top:
+        2px;
+
+}
+
+
+.permission-box {
+
+    margin-top:
+        14px;
+
+    padding:
+        12px;
+
+    border:
+        1px solid #d6c9ff;
+
+    background:
+        #faf8ff;
+
+    border-radius:
+        11px;
+
+}
+
+
+.permission-head {
+
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    gap:
+        8px;
+
+}
+
+
+.permission-head-title {
+
+    font-size:
+        12px;
+
+    font-weight:
+        900;
+
+    color:
+        #53389e;
+
+}
+
+
+.permission-actions {
+
+    display:
+        flex;
+
+    gap:
+        5px;
+
+}
+
+
+.tiny-btn {
+
+    min-height:
+        28px;
+
+    border:
+        1px solid var(--bd);
+
+    background:
+        #fff;
+
+    border-radius:
+        7px;
+
+    padding:
+        0 8px;
+
+    font-size:
+        9px;
+
+    font-weight:
+        800;
+
+}
+
+
+.permission-note {
+
+    color:
+        var(--muted);
+
+    font-size:
+        10px;
+
+    line-height:
+        1.5;
+
+    margin-top:
+        5px;
+
+}
+
+
+/* ============================================================
+   Toast
+   ============================================================ */
+
+.toast {
+
+    position:
+        fixed;
+
+    right:
+        18px;
+
+    bottom:
+        18px;
+
+    z-index:
+        2000;
+
+    padding:
+        11px 15px;
+
+    background:
+        #101828;
+
+    color:
+        #fff;
+
+    border-radius:
+        9px;
+
+    opacity:
+        0;
+
+    transform:
+        translateY(10px);
+
+    transition:
+        .2s;
+
+    pointer-events:
+        none;
+
+    max-width:
+        390px;
+
+    font-size:
+        12px;
+
+}
+
+
+.toast.show {
+
+    opacity:
+        1;
+
+    transform:
+        none;
+
+}
+
+
+/* ============================================================
+   RWD
+   ============================================================ */
+
+@media(max-width:780px) {
+
+    .stats {
+
+        grid-template-columns:
+            1fr 1fr;
+
+    }
+
+
+    .section-grid {
+
+        grid-template-columns:
+            60px 1fr 100px;
+
+    }
+
+
+    .section-grid .mode-wrap,
+    .section-grid .section-actions {
+
+        grid-column:
+            1/-1;
+
+    }
+
+
+    .group-head {
+
+        grid-template-columns:
+            1fr 100px;
+
+    }
+
+
+    .group-head .row-actions {
+
+        grid-column:
+            1/-1;
+
+    }
+
+
+    .criterion {
+
+        grid-template-columns:
+            1fr 90px;
+
+    }
+
+
+    .criterion .row-actions {
+
+        grid-column:
+            1/-1;
+
+    }
+
+
+    .grid2,
+    .grid4 {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .score-top {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .score-footer {
+
+        flex-direction:
+            column;
+
+    }
+
+
+    .topbar .sub {
+
+        display:
+            none;
+
+    }
+
+
+    .hero {
+
+        align-items:
+            flex-start;
+
+        flex-direction:
+            column;
+
+    }
+
+
+    .toolbar .field {
+
+        width:
+            100%;
+
+    }
+
+
+    .toolbar .grow {
+
+        flex:
+            auto;
+
+        width:
+            100%;
+
+    }
+
+
+    .list-row {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .check-grid {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+}
+
 </style>
+
 </head>
+
 
 <body>
 
-<section id="loginScreen" class="login-screen">
+
+<!-- ============================================================
+     登入
+     ============================================================ -->
+
+<section
+    id="loginScreen"
+    class="login-screen"
+>
+
 <div class="login-card">
-    <div class="login-icon">🛠️</div>
-    <h1 class="login-title">管理員後台</h1>
-    <div class="muted">社團評選暨觀摩活動管理系統</div>
+
+    <div class="login-icon">
+        🛠️
+    </div>
+
+    <h1 class="login-title">
+        管理員後台
+    </h1>
+
+    <div class="muted">
+        社團評選暨觀摩活動管理系統
+    </div>
+
 
     <form id="loginForm">
-        <label class="label">管理員密碼</label>
+
+        <label class="label">
+            管理員密碼
+        </label>
+
         <input
             id="adminPassword"
             class="field"
@@ -30,6 +1954,7 @@
             placeholder="請輸入管理員密碼"
         >
 
+
         <button
             id="loginBtn"
             class="btn btn-primary login-btn"
@@ -38,17 +1963,32 @@
             登入管理後台
         </button>
 
-        <div id="loginError" class="error"></div>
+
+        <div
+            id="loginError"
+            class="error"
+        ></div>
+
     </form>
+
 </div>
 </section>
 
 
-<div id="adminApp" class="app">
+<!-- ============================================================
+     App
+     ============================================================ -->
+
+<div
+    id="adminApp"
+    class="app"
+>
+
 
 <header class="topbar">
 
     <div>
+
         <div class="brand">
             🛠️ 社團評選管理後台
         </div>
@@ -56,7 +1996,9 @@
         <div class="sub">
             115學年度第一學期全校學生社團評選暨觀摩活動
         </div>
+
     </div>
+
 
     <div class="top-actions">
 
@@ -66,6 +2008,7 @@
         >
             🔄 重新整理
         </button>
+
 
         <button
             class="btn btn-danger"
@@ -81,15 +2024,21 @@
 
 <main class="main">
 
+
 <div class="hero">
 
     <div>
-        <h1>管理中心</h1>
+
+        <h1>
+            管理中心
+        </h1>
 
         <div class="sub">
             評分架構、評審、社團、活動與資料管理
         </div>
+
     </div>
+
 
     <div
         id="lastRefresh"
@@ -104,39 +2053,87 @@
 <div class="stats">
 
     <div class="stat">
-        <div class="stat-label">社團總數</div>
-        <div id="statClubs" class="stat-value">-</div>
+
+        <div class="stat-label">
+            社團總數
+        </div>
+
+        <div
+            id="statClubs"
+            class="stat-value"
+        >
+            -
+        </div>
+
     </div>
 
-    <div class="stat">
-        <div class="stat-label">評審帳號</div>
-        <div id="statJudges" class="stat-value">-</div>
-    </div>
 
     <div class="stat">
-        <div class="stat-label">表單已完成</div>
-        <div id="statForms" class="stat-value">-</div>
+
+        <div class="stat-label">
+            評審帳號
+        </div>
+
+        <div
+            id="statJudges"
+            class="stat-value"
+        >
+            -
+        </div>
+
     </div>
 
+
     <div class="stat">
-        <div class="stat-label">評分設定版本</div>
-        <div id="statScoreRev" class="stat-value">-</div>
+
+        <div class="stat-label">
+            表單已完成
+        </div>
+
+        <div
+            id="statForms"
+            class="stat-value"
+        >
+            -
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-label">
+            評分設定版本
+        </div>
+
+        <div
+            id="statScoreRev"
+            class="stat-value"
+        >
+            -
+        </div>
+
     </div>
 
 </div>
 
 
-<!-- ======================================================
-     評分設定
-     ====================================================== -->
+<!-- ============================================================
+     評分機制
+     ============================================================ -->
 
-<section class="panel" data-panel="score">
+<section
+    class="panel"
+    data-panel="score"
+>
 
 <button
     class="panel-head"
     onclick="togglePanel(this)"
 >
+
     <div>
+
         <div class="panel-title">
             ⚙️ 評分機制設定 v2
         </div>
@@ -147,18 +2144,25 @@
         >
             載入中...
         </div>
+
     </div>
 
-    <span class="chev">▼</span>
+    <span class="chev">
+        ▼
+    </span>
+
 </button>
 
 
 <div class="panel-body">
 
     <div class="notice">
-        所有配分都可自行修改。草稿可先儲存不完整設定；
-        正式發布前，系統會檢查「小項合計＝分類、
-        分類合計＝大項、大項合計＝總配分」。
+
+        所有配分都可自行修改。
+        草稿可以先儲存不完整設定；
+        正式發布前系統會檢查
+        「小項合計＝分類、分類合計＝大項、大項合計＝總配分」。
+
     </div>
 
 
@@ -166,8 +2170,11 @@
         id="scoreState"
         class="state"
     >
+
         <div class="spinner"></div>
+
         正在讀取評分設定...
+
     </div>
 
 
@@ -179,20 +2186,27 @@
         <div class="score-top">
 
             <div>
+
                 <div class="mini-label">
                     總配分名稱
                 </div>
 
                 <div
                     class="field"
-                    style="display:flex;align-items:center;background:#f9fafb"
+                    style="
+                        display:flex;
+                        align-items:center;
+                        background:#f9fafb
+                    "
                 >
                     整體評分總配分
                 </div>
+
             </div>
 
 
             <div>
+
                 <div class="mini-label">
                     總配分
                 </div>
@@ -205,6 +2219,7 @@
                     step="0.01"
                     oninput="setTotalMaxScore(this.value)"
                 >
+
             </div>
 
 
@@ -218,7 +2233,9 @@
         </div>
 
 
-        <div id="sectionsEditor"></div>
+        <div
+            id="sectionsEditor"
+        ></div>
 
 
         <div class="score-footer">
@@ -227,6 +2244,7 @@
                 id="scoreValidation"
                 class="validation notice"
             ></div>
+
 
             <button
                 id="saveScoreBtn"
@@ -241,12 +2259,13 @@
     </div>
 
 </div>
+
 </section>
 
 
-<!-- ======================================================
-     評審帳號
-     ====================================================== -->
+<!-- ============================================================
+     評審
+     ============================================================ -->
 
 <section class="panel closed">
 
@@ -254,7 +2273,9 @@
     class="panel-head"
     onclick="togglePanel(this)"
 >
+
     <div>
+
         <div class="panel-title">
             👨‍⚖️ 評審帳號管理
         </div>
@@ -265,9 +2286,13 @@
         >
             -
         </div>
+
     </div>
 
-    <span class="chev">▼</span>
+    <span class="chev">
+        ▼
+    </span>
+
 </button>
 
 
@@ -282,6 +2307,7 @@
             ＋ 新增評審
         </button>
 
+
         <button
             class="btn"
             onclick="loadJudges()"
@@ -291,22 +2317,38 @@
 
     </div>
 
+
+    <div class="notice">
+
+        每位評審可以分別設定
+        <b>負責哪些社團屬性</b>
+        與
+        <b>可以評哪些評分大項</b>。
+        兩種權限會同時套用。
+
+    </div>
+
+
     <div
         id="judgeList"
         class="list"
+        style="margin-top:12px"
     >
+
         <div class="state">
             尚未讀取
         </div>
+
     </div>
 
 </div>
+
 </section>
 
 
-<!-- ======================================================
+<!-- ============================================================
      社團
-     ====================================================== -->
+     ============================================================ -->
 
 <section class="panel closed">
 
@@ -314,7 +2356,9 @@
     class="panel-head"
     onclick="togglePanel(this)"
 >
+
     <div>
+
         <div class="panel-title">
             🏫 社團名單管理
         </div>
@@ -325,9 +2369,13 @@
         >
             -
         </div>
+
     </div>
 
-    <span class="chev">▼</span>
+    <span class="chev">
+        ▼
+    </span>
+
 </button>
 
 
@@ -342,6 +2390,7 @@
             oninput="renderClubs()"
         >
 
+
         <button
             class="btn btn-primary"
             onclick="openClubModal()"
@@ -351,22 +2400,26 @@
 
     </div>
 
+
     <div
         id="clubList"
         class="list"
     >
+
         <div class="state">
             尚未讀取
         </div>
+
     </div>
 
 </div>
+
 </section>
 
 
-<!-- ======================================================
-     活動時程
-     ====================================================== -->
+<!-- ============================================================
+     活動時間
+     ============================================================ -->
 
 <section class="panel closed">
 
@@ -374,7 +2427,9 @@
     class="panel-head"
     onclick="togglePanel(this)"
 >
+
     <div>
+
         <div class="panel-title">
             ⏰ 活動時程管理
         </div>
@@ -385,9 +2440,13 @@
         >
             -
         </div>
+
     </div>
 
-    <span class="chev">▼</span>
+    <span class="chev">
+        ▼
+    </span>
+
 </button>
 
 
@@ -396,6 +2455,7 @@
     <div class="grid2">
 
         <div>
+
             <label class="label">
                 資料繳交截止
             </label>
@@ -405,10 +2465,12 @@
                 class="field"
                 type="datetime-local"
             >
+
         </div>
 
 
         <div>
+
             <label class="label">
                 表單填寫截止
             </label>
@@ -418,10 +2480,12 @@
                 class="field"
                 type="datetime-local"
             >
+
         </div>
 
 
         <div>
+
             <label class="label">
                 活動開始
             </label>
@@ -431,10 +2495,12 @@
                 class="field"
                 type="datetime-local"
             >
+
         </div>
 
 
         <div>
+
             <label class="label">
                 活動結束
             </label>
@@ -444,6 +2510,7 @@
                 class="field"
                 type="datetime-local"
             >
+
         </div>
 
     </div>
@@ -463,18 +2530,20 @@
 
     </div>
 
+
     <div
         id="eventError"
         class="error"
     ></div>
 
 </div>
+
 </section>
 
 
-<!-- ======================================================
-     表單
-     ====================================================== -->
+<!-- ============================================================
+     Form
+     ============================================================ -->
 
 <section class="panel closed">
 
@@ -482,7 +2551,9 @@
     class="panel-head"
     onclick="togglePanel(this)"
 >
+
     <div>
+
         <div class="panel-title">
             📝 Google Form 填寫進度
         </div>
@@ -493,9 +2564,13 @@
         >
             -
         </div>
+
     </div>
 
-    <span class="chev">▼</span>
+    <span class="chev">
+        ▼
+    </span>
+
 </button>
 
 
@@ -510,11 +2585,13 @@
             oninput="renderForms()"
         >
 
+
         <select
             id="formFilter"
             class="field"
             onchange="renderForms()"
         >
+
             <option value="all">
                 全部狀態
             </option>
@@ -530,6 +2607,7 @@
             <option value="duplicate">
                 重複填寫
             </option>
+
         </select>
 
 
@@ -547,18 +2625,21 @@
         id="formList"
         class="list"
     >
+
         <div class="state">
             尚未讀取
         </div>
+
     </div>
 
 </div>
+
 </section>
 
 
-<!-- ======================================================
-     LINE 綁定
-     ====================================================== -->
+<!-- ============================================================
+     LINE
+     ============================================================ -->
 
 <section class="panel closed">
 
@@ -566,7 +2647,9 @@
     class="panel-head"
     onclick="togglePanel(this)"
 >
+
     <div>
+
         <div class="panel-title">
             🔗 LINE 綁定管理
         </div>
@@ -577,9 +2660,13 @@
         >
             -
         </div>
+
     </div>
 
-    <span class="chev">▼</span>
+    <span class="chev">
+        ▼
+    </span>
+
 </button>
 
 
@@ -601,18 +2688,21 @@
         id="bindingList"
         class="list"
     >
+
         <div class="state">
             尚未讀取
         </div>
+
     </div>
 
 </div>
+
 </section>
 
 
-<!-- ======================================================
-     雲端
-     ====================================================== -->
+<!-- ============================================================
+     Cloud
+     ============================================================ -->
 
 <section class="panel closed">
 
@@ -620,7 +2710,9 @@
     class="panel-head"
     onclick="togglePanel(this)"
 >
+
     <div>
+
         <div class="panel-title">
             ☁️ 社團專屬雲端
         </div>
@@ -631,9 +2723,13 @@
         >
             -
         </div>
+
     </div>
 
-    <span class="chev">▼</span>
+    <span class="chev">
+        ▼
+    </span>
+
 </button>
 
 
@@ -655,31 +2751,39 @@
         id="cloudList"
         class="list"
     >
+
         <div class="state">
             尚未讀取
         </div>
+
     </div>
 
 </div>
+
 </section>
+
 
 </main>
 </div>
 
 
-<!-- ======================================================
-     評審 Modal
-     ====================================================== -->
+<!-- ============================================================
+     Judge Modal
+     ============================================================ -->
 
 <div
     id="judgeModal"
     class="modal-bg"
 >
+
 <div class="modal">
 
-    <h3 id="judgeModalTitle">
+    <h3
+        id="judgeModalTitle"
+    >
         新增評審
     </h3>
+
 
     <input
         id="judgeId"
@@ -709,7 +2813,9 @@
     >
 
 
-    <div id="judgePasswordWrap">
+    <div
+        id="judgePasswordWrap"
+    >
 
         <label class="label">
             初始密碼
@@ -725,14 +2831,75 @@
     </div>
 
 
+    <!-- 社團屬性 -->
+
     <label class="label">
-        負責屬性
+        負責社團屬性
     </label>
+
+
+    <div class="permission-note">
+
+        勾選後，此評審需要評完該屬性中的所有社團。
+
+    </div>
+
 
     <div
         id="judgeCategories"
         class="check-grid"
     ></div>
+
+
+    <!-- 評分大項 -->
+
+    <div class="permission-box">
+
+        <div class="permission-head">
+
+            <div class="permission-head-title">
+                🎯 可評分大項
+            </div>
+
+
+            <div class="permission-actions">
+
+                <button
+                    class="tiny-btn"
+                    type="button"
+                    onclick="setAllJudgeScoreSections(true)"
+                >
+                    全選
+                </button>
+
+
+                <button
+                    class="tiny-btn"
+                    type="button"
+                    onclick="setAllJudgeScoreSections(false)"
+                >
+                    全不選
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="permission-note">
+
+            評審登入後，只會看到這裡勾選的大項。
+            後端也會阻擋沒有權限的大項。
+
+        </div>
+
+
+        <div
+            id="judgeScoreSections"
+            class="check-grid"
+        ></div>
+
+    </div>
 
 
     <div
@@ -750,6 +2917,7 @@
             取消
         </button>
 
+
         <button
             class="btn btn-primary"
             onclick="saveJudge()"
@@ -763,19 +2931,21 @@
 </div>
 
 
-<!-- ======================================================
-     社團 Modal
-     ====================================================== -->
+<!-- ============================================================
+     Club Modal
+     ============================================================ -->
 
 <div
     id="clubModal"
     class="modal-bg"
 >
+
 <div class="modal">
 
     <h3 id="clubModalTitle">
         新增社團
     </h3>
+
 
     <input
         id="clubOldName"
@@ -818,6 +2988,7 @@
             取消
         </button>
 
+
         <button
             class="btn btn-primary"
             onclick="saveClub()"
@@ -831,24 +3002,27 @@
 </div>
 
 
-<!-- ======================================================
-     雲端 Modal
-     ====================================================== -->
+<!-- ============================================================
+     Cloud Modal
+     ============================================================ -->
 
 <div
     id="cloudModal"
     class="modal-bg"
 >
+
 <div class="modal">
 
     <h3>
         設定社團雲端
     </h3>
 
+
     <div
         id="cloudModalClub"
         class="muted"
     ></div>
+
 
     <input
         id="cloudClubName"
@@ -882,6 +3056,7 @@
             取消
         </button>
 
+
         <button
             class="btn btn-primary"
             onclick="saveCloud()"
@@ -903,6 +3078,11 @@
 
 <script>
 
+
+/* ============================================================
+   系統
+   ============================================================ */
+
 const BACKEND_URL =
     "https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
 
@@ -912,12 +3092,14 @@ const SESSION_KEY =
 
 
 const CLUB_CATEGORIES = [
+
     "全校自治性",
     "自治綜合性",
     "康樂性",
     "服務性",
     "體能性",
     "學藝性"
+
 ];
 
 
@@ -928,6 +3110,9 @@ const S = {
 
     scoreConfig:
         null,
+
+    availableScoreSections:
+        [],
 
     judges:
         [],
@@ -963,7 +3148,8 @@ const $ =
 const esc =
     value =>
         String(
-            value ?? ""
+            value ??
+            ""
         )
         .replaceAll(
             "&",
@@ -1001,9 +3187,13 @@ function uid(
 
     return (
 
-        prefix +
+        prefix
 
-        "_" +
+        +
+
+        "_"
+
+        +
 
         Date.now()
             .toString(
@@ -1012,7 +3202,9 @@ function uid(
 
         +
 
-        "_" +
+        "_"
+
+        +
 
         Math.random()
             .toString(
@@ -1206,12 +3398,15 @@ function toast(
 
     toast.timer =
         setTimeout(
-            () =>
+            () => {
+
                 element
                     .classList
                     .remove(
                         "show"
-                    ),
+                    );
+
+            },
             2600
         );
 
@@ -1219,7 +3414,7 @@ function toast(
 
 
 /* ============================================================
-   後端
+   Backend
    ============================================================ */
 
 async function post(
@@ -1355,7 +3550,7 @@ async function api(
 
 
 /* ============================================================
-   Session
+   Unauthorized
    ============================================================ */
 
 function unauthorized(
@@ -1403,7 +3598,7 @@ function clearSession() {
 
 
 /* ============================================================
-   登入
+   Login
    ============================================================ */
 
 $("loginForm")
@@ -1586,7 +3781,7 @@ async function logoutAdmin() {
 
 
 /* ============================================================
-   初始化
+   Initialize
    ============================================================ */
 
 async function init() {
@@ -1662,7 +3857,7 @@ document.addEventListener(
 
 
 /* ============================================================
-   全部重新整理
+   Refresh All
    ============================================================ */
 
 async function refreshAllData() {
@@ -1679,11 +3874,17 @@ async function refreshAllData() {
     const jobs = [
 
         loadScoreConfig(),
+
         loadJudges(),
+
         loadClubs(),
+
         loadEvent(),
+
         loadForms(),
+
         loadBindings(),
+
         loadClouds()
 
     ];
@@ -1728,8 +3929,67 @@ async function refreshAllData() {
 
 
 /* ============================================================
-   評分設定 v2
+   Score Config
    ============================================================ */
+
+function syncAvailableScoreSectionsFromConfig() {
+
+    if (
+        !S.scoreConfig
+        ||
+        !Array.isArray(
+            S.scoreConfig.sections
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    S.availableScoreSections =
+
+        S.scoreConfig.sections
+
+            .filter(
+                section =>
+
+                    section
+
+                    &&
+
+                    section.scoringMode ===
+                    "judge"
+            )
+
+            .map(
+                section => ({
+
+                    id:
+                        section.id,
+
+                    name:
+                        section.name,
+
+                    icon:
+                        section.icon
+                        ||
+                        "📌",
+
+                    enabled:
+                        section.enabled !==
+                        false,
+
+                    published:
+                        Boolean(
+                            section.published
+                        )
+
+                })
+            );
+
+}
+
 
 async function loadScoreConfig() {
 
@@ -1773,6 +4033,9 @@ async function loadScoreConfig() {
             deep(
                 result.config
             );
+
+
+        syncAvailableScoreSectionsFromConfig();
 
 
         $("statScoreRev")
@@ -1903,7 +4166,7 @@ function normalizeOrders() {
 
 
 /* ============================================================
-   大項
+   Score Section
    ============================================================ */
 
 function addSection() {
@@ -2122,7 +4385,7 @@ function setSection(
 
 
 /* ============================================================
-   分類
+   Group
    ============================================================ */
 
 function addGroup(
@@ -2328,7 +4591,7 @@ function setGroup(
 
 
 /* ============================================================
-   小項
+   Criterion
    ============================================================ */
 
 function addCriterion(
@@ -2539,7 +4802,7 @@ function setCriterion(
 
 
 /* ============================================================
-   配分計算
+   Score Calculate
    ============================================================ */
 
 function criteriaTotal(
@@ -2563,10 +4826,15 @@ function criteriaTotal(
                 total,
                 criterion
             ) =>
-                total +
+
+                total
+
+                +
+
                 num(
                     criterion.maxScore
                 ),
+
             0
         )
 
@@ -2596,10 +4864,15 @@ function groupsTotal(
                 total,
                 group
             ) =>
-                total +
+
+                total
+
+                +
+
                 num(
                     group.maxScore
                 ),
+
             0
         )
 
@@ -2627,10 +4900,15 @@ function sectionsTotal() {
                 total,
                 section
             ) =>
-                total +
+
+                total
+
+                +
+
                 num(
                     section.maxScore
                 ),
+
             0
         )
 
@@ -2640,7 +4918,7 @@ function sectionsTotal() {
 
 
 /* ============================================================
-   前端合理性檢查
+   Client Validation
    ============================================================ */
 
 function validateClientScore() {
@@ -2701,20 +4979,6 @@ function validateClientScore() {
             }
 
 
-            if (
-                num(
-                    section.maxScore
-                ) <
-                0
-            ) {
-
-                errors.push(
-                    `大項「${section.name}」不得為負分。`
-                );
-
-            }
-
-
             const groups =
                 (
                     section.groups
@@ -2733,7 +4997,10 @@ function validateClientScore() {
             ) {
 
                 errors.push(
-                    `大項「${section.name}」至少需要一個啟用分類。`
+
+                    `大項「${section.name}」` +
+                    `至少需要一個啟用分類。`
+
                 );
 
             }
@@ -2752,7 +5019,10 @@ function validateClientScore() {
                     ) {
 
                         errors.push(
-                            `「${section.name}」有分類未命名。`
+
+                            `「${section.name}」` +
+                            `有分類未命名。`
+
                         );
 
                     }
@@ -2834,10 +5104,15 @@ function validateClientScore() {
 
                     if (
                         Math.abs(
-                            current -
+
+                            current
+
+                            -
+
                             num(
                                 group.maxScore
                             )
+
                         )
                         >
                         0.000001
@@ -2865,10 +5140,15 @@ function validateClientScore() {
 
             if (
                 Math.abs(
-                    current -
+
+                    current
+
+                    -
+
                     num(
                         section.maxScore
                     )
+
                 )
                 >
                 0.000001
@@ -2894,10 +5174,15 @@ function validateClientScore() {
 
     if (
         Math.abs(
-            sectionSum -
+
+            sectionSum
+
+            -
+
             num(
                 config.totalMaxScore
             )
+
         )
         >
         0.000001
@@ -2931,7 +5216,7 @@ function validateClientScore() {
 
 
 /* ============================================================
-   Render 評分設定
+   Score Render
    ============================================================ */
 
 function renderScoreEditor() {
@@ -3081,14 +5366,24 @@ function sectionHtml(
 
                         <option
                             value="judge"
-                            ${section.scoringMode === "judge" ? "selected" : ""}
+                            ${
+                                section.scoringMode ===
+                                "judge"
+                                ? "selected"
+                                : ""
+                            }
                         >
                             評審評分
                         </option>
 
                         <option
                             value="manual"
-                            ${section.scoringMode === "manual" ? "selected" : ""}
+                            ${
+                                section.scoringMode ===
+                                "manual"
+                                ? "selected"
+                                : ""
+                            }
                         >
                             行政／人工
                         </option>
@@ -3146,7 +5441,12 @@ function sectionHtml(
 
                         <input
                             type="checkbox"
-                            ${section.enabled !== false ? "checked" : ""}
+                            ${
+                                section.enabled !==
+                                false
+                                ? "checked"
+                                : ""
+                            }
                             onchange="setSection(${sectionIndex},'enabled',this.checked)"
                         >
 
@@ -3169,10 +5469,18 @@ function sectionHtml(
 
                     ? `
                       <button
-                          class="btn ${section.published ? "btn-danger" : "btn-success"}"
+                          class="btn ${
+                              section.published
+                              ? "btn-danger"
+                              : "btn-success"
+                          }"
                           onclick="togglePublish(${sectionIndex})"
                       >
-                          ${section.published ? "取消發布" : "發布給評審"}
+                          ${
+                              section.published
+                              ? "取消發布"
+                              : "發布給評審"
+                          }
                       </button>
                       `
 
@@ -3224,7 +5532,8 @@ function sectionHtml(
             <div
                 class="calc ${
                     Math.abs(
-                        groupsTotal(section) -
+                        groupsTotal(section)
+                        -
                         num(section.maxScore)
                     )
                     <
@@ -3233,11 +5542,13 @@ function sectionHtml(
                     : "bad"
                 }"
             >
+
                 分類合計
                 ${fmt(groupsTotal(section))}
                 /
                 大項
                 ${fmt(section.maxScore)}
+
             </div>
 
         </div>
@@ -3300,7 +5611,12 @@ function groupHtml(
 
                     <input
                         type="checkbox"
-                        ${group.enabled !== false ? "checked" : ""}
+                        ${
+                            group.enabled !==
+                            false
+                            ? "checked"
+                            : ""
+                        }
                         onchange="setGroup(${sectionIndex},${groupIndex},'enabled',this.checked)"
                     >
 
@@ -3372,7 +5688,8 @@ function groupHtml(
             <div
                 class="calc ${
                     Math.abs(
-                        criteriaTotal(group) -
+                        criteriaTotal(group)
+                        -
                         num(group.maxScore)
                     )
                     <
@@ -3381,11 +5698,13 @@ function groupHtml(
                     : "bad"
                 }"
             >
+
                 小項合計
                 ${fmt(criteriaTotal(group))}
                 /
                 分類
                 ${fmt(group.maxScore)}
+
             </div>
 
         </div>
@@ -3447,7 +5766,12 @@ function criterionHtml(
 
                 <input
                     type="checkbox"
-                    ${criterion.enabled !== false ? "checked" : ""}
+                    ${
+                        criterion.enabled !==
+                        false
+                        ? "checked"
+                        : ""
+                    }
                     onchange="setCriterion(${sectionIndex},${groupIndex},${criterionIndex},'enabled',this.checked)"
                 >
 
@@ -3487,7 +5811,7 @@ function criterionHtml(
 
 
 /* ============================================================
-   顯示合理性
+   Score Validation Render
    ============================================================ */
 
 function renderScoreValidation() {
@@ -3563,7 +5887,7 @@ function renderScoreValidation() {
 
 
 /* ============================================================
-   儲存 Score Config
+   Save Score Config
    ============================================================ */
 
 async function saveScoreConfig(
@@ -3639,6 +5963,9 @@ async function saveScoreConfig(
             );
 
 
+        syncAvailableScoreSectionsFromConfig();
+
+
         renderScoreEditor();
 
 
@@ -3680,8 +6007,11 @@ async function saveScoreConfig(
     catch (error) {
 
         toast(
+
             "❌ " +
+
             error.message
+
         );
 
 
@@ -3700,7 +6030,7 @@ async function saveScoreConfig(
 
 
 /* ============================================================
-   發布
+   Publish
    ============================================================ */
 
 async function togglePublish(
@@ -3795,6 +6125,9 @@ async function togglePublish(
             );
 
 
+        syncAvailableScoreSectionsFromConfig();
+
+
         renderScoreEditor();
 
 
@@ -3807,10 +6140,6 @@ async function togglePublish(
 
     }
 
-
-    /*
-     * 發布前先儲存目前草稿。
-     */
 
     const saved =
         await saveScoreConfig(
@@ -3918,6 +6247,9 @@ async function togglePublish(
         );
 
 
+    syncAvailableScoreSectionsFromConfig();
+
+
     renderScoreEditor();
 
 
@@ -3929,7 +6261,90 @@ async function togglePublish(
 
 
 /* ============================================================
-   評審
+   Judge：可分配大項
+   ============================================================ */
+
+function getAvailableJudgeScoreSections() {
+
+    return Array.isArray(
+        S.availableScoreSections
+    )
+
+        ? S.availableScoreSections
+
+        : [];
+
+}
+
+
+function scoreSectionById(
+    id
+) {
+
+    return (
+
+        getAvailableJudgeScoreSections()
+            .find(
+                section =>
+                    section.id ===
+                    id
+            )
+
+        ||
+
+        null
+
+    );
+
+}
+
+
+function scoreSectionLabel(
+    id
+) {
+
+    const section =
+        scoreSectionById(
+            id
+        );
+
+
+    if (
+        !section
+    ) {
+
+        return id;
+
+    }
+
+
+    return (
+
+        (
+            section.icon
+            ||
+            "📌"
+        )
+
+        +
+
+        " "
+
+        +
+
+        (
+            section.name
+            ||
+            section.id
+        )
+
+    );
+
+}
+
+
+/* ============================================================
+   Judge：屬性 Checkbox
    ============================================================ */
 
 function renderCategoryChecks(
@@ -3951,7 +6366,13 @@ function renderCategoryChecks(
                         ${selected.includes(category) ? "checked" : ""}
                     >
 
-                    ${esc(category)}
+                    <div>
+
+                        <div class="check-main">
+                            ${esc(category)}
+                        </div>
+
+                    </div>
 
                 </label>
 
@@ -3964,16 +6385,169 @@ function renderCategoryChecks(
 }
 
 
+/* ============================================================
+   Judge：大項 Checkbox
+   ============================================================ */
+
+function renderJudgeScoreSectionChecks(
+    selected = []
+) {
+
+    const sections =
+        getAvailableJudgeScoreSections();
+
+
+    const container =
+        $("judgeScoreSections");
+
+
+    if (
+        !sections.length
+    ) {
+
+        container.innerHTML = `
+
+            <div
+                class="notice warnbox"
+                style="grid-column:1/-1"
+            >
+                ⚠️ 目前沒有「評審評分」類型的大項。
+            </div>
+
+        `;
+
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+
+        sections
+            .map(
+                section => {
+
+                    const checked =
+                        selected.includes(
+                            section.id
+                        );
+
+
+                    let statusText =
+                        "";
+
+
+                    if (
+                        section.enabled ===
+                        false
+                    ) {
+
+                        statusText =
+                            "目前停用";
+
+                    }
+
+                    else if (
+                        section.published
+                    ) {
+
+                        statusText =
+                            "已發布";
+
+                    }
+
+                    else {
+
+                        statusText =
+                            "尚未發布";
+
+                    }
+
+
+                    return `
+
+                    <label class="check">
+
+                        <input
+                            type="checkbox"
+                            value="${attr(section.id)}"
+                            ${checked ? "checked" : ""}
+                        >
+
+                        <div>
+
+                            <div class="check-main">
+
+                                ${esc(section.icon || "📌")}
+
+                                ${esc(section.name || section.id)}
+
+                            </div>
+
+                            <div class="check-sub">
+
+                                ${esc(statusText)}
+
+                            </div>
+
+                        </div>
+
+                    </label>
+
+                    `;
+
+                }
+            )
+            .join(
+                ""
+            );
+
+}
+
+
+function setAllJudgeScoreSections(
+    checked
+) {
+
+    $("judgeScoreSections")
+        .querySelectorAll(
+            'input[type="checkbox"]'
+        )
+        .forEach(
+            input => {
+
+                input.checked =
+                    Boolean(
+                        checked
+                    );
+
+            }
+        );
+
+}
+
+
+/* ============================================================
+   Judge Load
+   ============================================================ */
+
 function judgeIdOf(
     judge
 ) {
 
     return (
+
         judge.id
+
         ||
+
         judge.judgeId
+
         ||
+
         ""
+
     );
 
 }
@@ -4016,6 +6590,7 @@ async function loadJudges() {
 
 
         S.judges =
+
             Array.isArray(
                 result.judges
             )
@@ -4025,6 +6600,35 @@ async function loadJudges() {
             : [];
 
 
+        const backendSections =
+
+            Array.isArray(
+                result.availableScoreSections
+            )
+
+            ? result.availableScoreSections
+
+            : (
+                Array.isArray(
+                    result.scoreSections
+                )
+
+                ? result.scoreSections
+
+                : []
+              );
+
+
+        if (
+            backendSections.length
+        ) {
+
+            S.availableScoreSections =
+                backendSections;
+
+        }
+
+
         $("statJudges")
             .textContent =
             S.judges.length;
@@ -4032,7 +6636,10 @@ async function loadJudges() {
 
         $("judgeMeta")
             .textContent =
-            `${S.judges.length} 位評審`;
+
+            `${S.judges.length} 位評審｜` +
+
+            `${getAvailableJudgeScoreSections().length} 個可分配評分大項`;
 
 
         renderJudges();
@@ -4050,6 +6657,10 @@ async function loadJudges() {
 
 }
 
+
+/* ============================================================
+   Judge List Render
+   ============================================================ */
 
 function renderJudges() {
 
@@ -4079,6 +6690,72 @@ function renderJudges() {
                         "disabled";
 
 
+                    const categories =
+
+                        Array.isArray(
+                            judge.categories
+                        )
+
+                        ? judge.categories
+
+                        : [];
+
+
+                    const scoreSectionIds =
+
+                        Array.isArray(
+                            judge.scoreSectionIds
+                        )
+
+                        ? judge.scoreSectionIds
+
+                        : [];
+
+
+                    const categoryHtml =
+
+                        categories.length
+
+                        ? categories
+                            .map(
+                                category =>
+                                    `<span class="chip">${esc(category)}</span>`
+                            )
+                            .join(
+                                ""
+                            )
+
+                        : `
+                          <span class="chip chip-empty">
+                              未分配社團屬性
+                          </span>
+                          `;
+
+
+                    const scoreHtml =
+
+                        scoreSectionIds.length
+
+                        ? scoreSectionIds
+                            .map(
+                                sectionId =>
+                                    `
+                                    <span class="chip chip-score">
+                                        ${esc(scoreSectionLabel(sectionId))}
+                                    </span>
+                                    `
+                            )
+                            .join(
+                                ""
+                            )
+
+                        : `
+                          <span class="chip chip-empty">
+                              未分配評分大項
+                          </span>
+                          `;
+
+
                     return `
 
                     <div class="list-row">
@@ -4088,43 +6765,53 @@ function renderJudges() {
                             <div class="list-title">
 
                                 ${esc(
-                                    judge.displayName ||
-                                    judge.name ||
+                                    judge.displayName
+                                    ||
+                                    judge.name
+                                    ||
                                     "-"
                                 )}
 
                                 <span
-                                    class="badge ${active ? "b-pub" : "b-draft"}"
+                                    class="badge ${
+                                        active
+                                        ? "b-pub"
+                                        : "b-draft"
+                                    }"
                                 >
-                                    ${active ? "啟用" : "停用"}
+                                    ${
+                                        active
+                                        ? "啟用"
+                                        : "停用"
+                                    }
                                 </span>
 
                             </div>
 
 
                             <div class="list-sub">
+
                                 帳號：
                                 ${esc(judge.username || "-")}
+
                             </div>
 
 
+                            <div class="permission-title">
+                                負責社團屬性
+                            </div>
+
                             <div class="chips">
+                                ${categoryHtml}
+                            </div>
 
-                                ${
-                                    (
-                                        judge.categories
-                                        ||
-                                        []
-                                    )
-                                    .map(
-                                        category =>
-                                            `<span class="chip">${esc(category)}</span>`
-                                    )
-                                    .join(
-                                        ""
-                                    )
-                                }
 
+                            <div class="permission-title">
+                                可評分大項
+                            </div>
+
+                            <div class="chips">
+                                ${scoreHtml}
                             </div>
 
                         </div>
@@ -4139,6 +6826,7 @@ function renderJudges() {
                                 編輯
                             </button>
 
+
                             <button
                                 class="btn"
                                 onclick="resetJudgePassword('${encodeURIComponent(id)}')"
@@ -4146,12 +6834,18 @@ function renderJudges() {
                                 重設密碼
                             </button>
 
+
                             <button
                                 class="btn"
                                 onclick="setJudgeActive('${encodeURIComponent(id)}',${active ? "false" : "true"})"
                             >
-                                ${active ? "停用" : "啟用"}
+                                ${
+                                    active
+                                    ? "停用"
+                                    : "啟用"
+                                }
                             </button>
+
 
                             <button
                                 class="btn btn-danger"
@@ -4180,6 +6874,10 @@ function renderJudges() {
 
 }
 
+
+/* ============================================================
+   Judge Modal
+   ============================================================ */
 
 function openJudgeModal(
     encoded = ""
@@ -4290,12 +6988,49 @@ function openJudgeModal(
     );
 
 
+    /*
+     * 新增評審時：
+     * 預設勾選目前全部大項。
+     *
+     * 管理員仍可自行取消。
+     */
+
+    const selectedSections =
+
+        judge
+
+        ? (
+            Array.isArray(
+                judge.scoreSectionIds
+            )
+
+            ? judge.scoreSectionIds
+
+            : []
+          )
+
+        : getAvailableJudgeScoreSections()
+            .map(
+                section =>
+                    section.id
+            );
+
+
+    renderJudgeScoreSectionChecks(
+        selectedSections
+    );
+
+
     openModal(
         "judgeModal"
     );
 
 }
 
+
+/* ============================================================
+   Save Judge
+   ============================================================ */
 
 async function saveJudge() {
 
@@ -4335,7 +7070,26 @@ async function saveJudge() {
         );
 
 
+    const scoreSectionIds =
+
+        [
+            ...$("judgeScoreSections")
+                .querySelectorAll(
+                    "input:checked"
+                )
+        ]
+        .map(
+            input =>
+                input.value
+        );
+
+
     try {
+
+        $("judgeError")
+            .textContent =
+            "";
+
 
         let result;
 
@@ -4361,7 +7115,10 @@ async function saveJudge() {
                             name,
 
                         categories:
-                            categories
+                            categories,
+
+                        scoreSectionIds:
+                            scoreSectionIds
 
                     }
 
@@ -4391,7 +7148,10 @@ async function saveJudge() {
                             password,
 
                         categories:
-                            categories
+                            categories,
+
+                        scoreSectionIds:
+                            scoreSectionIds
 
                     }
 
@@ -4432,7 +7192,7 @@ async function saveJudge() {
 
 
         toast(
-            "✅ 評審資料已儲存"
+            "✅ 評審權限已儲存"
         );
 
 
@@ -4450,6 +7210,10 @@ async function saveJudge() {
 
 }
 
+
+/* ============================================================
+   Judge Password
+   ============================================================ */
 
 async function resetJudgePassword(
     encoded
@@ -4527,6 +7291,10 @@ async function resetJudgePassword(
 }
 
 
+/* ============================================================
+   Judge Active
+   ============================================================ */
+
 async function setJudgeActive(
     encoded,
     active
@@ -4598,6 +7366,10 @@ async function setJudgeActive(
 
 }
 
+
+/* ============================================================
+   Judge Delete
+   ============================================================ */
 
 async function deleteJudge(
     encoded
@@ -4679,7 +7451,7 @@ async function deleteJudge(
 
 
 /* ============================================================
-   社團
+   Clubs
    ============================================================ */
 
 async function loadClubs() {
@@ -4719,6 +7491,7 @@ async function loadClubs() {
 
 
         S.clubs =
+
             Array.isArray(
                 result.clubs
             )
@@ -5022,9 +7795,11 @@ async function saveClub() {
 
 
         await Promise.all([
+
             loadClubs(),
             loadClouds(),
             loadForms()
+
         ]);
 
 
@@ -5115,10 +7890,12 @@ async function deleteClub(
 
 
     await Promise.all([
+
         loadClubs(),
         loadClouds(),
         loadForms(),
         loadBindings()
+
     ]);
 
 
@@ -5130,7 +7907,7 @@ async function deleteClub(
 
 
 /* ============================================================
-   活動時間
+   Event
    ============================================================ */
 
 function isoToLocal(
@@ -5285,10 +8062,12 @@ async function loadEvent() {
 
 
         [
+
             "dataDeadline",
             "formDeadline",
             "eventStart",
             "eventEnd"
+
         ]
         .forEach(
             key => {
@@ -5518,7 +8297,7 @@ function formatDate(
 
 
 /* ============================================================
-   Google Form
+   Forms
    ============================================================ */
 
 async function loadForms() {
@@ -5558,6 +8337,7 @@ async function loadForms() {
 
 
         S.forms =
+
             Array.isArray(
                 result.clubs
             )
@@ -5667,8 +8447,13 @@ function renderForms() {
 
 
                     return (
-                        searchMatched &&
+
+                        searchMatched
+
+                        &&
+
                         statusMatched
+
                     );
 
                 }
@@ -5694,20 +8479,34 @@ function renderForms() {
 
                             <span
                                 class="badge ${
-                                    item.status === "submitted"
+                                    item.status ===
+                                    "submitted"
+
                                     ? "b-pub"
-                                    : item.status === "duplicate"
+
+                                    : item.status ===
+                                      "duplicate"
+
                                     ? "b-manual"
+
                                     : "b-draft"
                                 }"
                             >
+
                                 ${
-                                    item.status === "submitted"
+                                    item.status ===
+                                    "submitted"
+
                                     ? "✅ 已完成"
-                                    : item.status === "duplicate"
+
+                                    : item.status ===
+                                      "duplicate"
+
                                     ? "⚠️ 重複填寫"
+
                                     : "尚未填寫"
                                 }
+
                             </span>
 
                         </div>
@@ -5800,17 +8599,6 @@ async function syncForms() {
     }
 
 
-    S.forms =
-
-        Array.isArray(
-            result.clubs
-        )
-
-        ? result.clubs
-
-        : [];
-
-
     await loadForms();
 
 
@@ -5822,7 +8610,7 @@ async function syncForms() {
 
 
 /* ============================================================
-   LINE 綁定
+   Bindings
    ============================================================ */
 
 async function loadBindings() {
@@ -5862,6 +8650,7 @@ async function loadBindings() {
 
 
         S.bindings =
+
             Array.isArray(
                 result.bindings
             )
@@ -5941,14 +8730,16 @@ function renderBindings() {
                         <div class="list-title">
 
                             ${esc(
-                                item.displayName ||
+                                item.displayName
+                                ||
                                 "LINE 使用者"
                             )}
 
                             →
 
                             ${esc(
-                                item.club ||
+                                item.club
+                                ||
                                 "-"
                             )}
 
@@ -5958,14 +8749,16 @@ function renderBindings() {
                         <div class="list-sub">
 
                             ${esc(
-                                item.category ||
+                                item.category
+                                ||
                                 ""
                             )}
 
                             ｜
 
                             ${esc(
-                                item.userId ||
+                                item.userId
+                                ||
                                 ""
                             )}
 
@@ -6078,7 +8871,7 @@ async function unbindLine(
 
 
 /* ============================================================
-   社團雲端
+   Clouds
    ============================================================ */
 
 async function loadClouds() {
@@ -6118,6 +8911,7 @@ async function loadClouds() {
 
 
         S.clouds =
+
             Array.isArray(
                 result.clubs
             )
@@ -6207,9 +9001,17 @@ function renderClouds() {
                             ${esc(item.club)}
 
                             <span
-                                class="badge ${item.configured ? "b-pub" : "b-draft"}"
+                                class="badge ${
+                                    item.configured
+                                    ? "b-pub"
+                                    : "b-draft"
+                                }"
                             >
-                                ${item.configured ? "✅ 已設定" : "未設定"}
+                                ${
+                                    item.configured
+                                    ? "✅ 已設定"
+                                    : "未設定"
+                                }
                             </span>
 
                         </div>
@@ -6308,7 +9110,9 @@ function openCloudModal(
     $("cloudModalClub")
         .textContent =
 
-        name +
+        name
+
+        +
 
         (
             item
@@ -6506,7 +9310,7 @@ async function clearCloud(
 
 
 /* ============================================================
-   Modal
+   Modal Events
    ============================================================ */
 
 [
