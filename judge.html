@@ -8,34 +8,42 @@
 
 <style>
 *{box-sizing:border-box}
-:root{
-  --p:#1a73e8;
-  --pd:#1557b0;
-  --bg:#f5f7fb;
-  --card:#fff;
-  --border:#e4e7ec;
-  --text:#202124;
-  --muted:#667085;
-  --success:#167542;
-  --success-bg:#e7f6ec;
-  --warning:#b54708;
-  --warning-bg:#fff6e8;
-  --danger:#d92d20;
-  --danger-bg:#fff1f0;
-  --shadow:0 10px 30px rgba(16,24,40,.07);
-}
 
 html,body{
   margin:0;
   min-height:100%;
-  background:var(--bg);
-  color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,sans-serif;
+  background:#f5f7fb;
+  color:#202124;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,sans-serif
 }
 
-button,input{font:inherit}
-button{cursor:pointer}
-.hidden{display:none!important}
+button,input,select{
+  font:inherit
+}
+
+button{
+  cursor:pointer
+}
+
+:root{
+  --p:#1a73e8;
+  --pd:#1557b0;
+  --border:#e4e7ec;
+  --muted:#667085;
+  --success:#167542;
+  --successbg:#e7f6ec;
+  --warning:#b54708;
+  --warningbg:#fff6e8;
+  --danger:#d92d20;
+  --dangerbg:#fff1f0;
+  --draft:#6941c6;
+  --draftbg:#f4f0ff;
+  --shadow:0 10px 30px rgba(16,24,40,.07)
+}
+
+.hidden{
+  display:none!important
+}
 
 .login-screen{
   min-height:100vh;
@@ -45,9 +53,9 @@ button{cursor:pointer}
   justify-content:center;
   padding:24px;
   background:
-    radial-gradient(circle at top left,rgba(26,115,232,.10),transparent 34%),
+    radial-gradient(circle at top left,rgba(26,115,232,.11),transparent 34%),
     radial-gradient(circle at bottom right,rgba(74,144,226,.08),transparent 34%),
-    var(--bg);
+    #f5f7fb
 }
 
 .login-card{
@@ -57,7 +65,7 @@ button{cursor:pointer}
   background:#fff;
   border:1px solid var(--border);
   border-radius:24px;
-  box-shadow:0 20px 60px rgba(16,24,40,.12);
+  box-shadow:0 20px 60px rgba(16,24,40,.12)
 }
 
 .login-logo{
@@ -69,35 +77,35 @@ button{cursor:pointer}
   margin-bottom:20px;
   border-radius:18px;
   background:#e8f0fe;
-  font-size:31px;
+  font-size:31px
 }
 
 .login-title{
   margin:0;
   font-size:26px;
-  font-weight:900;
+  font-weight:900
 }
 
 .login-subtitle{
   margin:8px 0 24px;
   color:var(--muted);
   font-size:14px;
-  line-height:1.7;
+  line-height:1.7
 }
 
 .form-group{
-  margin-top:15px;
+  margin-top:15px
 }
 
 .form-label{
   display:block;
   margin-bottom:7px;
   font-size:13px;
-  font-weight:800;
+  font-weight:800
 }
 
 .field-wrap{
-  position:relative;
+  position:relative
 }
 
 .field{
@@ -108,18 +116,17 @@ button{cursor:pointer}
   border-radius:11px;
   outline:none;
   background:#fff;
-  color:var(--text);
-  font-size:14px;
-  transition:.18s;
+  color:#202124;
+  font-size:14px
 }
 
 .field:focus{
   border-color:var(--p);
-  box-shadow:0 0 0 3px rgba(26,115,232,.10);
+  box-shadow:0 0 0 3px rgba(26,115,232,.1)
 }
 
 .password-field{
-  padding-right:52px;
+  padding-right:52px
 }
 
 .eye-btn{
@@ -131,12 +138,11 @@ button{cursor:pointer}
   height:34px;
   border:0;
   border-radius:8px;
-  background:transparent;
-  color:#667085;
+  background:transparent
 }
 
 .eye-btn:hover{
-  background:#f2f4f7;
+  background:#f2f4f7
 }
 
 .login-btn{
@@ -147,17 +153,13 @@ button{cursor:pointer}
   border-radius:11px;
   background:var(--p);
   color:#fff;
-  font-weight:850;
-}
-
-.login-btn:hover{
-  background:var(--pd);
+  font-weight:850
 }
 
 .login-btn:disabled,
 .btn:disabled{
-  opacity:.55;
-  cursor:not-allowed;
+  opacity:.5;
+  cursor:not-allowed
 }
 
 .login-error{
@@ -165,7 +167,7 @@ button{cursor:pointer}
   margin-top:10px;
   color:var(--danger);
   font-size:12px;
-  line-height:1.6;
+  line-height:1.6
 }
 
 .login-foot{
@@ -175,12 +177,12 @@ button{cursor:pointer}
   color:var(--muted);
   font-size:11px;
   line-height:1.7;
-  text-align:center;
+  text-align:center
 }
 
 .app{
   display:none;
-  min-height:100vh;
+  min-height:100vh
 }
 
 .topbar{
@@ -191,27 +193,27 @@ button{cursor:pointer}
   align-items:center;
   justify-content:space-between;
   gap:16px;
-  padding:13px max(18px,calc((100vw - 1120px)/2));
-  background:rgba(255,255,255,.95);
+  padding:13px max(18px,calc((100vw - 1160px)/2));
+  background:rgba(255,255,255,.96);
   border-bottom:1px solid var(--border);
-  backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px)
 }
 
 .brand-title{
   font-size:17px;
-  font-weight:900;
+  font-weight:900
 }
 
 .brand-subtitle{
   margin-top:2px;
   color:var(--muted);
-  font-size:11px;
+  font-size:11px
 }
 
 .top-actions{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:8px
 }
 
 .user-chip{
@@ -224,7 +226,7 @@ button{cursor:pointer}
   font-weight:800;
   overflow:hidden;
   text-overflow:ellipsis;
-  white-space:nowrap;
+  white-space:nowrap
 }
 
 .btn{
@@ -235,33 +237,39 @@ button{cursor:pointer}
   background:#fff;
   color:#344054;
   font-size:13px;
-  font-weight:800;
+  font-weight:800
 }
 
 .btn:hover{
-  background:#f9fafb;
+  background:#f9fafb
 }
 
 .btn-primary{
   border-color:var(--p);
   background:var(--p);
-  color:#fff;
+  color:#fff
 }
 
 .btn-primary:hover{
-  background:var(--pd);
+  background:var(--pd)
 }
 
 .btn-danger{
   border-color:#f5c7c4;
-  background:var(--danger-bg);
-  color:var(--danger);
+  background:var(--dangerbg);
+  color:var(--danger)
+}
+
+.btn-success{
+  border-color:#cfe8d7;
+  background:var(--successbg);
+  color:var(--success)
 }
 
 .main{
-  width:min(1120px,calc(100% - 30px));
+  width:min(1160px,calc(100% - 30px));
   margin:auto;
-  padding:30px 0 50px;
+  padding:26px 0 50px
 }
 
 .hero{
@@ -269,275 +277,333 @@ button{cursor:pointer}
   align-items:flex-end;
   justify-content:space-between;
   gap:18px;
-  margin-bottom:18px;
+  margin-bottom:16px
 }
 
 .hero-title{
   margin:0;
-  font-size:28px;
-  font-weight:950;
+  font-size:27px;
+  font-weight:950
 }
 
 .hero-desc{
   margin-top:6px;
   color:var(--muted);
-  font-size:14px;
+  font-size:13px
 }
 
 .session-text{
   color:var(--muted);
   font-size:11px;
-  text-align:right;
-  line-height:1.6;
+  text-align:right
 }
 
 .profile-card{
   display:grid;
-  grid-template-columns:auto minmax(0,1fr);
+  grid-template-columns:auto minmax(0,1fr) auto;
   gap:16px;
   align-items:center;
-  padding:20px;
-  margin-bottom:16px;
+  padding:18px;
+  margin-bottom:14px;
   background:#fff;
   border:1px solid var(--border);
-  border-radius:18px;
-  box-shadow:var(--shadow);
+  border-radius:17px;
+  box-shadow:var(--shadow)
 }
 
 .avatar{
-  width:58px;
-  height:58px;
+  width:56px;
+  height:56px;
   display:flex;
   align-items:center;
   justify-content:center;
-  border-radius:17px;
+  border-radius:16px;
   background:#e8f0fe;
-  font-size:28px;
+  font-size:27px
 }
 
 .profile-name{
-  font-size:19px;
-  font-weight:900;
+  font-size:18px;
+  font-weight:900
 }
 
 .profile-username{
   margin-top:3px;
   color:var(--muted);
-  font-size:12px;
-}
-
-.category-title{
-  margin-top:11px;
-  color:var(--muted);
-  font-size:11px;
-  font-weight:800;
+  font-size:12px
 }
 
 .chips{
   display:flex;
   flex-wrap:wrap;
   gap:6px;
-  margin-top:7px;
+  margin-top:8px
 }
 
 .chip{
   display:inline-flex;
   align-items:center;
-  padding:6px 9px;
+  padding:5px 9px;
   border-radius:999px;
   background:#eef4ff;
   color:var(--pd);
   font-size:11px;
-  font-weight:850;
+  font-weight:850
 }
 
-.notice{
-  display:flex;
-  gap:10px;
-  align-items:flex-start;
-  padding:13px 15px;
-  margin-bottom:16px;
-  border:1px solid #f7d7a5;
+.must-score{
+  padding:12px 14px;
+  border:1px solid #bcd5ff;
   border-radius:12px;
-  background:var(--warning-bg);
-  color:#7a4a00;
+  background:#f5f9ff;
+  color:#174b88;
   font-size:12px;
-  line-height:1.7;
+  font-weight:700;
+  line-height:1.7
 }
 
-.section-title-row{
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:12px;
-  margin:22px 0 10px;
-}
-
-.section-title{
-  font-size:16px;
-  font-weight:900;
-}
-
-.section-sub{
-  margin-top:3px;
-  color:var(--muted);
-  font-size:11px;
-}
-
-.stage-grid{
+.tabs{
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:14px;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin:16px 0 12px
 }
 
-.stage-card{
+.tab{
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:13px;
+  background:#fff;
+  text-align:left
+}
+
+.tab.active{
+  border-color:#9ec4ff;
+  background:#f5f9ff;
+  box-shadow:0 0 0 2px rgba(26,115,232,.07)
+}
+
+.tab-title{
+  font-size:14px;
+  font-weight:900
+}
+
+.tab-progress{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:11px
+}
+
+.stage-panel{
   background:#fff;
   border:1px solid var(--border);
   border-radius:17px;
   box-shadow:var(--shadow);
-  overflow:hidden;
+  overflow:hidden
 }
 
 .stage-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:10px;
-  padding:17px;
-  border-bottom:1px solid var(--border);
+  gap:12px;
+  padding:17px 18px;
+  border-bottom:1px solid var(--border)
 }
 
 .stage-title{
-  display:flex;
-  align-items:center;
-  gap:9px;
-  font-size:16px;
-  font-weight:900;
+  font-size:17px;
+  font-weight:900
 }
 
-.status-chip{
-  padding:5px 8px;
+.stage-sub{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:11px
+}
+
+.status-pill{
+  padding:6px 9px;
   border-radius:999px;
   font-size:10px;
-  font-weight:900;
+  font-weight:900
 }
 
 .status-open{
-  background:var(--success-bg);
-  color:var(--success);
+  background:var(--successbg);
+  color:var(--success)
 }
 
 .status-closed{
   background:#f2f4f7;
-  color:#667085;
+  color:#667085
 }
 
-.stage-body{
-  padding:17px;
+.progress-area{
+  padding:15px 18px;
+  border-bottom:1px solid var(--border);
+  background:#fcfcfd
 }
 
-.stage-stats{
+.progress-top{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center
+}
+
+.progress-text{
+  font-size:13px;
+  font-weight:900
+}
+
+.progress-meta{
+  color:var(--muted);
+  font-size:11px
+}
+
+.progress-track{
+  height:9px;
+  margin-top:10px;
+  background:#eaecf0;
+  border-radius:999px;
+  overflow:hidden
+}
+
+.progress-bar{
+  height:100%;
+  width:0;
+  background:var(--p);
+  transition:.25s
+}
+
+.summary-grid{
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-columns:repeat(4,minmax(0,1fr));
   gap:8px;
+  margin-top:12px
 }
 
-.stage-stat{
-  padding:11px;
+.summary-card{
+  padding:10px;
   border:1px solid var(--border);
-  border-radius:11px;
-  background:#fcfcfd;
+  border-radius:10px;
+  background:#fff
 }
 
-.stage-stat-label{
+.summary-label{
   color:var(--muted);
   font-size:10px;
-  font-weight:800;
+  font-weight:800
 }
 
-.stage-stat-value{
-  margin-top:5px;
-  font-size:17px;
-  font-weight:900;
+.summary-value{
+  margin-top:4px;
+  font-size:18px;
+  font-weight:900
 }
 
-.criteria-preview{
-  margin-top:14px;
-  padding:12px;
-  border-radius:11px;
-  background:#f8fafc;
-}
-
-.criteria-title{
-  font-size:11px;
-  font-weight:900;
-  margin-bottom:8px;
-}
-
-.criteria-item{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:7px 0;
-  border-bottom:1px solid #eaecf0;
-  font-size:12px;
-}
-
-.criteria-item:last-child{
-  border-bottom:0;
-}
-
-.criteria-name{
-  min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.criteria-score{
-  flex-shrink:0;
-  color:var(--muted);
-  font-size:11px;
-  font-weight:800;
-}
-
-.empty-stage{
-  padding:18px 12px;
-  border:1px dashed #d0d5dd;
-  border-radius:11px;
-  background:#fcfcfd;
-  color:var(--muted);
-  text-align:center;
-  font-size:12px;
-  line-height:1.7;
-}
-
-.stage-actions{
+.toolbar{
   display:flex;
   gap:8px;
-  margin-top:14px;
+  padding:12px 18px;
+  border-bottom:1px solid var(--border)
 }
 
-.stage-actions .btn{
-  flex:1;
+.search{
+  flex:1
 }
 
-.loading{
+.filter{
+  width:170px
+}
+
+.club-list{
+  display:grid;
+  gap:8px;
+  padding:14px 18px 18px
+}
+
+.category-group{
+  display:grid;
+  gap:8px
+}
+
+.category-heading{
+  margin:5px 0 1px;
+  padding:8px 10px;
+  border-radius:9px;
+  background:#f2f4f7;
+  color:#475467;
+  font-size:11px;
+  font-weight:900
+}
+
+.club-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  gap:10px;
+  align-items:center;
+  padding:13px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff
+}
+
+.club-row:hover{
+  background:#fafcff
+}
+
+.club-name{
+  font-size:13px;
+  font-weight:900
+}
+
+.club-meta{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:10px
+}
+
+.score-status{
+  min-width:86px;
+  text-align:center;
+  padding:6px 8px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:900
+}
+
+.s-not{
+  background:#f2f4f7;
+  color:#667085
+}
+
+.s-draft{
+  background:var(--draftbg);
+  color:var(--draft)
+}
+
+.s-sub{
+  background:var(--successbg);
+  color:var(--success)
+}
+
+.state{
   padding:38px 18px;
   text-align:center;
   color:var(--muted);
-  font-size:13px;
+  font-size:13px
 }
 
 .spinner{
-  width:30px;
-  height:30px;
-  margin:0 auto 11px;
+  width:29px;
+  height:29px;
+  margin:0 auto 10px;
   border:3px solid #e8eef7;
   border-top-color:var(--p);
   border-radius:50%;
-  animation:spin .8s linear infinite;
+  animation:spin .8s linear infinite
 }
 
 @keyframes spin{
@@ -551,98 +617,241 @@ button{cursor:pointer}
   display:none;
   align-items:center;
   justify-content:center;
-  padding:20px;
-  background:rgba(16,24,40,.55);
+  padding:18px;
+  background:rgba(16,24,40,.58)
 }
 
-.modal{
-  width:100%;
-  max-width:520px;
-  max-height:min(720px,88vh);
+.score-modal{
+  width:min(760px,100%);
+  max-height:92vh;
   background:#fff;
   border-radius:18px;
-  box-shadow:0 24px 60px rgba(16,24,40,.24);
   overflow:hidden;
+  box-shadow:0 24px 60px rgba(16,24,40,.26);
+  display:flex;
+  flex-direction:column
 }
 
 .modal-head{
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:space-between;
   gap:12px;
-  padding:18px 20px;
-  border-bottom:1px solid var(--border);
+  padding:17px 19px;
+  border-bottom:1px solid var(--border)
 }
 
 .modal-title{
   font-size:17px;
-  font-weight:900;
+  font-weight:950
+}
+
+.modal-sub{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:11px
 }
 
 .modal-close{
   width:36px;
   height:36px;
+  flex-shrink:0;
   border:0;
   border-radius:9px;
   background:#f2f4f7;
-  font-size:18px;
+  font-size:18px
 }
 
 .modal-body{
-  max-height:60vh;
-  overflow:auto;
-  padding:18px 20px;
+  padding:16px 19px;
+  overflow:auto
 }
 
-.modal-meta{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:8px;
-  margin-bottom:14px;
-}
-
-.modal-meta-card{
-  padding:12px;
-  border:1px solid var(--border);
+.score-banner{
+  padding:11px 12px;
+  margin-bottom:12px;
+  border:1px solid #bcd5ff;
   border-radius:10px;
-  background:#fcfcfd;
+  background:#f5f9ff;
+  color:#174b88;
+  font-size:11px;
+  line-height:1.7
 }
 
-.modal-meta-label{
-  color:var(--muted);
-  font-size:10px;
-  font-weight:800;
+.score-banner.warning{
+  border-color:#f7d7a5;
+  background:var(--warningbg);
+  color:#8a4b08
 }
 
-.modal-meta-value{
-  margin-top:4px;
-  font-size:15px;
-  font-weight:900;
+.score-banner.locked{
+  border-color:#cfe8d7;
+  background:var(--successbg);
+  color:var(--success)
 }
 
-.modal-criterion{
+.score-total-box{
+  position:sticky;
+  top:-16px;
+  z-index:3;
   display:flex;
-  align-items:flex-start;
+  align-items:center;
   justify-content:space-between;
   gap:12px;
-  padding:12px 0;
-  border-bottom:1px solid var(--border);
+  padding:12px 13px;
+  margin-bottom:12px;
+  border:1px solid #bcd5ff;
+  border-radius:11px;
+  background:#f5f9ff
 }
 
-.modal-criterion:last-child{
-  border-bottom:0;
+.score-total-label{
+  font-size:11px;
+  color:#475467;
+  font-weight:800
 }
 
-.modal-criterion-name{
+.score-total-value{
+  font-size:23px;
+  font-weight:950;
+  color:var(--p)
+}
+
+.criteria-list{
+  display:grid;
+  gap:9px
+}
+
+.criterion{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 150px;
+  gap:12px;
+  align-items:center;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:#fcfcfd
+}
+
+.criterion-name{
   font-size:13px;
-  font-weight:800;
+  font-weight:850
 }
 
-.modal-criterion-max{
+.criterion-max{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:10px
+}
+
+.score-input-wrap{
+  display:flex;
+  align-items:center;
+  gap:6px
+}
+
+.score-input{
+  width:100%;
+  height:42px;
+  padding:0 10px;
+  border:1px solid #d0d5dd;
+  border-radius:9px;
+  outline:none;
+  text-align:right;
+  font-weight:850
+}
+
+.score-input:focus{
+  border-color:var(--p);
+  box-shadow:0 0 0 3px rgba(26,115,232,.09)
+}
+
+.score-input.invalid{
+  border-color:var(--danger);
+  background:#fff8f7
+}
+
+.score-unit{
   flex-shrink:0;
-  color:var(--p);
+  color:var(--muted);
+  font-size:11px
+}
+
+.modal-error{
+  min-height:18px;
+  margin-top:10px;
+  color:var(--danger);
+  font-size:11px;
+  line-height:1.6
+}
+
+.modal-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:13px 19px;
+  border-top:1px solid var(--border);
+  background:#fcfcfd
+}
+
+.footer-left{
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.5
+}
+
+.footer-actions{
+  display:flex;
+  gap:8px
+}
+
+.confirm-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:1200;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(16,24,40,.64)
+}
+
+.confirm-box{
+  width:min(430px,100%);
+  padding:22px;
+  background:#fff;
+  border-radius:17px;
+  box-shadow:0 24px 70px rgba(16,24,40,.3)
+}
+
+.confirm-title{
+  font-size:18px;
+  font-weight:950
+}
+
+.confirm-text{
+  margin-top:8px;
+  color:#475467;
   font-size:12px;
-  font-weight:900;
+  line-height:1.8
+}
+
+.confirm-warning{
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:var(--dangerbg);
+  color:#7a271a;
+  font-size:11px;
+  line-height:1.7
+}
+
+.confirm-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:16px
 }
 
 .toast{
@@ -650,7 +859,7 @@ button{cursor:pointer}
   right:20px;
   bottom:20px;
   z-index:2000;
-  max-width:min(380px,calc(100% - 40px));
+  max-width:min(390px,calc(100% - 40px));
   padding:12px 16px;
   border-radius:10px;
   background:#101828;
@@ -660,73 +869,95 @@ button{cursor:pointer}
   opacity:0;
   transform:translateY(12px);
   pointer-events:none;
-  transition:.25s;
+  transition:.25s
 }
 
 .toast.show{
   opacity:1;
-  transform:translateY(0);
+  transform:translateY(0)
 }
 
 @media(max-width:760px){
 
-  .login-card{
-    padding:25px 20px;
-  }
-
   .topbar{
-    padding:11px 12px;
+    padding:11px 12px
   }
 
   .brand-subtitle,
   .user-chip{
-    display:none;
+    display:none
   }
 
   .top-actions .btn span{
-    display:none;
+    display:none
   }
 
   .main{
     width:calc(100% - 20px);
-    padding:20px 0 35px;
+    padding:18px 0 35px
   }
 
   .hero{
     align-items:flex-start;
-    flex-direction:column;
+    flex-direction:column
   }
 
   .hero-title{
-    font-size:23px;
+    font-size:23px
   }
 
   .session-text{
-    text-align:left;
+    text-align:left
   }
 
   .profile-card{
-    padding:16px;
+    grid-template-columns:auto 1fr
   }
 
-  .stage-grid{
-    grid-template-columns:1fr;
+  .profile-card .must-score{
+    grid-column:1/3
   }
 
-  .stage-stats{
-    grid-template-columns:repeat(3,1fr);
+  .summary-grid{
+    grid-template-columns:1fr 1fr
   }
 
-}
-
-@media(max-width:420px){
-
-  .stage-stats{
-    grid-template-columns:1fr;
+  .toolbar{
+    flex-direction:column
   }
 
-  .modal-meta{
-    grid-template-columns:1fr;
+  .filter{
+    width:100%
+  }
+
+  .club-row{
+    grid-template-columns:minmax(0,1fr) auto
+  }
+
+  .club-row .btn{
+    grid-column:1/3;
+    width:100%
+  }
+
+  .criterion{
+    grid-template-columns:1fr
+  }
+
+  .modal-footer{
+    align-items:stretch;
+    flex-direction:column
+  }
+
+  .footer-actions{
+    width:100%
+  }
+
+  .footer-actions .btn{
+    flex:1
+  }
+
+  .score-modal{
+    max-height:96vh
   }
 
 }
@@ -735,7 +966,10 @@ button{cursor:pointer}
 
 <body>
 
-<section id="loginScreen" class="login-screen">
+<section
+  id="loginScreen"
+  class="login-screen"
+>
 
   <div class="login-card">
 
@@ -800,7 +1034,6 @@ button{cursor:pointer}
             id="passwordToggle"
             class="eye-btn"
             type="button"
-            aria-label="顯示或隱藏密碼"
           >
             👁️
           </button>
@@ -867,7 +1100,8 @@ button{cursor:pointer}
         class="btn"
         type="button"
       >
-        🔄 <span>重新整理</span>
+        🔄
+        <span>重新整理</span>
       </button>
 
       <button
@@ -875,7 +1109,8 @@ button{cursor:pointer}
         class="btn btn-danger"
         type="button"
       >
-        🚪 <span>登出</span>
+        🚪
+        <span>登出</span>
       </button>
 
     </div>
@@ -894,7 +1129,7 @@ button{cursor:pointer}
         </h1>
 
         <div class="hero-desc">
-          查看您的評審身分、負責屬性與目前已發布的評分標準。
+          您被指派的屬性，其底下所有社團都必須完成評分。
         </div>
 
       </div>
@@ -931,10 +1166,6 @@ button{cursor:pointer}
           -
         </div>
 
-        <div class="category-title">
-          負責社團屬性
-        </div>
-
         <div
           id="categoryChips"
           class="chips"
@@ -942,75 +1173,258 @@ button{cursor:pointer}
 
       </div>
 
+      <div
+        id="mustScoreText"
+        class="must-score"
+      >
+        正在讀取必評社團...
+      </div>
+
     </section>
 
 
-    <div class="notice">
+    <div class="tabs">
 
-      <div>
-        ℹ️
-      </div>
-
-      <div>
-        目前先完成評審登入與身分驗證。
-        正式「輸入分數、儲存草稿、送出鎖定」功能會在下一階段接上。
-      </div>
-
-    </div>
-
-
-    <div class="section-title-row">
-
-      <div>
-
-        <div class="section-title">
-          評分階段
-        </div>
-
-        <div class="section-sub">
-          僅顯示管理後台已發布的評分標準
-        </div>
-
-      </div>
-
-      <div
-        id="scoreRevision"
-        class="section-sub"
+      <button
+        id="tabData"
+        class="tab active"
+        type="button"
+        onclick="switchStage('dataReview')"
       >
-        -
-      </div>
+
+        <div class="tab-title">
+          📄 資料審查
+        </div>
+
+        <div
+          id="tabDataProgress"
+          class="tab-progress"
+        >
+          讀取中...
+        </div>
+
+      </button>
+
+
+      <button
+        id="tabField"
+        class="tab"
+        type="button"
+        onclick="switchStage('fieldReview')"
+      >
+
+        <div class="tab-title">
+          🏫 實地審查
+        </div>
+
+        <div
+          id="tabFieldProgress"
+          class="tab-progress"
+        >
+          讀取中...
+        </div>
+
+      </button>
 
     </div>
 
 
     <div
-      id="dashboardLoading"
-      class="loading"
+      id="dashboardState"
+      class="state"
     >
 
       <div class="spinner"></div>
 
-      正在讀取評審資料...
+      正在讀取評分清單...
 
     </div>
 
 
-    <div
-      id="stageGrid"
-      class="stage-grid hidden"
+    <section
+      id="stagePanel"
+      class="stage-panel hidden"
     >
 
-      <section
-        id="dataReviewCard"
-        class="stage-card"
-      ></section>
+      <div class="stage-head">
 
-      <section
-        id="fieldReviewCard"
-        class="stage-card"
-      ></section>
+        <div>
 
-    </div>
+          <div
+            id="stageTitle"
+            class="stage-title"
+          >
+            -
+          </div>
+
+          <div
+            id="stageSub"
+            class="stage-sub"
+          >
+            -
+          </div>
+
+        </div>
+
+        <span
+          id="stageStatus"
+          class="status-pill status-closed"
+        >
+          -
+        </span>
+
+      </div>
+
+
+      <div
+        id="progressArea"
+        class="progress-area"
+      >
+
+        <div class="progress-top">
+
+          <div
+            id="progressText"
+            class="progress-text"
+          >
+            0 / 0 已完成
+          </div>
+
+          <div
+            id="progressMeta"
+            class="progress-meta"
+          >
+            -
+          </div>
+
+        </div>
+
+
+        <div class="progress-track">
+
+          <div
+            id="progressBar"
+            class="progress-bar"
+          ></div>
+
+        </div>
+
+
+        <div class="summary-grid">
+
+          <div class="summary-card">
+
+            <div class="summary-label">
+              必評社團
+            </div>
+
+            <div
+              id="sumTotal"
+              class="summary-value"
+            >
+              0
+            </div>
+
+          </div>
+
+
+          <div class="summary-card">
+
+            <div class="summary-label">
+              ✅ 已送出
+            </div>
+
+            <div
+              id="sumSubmitted"
+              class="summary-value"
+            >
+              0
+            </div>
+
+          </div>
+
+
+          <div class="summary-card">
+
+            <div class="summary-label">
+              📝 草稿
+            </div>
+
+            <div
+              id="sumDraft"
+              class="summary-value"
+            >
+              0
+            </div>
+
+          </div>
+
+
+          <div class="summary-card">
+
+            <div class="summary-label">
+              ⚪ 未開始
+            </div>
+
+            <div
+              id="sumNot"
+              class="summary-value"
+            >
+              0
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="toolbar">
+
+        <input
+          id="clubSearch"
+          class="field search"
+          type="search"
+          placeholder="搜尋社團名稱或屬性"
+        >
+
+        <select
+          id="statusFilter"
+          class="field filter"
+        >
+
+          <option value="all">
+            全部狀態
+          </option>
+
+          <option value="unfinished">
+            尚未完成
+          </option>
+
+          <option value="notStarted">
+            ⚪ 未開始
+          </option>
+
+          <option value="draft">
+            📝 草稿
+          </option>
+
+          <option value="submitted">
+            ✅ 已送出
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div
+        id="clubList"
+        class="club-list"
+      ></div>
+
+    </section>
 
   </main>
 
@@ -1018,35 +1432,175 @@ button{cursor:pointer}
 
 
 <div
-  id="criteriaModal"
+  id="scoreModal"
   class="modal-backdrop"
 >
 
-  <div class="modal">
+  <div class="score-modal">
 
     <div class="modal-head">
 
-      <div
-        id="criteriaModalTitle"
-        class="modal-title"
-      >
-        評分標準
+      <div>
+
+        <div
+          id="scoreModalTitle"
+          class="modal-title"
+        >
+          評分
+        </div>
+
+        <div
+          id="scoreModalSub"
+          class="modal-sub"
+        >
+          -
+        </div>
+
       </div>
 
       <button
-        id="criteriaModalClose"
         class="modal-close"
         type="button"
+        onclick="closeScoreModal()"
       >
         ×
       </button>
 
     </div>
 
+
+    <div class="modal-body">
+
+      <div
+        id="scoreBanner"
+        class="score-banner"
+      >
+        -
+      </div>
+
+
+      <div class="score-total-box">
+
+        <div>
+
+          <div class="score-total-label">
+            目前總分
+          </div>
+
+          <div
+            id="answerProgress"
+            class="modal-sub"
+          >
+            0 / 0 項已填
+          </div>
+
+        </div>
+
+        <div
+          id="liveTotal"
+          class="score-total-value"
+        >
+          0 / 0
+        </div>
+
+      </div>
+
+
+      <div
+        id="criteriaList"
+        class="criteria-list"
+      ></div>
+
+
+      <div
+        id="scoreError"
+        class="modal-error"
+      ></div>
+
+    </div>
+
+
+    <div class="modal-footer">
+
+      <div
+        id="scoreUpdatedText"
+        class="footer-left"
+      >
+        尚未儲存
+      </div>
+
+      <div class="footer-actions">
+
+        <button
+          id="saveDraftBtn"
+          class="btn"
+          type="button"
+          onclick="saveDraft()"
+        >
+          💾 儲存草稿
+        </button>
+
+        <button
+          id="submitScoreBtn"
+          class="btn btn-primary"
+          type="button"
+          onclick="openSubmitConfirm()"
+        >
+          ✅ 正式送出
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<div
+  id="confirmModal"
+  class="confirm-backdrop"
+>
+
+  <div class="confirm-box">
+
+    <div class="confirm-title">
+      確認正式送出？
+    </div>
+
     <div
-      id="criteriaModalBody"
-      class="modal-body"
-    ></div>
+      id="confirmText"
+      class="confirm-text"
+    >
+      -
+    </div>
+
+    <div class="confirm-warning">
+      ⚠️ 正式送出後，此筆評分會立即鎖定，評審本人不能再修改。
+      若真的需要修改，必須由管理員解鎖。
+    </div>
+
+    <div class="confirm-actions">
+
+      <button
+        class="btn"
+        type="button"
+        onclick="closeSubmitConfirm()"
+      >
+        取消
+      </button>
+
+      <button
+        id="confirmSubmitBtn"
+        class="btn btn-primary"
+        type="button"
+        onclick="submitScore()"
+      >
+        確認送出並鎖定
+      </button>
+
+    </div>
 
   </div>
 
@@ -1080,7 +1634,16 @@ const APP = {
   expiresAt:
     null,
 
-  scoreConfig:
+  dashboard:
+    null,
+
+  currentStage:
+    "dataReview",
+
+  filteredClubs:
+    [],
+
+  scoreContext:
     null,
 
   busy:
@@ -1096,6 +1659,22 @@ document.addEventListener(
 
 
 /* ============================================================
+   共用
+   ============================================================ */
+
+function byId(
+  id
+) {
+
+  return document
+    .getElementById(
+      id
+    );
+
+}
+
+
+/* ============================================================
    初始化
    ============================================================ */
 
@@ -1104,7 +1683,7 @@ async function initializeApp() {
   bindEvents();
 
 
-  const savedToken =
+  const token =
 
     sessionStorage
       .getItem(
@@ -1112,7 +1691,7 @@ async function initializeApp() {
       );
 
 
-  if (!savedToken) {
+  if (!token) {
 
     showLogin();
 
@@ -1122,7 +1701,7 @@ async function initializeApp() {
 
 
   APP.sessionToken =
-    savedToken;
+    token;
 
 
   showApp();
@@ -1138,89 +1717,126 @@ async function initializeApp() {
 
     showLogin();
 
+
+    byId(
+      "loginError"
+    )
+    .textContent =
+      "登入已失效，請重新登入。";
+
   }
 
 }
 
 
 /* ============================================================
-   綁定事件
+   Events
    ============================================================ */
 
 function bindEvents() {
 
-  document
-    .getElementById(
-      "loginForm"
-    )
-    .addEventListener(
-      "submit",
-      handleLogin
-    );
+  byId(
+    "loginForm"
+  )
+  .addEventListener(
+    "submit",
+    handleLogin
+  );
 
 
-  document
-    .getElementById(
-      "passwordToggle"
-    )
-    .addEventListener(
-      "click",
-      togglePassword
-    );
+  byId(
+    "passwordToggle"
+  )
+  .addEventListener(
+    "click",
+    togglePassword
+  );
 
 
-  document
-    .getElementById(
-      "logoutBtn"
-    )
-    .addEventListener(
-      "click",
-      logoutJudge
-    );
+  byId(
+    "logoutBtn"
+  )
+  .addEventListener(
+    "click",
+    logoutJudge
+  );
 
 
-  document
-    .getElementById(
-      "refreshBtn"
-    )
-    .addEventListener(
-      "click",
-      refreshDashboard
-    );
+  byId(
+    "refreshBtn"
+  )
+  .addEventListener(
+    "click",
+    refreshDashboard
+  );
 
 
-  document
-    .getElementById(
-      "criteriaModalClose"
-    )
-    .addEventListener(
-      "click",
-      closeCriteriaModal
-    );
+  byId(
+    "clubSearch"
+  )
+  .addEventListener(
+    "input",
+    filterAndRenderClubs
+  );
 
 
-  document
-    .getElementById(
-      "criteriaModal"
-    )
-    .addEventListener(
+  byId(
+    "statusFilter"
+  )
+  .addEventListener(
+    "change",
+    filterAndRenderClubs
+  );
 
-      "click",
 
-      event => {
+  byId(
+    "scoreModal"
+  )
+  .addEventListener(
 
-        if (
-          event.target ===
-          event.currentTarget
-        ) {
+    "click",
 
-          closeCriteriaModal();
+    event => {
 
-        }
+      if (
+        event.target ===
+        event.currentTarget
+        &&
+        !APP.busy
+      ) {
+
+        closeScoreModal();
 
       }
 
-    );
+    }
+
+  );
+
+
+  byId(
+    "confirmModal"
+  )
+  .addEventListener(
+
+    "click",
+
+    event => {
+
+      if (
+        event.target ===
+        event.currentTarget
+        &&
+        !APP.busy
+      ) {
+
+        closeSubmitConfirm();
+
+      }
+
+    }
+
+  );
 
 
   document.addEventListener(
@@ -1232,9 +1848,12 @@ function bindEvents() {
       if (
         event.key ===
         "Escape"
+        &&
+        !APP.busy
       ) {
 
-        closeCriteriaModal();
+        closeSubmitConfirm();
+        closeScoreModal();
 
       }
 
@@ -1246,16 +1865,18 @@ function bindEvents() {
 
 
 /* ============================================================
-   呼叫後端
+   POST
    ============================================================ */
 
-async function post(payload) {
+async function post(
+  payload
+) {
 
   const controller =
     new AbortController();
 
 
-  const timeout =
+  const timer =
 
     setTimeout(
 
@@ -1320,6 +1941,12 @@ async function post(payload) {
 
     catch {
 
+      console.error(
+        "後端原始回應：",
+        text
+      );
+
+
       throw new Error(
         "後端回傳格式錯誤"
       );
@@ -1349,7 +1976,7 @@ async function post(payload) {
   finally {
 
     clearTimeout(
-      timeout
+      timer
     );
 
   }
@@ -1358,7 +1985,7 @@ async function post(payload) {
 
 
 /* ============================================================
-   評審 API
+   Judge API
    ============================================================ */
 
 function judgeApi(
@@ -1381,33 +2008,65 @@ function judgeApi(
 }
 
 
-function publicApi(
-  action,
-  extra = {}
+/* ============================================================
+   Unauthorized
+   ============================================================ */
+
+function isUnauthorized(
+  result
 ) {
 
-  return post({
+  return (
 
-    action:
-      action,
+    result &&
 
-    ...extra
+    [
+      "JUDGE_UNAUTHORIZED",
+      "JUDGE_SESSION_INVALID",
+      "JUDGE_SESSION_EXPIRED"
+    ]
+    .includes(
+      result.error
+    )
 
-  });
+  );
+
+}
+
+
+function handleUnauthorized(
+  message =
+    "評審登入已失效，請重新登入。"
+) {
+
+  clearSession();
+
+  showLogin();
+
+
+  byId(
+    "loginError"
+  )
+  .textContent =
+    message;
 
 }
 
 
 /* ============================================================
-   登入
+   Login
    ============================================================ */
 
-async function handleLogin(event) {
+async function handleLogin(
+  event
+) {
 
   event.preventDefault();
 
 
-  if (APP.busy) {
+  if (
+    APP.busy
+  ) {
 
     return;
 
@@ -1416,20 +2075,18 @@ async function handleLogin(event) {
 
   const username =
 
-    document
-      .getElementById(
-        "username"
-      )
-      .value
-      .trim();
+    byId(
+      "username"
+    )
+    .value
+    .trim();
 
 
   const passwordInput =
 
-    document
-      .getElementById(
-        "password"
-      );
+    byId(
+      "password"
+    );
 
 
   const password =
@@ -1438,18 +2095,16 @@ async function handleLogin(event) {
 
   const button =
 
-    document
-      .getElementById(
-        "loginBtn"
-      );
+    byId(
+      "loginBtn"
+    );
 
 
-  const errorBox =
+  const error =
 
-    document
-      .getElementById(
-        "loginError"
-      );
+    byId(
+      "loginError"
+    );
 
 
   if (
@@ -1457,7 +2112,7 @@ async function handleLogin(event) {
     !password
   ) {
 
-    errorBox.textContent =
+    error.textContent =
       "請輸入評審帳號與密碼。";
 
     return;
@@ -1479,7 +2134,7 @@ async function handleLogin(event) {
       "登入中...";
 
 
-    errorBox.textContent =
+    error.textContent =
       "";
 
 
@@ -1545,23 +2200,11 @@ async function handleLogin(event) {
     showApp();
 
 
-    if (
-      result.judge &&
-      typeof result.judge ===
-      "object"
-    ) {
-
-      APP.judge =
-        result.judge;
-
-    }
-
-
-    const restored =
+    const ok =
       await restoreSession();
 
 
-    if (!restored) {
+    if (!ok) {
 
       throw new Error(
         "登入成功，但無法取得評審資料。"
@@ -1576,16 +2219,16 @@ async function handleLogin(event) {
 
   }
 
-  catch (error) {
+  catch (errorMessage) {
 
     clearSession();
 
     showLogin();
 
 
-    errorBox.textContent =
+    error.textContent =
 
-      error.message ||
+      errorMessage.message ||
       "登入失敗。";
 
   }
@@ -1609,30 +2252,19 @@ async function handleLogin(event) {
 
 
 /* ============================================================
-   Session 驗證
+   Restore Session
    ============================================================ */
 
 async function restoreSession() {
 
-  if (!APP.sessionToken) {
-
-    return false;
-
-  }
-
-
-  setDashboardLoading(
-
-    true,
-
-    "正在驗證評審身分..."
-
-  );
-
-
   try {
 
-    const result =
+    setDashboardLoading(
+      "正在驗證評審身分..."
+    );
+
+
+    const me =
 
       await judgeApi(
         "judgeMe"
@@ -1640,8 +2272,8 @@ async function restoreSession() {
 
 
     if (
-      !result ||
-      !result.success
+      !me ||
+      !me.success
     ) {
 
       return false;
@@ -1651,18 +2283,18 @@ async function restoreSession() {
 
     APP.judge =
 
-      result.judge ||
-      result.user ||
-      APP.judge;
+      me.judge ||
+      me.user ||
+      null;
 
 
     APP.expiresAt =
 
-      result.expiresAt ||
+      me.expiresAt ||
 
       (
-        result.session &&
-        result.session.expiresAt
+        me.session &&
+        me.session.expiresAt
       )
 
       ||
@@ -1670,22 +2302,71 @@ async function restoreSession() {
       APP.expiresAt;
 
 
-    if (!APP.judge) {
+    if (
+      !APP.judge
+    ) {
 
       return false;
 
     }
 
 
-    renderJudgeProfile();
+    renderProfile();
 
 
-    await loadScoreConfig();
+    const dash =
+
+      await judgeApi(
+        "judgeScoreDashboard"
+      );
 
 
-    setDashboardLoading(
-      false
-    );
+    if (
+      isUnauthorized(
+        dash
+      )
+    ) {
+
+      return false;
+
+    }
+
+
+    if (
+      !dash ||
+      !dash.success
+    ) {
+
+      throw new Error(
+
+        dash &&
+        dash.message
+
+          ? dash.message
+
+          : "無法取得評分清單"
+
+      );
+
+    }
+
+
+    APP.dashboard =
+      dash;
+
+
+    if (
+      dash.judge
+    ) {
+
+      APP.judge =
+        dash.judge;
+
+    }
+
+
+    renderProfile();
+    renderDashboard();
 
 
     return true;
@@ -1699,6 +2380,19 @@ async function restoreSession() {
     );
 
 
+    byId(
+      "dashboardState"
+    )
+    .innerHTML =
+
+      "⚠️ " +
+
+      escapeHtml(
+        error.message ||
+        "讀取失敗"
+      );
+
+
     return false;
 
   }
@@ -1707,7 +2401,7 @@ async function restoreSession() {
 
 
 /* ============================================================
-   重新整理
+   Refresh
    ============================================================ */
 
 async function refreshDashboard() {
@@ -1723,11 +2417,9 @@ async function refreshDashboard() {
 
 
   const button =
-
-    document
-      .getElementById(
-        "refreshBtn"
-      );
+    byId(
+      "refreshBtn"
+    );
 
 
   try {
@@ -1741,69 +2433,65 @@ async function refreshDashboard() {
 
 
     setDashboardLoading(
-
-      true,
-
       "正在重新整理..."
-
     );
 
 
-    const result =
+    const dash =
 
       await judgeApi(
-        "judgeMe"
+        "judgeScoreDashboard"
       );
 
 
     if (
-      !result ||
-      !result.success
+      isUnauthorized(
+        dash
+      )
     ) {
 
-      clearSession();
-
-      showLogin();
-
-
-      document
-        .getElementById(
-          "loginError"
-        )
-        .textContent =
-          "登入已失效，請重新登入。";
-
+      handleUnauthorized();
 
       return;
 
     }
 
 
-    APP.judge =
+    if (
+      !dash ||
+      !dash.success
+    ) {
 
-      result.judge ||
-      result.user ||
-      APP.judge;
+      throw new Error(
 
+        dash &&
+        dash.message
 
-    APP.expiresAt =
+          ? dash.message
 
-      result.expiresAt ||
+          : "重新整理失敗"
 
-      (
-        result.session &&
-        result.session.expiresAt
-      )
+      );
 
-      ||
-
-      APP.expiresAt;
+    }
 
 
-    renderJudgeProfile();
+    APP.dashboard =
+      dash;
 
 
-    await loadScoreConfig();
+    if (
+      dash.judge
+    ) {
+
+      APP.judge =
+        dash.judge;
+
+    }
+
+
+    renderProfile();
+    renderDashboard();
 
 
     toast(
@@ -1813,6 +2501,27 @@ async function refreshDashboard() {
   }
 
   catch (error) {
+
+    byId(
+      "dashboardState"
+    )
+    .style
+    .display =
+      "block";
+
+
+    byId(
+      "dashboardState"
+    )
+    .innerHTML =
+
+      "⚠️ " +
+
+      escapeHtml(
+        error.message ||
+        "重新整理失敗"
+      );
+
 
     toast(
 
@@ -1836,89 +2545,23 @@ async function refreshDashboard() {
     button.disabled =
       false;
 
-
-    setDashboardLoading(
-      false
-    );
-
   }
 
 }
 
 
 /* ============================================================
-   評分機制
+   Profile
    ============================================================ */
 
-async function loadScoreConfig() {
-
-  try {
-
-    const result =
-
-      await publicApi(
-        "getPublishedScoreConfig"
-      );
-
-
-    if (
-      !result ||
-      !result.success
-    ) {
-
-      throw new Error(
-
-        result &&
-        result.message
-
-          ? result.message
-
-          : "無法取得評分機制"
-
-      );
-
-    }
-
-
-    APP.scoreConfig =
-      result;
-
-
-    renderScoreStages();
-
-  }
-
-  catch (error) {
-
-    APP.scoreConfig =
-      null;
-
-
-    renderScoreStages();
-
-
-    toast(
-      "⚠️ " +
-      error.message
-    );
-
-  }
-
-}
-
-
-/* ============================================================
-   評審資料
-   ============================================================ */
-
-function renderJudgeProfile() {
+function renderProfile() {
 
   const judge =
     APP.judge ||
     {};
 
 
-  const displayName =
+  const name =
 
     String(
 
@@ -1945,48 +2588,51 @@ function renderJudgeProfile() {
 
       ? judge.categories
 
-      : [];
+      : (
+          APP.dashboard &&
+          Array.isArray(
+            APP.dashboard
+              .assignedCategories
+          )
+
+            ? APP.dashboard
+                .assignedCategories
+
+            : []
+        );
 
 
-  document
-    .getElementById(
-      "profileName"
-    )
-    .textContent =
-      displayName;
+  byId(
+    "profileName"
+  )
+  .textContent =
+    name;
 
 
-  document
-    .getElementById(
-      "profileUsername"
-    )
-    .textContent =
+  byId(
+    "profileUsername"
+  )
+  .textContent =
 
-      username
+    username
 
-        ? "登入帳號：" +
-          username
+      ? "登入帳號：" +
+        username
 
-        : "評審帳號";
-
-
-  document
-    .getElementById(
-      "topUserName"
-    )
-    .textContent =
-      displayName;
+      : "評審帳號";
 
 
-  const chipBox =
+  byId(
+    "topUserName"
+  )
+  .textContent =
+    name;
 
-    document
-      .getElementById(
-        "categoryChips"
-      );
 
-
-  chipBox.innerHTML =
+  byId(
+    "categoryChips"
+  )
+  .innerHTML =
 
     categories.length
 
@@ -1999,142 +2645,333 @@ function renderJudgeProfile() {
               `<span class="chip">${escapeHtml(category)}</span>`
 
           )
-
           .join("")
 
-      : `<span class="chip">尚未指派屬性</span>`;
+      : '<span class="chip">尚未指派屬性</span>';
 
 
-  document
-    .getElementById(
-      "sessionText"
-    )
-    .textContent =
+  byId(
+    "sessionText"
+  )
+  .textContent =
 
-      APP.expiresAt
+    APP.expiresAt
 
-        ? "登入有效期限：" +
-          formatDate(
-            APP.expiresAt
-          )
+      ? "登入有效期限：" +
+        formatDate(
+          APP.expiresAt
+        )
 
-        : "評審身分已驗證";
+      : "評審身分已驗證";
+
+
+  const total =
+
+    Number(
+
+      APP.dashboard &&
+      APP.dashboard.assignedClubCount
+
+        ? APP.dashboard.assignedClubCount
+
+        : 0
+
+    );
+
+
+  byId(
+    "mustScoreText"
+  )
+  .textContent =
+
+    total
+
+      ? "📌 您負責的屬性共有 " +
+        total +
+        " 個社團；資料審查與實地審查都必須把這 " +
+        total +
+        " 個社團全部評完。"
+
+      : "📌 目前沒有指派到任何必評社團。";
 
 }
 
 
 /* ============================================================
-   評分階段卡片
+   Dashboard
    ============================================================ */
 
-function renderScoreStages() {
+function renderDashboard() {
 
-  const result =
-    APP.scoreConfig ||
-    {};
-
-
-  document
-    .getElementById(
-      "scoreRevision"
-    )
-    .textContent =
-
-      result.revision
-
-        ? "評分設定版本 v" +
-          result.revision
-
-        : "尚無已發布設定";
+  byId(
+    "dashboardState"
+  )
+  .style
+  .display =
+    "none";
 
 
-  renderStageCard(
-
-    "dataReview",
-
-    result.dataReview,
-
-    "📄",
-
-    "資料審查"
-
+  byId(
+    "stagePanel"
+  )
+  .classList
+  .remove(
+    "hidden"
   );
 
 
-  renderStageCard(
+  updateTabLabels();
 
-    "fieldReview",
+  renderCurrentStage();
 
-    result.fieldReview,
-
-    "🏫",
-
-    "實地審查"
-
-  );
+}
 
 
-  document
-    .getElementById(
-      "stageGrid"
-    )
-    .classList
-    .remove(
-      "hidden"
+/* ============================================================
+   Tab
+   ============================================================ */
+
+function updateTabLabels() {
+
+  const data =
+
+    APP.dashboard &&
+    APP.dashboard.stages
+
+      ? APP.dashboard
+          .stages
+          .dataReview
+
+      : null;
+
+
+  const field =
+
+    APP.dashboard &&
+    APP.dashboard.stages
+
+      ? APP.dashboard
+          .stages
+          .fieldReview
+
+      : null;
+
+
+  byId(
+    "tabDataProgress"
+  )
+  .textContent =
+    stageTabText(
+      data
+    );
+
+
+  byId(
+    "tabFieldProgress"
+  )
+  .textContent =
+    stageTabText(
+      field
     );
 
 }
 
 
-/* ============================================================
-   單一階段
-   ============================================================ */
-
-function renderStageCard(
-  phaseKey,
-  phase,
-  icon,
-  label
+function stageTabText(
+  stage
 ) {
 
-  const card =
+  if (!stage) {
 
-    document
-      .getElementById(
-        phaseKey +
-        "Card"
-      );
+    return "尚無資料";
+
+  }
 
 
-  if (!phase) {
+  if (
+    !stage.available
+  ) {
 
-    card.innerHTML = `
+    return "尚未開放";
 
-      <div class="stage-head">
+  }
 
-        <div class="stage-title">
-          ${icon} ${escapeHtml(label)}
-        </div>
 
-        <span class="status-chip status-closed">
-          尚未發布
-        </span>
+  return (
 
-      </div>
+    String(
+      stage.submittedCount ||
+      0
+    )
 
-      <div class="stage-body">
+    +
 
-        <div class="empty-stage">
+    " / " +
 
-          管理員尚未發布此階段的評分標準。<br>
+    String(
+      stage.totalClubs ||
+      0
+    )
 
-          發布後會自動顯示在這裡。
+    +
 
-        </div>
+    " 已完成"
 
-      </div>
+  );
 
-    `;
+}
+
+
+function switchStage(
+  stageKey
+) {
+
+  APP.currentStage =
+    stageKey;
+
+
+  byId(
+    "tabData"
+  )
+  .classList
+  .toggle(
+
+    "active",
+
+    stageKey ===
+    "dataReview"
+
+  );
+
+
+  byId(
+    "tabField"
+  )
+  .classList
+  .toggle(
+
+    "active",
+
+    stageKey ===
+    "fieldReview"
+
+  );
+
+
+  byId(
+    "clubSearch"
+  )
+  .value =
+    "";
+
+
+  byId(
+    "statusFilter"
+  )
+  .value =
+    "all";
+
+
+  renderCurrentStage();
+
+}
+
+
+/* ============================================================
+   Current Stage
+   ============================================================ */
+
+function renderCurrentStage() {
+
+  const stage =
+
+    APP.dashboard &&
+    APP.dashboard.stages
+
+      ? APP.dashboard
+          .stages[
+            APP.currentStage
+          ]
+
+      : null;
+
+
+  const icon =
+
+    APP.currentStage ===
+    "dataReview"
+
+      ? "📄"
+
+      : "🏫";
+
+
+  const fallback =
+
+    APP.currentStage ===
+    "dataReview"
+
+      ? "資料審查"
+
+      : "實地審查";
+
+
+  byId(
+    "stageTitle"
+  )
+  .textContent =
+
+    icon +
+    " " +
+    (
+      stage &&
+      stage.stageName
+
+        ? stage.stageName
+
+        : fallback
+    );
+
+
+  if (
+    !stage ||
+    !stage.available
+  ) {
+
+    byId(
+      "stageStatus"
+    )
+    .className =
+      "status-pill status-closed";
+
+
+    byId(
+      "stageStatus"
+    )
+    .textContent =
+      "尚未開放";
+
+
+    byId(
+      "stageSub"
+    )
+    .textContent =
+      "管理員尚未發布此階段評分標準。";
+
+
+    byId(
+      "progressArea"
+    )
+    .style
+    .display =
+      "none";
+
+
+    byId(
+      "clubList"
+    )
+    .innerHTML =
+      '<div class="state">此階段目前尚未開放評分。</div>';
 
 
     return;
@@ -2142,88 +2979,426 @@ function renderStageCard(
   }
 
 
-  const criteria =
+  byId(
+    "stageStatus"
+  )
+  .className =
+    "status-pill status-open";
 
-    Array.isArray(
-      phase.criteria
+
+  byId(
+    "stageStatus"
+  )
+  .textContent =
+    "✅ 已開放";
+
+
+  let stageSubText =
+
+    "評分設定 v" +
+    String(
+      stage.configRevision ||
+      "-"
     )
 
-      ? phase.criteria.filter(
+    +
 
-          item =>
-            item.enabled !==
-            false
+    "｜階段總分 " +
 
+    formatNumber(
+      stage.totalScore
+    )
+
+    +
+
+    " 分";
+
+
+  if (
+    stage.weight !==
+    null
+
+    &&
+
+    stage.weight !==
+    undefined
+  ) {
+
+    stageSubText +=
+
+      "｜最終權重 " +
+
+      formatNumber(
+        stage.weight
+      )
+
+      +
+
+      "%";
+
+  }
+
+
+  byId(
+    "stageSub"
+  )
+  .textContent =
+    stageSubText;
+
+
+  byId(
+    "progressArea"
+  )
+  .style
+  .display =
+    "block";
+
+
+  const total =
+    Number(
+      stage.totalClubs ||
+      0
+    );
+
+
+  const submitted =
+    Number(
+      stage.submittedCount ||
+      0
+    );
+
+
+  const draft =
+    Number(
+      stage.draftCount ||
+      0
+    );
+
+
+  const notStarted =
+    Number(
+      stage.notStartedCount ||
+      0
+    );
+
+
+  const percent =
+
+    total
+
+      ? Math.round(
+          submitted /
+          total *
+          100
         )
+
+      : 0;
+
+
+  byId(
+    "progressText"
+  )
+  .textContent =
+
+    submitted +
+    " / " +
+    total +
+    " 已完成";
+
+
+  byId(
+    "progressMeta"
+  )
+  .textContent =
+
+    "完成率 " +
+    percent +
+    "%";
+
+
+  byId(
+    "progressBar"
+  )
+  .style
+  .width =
+
+    percent +
+    "%";
+
+
+  byId(
+    "sumTotal"
+  )
+  .textContent =
+    total;
+
+
+  byId(
+    "sumSubmitted"
+  )
+  .textContent =
+    submitted;
+
+
+  byId(
+    "sumDraft"
+  )
+  .textContent =
+    draft;
+
+
+  byId(
+    "sumNot"
+  )
+  .textContent =
+    notStarted;
+
+
+  filterAndRenderClubs();
+
+}
+
+
+/* ============================================================
+   Filter
+   ============================================================ */
+
+function filterAndRenderClubs() {
+
+  const stage =
+
+    APP.dashboard &&
+    APP.dashboard.stages
+
+      ? APP.dashboard
+          .stages[
+            APP.currentStage
+          ]
+
+      : null;
+
+
+  if (
+    !stage ||
+    !stage.available
+  ) {
+
+    return;
+
+  }
+
+
+  const query =
+
+    byId(
+      "clubSearch"
+    )
+    .value
+    .trim()
+    .toLowerCase();
+
+
+  const filter =
+
+    byId(
+      "statusFilter"
+    )
+    .value;
+
+
+  const clubs =
+
+    Array.isArray(
+      stage.clubs
+    )
+
+      ? stage.clubs
 
       : [];
 
 
-  const totalScore =
+  APP.filteredClubs =
 
-    Number(
+    clubs.filter(
 
-      phase.totalScore ||
+      club => {
 
-      criteria.reduce(
+        const searchable =
 
-        (
-          sum,
-          item
-        ) =>
+          (
+            String(
+              club.name ||
+              ""
+            )
 
-          sum +
+            +
 
-          Number(
-            item.maxScore ||
-            0
-          ),
+            " " +
 
-        0
+            String(
+              club.category ||
+              ""
+            )
+          )
+          .toLowerCase();
 
-      )
+
+        const searchMatched =
+
+          !query ||
+          searchable.includes(
+            query
+          );
+
+
+        let statusMatched =
+          true;
+
+
+        if (
+          filter ===
+          "unfinished"
+        ) {
+
+          statusMatched =
+
+            club.status !==
+            "submitted";
+
+        }
+
+        else if (
+          filter !==
+          "all"
+        ) {
+
+          statusMatched =
+
+            club.status ===
+            filter;
+
+        }
+
+
+        return (
+
+          searchMatched &&
+          statusMatched
+
+        );
+
+      }
 
     );
 
 
-  const weightText =
+  renderClubList();
 
-    phase.weight ===
-    null
-
-    ||
-
-    phase.weight ===
-    undefined
-
-      ? "未設定"
-
-      : formatNumber(
-          phase.weight
-        ) +
-        "%";
+}
 
 
-  const preview =
+/* ============================================================
+   Club List
+   ============================================================ */
 
-    criteria
-      .slice(
-        0,
-        4
+function renderClubList() {
+
+  const box =
+    byId(
+      "clubList"
+    );
+
+
+  const rows =
+    APP.filteredClubs;
+
+
+  if (
+    !rows.length
+  ) {
+
+    box.innerHTML =
+      '<div class="state">目前沒有符合條件的社團。</div>';
+
+    return;
+
+  }
+
+
+  const groups =
+    {};
+
+
+  rows.forEach(
+
+    club => {
+
+      const category =
+
+        club.category ||
+        "未分類";
+
+
+      if (
+        !groups[
+          category
+        ]
+      ) {
+
+        groups[
+          category
+        ] =
+          [];
+
+      }
+
+
+      groups[
+        category
+      ]
+      .push(
+        club
+      );
+
+    }
+
+  );
+
+
+  box.innerHTML =
+
+    Object
+      .entries(
+        groups
       )
       .map(
 
-        item => `
+        (
+          [
+            category,
+            clubs
+          ]
+        ) => `
 
-          <div class="criteria-item">
+          <div class="category-group">
 
-            <div class="criteria-name">
-              ${escapeHtml(item.name)}
+            <div class="category-heading">
+
+              ${escapeHtml(category)}
+              ｜
+              ${clubs.length}
+              個社團
+
             </div>
 
-            <div class="criteria-score">
-              ${formatNumber(item.maxScore)} 分
-            </div>
+            ${clubs
+              .map(
+                club =>
+                  clubRowHtml(
+                    club
+                  )
+              )
+              .join("")}
 
           </div>
 
@@ -2232,154 +3407,109 @@ function renderStageCard(
       )
       .join("");
 
+}
 
-  const moreText =
 
-    criteria.length >
-    4
+/* ============================================================
+   Club Row
+   ============================================================ */
 
-      ? `
+function clubRowHtml(
+  club
+) {
 
-        <div
-          style="
-            margin-top:8px;
-            color:#667085;
-            font-size:10px;
-          "
-        >
+  const ui =
+    statusUi(
+      club.status
+    );
 
-          另有 ${criteria.length - 4} 個項目
 
+  const action =
+
+    club.status ===
+    "submitted"
+
+      ? "查看評分"
+
+      : club.status ===
+        "draft"
+
+        ? "繼續評分"
+
+        : "開始評分";
+
+
+  const time =
+
+    club.status ===
+    "submitted"
+
+      ? (
+          club.submittedAt ||
+          club.updatedAt
+        )
+
+      : club.updatedAt;
+
+
+  return `
+
+    <div class="club-row">
+
+      <div>
+
+        <div class="club-name">
+          ${escapeHtml(club.name)}
         </div>
 
-      `
+        <div class="club-meta">
 
-      : "";
+          ${escapeHtml(
+            club.category ||
+            ""
+          )}
 
+          ${
+            time
 
-  card.innerHTML = `
+              ? "｜最後更新：" +
+                escapeHtml(
+                  formatDate(
+                    time
+                  )
+                )
 
-    <div class="stage-head">
-
-      <div class="stage-title">
-        ${icon} ${escapeHtml(label)}
-      </div>
-
-      <span class="status-chip status-open">
-        ✅ 已發布
-      </span>
-
-    </div>
-
-
-    <div class="stage-body">
-
-      <div class="stage-stats">
-
-
-        <div class="stage-stat">
-
-          <div class="stage-stat-label">
-            階段總分
-          </div>
-
-          <div class="stage-stat-value">
-            ${formatNumber(totalScore)}
-          </div>
+              : ""
+          }
 
         </div>
-
-
-        <div class="stage-stat">
-
-          <div class="stage-stat-label">
-            評分項目
-          </div>
-
-          <div class="stage-stat-value">
-            ${criteria.length}
-          </div>
-
-        </div>
-
-
-        <div class="stage-stat">
-
-          <div class="stage-stat-label">
-            最終權重
-          </div>
-
-          <div class="stage-stat-value">
-            ${escapeHtml(weightText)}
-          </div>
-
-        </div>
-
 
       </div>
 
 
-      ${
-        criteria.length
+      <div
+        class="score-status ${ui.cls}"
+      >
 
-          ? `
-
-            <div class="criteria-preview">
-
-              <div class="criteria-title">
-                評分項目預覽
-              </div>
-
-              ${preview}
-
-              ${moreText}
-
-            </div>
-
-          `
-
-          : `
-
-            <div
-              class="empty-stage"
-              style="margin-top:14px"
-            >
-
-              此階段目前沒有啟用中的評分項目。
-
-            </div>
-
-          `
-      }
-
-
-      <div class="stage-actions">
-
-        <button
-          class="btn"
-          type="button"
-          onclick="openCriteriaModal('${phaseKey}')"
-          ${criteria.length ? "" : "disabled"}
-        >
-
-          📋 查看評分標準
-
-        </button>
-
-
-        <button
-          class="btn btn-primary"
-          type="button"
-          disabled
-          title="下一階段開放正式評分"
-        >
-
-          ✍️ 開始評分
-
-        </button>
+        ${ui.label}
 
       </div>
 
+
+      <button
+        class="btn ${club.status === "submitted" ? "" : "btn-primary"}"
+        type="button"
+        onclick="
+          openScore(
+            '${encodeURIComponent(APP.currentStage)}',
+            '${encodeURIComponent(club.name)}'
+          )
+        "
+      >
+
+        ${action}
+
+      </button>
 
     </div>
 
@@ -2388,244 +3518,909 @@ function renderStageCard(
 }
 
 
-/* ============================================================
-   評分標準視窗
-   ============================================================ */
-
-function openCriteriaModal(
-  phaseKey
+function statusUi(
+  status
 ) {
 
-  if (!APP.scoreConfig) {
+  if (
+    status ===
+    "submitted"
+  ) {
+
+    return {
+
+      label:
+        "✅ 已送出",
+
+      cls:
+        "s-sub"
+
+    };
+
+  }
+
+
+  if (
+    status ===
+    "draft"
+  ) {
+
+    return {
+
+      label:
+        "📝 草稿",
+
+      cls:
+        "s-draft"
+
+    };
+
+  }
+
+
+  return {
+
+    label:
+      "⚪ 未開始",
+
+    cls:
+      "s-not"
+
+  };
+
+}
+
+
+/* ============================================================
+   Open Score
+   ============================================================ */
+
+async function openScore(
+  encodedStage,
+  encodedClub
+) {
+
+  if (
+    APP.busy
+  ) {
 
     return;
 
   }
 
 
-  const phase =
-
-    APP.scoreConfig[
-      phaseKey
-    ];
-
-
-  if (!phase) {
-
-    return;
-
-  }
-
-
-  const isData =
-
-    phaseKey ===
-    "dataReview";
-
-
-  const label =
-
-    isData
-
-      ? "資料審查"
-
-      : "實地審查";
-
-
-  const icon =
-
-    isData
-
-      ? "📄"
-
-      : "🏫";
-
-
-  const criteria =
-
-    Array.isArray(
-      phase.criteria
-    )
-
-      ? phase.criteria.filter(
-
-          item =>
-            item.enabled !==
-            false
-
-        )
-
-      : [];
-
-
-  const total =
-
-    Number(
-
-      phase.totalScore ||
-
-      criteria.reduce(
-
-        (
-          sum,
-          item
-        ) =>
-
-          sum +
-
-          Number(
-            item.maxScore ||
-            0
-          ),
-
-        0
-
-      )
-
+  const stageKey =
+    decodeURIComponent(
+      encodedStage
     );
 
 
-  document
-    .getElementById(
-      "criteriaModalTitle"
+  const clubName =
+    decodeURIComponent(
+      encodedClub
+    );
+
+
+  try {
+
+    APP.busy =
+      true;
+
+
+    byId(
+      "scoreError"
     )
     .textContent =
-
-      icon +
-      " " +
-      label +
-      "｜評分標準";
+      "";
 
 
-  const weightText =
-
-    phase.weight ===
-    null
-
-    ||
-
-    phase.weight ===
-    undefined
-
-      ? "未設定"
-
-      : formatNumber(
-          phase.weight
-        ) +
-        "%";
-
-
-  const rows =
-
-    criteria
-      .map(
-
-        (
-          item,
-          index
-        ) => `
-
-          <div class="modal-criterion">
-
-            <div class="modal-criterion-name">
-
-              ${index + 1}.
-              ${escapeHtml(item.name)}
-
-            </div>
-
-            <div class="modal-criterion-max">
-
-              ${formatNumber(item.maxScore)} 分
-
-            </div>
-
-          </div>
-
-        `
-
-      )
-      .join("");
-
-
-  document
-    .getElementById(
-      "criteriaModalBody"
-    )
-    .innerHTML = `
-
-      <div class="modal-meta">
-
-
-        <div class="modal-meta-card">
-
-          <div class="modal-meta-label">
-            階段總分
-          </div>
-
-          <div class="modal-meta-value">
-            ${formatNumber(total)} 分
-          </div>
-
-        </div>
-
-
-        <div class="modal-meta-card">
-
-          <div class="modal-meta-label">
-            最終權重
-          </div>
-
-          <div class="modal-meta-value">
-            ${escapeHtml(weightText)}
-          </div>
-
-        </div>
-
-
-      </div>
-
-
-      ${
-        rows ||
-
-        '<div class="empty-stage">目前沒有評分項目。</div>'
-      }
-
-    `;
-
-
-  document
-    .getElementById(
-      "criteriaModal"
+    byId(
+      "scoreModal"
     )
     .style
     .display =
       "flex";
 
-}
 
-
-function closeCriteriaModal() {
-
-  document
-    .getElementById(
-      "criteriaModal"
+    byId(
+      "scoreModalTitle"
     )
-    .style
-    .display =
-      "none";
+    .textContent =
+      "正在讀取評分資料...";
+
+
+    byId(
+      "scoreModalSub"
+    )
+    .textContent =
+      "";
+
+
+    byId(
+      "criteriaList"
+    )
+    .innerHTML = `
+
+      <div class="state">
+
+        <div class="spinner"></div>
+
+        正在讀取...
+
+      </div>
+
+    `;
+
+
+    byId(
+      "saveDraftBtn"
+    )
+    .disabled =
+      true;
+
+
+    byId(
+      "submitScoreBtn"
+    )
+    .disabled =
+      true;
+
+
+    const result =
+
+      await judgeApi(
+
+        "judgeGetScore",
+
+        {
+
+          stageKey:
+            stageKey,
+
+          clubName:
+            clubName
+
+        }
+
+      );
+
+
+    if (
+      isUnauthorized(
+        result
+      )
+    ) {
+
+      closeScoreModal(
+        true
+      );
+
+
+      handleUnauthorized();
+
+      return;
+
+    }
+
+
+    if (
+      !result ||
+      !result.success
+    ) {
+
+      throw new Error(
+
+        result &&
+        result.message
+
+          ? result.message
+
+          : "無法取得評分資料"
+
+      );
+
+    }
+
+
+    APP.scoreContext = {
+
+      stageKey:
+        stageKey,
+
+      clubName:
+        clubName,
+
+      result:
+        result
+
+    };
+
+
+    renderScoreModal();
+
+  }
+
+  catch (error) {
+
+    byId(
+      "scoreModalTitle"
+    )
+    .textContent =
+      "評分資料讀取失敗";
+
+
+    byId(
+      "criteriaList"
+    )
+    .innerHTML =
+      "";
+
+
+    byId(
+      "scoreError"
+    )
+    .textContent =
+
+      error.message ||
+      "讀取失敗";
+
+  }
+
+  finally {
+
+    APP.busy =
+      false;
+
+  }
 
 }
 
 
 /* ============================================================
-   登出
+   Render Score Modal
    ============================================================ */
 
-async function logoutJudge() {
+function renderScoreModal() {
 
-  if (APP.busy) {
+  const context =
+    APP.scoreContext;
+
+
+  if (!context) {
+
+    return;
+
+  }
+
+
+  const result =
+    context.result;
+
+
+  const stage =
+    result.stage ||
+    {};
+
+
+  const record =
+    result.record ||
+    null;
+
+
+  const criteria =
+
+    Array.isArray(
+      stage.criteria
+    )
+
+      ? stage.criteria
+
+      : [];
+
+
+  const locked =
+
+    result.locked ===
+    true;
+
+
+  byId(
+    "scoreModalTitle"
+  )
+  .textContent =
+
+    (
+      context.stageKey ===
+      "dataReview"
+
+        ? "📄 "
+
+        : "🏫 "
+    )
+
+    +
+
+    context.clubName;
+
+
+  byId(
+    "scoreModalSub"
+  )
+  .textContent =
+
+    String(
+      result.club &&
+      result.club.category
+
+        ? result.club.category
+
+        : ""
+    )
+
+    +
+
+    "｜" +
+
+    String(
+      stage.name ||
+      "評分"
+    )
+
+    +
+
+    "｜設定 v" +
+
+    String(
+      stage.configRevision ||
+      "-"
+    );
+
+
+  const banner =
+    byId(
+      "scoreBanner"
+    );
+
+
+  if (
+    locked
+  ) {
+
+    banner.className =
+      "score-banner locked";
+
+
+    banner.textContent =
+      "🔒 此筆評分已正式送出並鎖定，只能查看，不能修改。";
+
+  }
+
+  else if (
+    result.staleDraft
+  ) {
+
+    banner.className =
+      "score-banner warning";
+
+
+    banner.textContent =
+      "⚠️ 此草稿是舊版評分規則建立的，請重新確認每一項分數後再儲存。";
+
+  }
+
+  else {
+
+    banner.className =
+      "score-banner";
+
+
+    banner.textContent =
+      "💡 可以先儲存草稿；全部項目填完後才能正式送出。正式送出後會鎖定。";
+
+  }
+
+
+  const scoreMap =
+
+    record &&
+    record.scores
+
+      ? record.scores
+
+      : {};
+
+
+  byId(
+    "criteriaList"
+  )
+  .innerHTML =
+
+    criteria
+
+      .map(
+
+        (
+          item,
+          index
+        ) => {
+
+          const raw =
+            scoreMap[
+              item.id
+            ];
+
+
+          const value =
+
+            raw ===
+            null
+
+            ||
+
+            raw ===
+            undefined
+
+              ? ""
+
+              : raw;
+
+
+          return `
+
+            <div class="criterion">
+
+              <div>
+
+                <div class="criterion-name">
+
+                  ${index + 1}.
+                  ${escapeHtml(item.name)}
+
+                </div>
+
+                <div class="criterion-max">
+
+                  本項最高
+                  ${formatNumber(item.maxScore)}
+                  分
+
+                </div>
+
+              </div>
+
+
+              <div class="score-input-wrap">
+
+                <input
+                  class="score-input"
+                  data-criterion-id="${escapeAttribute(item.id)}"
+                  data-max="${escapeAttribute(item.maxScore)}"
+                  type="number"
+                  min="0"
+                  max="${escapeAttribute(item.maxScore)}"
+                  step="0.01"
+                  value="${escapeAttribute(value)}"
+                  ${locked ? "disabled" : ""}
+                  oninput="updateLiveScore()"
+                >
+
+                <span class="score-unit">
+
+                  /
+                  ${formatNumber(item.maxScore)}
+
+                </span>
+
+              </div>
+
+            </div>
+
+          `;
+
+        }
+
+      )
+      .join("");
+
+
+  byId(
+    "saveDraftBtn"
+  )
+  .disabled =
+    locked;
+
+
+  byId(
+    "submitScoreBtn"
+  )
+  .disabled =
+    locked;
+
+
+  byId(
+    "saveDraftBtn"
+  )
+  .style
+  .display =
+
+    locked
+
+      ? "none"
+
+      : "";
+
+
+  byId(
+    "submitScoreBtn"
+  )
+  .style
+  .display =
+
+    locked
+
+      ? "none"
+
+      : "";
+
+
+  byId(
+    "scoreUpdatedText"
+  )
+  .textContent =
+
+    locked
+
+      ? "正式送出：" +
+        formatDate(
+          record &&
+          record.submittedAt
+        )
+
+      : record &&
+        record.updatedAt
+
+        ? "草稿更新：" +
+          formatDate(
+            record.updatedAt
+          )
+
+        : "尚未儲存";
+
+
+  byId(
+    "scoreError"
+  )
+  .textContent =
+    "";
+
+
+  updateLiveScore();
+
+}
+
+
+/* ============================================================
+   Collect Scores
+   ============================================================ */
+
+function collectScores(
+  requireAll =
+    false
+) {
+
+  const inputs =
+
+    Array.from(
+
+      document
+        .querySelectorAll(
+          "#criteriaList .score-input"
+        )
+
+    );
+
+
+  const scores =
+    {};
+
+
+  let total =
+    0;
+
+
+  let answered =
+    0;
+
+
+  let firstError =
+    null;
+
+
+  inputs.forEach(
+
+    input => {
+
+      input
+        .classList
+        .remove(
+          "invalid"
+        );
+
+
+      const id =
+        input.dataset
+          .criterionId;
+
+
+      const max =
+        Number(
+          input.dataset.max
+        );
+
+
+      const text =
+        input.value
+          .trim();
+
+
+      if (
+        text ===
+        ""
+      ) {
+
+        scores[
+          id
+        ] =
+          null;
+
+
+        if (
+          requireAll &&
+          !firstError
+        ) {
+
+          firstError =
+            "還有評分項目尚未填寫。";
+
+
+          input
+            .classList
+            .add(
+              "invalid"
+            );
+
+        }
+
+
+        return;
+
+      }
+
+
+      const number =
+        Number(
+          text
+        );
+
+
+      if (
+
+        !Number.isFinite(
+          number
+        )
+
+        ||
+
+        number <
+        0
+
+        ||
+
+        number >
+        max
+
+      ) {
+
+        if (
+          !firstError
+        ) {
+
+          firstError =
+
+            "分數必須介於 0～" +
+            formatNumber(
+              max
+            ) +
+            " 分。";
+
+        }
+
+
+        input
+          .classList
+          .add(
+            "invalid"
+          );
+
+
+        return;
+
+      }
+
+
+      const rounded =
+
+        Math.round(
+          number *
+          100
+        )
+
+        /
+
+        100;
+
+
+      scores[
+        id
+      ] =
+        rounded;
+
+
+      total +=
+        rounded;
+
+
+      answered++;
+
+    }
+
+  );
+
+
+  return {
+
+    success:
+      !firstError,
+
+    error:
+      firstError,
+
+    scores:
+      scores,
+
+    total:
+
+      Math.round(
+        total *
+        100
+      )
+
+      /
+
+      100,
+
+    answered:
+      answered,
+
+    count:
+      inputs.length
+
+  };
+
+}
+
+
+/* ============================================================
+   Live Total
+   ============================================================ */
+
+function updateLiveScore() {
+
+  const context =
+    APP.scoreContext;
+
+
+  if (!context) {
+
+    return;
+
+  }
+
+
+  const data =
+    collectScores(
+      false
+    );
+
+
+  const max =
+
+    Number(
+
+      context.result &&
+      context.result.stage
+
+        ? context.result
+            .stage
+            .totalScore
+
+        : 0
+
+    );
+
+
+  byId(
+    "liveTotal"
+  )
+  .textContent =
+
+    formatNumber(
+      data.total
+    )
+
+    +
+
+    " / " +
+
+    formatNumber(
+      max
+    );
+
+
+  byId(
+    "answerProgress"
+  )
+  .textContent =
+
+    data.answered +
+    " / " +
+    data.count +
+    " 項已填";
+
+
+  byId(
+    "scoreError"
+  )
+  .textContent =
+
+    data.error ||
+    "";
+
+}
+
+
+/* ============================================================
+   Save Draft
+   ============================================================ */
+
+async function saveDraft() {
+
+  if (
+    APP.busy ||
+    !APP.scoreContext
+  ) {
+
+    return;
+
+  }
+
+
+  const data =
+    collectScores(
+      false
+    );
+
+
+  if (
+    !data.success
+  ) {
+
+    byId(
+      "scoreError"
+    )
+    .textContent =
+      data.error;
+
 
     return;
 
@@ -2633,11 +4428,642 @@ async function logoutJudge() {
 
 
   const button =
+    byId(
+      "saveDraftBtn"
+    );
 
-    document
-      .getElementById(
-        "logoutBtn"
+
+  const context =
+    APP.scoreContext;
+
+
+  try {
+
+    APP.busy =
+      true;
+
+
+    button.disabled =
+      true;
+
+
+    button.textContent =
+      "儲存中...";
+
+
+    const result =
+
+      await judgeApi(
+
+        "judgeSaveScoreDraft",
+
+        {
+
+          stageKey:
+            context.stageKey,
+
+          clubName:
+            context.clubName,
+
+          scores:
+            data.scores
+
+        }
+
       );
+
+
+    if (
+      isUnauthorized(
+        result
+      )
+    ) {
+
+      closeScoreModal(
+        true
+      );
+
+
+      handleUnauthorized();
+
+      return;
+
+    }
+
+
+    if (
+      !result ||
+      !result.success
+    ) {
+
+      throw new Error(
+
+        result &&
+        result.message
+
+          ? result.message
+
+          : "草稿儲存失敗"
+
+      );
+
+    }
+
+
+    context.result.record =
+      result.record;
+
+
+    context.result.locked =
+      false;
+
+
+    byId(
+      "scoreUpdatedText"
+    )
+    .textContent =
+
+      "草稿更新：" +
+
+      formatDate(
+        result.record &&
+        result.record.updatedAt
+      );
+
+
+    toast(
+      "💾 草稿已儲存"
+    );
+
+
+    await refreshDashboardSilently();
+
+  }
+
+  catch (error) {
+
+    byId(
+      "scoreError"
+    )
+    .textContent =
+
+      error.message ||
+      "草稿儲存失敗";
+
+  }
+
+  finally {
+
+    APP.busy =
+      false;
+
+
+    button.disabled =
+      false;
+
+
+    button.textContent =
+      "💾 儲存草稿";
+
+  }
+
+}
+
+
+/* ============================================================
+   Submit Confirm
+   ============================================================ */
+
+function openSubmitConfirm() {
+
+  if (
+    APP.busy ||
+    !APP.scoreContext
+  ) {
+
+    return;
+
+  }
+
+
+  const data =
+    collectScores(
+      true
+    );
+
+
+  if (
+    !data.success
+  ) {
+
+    byId(
+      "scoreError"
+    )
+    .textContent =
+      data.error;
+
+
+    return;
+
+  }
+
+
+  const context =
+    APP.scoreContext;
+
+
+  const max =
+
+    Number(
+
+      context.result &&
+      context.result.stage
+
+        ? context.result
+            .stage
+            .totalScore
+
+        : 0
+
+    );
+
+
+  context.pendingSubmitScores =
+    data.scores;
+
+
+  byId(
+    "confirmText"
+  )
+  .innerHTML =
+
+    "社團：<b>" +
+
+    escapeHtml(
+      context.clubName
+    )
+
+    +
+
+    "</b><br>" +
+
+    "階段：<b>" +
+
+    escapeHtml(
+
+      context.result &&
+      context.result.stage
+
+        ? context.result
+            .stage
+            .name
+
+        : ""
+
+    )
+
+    +
+
+    "</b><br>" +
+
+    "總分：<b>" +
+
+    formatNumber(
+      data.total
+    )
+
+    +
+
+    " / " +
+
+    formatNumber(
+      max
+    )
+
+    +
+
+    "</b>";
+
+
+  byId(
+    "confirmModal"
+  )
+  .style
+  .display =
+    "flex";
+
+}
+
+
+function closeSubmitConfirm() {
+
+  if (
+    APP.busy
+  ) {
+
+    return;
+
+  }
+
+
+  byId(
+    "confirmModal"
+  )
+  .style
+  .display =
+    "none";
+
+}
+
+
+/* ============================================================
+   Submit Score
+   ============================================================ */
+
+async function submitScore() {
+
+  if (
+    APP.busy ||
+    !APP.scoreContext
+  ) {
+
+    return;
+
+  }
+
+
+  const context =
+    APP.scoreContext;
+
+
+  const collected =
+    collectScores(
+      true
+    );
+
+
+  if (
+    !collected.success
+  ) {
+
+    byId(
+      "confirmModal"
+    )
+    .style
+    .display =
+      "none";
+
+
+    byId(
+      "scoreError"
+    )
+    .textContent =
+      collected.error;
+
+
+    return;
+
+  }
+
+
+  const scores =
+
+    context
+      .pendingSubmitScores
+
+      ||
+
+      collected.scores;
+
+
+  const button =
+    byId(
+      "confirmSubmitBtn"
+    );
+
+
+  try {
+
+    APP.busy =
+      true;
+
+
+    button.disabled =
+      true;
+
+
+    button.textContent =
+      "送出中...";
+
+
+    const result =
+
+      await judgeApi(
+
+        "judgeSubmitScore",
+
+        {
+
+          stageKey:
+            context.stageKey,
+
+          clubName:
+            context.clubName,
+
+          scores:
+            scores
+
+        }
+
+      );
+
+
+    if (
+      isUnauthorized(
+        result
+      )
+    ) {
+
+      byId(
+        "confirmModal"
+      )
+      .style
+      .display =
+        "none";
+
+
+      closeScoreModal(
+        true
+      );
+
+
+      handleUnauthorized();
+
+      return;
+
+    }
+
+
+    if (
+      !result ||
+      !result.success
+    ) {
+
+      throw new Error(
+
+        result &&
+        result.message
+
+          ? result.message
+
+          : "正式送出失敗"
+
+      );
+
+    }
+
+
+    byId(
+      "confirmModal"
+    )
+    .style
+    .display =
+      "none";
+
+
+    toast(
+      "✅ 評分已正式送出並鎖定"
+    );
+
+
+    await refreshDashboardSilently();
+
+
+    closeScoreModal(
+      true
+    );
+
+  }
+
+  catch (error) {
+
+    byId(
+      "confirmModal"
+    )
+    .style
+    .display =
+      "none";
+
+
+    byId(
+      "scoreError"
+    )
+    .textContent =
+
+      error.message ||
+      "正式送出失敗";
+
+
+    toast(
+
+      "❌ " +
+
+      (
+        error.message ||
+        "正式送出失敗"
+      )
+
+    );
+
+  }
+
+  finally {
+
+    APP.busy =
+      false;
+
+
+    button.disabled =
+      false;
+
+
+    button.textContent =
+      "確認送出並鎖定";
+
+  }
+
+}
+
+
+/* ============================================================
+   Silent Refresh
+   ============================================================ */
+
+async function refreshDashboardSilently() {
+
+  const dash =
+
+    await judgeApi(
+      "judgeScoreDashboard"
+    );
+
+
+  if (
+    isUnauthorized(
+      dash
+    )
+  ) {
+
+    handleUnauthorized();
+
+    return false;
+
+  }
+
+
+  if (
+    !dash ||
+    !dash.success
+  ) {
+
+    throw new Error(
+
+      dash &&
+      dash.message
+
+        ? dash.message
+
+        : "無法更新進度"
+
+    );
+
+  }
+
+
+  APP.dashboard =
+    dash;
+
+
+  if (
+    dash.judge
+  ) {
+
+    APP.judge =
+      dash.judge;
+
+  }
+
+
+  renderProfile();
+
+  renderDashboard();
+
+
+  return true;
+
+}
+
+
+/* ============================================================
+   Close Score Modal
+   ============================================================ */
+
+function closeScoreModal(
+  force =
+    false
+) {
+
+  if (
+    APP.busy &&
+    !force
+  ) {
+
+    return;
+
+  }
+
+
+  byId(
+    "scoreModal"
+  )
+  .style
+  .display =
+    "none";
+
+
+  byId(
+    "confirmModal"
+  )
+  .style
+  .display =
+    "none";
+
+
+  APP.scoreContext =
+    null;
+
+}
+
+
+/* ============================================================
+   Logout
+   ============================================================ */
+
+async function logoutJudge() {
+
+  if (
+    APP.busy
+  ) {
+
+    return;
+
+  }
+
+
+  const button =
+    byId(
+      "logoutBtn"
+    );
 
 
   try {
@@ -2695,7 +5121,7 @@ async function logoutJudge() {
 
 
 /* ============================================================
-   清除 Session
+   Clear Session
    ============================================================ */
 
 function clearSession() {
@@ -2712,7 +5138,11 @@ function clearSession() {
     null;
 
 
-  APP.scoreConfig =
+  APP.dashboard =
+    null;
+
+
+  APP.scoreContext =
     null;
 
 
@@ -2725,66 +5155,58 @@ function clearSession() {
 
 
 /* ============================================================
-   畫面切換
+   Views
    ============================================================ */
 
 function showLogin() {
 
-  document
-    .getElementById(
-      "loginScreen"
-    )
-    .style
-    .display =
-      "flex";
+  byId(
+    "loginScreen"
+  )
+  .style
+  .display =
+    "flex";
 
 
-  document
-    .getElementById(
-      "judgeApp"
-    )
-    .style
-    .display =
-      "none";
+  byId(
+    "judgeApp"
+  )
+  .style
+  .display =
+    "none";
 
 
-  document
-    .getElementById(
-      "stageGrid"
-    )
-    .classList
-    .add(
-      "hidden"
-    );
+  setTimeout(
 
+    () =>
+      byId(
+        "username"
+      )
+      .focus(),
 
-  document
-    .getElementById(
-      "username"
-    )
-    .focus();
+    0
+
+  );
 
 }
 
 
 function showApp() {
 
-  document
-    .getElementById(
-      "loginScreen"
-    )
-    .style
-    .display =
-      "none";
+  byId(
+    "loginScreen"
+  )
+  .style
+  .display =
+    "none";
 
 
-  document
-    .getElementById(
-      "judgeApp"
-    )
-    .style
-    .display =
-      "block";
+  byId(
+    "judgeApp"
+  )
+  .style
+  .display =
+    "block";
 
 }
 
@@ -2794,83 +5216,50 @@ function showApp() {
    ============================================================ */
 
 function setDashboardLoading(
-  loading,
-  text =
-    "正在讀取評審資料..."
+  text
 ) {
 
-  const box =
-
-    document
-      .getElementById(
-        "dashboardLoading"
-      );
-
-
-  const grid =
-
-    document
-      .getElementById(
-        "stageGrid"
-      );
+  byId(
+    "stagePanel"
+  )
+  .classList
+  .add(
+    "hidden"
+  );
 
 
-  if (loading) {
-
-    box.style.display =
-      "block";
-
-
-    box.innerHTML =
-
-      `<div class="spinner"></div>${escapeHtml(text)}`;
+  byId(
+    "dashboardState"
+  )
+  .style
+  .display =
+    "block";
 
 
-    grid
-      .classList
-      .add(
-        "hidden"
-      );
+  byId(
+    "dashboardState"
+  )
+  .innerHTML = `
 
-  }
+    <div class="spinner"></div>
 
-  else {
+    ${escapeHtml(text)}
 
-    box.style.display =
-      "none";
-
-
-    grid
-      .classList
-      .remove(
-        "hidden"
-      );
-
-  }
+  `;
 
 }
 
 
 /* ============================================================
-   密碼顯示
+   Password
    ============================================================ */
 
 function togglePassword() {
 
   const input =
-
-    document
-      .getElementById(
-        "password"
-      );
-
-
-  const button =
-
-    document
-      .getElementById(
-        "passwordToggle"
-      );
+    byId(
+      "password"
+    );
 
 
   const show =
@@ -2888,7 +5277,10 @@ function togglePassword() {
       : "password";
 
 
-  button.textContent =
+  byId(
+    "passwordToggle"
+  )
+  .textContent =
 
     show
 
@@ -2900,10 +5292,12 @@ function togglePassword() {
 
 
 /* ============================================================
-   日期
+   Date
    ============================================================ */
 
-function formatDate(value) {
+function formatDate(
+  value
+) {
 
   if (!value) {
 
@@ -2969,13 +5363,14 @@ function formatDate(value) {
 
 
 /* ============================================================
-   分數格式
+   Number
    ============================================================ */
 
-function formatNumber(value) {
+function formatNumber(
+  value
+) {
 
   const number =
-
     Number(
       value
     );
@@ -2992,28 +5387,29 @@ function formatNumber(value) {
   }
 
 
-  const rounded =
+  return String(
 
     Math.round(
       number *
       100
     )
+
     /
-    100;
 
+    100
 
-  return String(
-    rounded
   );
 
 }
 
 
 /* ============================================================
-   HTML escape
+   Escape
    ============================================================ */
 
-function escapeHtml(value) {
+function escapeHtml(
+  value
+) {
 
   return String(
     value ??
@@ -3048,6 +5444,17 @@ function escapeHtml(value) {
 }
 
 
+function escapeAttribute(
+  value
+) {
+
+  return escapeHtml(
+    value
+  );
+
+}
+
+
 /* ============================================================
    Toast
    ============================================================ */
@@ -3056,14 +5463,14 @@ let toastTimer =
   null;
 
 
-function toast(message) {
+function toast(
+  message
+) {
 
   const element =
-
-    document
-      .getElementById(
-        "toast"
-      );
+    byId(
+      "toast"
+    );
 
 
   element.textContent =
@@ -3087,7 +5494,6 @@ function toast(message) {
     setTimeout(
 
       () =>
-
         element
           .classList
           .remove(
