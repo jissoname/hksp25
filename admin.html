@@ -163,7 +163,19 @@
 
 <div class="panel-body">
 
-<div class="toolbar">
+<div class="notice">
+請先從下拉選單選擇要管理的評審；選定後只顯示該評審的帳號、權限及操作按鈕，不會一次展開全部評審。
+</div>
+
+<div class="toolbar" style="margin-top:12px">
+
+<select
+id="judgeManageSelect"
+class="field grow"
+onchange="renderJudges()"
+>
+<option value="">請選擇評審帳號</option>
+</select>
 
 <button class="btn btn-primary" onclick="openJudgeModal()">
 ＋ 新增評審
@@ -3226,9 +3238,14 @@ j.judgeId ||
 
 }
 
-async function loadJudges(){
+async function loadJudges(
+preferredJudgeId=""
+){
 
 try{
+
+$("judgeManageSelect").disabled =
+true;
 
 const r =
 await api(
@@ -3293,6 +3310,10 @@ S.judges.length;
 $("judgeMeta").textContent =
 `${S.judges.length} 位評審｜可分配 ${S.availableScoreSections.length} 個評分大項`;
 
+renderJudgeManageOptions(
+preferredJudgeId
+);
+
 renderJudges();
 
 renderJudgeExportOptions();
@@ -3306,15 +3327,179 @@ $("judgeList").innerHTML =
 </div>`;
 
 }
+finally{
+
+$("judgeManageSelect").disabled =
+false;
+
+}
+
+}
+
+function renderJudgeManageOptions(
+preferredJudgeId=""
+){
+
+const el =
+$("judgeManageSelect");
+
+if(!el)return;
+
+const current =
+String(
+preferredJudgeId ||
+el.value ||
+""
+);
+
+const judges =
+(S.judges || [])
+.slice()
+.sort(
+(a,b)=>{
+
+const nameCompare =
+String(
+a.displayName ||
+a.name ||
+""
+)
+.localeCompare(
+String(
+b.displayName ||
+b.name ||
+""
+),
+"zh-TW"
+);
+
+if(nameCompare!==0){
+return nameCompare;
+}
+
+return String(
+a.username ||
+""
+)
+.localeCompare(
+String(
+b.username ||
+""
+),
+"zh-TW"
+);
+
+}
+);
+
+el.innerHTML =
+'<option value="">請選擇評審帳號</option>' +
+judges.map(
+judge=>{
+
+const id =
+String(
+judgeIdOf(judge) ||
+""
+);
+
+const name =
+judge.displayName ||
+judge.name ||
+"未命名評審";
+
+const account =
+judge.username ||
+"無帳號";
+
+const active =
+judge.active !== false &&
+judge.status !== "disabled";
+
+return `
+<option value="${attr(id)}">
+${esc(name)}（${esc(account)}）－${active?"啟用":"停用"}
+</option>
+`;
+
+}
+)
+.join("");
+
+el.value =
+judges.some(
+judge=>
+String(
+judgeIdOf(judge) ||
+""
+)===current
+)
+?
+current
+:
+"";
 
 }
 
 function renderJudges(){
 
-$("judgeList").innerHTML =
-S.judges.length
-?
-S.judges.map(
+const root =
+$("judgeList");
+
+if(!S.judges.length){
+
+$("judgeMeta").textContent =
+"目前沒有評審帳號";
+
+root.innerHTML =
+'<div class="state">目前沒有評審帳號</div>';
+
+return;
+
+}
+
+const selectedJudgeId =
+$("judgeManageSelect")?.value ||
+"";
+
+if(!selectedJudgeId){
+
+$("judgeMeta").textContent =
+`共 ${S.judges.length} 位評審｜請先選擇評審帳號`;
+
+root.innerHTML =
+'<div class="state">請先從上方選擇一位評審進行管理。</div>';
+
+return;
+
+}
+
+const selectedJudge =
+S.judges.find(
+judge=>
+String(
+judgeIdOf(judge) ||
+""
+)===selectedJudgeId
+);
+
+if(!selectedJudge){
+
+$("judgeMeta").textContent =
+"找不到選擇的評審";
+
+root.innerHTML =
+'<div class="state">找不到選擇的評審，請重新選擇。</div>';
+
+return;
+
+}
+
+$("judgeMeta").textContent =
+`目前：${selectedJudge.displayName || selectedJudge.name || "未命名評審"}（${selectedJudge.username || "無帳號"}）｜共 ${S.judges.length} 位評審`;
+
+root.innerHTML =
+[selectedJudge].map(
 j=>{
 
 const id =
@@ -3456,9 +3641,7 @@ onclick="deleteJudge('${encodeURIComponent(id)}')"
 
 }
 )
-.join("")
-:
-'<div class="state">目前沒有評審帳號</div>';
+.join("");
 
 }
 
@@ -3651,7 +3834,35 @@ toast(
 "✅ 評審資料與權限已儲存"
 );
 
-await loadJudges();
+await loadJudges(
+id
+);
+
+if(!id){
+
+const createdJudge =
+S.judges.find(
+judge=>
+String(
+judge.username ||
+""
+)===username
+);
+
+if(createdJudge){
+
+$("judgeManageSelect").value =
+String(
+judgeIdOf(createdJudge) ||
+""
+);
+
+renderJudges();
+
+}
+
+}
+
 await loadJudgeProgress();
 await loadScoreAggregation();
 await loadRanking();
