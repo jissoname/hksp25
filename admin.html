@@ -1111,6 +1111,23 @@ const SESSION_KEY =
 const EVENT_NAME =
 "115學年度第一學期全校學生社團評選暨觀摩活動";
 
+const DEFAULT_REQUEST_TIMEOUT_MS =
+45000;
+
+const HEAVY_REQUEST_TIMEOUT_MS =
+180000;
+
+const HEAVY_REQUEST_ACTIONS =
+new Set([
+"adminJudgeScoreProgress",
+"adminScoreAggregation",
+"adminScoreAggregationSummary",
+"adminClubScoreAggregation",
+"adminRanking",
+"adminCategoryRanking",
+"adminJudgeConfirmationExport"
+]);
+
 const CLUB_CATEGORIES = [
 "全校自治性",
 "自治綜合性",
@@ -1237,10 +1254,19 @@ async function post(payload){
 const c =
 new AbortController();
 
+const timeoutMs =
+HEAVY_REQUEST_ACTIONS.has(
+payload && payload.action
+)
+?
+HEAVY_REQUEST_TIMEOUT_MS
+:
+DEFAULT_REQUEST_TIMEOUT_MS;
+
 const t =
 setTimeout(
 ()=>c.abort(),
-15000
+timeoutMs
 );
 
 try{
@@ -1506,15 +1532,11 @@ async function refreshAllData(){
 
 if(!S.token)return;
 
-const jobs = [
+const basicJobs = [
 
 loadScoreConfig(),
 
 loadJudges(),
-
-loadJudgeProgress(),
-
-loadScoreAggregation(),
 
 loadClubs(),
 
@@ -1529,10 +1551,21 @@ loadClouds()
 ];
 
 await Promise.allSettled(
-jobs
+basicJobs
 );
 
-/* Ranking 依賴最新社團與成績彙整，放在核心資料完成後再讀取 */
+/*
+ * 進度、彙整與排名都會大量讀取評分資料。
+ * 改為依序執行，避免同時啟動三個重型 Apps Script 運算而互相拖慢。
+ */
+await Promise.allSettled([
+loadJudgeProgress()
+]);
+
+await Promise.allSettled([
+loadScoreAggregation()
+]);
+
 await Promise.allSettled([
 loadRanking()
 ]);
@@ -2907,11 +2940,9 @@ r.validation.valid
 
 }
 
-await Promise.all([
-loadJudges(),
-loadScoreAggregation(),
-loadRanking()
-]);
+await loadJudges();
+await loadScoreAggregation();
+await loadRanking();
 
 return r;
 
@@ -2994,10 +3025,8 @@ toast(
 "已取消發布"
 );
 
-await Promise.all([
-loadScoreAggregation(),
-loadRanking()
-]);
+await loadScoreAggregation();
+await loadRanking();
 
 return;
 
@@ -3072,10 +3101,8 @@ toast(
 "✅ 已發布給評審"
 );
 
-await Promise.all([
-loadScoreAggregation(),
-loadRanking()
-]);
+await loadScoreAggregation();
+await loadRanking();
 
 }
 
@@ -3607,12 +3634,10 @@ toast(
 "✅ 評審資料與權限已儲存"
 );
 
-await Promise.all([
-loadJudges(),
-loadJudgeProgress(),
-loadScoreAggregation(),
-loadRanking()
-]);
+await loadJudges();
+await loadJudgeProgress();
+await loadScoreAggregation();
+await loadRanking();
 
 }
 catch(e){
@@ -3712,12 +3737,10 @@ return;
 
 }
 
-await Promise.all([
-loadJudges(),
-loadJudgeProgress(),
-loadScoreAggregation(),
-loadRanking()
-]);
+await loadJudges();
+await loadJudgeProgress();
+await loadScoreAggregation();
+await loadRanking();
 
 toast(
 "✅ 狀態已更新"
@@ -3770,12 +3793,10 @@ return;
 
 }
 
-await Promise.all([
-loadJudges(),
-loadJudgeProgress(),
-loadScoreAggregation(),
-loadRanking()
-]);
+await loadJudges();
+await loadJudgeProgress();
+await loadScoreAggregation();
+await loadRanking();
 
 toast(
 "✅ 評審已刪除"
@@ -4548,11 +4569,9 @@ toast(
 "🔓 已解鎖，評審可以重新修改"
 );
 
-await Promise.all([
-loadJudgeProgress(),
-loadScoreAggregation(),
-loadRanking()
-]);
+await loadJudgeProgress();
+await loadScoreAggregation();
+await loadRanking();
 
 if(
 $("rawScoreModal").style.display==="flex"
@@ -6706,10 +6725,11 @@ closeModal(
 await Promise.all([
 loadClubs(),
 loadClouds(),
-loadForms(),
-loadScoreAggregation(),
-loadRanking()
+loadForms()
 ]);
+
+await loadScoreAggregation();
+await loadRanking();
 
 toast(
 "✅ 社團資料已儲存"
@@ -6774,10 +6794,11 @@ await Promise.all([
 loadClubs(),
 loadClouds(),
 loadForms(),
-loadBindings(),
-loadScoreAggregation(),
-loadRanking()
+loadBindings()
 ]);
+
+await loadScoreAggregation();
+await loadRanking();
 
 toast(
 "✅ 社團已刪除"
