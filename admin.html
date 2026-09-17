@@ -199,7 +199,7 @@
 <div class="panel-body">
 
 <div class="notice">
-先選擇一位評審，再依「評分大項 → 社團」查看目前狀態，不會一次展開所有評審。
+先選擇一位評審，再選擇要查看的社團；社團預設為「全部社團」，也可以指定單一社團細看。
 已正式送出的分數可以查看原始分數、修改歷史，並由管理員指定單筆解鎖。
 </div>
 
@@ -208,9 +208,18 @@
 <select
 id="judgeProgressJudge"
 class="field"
-onchange="renderJudgeProgress()"
+onchange="handleJudgeProgressJudgeChange()"
 >
 <option value="">請選擇評審</option>
+</select>
+
+<select
+id="judgeProgressClub"
+class="field"
+onchange="renderJudgeProgress()"
+disabled
+>
+<option value="all">全部社團（預設）</option>
 </select>
 
 <input
@@ -3855,6 +3864,9 @@ try{
 $("judgeProgressJudge").disabled =
 true;
 
+$("judgeProgressClub").disabled =
+true;
+
 $("judgeProgressList").innerHTML =
 '<div class="state"><div class="spinner"></div>正在讀取評審進度...</div>';
 
@@ -3900,6 +3912,10 @@ s.completionRate??0
 }%`;
 
 renderJudgeProgressJudgeOptions();
+
+renderJudgeProgressClubOptions(
+false
+);
 
 renderJudgeProgress();
 
@@ -4022,6 +4038,151 @@ el.value =
 
 }
 
+function handleJudgeProgressJudgeChange(){
+
+renderJudgeProgressClubOptions(
+true
+);
+
+renderJudgeProgress();
+
+}
+
+function renderJudgeProgressClubOptions(
+resetToAll=false
+){
+
+const el =
+$("judgeProgressClub");
+
+if(!el)return;
+
+const selectedJudgeId =
+$("judgeProgressJudge")?.value ||
+"";
+
+const judges =
+S.judgeProgress &&
+Array.isArray(
+S.judgeProgress.judges
+)
+?
+S.judgeProgress.judges
+:
+[];
+
+const selectedJudge =
+judges.find(
+judge=>
+String(
+judgeIdOf(judge) ||
+""
+)===selectedJudgeId
+);
+
+if(!selectedJudge){
+
+el.innerHTML =
+'<option value="all">全部社團（預設）</option>';
+
+el.value =
+"all";
+
+el.disabled =
+true;
+
+return;
+
+}
+
+const current =
+resetToAll
+?
+"all"
+:
+el.value ||
+"all";
+
+const clubMap =
+new Map();
+
+(selectedJudge.sections || [])
+.forEach(
+section=>{
+
+(section.clubs || [])
+.forEach(
+club=>{
+
+const clubName =
+String(
+club.clubName ||
+club.name ||
+""
+)
+.trim();
+
+if(
+!clubName ||
+clubMap.has(clubName)
+){
+return;
+}
+
+clubMap.set(
+clubName,
+{
+name:clubName,
+category:String(
+club.category ||
+""
+)
+}
+);
+
+}
+);
+
+}
+);
+
+const clubs =
+Array.from(
+clubMap.values()
+)
+.sort(
+(a,b)=>
+a.name.localeCompare(
+b.name,
+"zh-TW"
+)
+);
+
+el.innerHTML =
+'<option value="all">全部社團（預設）</option>' +
+clubs.map(
+club=>`
+<option value="${attr(club.name)}">
+${esc(club.name)}${club.category?`（${esc(club.category)}）`:""}
+</option>
+`
+)
+.join("");
+
+el.disabled =
+clubs.length === 0;
+
+el.value =
+clubs.some(
+club=>club.name===current
+)
+?
+current
+:
+"all";
+
+}
+
 function renderJudgeProgress(){
 
 const root =
@@ -4082,8 +4243,12 @@ const selectedSummary =
 selectedJudge.summary ||
 {};
 
+const selectedClubName =
+$("judgeProgressClub")?.value ||
+"all";
+
 $("judgeProgressMeta").textContent =
-`${selectedJudge.displayName || selectedJudge.name || "未命名評審"}｜已送出 ${selectedSummary.submittedCount??0}/${selectedSummary.totalExpected??0}｜草稿 ${selectedSummary.draftCount??0}｜待重送 ${selectedSummary.reopenedCount??0}｜完成率 ${selectedSummary.completionRate??0}%`;
+`${selectedJudge.displayName || selectedJudge.name || "未命名評審"}｜社團 ${selectedClubName==="all"?"全部":selectedClubName}｜已送出 ${selectedSummary.submittedCount??0}/${selectedSummary.totalExpected??0}｜草稿 ${selectedSummary.draftCount??0}｜待重送 ${selectedSummary.reopenedCount??0}｜完成率 ${selectedSummary.completionRate??0}%`;
 
 const q =
 (
@@ -4123,6 +4288,15 @@ c=>
 (
 filter==="all" ||
 c.status===filter
+)
+&&
+(
+selectedClubName==="all" ||
+String(
+c.clubName ||
+c.name ||
+""
+)===selectedClubName
 )
 &&
 (
