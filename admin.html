@@ -199,16 +199,24 @@
 <div class="panel-body">
 
 <div class="notice">
-依「評審帳號 → 評分大項 → 社團」查看目前狀態。
+先選擇一位評審，再依「評分大項 → 社團」查看目前狀態，不會一次展開所有評審。
 已正式送出的分數可以查看原始分數、修改歷史，並由管理員指定單筆解鎖。
 </div>
 
 <div class="toolbar" style="margin-top:12px">
 
+<select
+id="judgeProgressJudge"
+class="field"
+onchange="renderJudgeProgress()"
+>
+<option value="">請選擇評審</option>
+</select>
+
 <input
 id="judgeProgressSearch"
 class="field grow"
-placeholder="搜尋評審、帳號、評分大項、社團或屬性"
+placeholder="搜尋評分大項、社團或屬性"
 oninput="renderJudgeProgress()"
 >
 
@@ -3844,6 +3852,12 @@ async function loadJudgeProgress(){
 
 try{
 
+$("judgeProgressJudge").disabled =
+true;
+
+$("judgeProgressList").innerHTML =
+'<div class="state"><div class="spinner"></div>正在讀取評審進度...</div>';
+
 const r =
 await api(
 "adminJudgeScoreProgress"
@@ -3885,6 +3899,8 @@ s.reopenedCount??0
 s.completionRate??0
 }%`;
 
+renderJudgeProgressJudgeOptions();
+
 renderJudgeProgress();
 
 }
@@ -3894,6 +3910,113 @@ $("judgeProgressList").innerHTML=
 `<div class="state">
 ⚠️ ${esc(e.message)}
 </div>`;
+
+}
+finally{
+
+$("judgeProgressJudge").disabled =
+false;
+
+}
+
+}
+
+function renderJudgeProgressJudgeOptions(){
+
+const el =
+$("judgeProgressJudge");
+
+if(!el)return;
+
+const current =
+el.value;
+
+const judges =
+S.judgeProgress &&
+Array.isArray(
+S.judgeProgress.judges
+)
+?
+S.judgeProgress.judges
+.slice()
+.sort(
+(a,b)=>
+String(
+a.displayName ||
+a.name ||
+""
+)
+.localeCompare(
+String(
+b.displayName ||
+b.name ||
+""
+),
+"zh-TW"
+)
+)
+:
+[];
+
+el.innerHTML =
+'<option value="">請選擇評審</option>' +
+judges.map(
+judge=>{
+
+const id =
+String(
+judgeIdOf(judge) ||
+""
+);
+
+const name =
+judge.displayName ||
+judge.name ||
+"未命名評審";
+
+const account =
+judge.username
+?
+`（${esc(judge.username)}）`
+:
+"";
+
+const inactive =
+judge.active === false
+?
+"－已停用"
+:
+"";
+
+return `
+<option value="${attr(id)}">
+${esc(name)}${account}${inactive}
+</option>
+`;
+
+}
+)
+.join("");
+
+if(
+current &&
+judges.some(
+judge=>
+String(
+judgeIdOf(judge) ||
+""
+)===current
+)
+){
+
+el.value =
+current;
+
+}
+else{
+
+el.value =
+"";
 
 }
 
@@ -3918,6 +4041,50 @@ return;
 
 }
 
+const selectedJudgeId =
+$("judgeProgressJudge")?.value ||
+"";
+
+if(!selectedJudgeId){
+
+$("judgeProgressMeta").textContent =
+`共 ${S.judgeProgress.judges.length} 位評審｜請先選擇評審`;
+
+root.innerHTML =
+'<div class="state">請先從上方選擇一位評審查看進度。</div>';
+
+return;
+
+}
+
+const selectedJudge =
+S.judgeProgress.judges.find(
+judge=>
+String(
+judgeIdOf(judge) ||
+""
+)===selectedJudgeId
+);
+
+if(!selectedJudge){
+
+$("judgeProgressMeta").textContent =
+"找不到選擇的評審";
+
+root.innerHTML =
+'<div class="state">找不到選擇的評審，請重新選擇。</div>';
+
+return;
+
+}
+
+const selectedSummary =
+selectedJudge.summary ||
+{};
+
+$("judgeProgressMeta").textContent =
+`${selectedJudge.displayName || selectedJudge.name || "未命名評審"}｜已送出 ${selectedSummary.submittedCount??0}/${selectedSummary.totalExpected??0}｜草稿 ${selectedSummary.draftCount??0}｜待重送 ${selectedSummary.reopenedCount??0}｜完成率 ${selectedSummary.completionRate??0}%`;
+
 const q =
 (
 $("judgeProgressSearch")?.value ||
@@ -3933,7 +4100,7 @@ $("judgeProgressFilter")?.value ||
 const judgeHtml =
 [];
 
-S.judgeProgress.judges.forEach(
+[selectedJudge].forEach(
 j=>{
 
 const sections =
