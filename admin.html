@@ -463,6 +463,55 @@ onclick="exportCategoryRankingExcel()"
 
 </section>
 
+<section class="panel closed" data-panel="organizer-audit-excel-export">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+<div class="panel-title">📋 主辦單位總核對表 Excel</div>
+<div id="organizerAuditExcelMeta" class="panel-meta">依目前成績彙整與評審進度匯出</div>
+</div>
+
+<span class="chev">▼</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="notice">
+Excel 第一個工作表是全校社團總覽，後續再依社團屬性分頁列出每個社團、每個評分大項及每位評審的核對明細。正式送出、草稿、解鎖待重送、尚未評分、缺少評審指派，以及因權限移除而不列入平均的舊正式分數都會分別標示。
+</div>
+
+<div class="card" style="margin-top:12px">
+
+<div class="list-title">主辦單位內部查分與核對</div>
+
+<div class="list-sub">
+所有平均、目前總分及正式總分都直接使用後端成績彙整結果；此功能只匯出核對資料，不會修改任何評審分數或歷史紀錄。
+</div>
+
+<div class="toolbar" style="margin:12px 0 0">
+
+<button
+id="organizerAuditExcelBtn"
+class="btn btn-primary"
+onclick="exportOrganizerAuditExcel()"
+>
+📥 匯出總核對表 Excel
+</button>
+
+</div>
+
+</div>
+
+<div id="organizerAuditExcelState" class="state" style="padding-bottom:4px">
+按下「匯出總核對表 Excel」後，系統會重新讀取最新資料並自動下載檔案。
+</div>
+
+</div>
+
+</section>
+
 <section class="panel closed" data-panel="judge-confirmation-export">
 
 <button class="panel-head" onclick="togglePanel(this)">
@@ -1206,7 +1255,8 @@ new Set([
 "adminRanking",
 "adminCategoryRanking",
 "adminJudgeConfirmationExport",
-"adminCategoryRankingExcelExport"
+"adminCategoryRankingExcelExport",
+"adminOrganizerAuditExcelExport"
 ]);
 
 const CLUB_CATEGORIES = [
@@ -7467,6 +7517,150 @@ state.innerHTML =
 
 toast(
 "✅ 各屬性成績與排名 Excel 已匯出"
+);
+
+}
+catch(error){
+
+meta.textContent =
+"匯出失敗";
+
+state.innerHTML =
+`⚠️ ${esc(error.message)}`;
+
+toast(
+"❌ " +
+error.message
+);
+
+}
+finally{
+
+button.disabled =
+false;
+
+button.innerHTML =
+oldText;
+
+}
+
+}
+
+/* ============================================================
+   ORGANIZER AUDIT EXCEL EXPORT
+   ============================================================ */
+
+async function exportOrganizerAuditExcel(){
+
+const button =
+$("organizerAuditExcelBtn");
+
+const state =
+$("organizerAuditExcelState");
+
+const meta =
+$("organizerAuditExcelMeta");
+
+const oldText =
+button.innerHTML;
+
+try{
+
+button.disabled =
+true;
+
+button.textContent =
+"產生中...";
+
+state.classList.remove(
+"hidden"
+);
+
+state.innerHTML =
+'<div class="spinner"></div>正在整理全校社團、各評分大項與評審核對明細，並產生 Excel...';
+
+meta.textContent =
+"正在產生總核對表";
+
+const response =
+await api(
+"adminOrganizerAuditExcelExport"
+);
+
+if(
+unauthorized(response)
+){
+return;
+}
+
+if(
+!response ||
+!response.success
+){
+
+throw new Error(
+response && response.message ||
+"主辦單位總核對表 Excel 匯出失敗"
+);
+
+}
+
+if(
+!response.base64 ||
+!response.fileName
+){
+
+throw new Error(
+"後端沒有回傳完整的 Excel 檔案"
+);
+
+}
+
+downloadBase64Artifact(
+response.base64,
+response.mimeType,
+response.fileName
+);
+
+const summary =
+response.summary ||
+{};
+
+meta.textContent =
+`${summary.categoryCount ?? 0} 個屬性｜${summary.clubCount ?? 0} 個社團｜完成 ${summary.completeCount ?? 0}｜未完成 ${summary.incompleteCount ?? 0}｜${formatDate(response.generatedAt)}`;
+
+const notices =
+[];
+
+if(
+(summary.reopenedClubCount ?? 0) > 0
+){
+notices.push(
+`待重送社團 ${summary.reopenedClubCount} 個`
+);
+}
+
+if(
+(summary.missingAssignmentClubCount ?? 0) > 0
+){
+notices.push(
+`缺少評審指派 ${summary.missingAssignmentClubCount} 個社團`
+);
+}
+
+if(
+(summary.excludedOfficialScoreCount ?? 0) > 0
+){
+notices.push(
+`權限移除舊分數 ${summary.excludedOfficialScoreCount} 筆`
+);
+}
+
+state.innerHTML =
+`✅ 主辦單位總核對表已產生並開始下載：${esc(response.fileName)}${notices.length?`<br><span class="muted">核對提醒：${esc(notices.join("｜"))}</span>`:""}`;
+
+toast(
+"✅ 主辦單位總核對表 Excel 已匯出"
 );
 
 }
