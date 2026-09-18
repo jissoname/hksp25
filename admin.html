@@ -414,6 +414,55 @@ onchange="renderScoreAggregation()"
 
 <section class="panel closed" data-panel="ranking"><button class="panel-head" onclick="togglePanel(this)"><div><div class="panel-title">🥇 排名規則與各屬性排名</div><div id="rankingMeta" class="panel-meta">-</div></div><span class="chev">▼</span></button><div class="panel-body"><div class="notice">排名依社團屬性分開計算。每個評分大項先使用目前被指派評審的正式平均分，再加總成最終總分；總分達及格門檻後依目前設定產生名次。同分規則不寫死，可由管理員自行調整。</div><div class="rank-config-grid"><div class="rank-config-card"><label class="label">及格門檻</label><input id="rankPassThreshold" class="field" type="number" min="0" step="0.01"><label class="label">及格判定</label><select id="rankPassComparator" class="field"><option value="gte">大於等於（≥）</option><option value="gt">大於（>）</option></select></div><div class="rank-config-card"><label class="label">排名資格</label><select id="rankEligibility" class="field"><option value="all_completed">所有已完成評分社團</option><option value="passed_only">只有及格社團</option></select><label class="label">未完成社團</label><select id="rankIncompletePolicy" class="field"><option value="show_unranked">顯示但不給名次</option><option value="exclude">不顯示於排名表</option></select></div><div class="rank-config-card"><label class="label">同分處理</label><select id="rankTieMode" class="field" onchange="renderTieBreakers()"><option value="shared">直接並列</option><option value="rules">啟用同分比較規則</option></select><label class="label">名次格式</label><select id="rankStyle" class="field"><option value="competition">競賽式：1、2、2、4</option><option value="dense">密集式：1、2、2、3</option></select></div></div><div id="tieBreakerBox" class="rank-config-card" style="margin-top:10px"><div class="toolbar" style="margin-bottom:0"><div style="flex:1"><div class="list-title">同分比較優先順序</div><div class="rank-rule-help">只有選擇「啟用同分比較規則」時才會套用。第一順位永遠是最終總分，這裡設定的是總分相同後的比較方式。</div></div><button class="btn" onclick="addTieBreaker()">＋ 增加條件</button></div><div id="tieBreakerList" class="tie-list"></div><label class="label">所有比較條件仍完全相同時</label><select id="rankUnresolvedTie" class="field" style="max-width:260px"><option value="shared">並列</option><option value="manual">標示待人工決定</option></select></div><div class="rank-settings-actions"><button class="btn" onclick="loadRanking()">重新讀取</button><button id="saveRankingBtn" class="btn btn-primary" onclick="saveRankingConfig()">💾 儲存排名規則</button></div><div class="rank-summary"><div class="rank-stat"><div class="rank-stat-label">✅ 已完成</div><div id="rankCompleted" class="rank-stat-value">-</div></div><div class="rank-stat"><div class="rank-stat-label">🟢 及格</div><div id="rankPassed" class="rank-stat-value">-</div></div><div class="rank-stat"><div class="rank-stat-label">🔴 不及格</div><div id="rankFailed" class="rank-stat-value">-</div></div><div class="rank-stat"><div class="rank-stat-label">⏳ 未完成</div><div id="rankIncomplete" class="rank-stat-value">-</div></div></div><div class="toolbar"><input id="rankingSearch" class="field grow" placeholder="搜尋社團" oninput="renderRankingTable()"><select id="rankingCategory" class="field" onchange="renderRankingTable()"></select></div><div id="rankingState" class="state">尚未讀取</div><div id="rankingTableWrap" class="table-wrap hidden"><table class="rank-table"><thead><tr><th>名次</th><th>社團</th><th id="rankRoutineHeader">平時表現</th><th id="rankDataHeader">數位資料</th><th id="rankFieldHeader">現場詢答</th><th id="rankTotalHeader">總分</th><th>結果</th><th>排名狀態</th></tr></thead><tbody id="rankingTableBody"></tbody></table></div></div></section>
 
+<section class="panel closed" data-panel="category-ranking-excel-export">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+<div class="panel-title">📊 各屬性成績與排名 Excel</div>
+<div id="categoryRankingExcelMeta" class="panel-meta">依目前排名規則匯出</div>
+</div>
+
+<span class="chev">▼</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="notice">
+Excel 會依社團屬性分成不同工作表，內容包含名次、社團名稱、平時表現、數位資料、現場詢答、總分及結果。所有名次與及格判定都直接使用目前排名系統結果，不會在前端重新計算。
+</div>
+
+<div class="card" style="margin-top:12px">
+
+<div class="list-title">正式成績與排名表</div>
+
+<div class="list-sub">
+匯出前請先確認上方排名規則與排名結果；按下按鈕後，系統會重新取得當下最新正式成績並產生 Excel。
+</div>
+
+<div class="toolbar" style="margin:12px 0 0">
+
+<button
+id="categoryRankingExcelBtn"
+class="btn btn-primary"
+onclick="exportCategoryRankingExcel()"
+>
+📥 匯出 Excel
+</button>
+
+</div>
+
+</div>
+
+<div id="categoryRankingExcelState" class="state" style="padding-bottom:4px">
+按下「匯出 Excel」後，瀏覽器會自動下載檔案。
+</div>
+
+</div>
+
+</section>
+
 <section class="panel closed" data-panel="judge-confirmation-export">
 
 <button class="panel-head" onclick="togglePanel(this)">
@@ -1156,7 +1205,8 @@ new Set([
 "adminClubScoreAggregation",
 "adminRanking",
 "adminCategoryRanking",
-"adminJudgeConfirmationExport"
+"adminJudgeConfirmationExport",
+"adminCategoryRankingExcelExport"
 ]);
 
 const CLUB_CATEGORIES = [
@@ -7258,6 +7308,191 @@ popup.print();
 },
 350
 );
+
+}
+
+/* ============================================================
+   CATEGORY RANKING EXCEL EXPORT
+   ============================================================ */
+
+function downloadBase64Artifact(
+base64,
+mimeType,
+fileName
+){
+
+const binary =
+atob(
+String(base64 || "")
+);
+
+const bytes =
+new Uint8Array(
+binary.length
+);
+
+for(
+let index = 0;
+index < binary.length;
+index += 1
+){
+
+bytes[index] =
+binary.charCodeAt(index);
+
+}
+
+const blob =
+new Blob(
+[bytes],
+{
+type:
+mimeType ||
+"application/octet-stream"
+}
+);
+
+const url =
+URL.createObjectURL(blob);
+
+const link =
+document.createElement("a");
+
+link.href =
+url;
+
+link.download =
+fileName ||
+"export.xlsx";
+
+link.style.display =
+"none";
+
+document.body.appendChild(
+link
+);
+
+link.click();
+
+link.remove();
+
+setTimeout(
+()=>URL.revokeObjectURL(url),
+1500
+);
+
+}
+
+async function exportCategoryRankingExcel(){
+
+const button =
+$("categoryRankingExcelBtn");
+
+const state =
+$("categoryRankingExcelState");
+
+const meta =
+$("categoryRankingExcelMeta");
+
+const oldText =
+button.innerHTML;
+
+try{
+
+button.disabled =
+true;
+
+button.textContent =
+"產生中...";
+
+state.classList.remove(
+"hidden"
+);
+
+state.innerHTML =
+'<div class="spinner"></div>正在整理各屬性成績、套用排名規則並產生 Excel...';
+
+meta.textContent =
+"正在產生 Excel";
+
+const response =
+await api(
+"adminCategoryRankingExcelExport"
+);
+
+if(
+unauthorized(response)
+){
+return;
+}
+
+if(
+!response ||
+!response.success
+){
+
+throw new Error(
+response && response.message ||
+"各屬性成績與排名 Excel 匯出失敗"
+);
+
+}
+
+if(
+!response.base64 ||
+!response.fileName
+){
+
+throw new Error(
+"後端沒有回傳完整的 Excel 檔案"
+);
+
+}
+
+downloadBase64Artifact(
+response.base64,
+response.mimeType,
+response.fileName
+);
+
+const summary =
+response.summary ||
+{};
+
+meta.textContent =
+`${summary.categoryCount ?? 0} 個屬性｜${summary.rowCount ?? 0} 個社團｜${formatDate(response.generatedAt)}`;
+
+state.innerHTML =
+`✅ Excel 已產生並開始下載：${esc(response.fileName)}`;
+
+toast(
+"✅ 各屬性成績與排名 Excel 已匯出"
+);
+
+}
+catch(error){
+
+meta.textContent =
+"匯出失敗";
+
+state.innerHTML =
+`⚠️ ${esc(error.message)}`;
+
+toast(
+"❌ " +
+error.message
+);
+
+}
+finally{
+
+button.disabled =
+false;
+
+button.innerHTML =
+oldText;
+
+}
 
 }
 
