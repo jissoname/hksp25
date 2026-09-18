@@ -4,7 +4,8364 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1a73e8">
+<title>社團評選管理後台</title><!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1a73e8">
 <title>社團評選管理後台</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,sans-serif;background:#f5f7fb;color:#202124}button,input,select{font:inherit}button{cursor:pointer}:root{--p:#1a73e8;--pd:#1557b0;--bd:#e4e7ec;--muted:#667085;--ok:#167542;--okbg:#e7f6ec;--warn:#b54708;--warnbg:#fff6e8;--bad:#d92d20;--badbg:#fff1f0;--violet:#6941c6;--violetbg:#f4f0ff;--shadow:0 8px 28px rgba(16,24,40,.07)}.hidden{display:none!important}.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--bd);border-radius:22px;padding:32px;box-shadow:0 20px 60px rgba(16,24,40,.12)}.login-icon{font-size:34px}.login-title{font-size:26px;font-weight:900;margin:12px 0 5px}.muted{color:var(--muted)}.field{width:100%;height:42px;border:1px solid #d0d5dd;border-radius:9px;padding:0 11px;outline:none;background:#fff}.field:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(26,115,232,.08)}.label{display:block;font-size:12px;font-weight:800;margin:14px 0 6px}.btn{min-height:38px;border:1px solid var(--bd);border-radius:9px;background:#fff;padding:0 12px;font-weight:800;color:#344054}.btn:hover{background:#f9fafb}.btn-primary{background:var(--p);border-color:var(--p);color:#fff}.btn-primary:hover{background:var(--pd)}.btn-danger{background:var(--badbg);border-color:#f5c7c4;color:var(--bad)}.btn-success{background:var(--okbg);border-color:#cce7d5;color:var(--ok)}.btn:disabled{opacity:.5;cursor:not-allowed}.login-btn{width:100%;margin-top:20px;height:46px}.error{color:var(--bad);font-size:12px;line-height:1.6;margin-top:9px}.app{display:none}.topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;padding:12px max(16px,calc((100vw - 1200px)/2));gap:12px}.brand{font-weight:900}.sub{font-size:11px;color:var(--muted);margin-top:2px}.top-actions{display:flex;gap:8px}.main{width:min(1200px,calc(100% - 28px));margin:auto;padding:24px 0 50px}.hero{display:flex;justify-content:space-between;gap:14px;align-items:end;margin-bottom:15px}.hero h1{margin:0;font-size:27px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:15px}.stat{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:14px;box-shadow:var(--shadow)}.stat-label{font-size:11px;color:var(--muted);font-weight:800}.stat-value{font-size:22px;font-weight:900;margin-top:4px}.panel{background:#fff;border:1px solid var(--bd);border-radius:15px;box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}.panel-head{width:100%;border:0;background:#fff;padding:15px 17px;display:flex;align-items:center;justify-content:space-between;text-align:left}.panel-title{font-size:15px;font-weight:900}.panel-meta{font-size:11px;color:var(--muted)}.panel-body{border-top:1px solid var(--bd);padding:16px}.chev{transition:.2s}.panel.closed .panel-body{display:none}.panel.closed .chev{transform:rotate(-90deg)}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}.toolbar .field{width:auto;min-width:180px}.grow{flex:1}.card{border:1px solid var(--bd);border-radius:12px;padding:13px;background:#fff}.notice{padding:11px 12px;border:1px solid #bfd7ff;background:#f5f9ff;border-radius:10px;color:#174b88;font-size:12px;line-height:1.7}.okbox{background:var(--okbg);border-color:#cce7d5;color:var(--ok)}.warnbox{background:var(--warnbg);border-color:#f5d6a4;color:#8a4b08}.badbox{background:var(--badbg);border-color:#f5c7c4;color:#7a271a}.score-top{display:grid;grid-template-columns:1fr 160px auto;gap:10px;align-items:end;margin-bottom:12px}.score-section{border:1px solid #dce5f2;border-radius:14px;margin:12px 0;background:#fbfdff;overflow:hidden}.score-section-head{padding:12px;background:#f4f8ff;border-bottom:1px solid #dce5f2}.section-grid{display:grid;grid-template-columns:68px minmax(180px,1fr) 130px 135px auto;gap:8px;align-items:end}.mini-label{font-size:10px;color:var(--muted);font-weight:800;margin-bottom:4px}.mini{height:38px}.toggle-row{display:flex;gap:7px;align-items:center;font-size:11px;font-weight:800}.badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}.b-pub{background:var(--okbg);color:var(--ok)}.b-draft{background:#f2f4f7;color:#667085}.b-manual{background:var(--violetbg);color:var(--violet)}.score-section-body{padding:12px}.score-group{border:1px solid var(--bd);border-radius:11px;margin-bottom:9px;overflow:hidden;background:#fff}.group-head{display:grid;grid-template-columns:minmax(150px,1fr) 120px auto;gap:8px;align-items:end;padding:10px;background:#fcfcfd;border-bottom:1px solid var(--bd)}.criteria{padding:8px}.criterion{display:grid;grid-template-columns:minmax(160px,1fr) 110px auto;gap:8px;align-items:end;padding:7px;border-bottom:1px dashed #e8eaed}.criterion:last-child{border-bottom:0}.calc{font-size:11px;font-weight:800;margin-top:7px}.calc.good{color:var(--ok)}.calc.bad{color:var(--bad)}.row-actions{display:flex;gap:5px;flex-wrap:wrap}.icon-btn{width:34px;height:34px;border:1px solid var(--bd);border-radius:8px;background:#fff}.danger-icon{color:var(--bad)}.score-footer{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-top:12px}.validation{flex:1}.validation ul{margin:6px 0 0;padding-left:18px}.list{display:grid;gap:8px}.list-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px;border:1px solid var(--bd);border-radius:10px}.list-title{font-weight:900;font-size:13px}.list-sub{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.5}.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.chip{padding:4px 7px;background:#eef4ff;color:#1557b0;border-radius:999px;font-size:10px;font-weight:850}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.table-wrap{overflow:auto;border:1px solid var(--bd);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left;font-size:12px;vertical-align:top}th{background:#f9fafb;font-size:11px;color:#475467}.state{text-align:center;color:var(--muted);padding:28px 12px;font-size:12px}.spinner{width:26px;height:26px;margin:0 auto 8px;border:3px solid #e8eef7;border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.modal-bg{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(16,24,40,.58)}.modal{width:min(520px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:18px;box-shadow:0 25px 70px rgba(16,24,40,.28)}.modal h3{margin:0 0 10px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.check{display:flex;align-items:center;gap:6px;padding:7px;border:1px solid var(--bd);border-radius:8px;font-size:11px}.toast{position:fixed;right:18px;bottom:18px;z-index:2000;padding:11px 15px;background:#101828;color:#fff;border-radius:9px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;max-width:390px;font-size:12px}.toast.show{opacity:1;transform:none}.b-reopened{background:var(--warnbg);color:var(--warn)}.b-notstarted{background:#f2f4f7;color:#667085}.b-judge{background:var(--violetbg);color:var(--violet)}.chip.score-chip{background:var(--violetbg);color:var(--violet)}.permission-block{margin-top:6px}.permission-label{font-size:10px;color:var(--muted);font-weight:800;margin-bottom:4px}.progress-judge{border:1px solid var(--bd);border-radius:13px;margin:12px 0;overflow:hidden;background:#fff}.progress-judge-head{padding:12px 14px;background:#f9fafb;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.progress-summary{font-size:11px;color:var(--muted);text-align:right;line-height:1.6}.progress-section{padding:12px 14px;border-bottom:1px solid var(--bd)}.progress-section:last-child{border-bottom:0}.progress-section-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}.progress-section-title{font-weight:900;font-size:13px}.progress-club{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed #e5e7eb}.progress-club:first-child{border-top:0}.progress-score{font-weight:900;font-size:12px;white-space:nowrap}.modal-wide{width:min(760px,100%)}.raw-group{border:1px solid var(--bd);border-radius:11px;margin-bottom:10px;overflow:hidden}.raw-group-head{padding:9px 11px;background:#f9fafb;display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:900}.raw-row{display:grid;grid-template-columns:minmax(0,1fr) 100px 100px;gap:8px;padding:9px 11px;border-top:1px solid var(--bd);font-size:12px;align-items:center}.raw-row .right{text-align:right;font-weight:900}.raw-total{display:flex;justify-content:space-between;gap:10px;padding:11px;border-radius:10px;background:#f5f9ff;border:1px solid #bfd7ff;font-weight:900;margin-top:10px}.history-item{border:1px solid var(--bd);border-radius:11px;margin-bottom:10px;overflow:hidden}.history-head{padding:10px 12px;background:#f9fafb}.history-title{font-weight:900;font-size:12px}.history-meta{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.6}.history-body{padding:10px 12px}.empty-inline{font-size:11px;color:var(--muted);margin-top:5px}@media(max-width:780px){.stats{grid-template-columns:1fr 1fr}.section-grid{grid-template-columns:60px 1fr 100px}.section-grid .mode-wrap,.section-grid .section-actions{grid-column:1/-1}.group-head{grid-template-columns:1fr 100px}.group-head .row-actions{grid-column:1/-1}.criterion{grid-template-columns:1fr 90px}.criterion .row-actions{grid-column:1/-1}.grid2,.grid4{grid-template-columns:1fr}.score-top{grid-template-columns:1fr}.score-footer{flex-direction:column}.topbar .sub{display:none}.hero{align-items:flex-start;flex-direction:column}.toolbar .field{width:100%}.toolbar .grow{flex:auto;width:100%}.list-row{grid-template-columns:1fr}.check-grid{grid-template-columns:1fr}.progress-judge-head{flex-direction:column}.progress-summary{text-align:left}.progress-club{grid-template-columns:1fr}.raw-row{grid-template-columns:1fr 70px 70px}}
+
+.agg-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.agg-stat{padding:11px;border:1px solid var(--bd);border-radius:10px;background:#fcfcfd}.agg-stat-label{font-size:10px;color:var(--muted);font-weight:800}.agg-stat-value{font-size:20px;font-weight:900;margin-top:3px}.agg-table td,.agg-table th{white-space:nowrap}.agg-club{font-weight:900}.agg-score{font-weight:900;text-align:center}.agg-muted{color:var(--muted);font-weight:700}.agg-status-complete{background:var(--okbg);color:var(--ok)}.agg-status-incomplete{background:#f2f4f7;color:#667085}.agg-status-reopened{background:var(--warnbg);color:var(--warn)}.agg-status-missing{background:var(--badbg);color:var(--bad)}.agg-section-card{border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-top:10px}.agg-section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:11px 12px;background:#f9fafb}.agg-section-title{font-size:13px;font-weight:900}.agg-section-meta{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}.agg-judge-row{display:grid;grid-template-columns:minmax(0,1fr) 110px 100px;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--bd);font-size:11px}.agg-judge-name{font-weight:850}.agg-final-box{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.agg-final-item{padding:10px;border:1px solid var(--bd);border-radius:10px;background:#fff}.agg-final-label{font-size:10px;color:var(--muted);font-weight:800}.agg-final-value{font-size:18px;font-weight:900;margin-top:3px}.excluded-box{margin-top:8px;padding:9px 10px;border:1px solid #f5d6a4;border-radius:9px;background:var(--warnbg);font-size:10px;color:#8a4b08;line-height:1.6}@media(max-width:780px){.agg-summary,.agg-final-box{grid-template-columns:1fr 1fr}.agg-judge-row{grid-template-columns:1fr auto}.agg-judge-row .agg-time{grid-column:1/-1}.agg-table{min-width:980px}}
+
+/* =========================================================
+   Ranking
+   ========================================================= */
+.rank-config-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.rank-config-card{border:1px solid var(--bd);border-radius:11px;padding:11px;background:#fcfcfd}.rank-config-card .label{margin-top:0}.tie-list{display:grid;gap:7px;margin-top:8px}.tie-row{display:grid;grid-template-columns:44px minmax(180px,1fr) 120px auto;gap:7px;align-items:center;padding:8px;border:1px solid var(--bd);border-radius:9px;background:#fff}.tie-order{font-weight:900;text-align:center}.rank-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.rank-stat{padding:11px;border:1px solid var(--bd);border-radius:10px;background:#fcfcfd}.rank-stat-label{font-size:10px;color:var(--muted);font-weight:800}.rank-stat-value{font-size:20px;font-weight:900;margin-top:3px}.rank-table th,.rank-table td{white-space:nowrap}.rank-no{font-size:16px;font-weight:950;text-align:center}.rank-club{font-weight:900}.rank-passed{background:var(--okbg);color:var(--ok)}.rank-failed{background:var(--badbg);color:var(--bad)}.rank-incomplete{background:#f2f4f7;color:#667085}.rank-tie{background:var(--warnbg);color:var(--warn)}.rank-settings-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}.rank-rules-disabled{opacity:.55}.rank-rule-help{font-size:10px;color:var(--muted);line-height:1.6;margin-top:6px}@media(max-width:780px){.rank-config-grid,.rank-summary{grid-template-columns:1fr 1fr}.tie-row{grid-template-columns:36px 1fr}.tie-row .tie-direction,.tie-row .row-actions{grid-column:2}.rank-table{min-width:900px}}
+
+/* =========================================================
+   Judge confirmation export
+   ========================================================= */
+.export-toolbar{margin-top:12px}.export-toolbar .field{min-width:260px}.export-preview{margin-top:12px;padding:18px;background:#eef2f7;border:1px solid var(--bd);border-radius:12px;overflow:auto}.export-sheet{width:min(920px,100%);margin:auto;background:#fff;border:1px solid #dfe3e8;border-radius:10px;padding:28px;box-shadow:0 8px 24px rgba(16,24,40,.08);color:#202124}.export-sheet-title{text-align:center;font-size:22px;font-weight:950;line-height:1.4}.export-sheet-subtitle{text-align:center;color:var(--muted);font-size:12px;margin-top:4px}.export-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 18px;margin:20px 0 12px;padding:12px;border:1px solid var(--bd);border-radius:9px;background:#fcfcfd}.export-meta-item{font-size:12px;line-height:1.6}.export-meta-label{color:var(--muted);font-weight:800;margin-right:5px}.export-summary-row{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.export-summary-chip{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid var(--bd);border-radius:999px;background:#fff;font-size:11px;font-weight:850}.export-note{font-size:11px;line-height:1.65;color:#475467;padding:9px 10px;border-left:3px solid var(--p);background:#f5f9ff}.export-club-card{border:1px solid #cfd6df;border-radius:10px;margin-top:16px;overflow:hidden;break-inside:avoid-page}.export-club-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 13px;background:#eef4ff;border-bottom:1px solid #cfd6df}.export-club-name{font-size:15px;font-weight:950}.export-category{font-size:11px;font-weight:850;color:#1557b0}.export-section{padding:13px;border-top:1px dashed #d6dae0}.export-section:first-child{border-top:0}.export-section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.export-section-title{font-size:13px;font-weight:950}.export-section-meta{font-size:10px;color:var(--muted);line-height:1.65;margin-top:4px}.export-status{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900;white-space:nowrap}.export-status-submitted{background:var(--okbg);color:var(--ok)}.export-status-reopened{background:var(--warnbg);color:var(--warn)}.export-status-draft{background:var(--violetbg);color:var(--violet)}.export-status-other{background:#f2f4f7;color:#667085}.export-group{margin-top:11px}.export-group-title{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:900;margin-bottom:5px}.export-score-table{min-width:0}.export-score-table th,.export-score-table td{padding:7px 8px;font-size:11px}.export-score-table th:nth-child(2),.export-score-table th:nth-child(3),.export-score-table td:nth-child(2),.export-score-table td:nth-child(3){width:90px;text-align:right}.export-score-table tfoot td{font-weight:900;background:#fcfcfd}.export-section-total{display:flex;justify-content:space-between;gap:10px;margin-top:10px;padding:9px 10px;border:1px solid #bfd7ff;border-radius:8px;background:#f5f9ff;font-size:12px;font-weight:950}.export-empty{padding:24px;text-align:center;color:var(--muted);font-size:12px}.export-errors{margin-top:14px;padding:10px 12px;border:1px solid #f5d6a4;border-radius:9px;background:var(--warnbg);color:#8a4b08;font-size:11px;line-height:1.65}.export-print-hint{font-size:10px;color:var(--muted);line-height:1.6;margin-top:7px}@media(max-width:780px){.export-toolbar .field{min-width:0}.export-preview{padding:8px}.export-sheet{padding:16px;min-width:650px}.export-meta-grid{grid-template-columns:1fr}.export-club-head,.export-section-head{align-items:flex-start}}
+
+</style>
+</head>
+<body>
+
+<section id="loginScreen" class="login-screen">
+<div class="login-card">
+<div class="login-icon">🛠️</div>
+<h1 class="login-title">管理員後台</h1>
+<div class="muted">社團評選暨觀摩活動管理系統</div>
+<form id="loginForm">
+<label class="label">管理員密碼</label>
+<input id="adminPassword" class="field" type="password" autocomplete="current-password" required placeholder="請輸入管理員密碼">
+<button id="loginBtn" class="btn btn-primary login-btn" type="submit">登入管理後台</button>
+<div id="loginError" class="error"></div>
+</form>
+</div>
+</section>
+
+<div id="adminApp" class="app">
+
+<header class="topbar">
+<div>
+<div class="brand">🛠️ 社團評選管理後台</div>
+<div class="sub">115學年度第一學期全校學生社團評選暨觀摩活動</div>
+</div>
+<div class="top-actions">
+<button class="btn" onclick="refreshAllData()">🔄 重新整理</button>
+<button class="btn btn-danger" onclick="logoutAdmin()">🚪 登出</button>
+</div>
+</header>
+
+<main class="main">
+
+<div class="hero">
+<div>
+<h1>管理中心</h1>
+<div class="sub">評分架構、評審權限、評分進度、社團、活動與資料管理</div>
+</div>
+<div id="lastRefresh" class="sub">尚未同步</div>
+</div>
+
+<div class="stats">
+
+<div class="stat">
+<div class="stat-label">社團總數</div>
+<div id="statClubs" class="stat-value">-</div>
+</div>
+
+<div class="stat">
+<div class="stat-label">評審帳號</div>
+<div id="statJudges" class="stat-value">-</div>
+</div>
+
+<div class="stat">
+<div class="stat-label">表單已完成</div>
+<div id="statForms" class="stat-value">-</div>
+</div>
+
+<div class="stat">
+<div class="stat-label">評分設定版本</div>
+<div id="statScoreRev" class="stat-value">-</div>
+</div>
+
+</div>
+
+<section class="panel" data-panel="score">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+<div class="panel-title">⚙️ 評分機制設定 v3</div>
+<div id="scoreMeta" class="panel-meta">載入中...</div>
+</div>
+
+<span class="chev">▼</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="notice">
+所有評分大項統一由 Judge 系統評分，管理員可自由調整名稱、配分與小項。
+草稿可先儲存不完整設定；正式發布前，系統會檢查「小項合計＝分類、分類合計＝大項、大項合計＝總配分」。
+</div>
+
+<div id="scoreState" class="state">
+<div class="spinner"></div>
+正在讀取評分設定...
+</div>
+
+<div id="scoreEditor" class="hidden">
+
+<div class="score-top">
+
+<div>
+<div class="mini-label">總配分名稱</div>
+<div class="field" style="display:flex;align-items:center;background:#f9fafb">
+整體評分總配分
+</div>
+</div>
+
+<div>
+<div class="mini-label">總配分</div>
+<input id="totalMaxScore" class="field" type="number" min="0" step="0.01" oninput="setTotalMaxScore(this.value)">
+</div>
+
+<button class="btn" onclick="addSection()">＋ 新增大項</button>
+
+</div>
+
+<div id="sectionsEditor"></div>
+
+<div class="score-footer">
+
+<div id="scoreValidation" class="validation notice"></div>
+
+<button id="saveScoreBtn" class="btn btn-primary" onclick="saveScoreConfig()">
+💾 儲存設定草稿
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="panel closed">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+<div class="panel-title">👨‍⚖️ 評審帳號管理</div>
+<div id="judgeMeta" class="panel-meta">-</div>
+</div>
+
+<span class="chev">▼</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="notice">
+請先從下拉選單選擇要管理的評審；選定後只顯示該評審的帳號、權限及操作按鈕，不會一次展開全部評審。
+</div>
+
+<div class="toolbar" style="margin-top:12px">
+
+<select
+id="judgeManageSelect"
+class="field grow"
+onchange="renderJudges()"
+>
+<option value="">請選擇評審帳號</option>
+</select>
+
+<button class="btn btn-primary" onclick="openJudgeModal()">
+＋ 新增評審
+</button>
+
+<button class="btn" onclick="loadJudges()">
+重新讀取
+</button>
+
+</div>
+
+<div id="judgeList" class="list">
+<div class="state">尚未讀取</div>
+</div>
+
+</div>
+
+</section>
+
+<section class="panel closed">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+<div class="panel-title">📊 評審評分進度</div>
+<div id="judgeProgressMeta" class="panel-meta">-</div>
+</div>
+
+<span class="chev">▼</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="notice">
+先選擇一位評審，再選擇要查看的社團；社團預設為「全部社團」，也可以指定單一社團細看。
+已正式送出的分數可以查看原始分數、修改歷史，並由管理員指定單筆解鎖。
+</div>
+
+<div class="toolbar" style="margin-top:12px">
+
+<select
+id="judgeProgressJudge"
+class="field"
+onchange="handleJudgeProgressJudgeChange()"
+>
+<option value="">請選擇評審</option>
+</select>
+
+<select
+id="judgeProgressClub"
+class="field"
+onchange="renderJudgeProgress()"
+disabled
+>
+<option value="all">全部社團（預設）</option>
+</select>
+
+<input
+id="judgeProgressSearch"
+class="field grow"
+placeholder="搜尋評分大項、社團或屬性"
+oninput="renderJudgeProgress()"
+>
+
+<select
+id="judgeProgressFilter"
+class="field"
+onchange="renderJudgeProgress()"
+>
+
+<option value="all">全部狀態</option>
+<option value="submitted">已送出</option>
+<option value="draft">草稿</option>
+<option value="reopened">已解鎖待重送</option>
+<option value="not_started">未開始</option>
+
+</select>
+
+<button class="btn" onclick="loadJudgeProgress()">
+重新讀取
+</button>
+
+</div>
+
+<div id="judgeProgressList">
+<div class="state">尚未讀取</div>
+</div>
+
+</div>
+
+</section>
+
+<section class="panel closed" data-panel="aggregation">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+
+<div class="panel-title">
+🏆 成績彙整
+</div>
+
+<div id="aggregationMeta" class="panel-meta">
+-
+</div>
+
+</div>
+
+<span class="chev">▼</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="notice">
+同一社團、同一評分大項若有多位目前被指派的評審，正式成績取平均。
+草稿與「已解鎖待重送」不列入正式平均；所有被指派評審都送出後，該大項才算完成。
+這裡目前只做成績彙整，不做排名。
+</div>
+
+<div class="agg-summary">
+
+<div class="agg-stat">
+<div class="agg-stat-label">✅ 全部完成</div>
+<div id="aggComplete" class="agg-stat-value">-</div>
+</div>
+
+<div class="agg-stat">
+<div class="agg-stat-label">⏳ 尚未完成</div>
+<div id="aggIncomplete" class="agg-stat-value">-</div>
+</div>
+
+<div class="agg-stat">
+<div class="agg-stat-label">🔓 有待重送</div>
+<div id="aggReopened" class="agg-stat-value">-</div>
+</div>
+
+<div class="agg-stat">
+<div class="agg-stat-label">⚠️ 缺少評審指派</div>
+<div id="aggMissing" class="agg-stat-value">-</div>
+</div>
+
+</div>
+
+<div class="toolbar">
+
+<input
+id="aggregationSearch"
+class="field grow"
+placeholder="搜尋社團或屬性"
+oninput="renderScoreAggregation()"
+>
+
+<select
+id="aggregationCategory"
+class="field"
+onchange="renderScoreAggregation()"
+>
+
+<option value="all">
+全部屬性
+</option>
+
+</select>
+
+<select
+id="aggregationStatus"
+class="field"
+onchange="renderScoreAggregation()"
+>
+
+<option value="all">
+全部狀態
+</option>
+
+<option value="complete">
+✅ 全部完成
+</option>
+
+<option value="incomplete">
+⏳ 尚未完成
+</option>
+
+<option value="reopened">
+🔓 有待重送
+</option>
+
+<option value="missing">
+⚠️ 缺少評審指派
+</option>
+
+</select>
+
+<button class="btn" onclick="loadScoreAggregation()">
+重新計算
+</button>
+
+</div>
+
+<div id="aggregationState" class="state">
+尚未讀取
+</div>
+
+<div id="aggregationTableWrap" class="table-wrap hidden">
+
+<table class="agg-table">
+
+<thead>
+
+<tr>
+<th>社團</th>
+<th>屬性</th>
+<th>平時表現 / 30</th>
+<th>數位資料 / 50</th>
+<th>現場詢答 / 20</th>
+<th>目前總分</th>
+<th>正式總分</th>
+<th>完成狀態</th>
+<th>明細</th>
+</tr>
+
+</thead>
+
+<tbody id="aggregationTableBody"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="panel closed" data-panel="ranking"><button class="panel-head" onclick="togglePanel(this)"><div><div class="panel-title">🥇 排名規則與各屬性排名</div><div id="rankingMeta" class="panel-meta">-</div></div><span class="chev">▼</span></button><div class="panel-body"><div class="notice">排名依社團屬性分開計算。每個評分大項先使用目前被指派評審的正式平均分，再加總成最終總分；總分達及格門檻後依目前設定產生名次。同分規則不寫死，可由管理員自行調整。</div><div class="rank-config-grid"><div class="rank-config-card"><label class="label">及格門檻</label><input id="rankPassThreshold" class="field" type="number" min="0" step="0.01"><label class="label">及格判定</label><select id="rankPassComparator" class="field"><option value="gte">大於等於（≥）</option><option value="gt">大於（>）</option></select></div><div class="rank-config-card"><label class="label">排名資格</label><select id="rankEligibility" class="field"><option value="all_completed">所有已完成評分社團</option><option value="passed_only">只有及格社團</option></select><label class="label">未完成社團</label><select id="rankIncompletePolicy" class="field"><option value="show_unranked">顯示但不給名次</option><option value="exclude">不顯示於排名表</option></select></div><div class="rank-config-card"><label class="label">同分處理</label><select id="rankTieMode" class="field" onchange="renderTieBreakers()"><option value="shared">直接並列</option><option value="rules">啟用同分比較規則</option></select><label class="label">名次格式</label><select id="rankStyle" class="field"><option value="competition">競賽式：1、2、2、4</option><option value="dense">密集式：1、2、2、3</option></select></div></div><div id="tieBreakerBox" class="rank-config-card" style="margin-top:10px"><div class="toolbar" style="margin-bottom:0"><div style="flex:1"><div class="list-title">同分比較優先順序</div><div class="rank-rule-help">只有選擇「啟用同分比較規則」時才會套用。第一順位永遠是最終總分，這裡設定的是總分相同後的比較方式。</div></div><button class="btn" onclick="addTieBreaker()">＋ 增加條件</button></div><div id="tieBreakerList" class="tie-list"></div><label class="label">所有比較條件仍完全相同時</label><select id="rankUnresolvedTie" class="field" style="max-width:260px"><option value="shared">並列</option><option value="manual">標示待人工決定</option></select></div><div class="rank-settings-actions"><button class="btn" onclick="loadRanking()">重新讀取</button><button id="saveRankingBtn" class="btn btn-primary" onclick="saveRankingConfig()">💾 儲存排名規則</button></div><div class="rank-summary"><div class="rank-stat"><div class="rank-stat-label">✅ 已完成</div><div id="rankCompleted" class="rank-stat-value">-</div></div><div class="rank-stat"><div class="rank-stat-label">🟢 及格</div><div id="rankPassed" class="rank-stat-value">-</div></div><div class="rank-stat"><div class="rank-stat-label">🔴 不及格</div><div id="rankFailed" class="rank-stat-value">-</div></div><div class="rank-stat"><div class="rank-stat-label">⏳ 未完成</div><div id="rankIncomplete" class="rank-stat-value">-</div></div></div><div class="toolbar"><input id="rankingSearch" class="field grow" placeholder="搜尋社團" oninput="renderRankingTable()"><select id="rankingCategory" class="field" onchange="renderRankingTable()"></select></div><div id="rankingState" class="state">尚未讀取</div><div id="rankingTableWrap" class="table-wrap hidden"><table class="rank-table"><thead><tr><th>名次</th><th>社團</th><th id="rankRoutineHeader">平時表現</th><th id="rankDataHeader">數位資料</th><th id="rankFieldHeader">現場詢答</th><th id="rankTotalHeader">總分</th><th>結果</th><th>排名狀態</th></tr></thead><tbody id="rankingTableBody"></tbody></table></div></div></section>
+
+<section class="panel closed" data-panel="judge-confirmation-export">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+<div class="panel-title">📄 評審個人評分確認表</div>
+<div id="judgeExportMeta" class="panel-meta">請先選擇評審</div>
+</div>
+
+<span class="chev">▼</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="notice">
+本確認表只會顯示所選評審本人的評分小項、各大項總分、正式送出時間與重送狀態；不會顯示其他評審分數、評審平均、排名或及格結果。
+</div>
+
+<div class="toolbar export-toolbar">
+
+<select
+id="judgeExportJudge"
+class="field grow"
+onchange="resetJudgeConfirmationPreview()"
+>
+<option value="">請先選擇評審</option>
+</select>
+
+<button
+id="judgeExportPreviewBtn"
+class="btn"
+onclick="previewJudgeConfirmation()"
+disabled
+>
+👁️ 預覽
+</button>
+
+<button
+id="judgeExportPdfBtn"
+class="btn btn-primary"
+onclick="printJudgeConfirmation()"
+disabled
+>
+📄 匯出 PDF
+</button>
+
+</div>
+
+<div class="export-print-hint">
+按下「匯出 PDF」後，請在瀏覽器列印視窗選擇「另存為 PDF」。
+</div>
+
+<div id="judgeExportState" class="state">
+選擇評審後按「預覽」，系統才會讀取該評審目前的個人評分資料。
+</div>
+
+<div id="judgeExportPreview" class="export-preview hidden"></div>
+
+</div>
+
+</section>
+
+<section class="panel closed">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+<div class="panel-title">🏫 社團名單管理</div>
+<div id="clubMeta" class="panel-meta">-</div>
+</div>
+
+<span class="chev">▼</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="toolbar">
+
+<input
+id="clubSearch"
+class="field grow"
+placeholder="搜尋社團或屬性"
+oninput="renderClubs()"
+>
+
+<button
+class="btn btn-primary"
+onclick="openClubModal()"
+>
+＋ 新增社團
+</button>
+
+</div>
+
+<div id="clubList" class="list">
+<div class="state">尚未讀取</div>
+</div>
+
+</div>
+
+</section>
+
+<section class="panel closed">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+<div class="panel-title">⏰ 活動時程管理</div>
+<div id="eventMeta" class="panel-meta">-</div>
+</div>
+
+<span class="chev">▼</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="grid2">
+
+<div>
+
+<label class="label">
+資料繳交截止
+</label>
+
+<input
+id="dataDeadline"
+class="field"
+type="datetime-local"
+>
+
+</div>
+
+<div>
+
+<label class="label">
+表單填寫截止
+</label>
+
+<input
+id="formDeadline"
+class="field"
+type="datetime-local"
+>
+
+</div>
+
+<div>
+
+<label class="label">
+活動開始
+</label>
+
+<input
+id="eventStart"
+class="field"
+type="datetime-local"
+>
+
+</div>
+
+<div>
+
+<label class="label">
+活動結束
+</label>
+
+<input
+id="eventEnd"
+class="field"
+type="datetime-local"
+>
+
+</div>
+
+</div>
+
+<div class="toolbar" style="margin-top:12px">
+
+<button
+class="btn btn-primary"
+onclick="saveEventConfig()"
+>
+💾 儲存時程
+</button>
+
+</div>
+
+<div id="eventError" class="error"></div>
+
+</div>
+
+</section>
+
+<section class="panel closed">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+
+<div class="panel-title">
+📝 Google Form 填寫進度
+</div>
+
+<div id="formMeta" class="panel-meta">
+-
+</div>
+
+</div>
+
+<span class="chev">▼</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="toolbar">
+
+<input
+id="formSearch"
+class="field grow"
+placeholder="搜尋社團或屬性"
+oninput="renderForms()"
+>
+
+<select
+id="formFilter"
+class="field"
+onchange="renderForms()"
+>
+
+<option value="all">
+全部狀態
+</option>
+
+<option value="submitted">
+已完成
+</option>
+
+<option value="pending">
+尚未填寫
+</option>
+
+<option value="duplicate">
+重複填寫
+</option>
+
+</select>
+
+<button
+class="btn"
+onclick="syncForms()"
+>
+🔄 立即同步
+</button>
+
+</div>
+
+<div id="formList" class="list">
+
+<div class="state">
+尚未讀取
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="panel closed">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+
+<div class="panel-title">
+🔗 LINE 綁定管理
+</div>
+
+<div id="bindingMeta" class="panel-meta">
+-
+</div>
+
+</div>
+
+<span class="chev">
+▼
+</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="toolbar">
+
+<input
+id="bindingSearch"
+class="field grow"
+placeholder="搜尋 LINE 名稱、社團或屬性"
+oninput="renderBindings()"
+>
+
+</div>
+
+<div id="bindingList" class="list">
+
+<div class="state">
+尚未讀取
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="panel closed">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+
+<div class="panel-title">
+☁️ 社團專屬雲端
+</div>
+
+<div id="cloudMeta" class="panel-meta">
+-
+</div>
+
+</div>
+
+<span class="chev">
+▼
+</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="toolbar">
+
+<input
+id="cloudSearch"
+class="field grow"
+placeholder="搜尋社團或屬性"
+oninput="renderClouds()"
+>
+
+</div>
+
+<div id="cloudList" class="list">
+
+<div class="state">
+尚未讀取
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+</main>
+
+</div>
+
+<div id="judgeModal" class="modal-bg">
+
+<div class="modal">
+
+<h3 id="judgeModalTitle">
+新增評審
+</h3>
+
+<input
+id="judgeId"
+type="hidden"
+>
+
+<label class="label">
+顯示名稱
+</label>
+
+<input
+id="judgeName"
+class="field"
+placeholder="例如：王老師"
+>
+
+<label class="label">
+登入帳號
+</label>
+
+<input
+id="judgeUsername"
+class="field"
+placeholder="至少 3 個字元"
+>
+
+<div id="judgePasswordWrap">
+
+<label class="label">
+初始密碼
+</label>
+
+<input
+id="judgePassword"
+class="field"
+type="password"
+placeholder="至少 6 個字元"
+>
+
+</div>
+
+<label class="label">
+可評社團屬性
+</label>
+
+<div
+id="judgeCategories"
+class="check-grid"
+></div>
+
+<label class="label">
+可評分大項
+</label>
+
+<div
+id="judgeScoreSections"
+class="check-grid"
+></div>
+
+<div class="sub" style="margin-top:7px">
+社團屬性與評分大項都可自由勾選；全部不勾也可以。
+</div>
+
+<div id="judgeError" class="error"></div>
+
+<div class="modal-actions">
+
+<button
+class="btn"
+onclick="closeModal('judgeModal')"
+>
+取消
+</button>
+
+<button
+class="btn btn-primary"
+onclick="saveJudge()"
+>
+儲存
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="clubModal" class="modal-bg">
+
+<div class="modal">
+
+<h3 id="clubModalTitle">
+新增社團
+</h3>
+
+<input
+id="clubOldName"
+type="hidden"
+>
+
+<label class="label">
+社團完整名稱
+</label>
+
+<input
+id="clubName"
+class="field"
+>
+
+<label class="label">
+社團屬性
+</label>
+
+<select
+id="clubCategory"
+class="field"
+></select>
+
+<div id="clubError" class="error"></div>
+
+<div class="modal-actions">
+
+<button
+class="btn"
+onclick="closeModal('clubModal')"
+>
+取消
+</button>
+
+<button
+class="btn btn-primary"
+onclick="saveClub()"
+>
+儲存
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="cloudModal" class="modal-bg">
+
+<div class="modal">
+
+<h3>
+設定社團雲端
+</h3>
+
+<div id="cloudModalClub" class="muted"></div>
+
+<input
+id="cloudClubName"
+type="hidden"
+>
+
+<label class="label">
+HTTPS 網址
+</label>
+
+<input
+id="cloudUrl"
+class="field"
+placeholder="https://..."
+>
+
+<div id="cloudError" class="error"></div>
+
+<div class="modal-actions">
+
+<button
+class="btn"
+onclick="closeModal('cloudModal')"
+>
+取消
+</button>
+
+<button
+class="btn btn-primary"
+onclick="saveCloud()"
+>
+儲存
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="rawScoreModal" class="modal-bg">
+
+<div class="modal modal-wide">
+
+<h3 id="rawScoreTitle">
+評分原始分數
+</h3>
+
+<input
+id="rawJudgeId"
+type="hidden"
+>
+
+<input
+id="rawSectionId"
+type="hidden"
+>
+
+<input
+id="rawClubName"
+type="hidden"
+>
+
+<div id="rawScoreMeta" class="muted"></div>
+
+<div
+id="rawScoreStatus"
+style="margin-top:10px"
+></div>
+
+<div
+id="rawScoreBody"
+style="margin-top:12px"
+>
+
+<div class="state">
+讀取中...
+</div>
+
+</div>
+
+<div class="modal-actions">
+
+<button
+id="rawHistoryBtn"
+class="btn hidden"
+onclick="openCurrentScoreHistory()"
+>
+🕘 查看修改歷史
+</button>
+
+<button
+id="rawUnlockBtn"
+class="btn btn-danger hidden"
+onclick="unlockCurrentRawScore()"
+>
+🔓 解鎖重新評分
+</button>
+
+<button
+class="btn"
+onclick="closeModal('rawScoreModal')"
+>
+關閉
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="scoreHistoryModal" class="modal-bg">
+
+<div class="modal modal-wide">
+
+<h3>
+🕘 評分修改歷史
+</h3>
+
+<div id="scoreHistoryMeta" class="muted"></div>
+
+<div
+id="scoreHistoryBody"
+style="margin-top:12px"
+>
+
+<div class="state">
+讀取中...
+</div>
+
+</div>
+
+<div class="modal-actions">
+
+<button
+class="btn"
+onclick="closeModal('scoreHistoryModal')"
+>
+關閉
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="aggregationDetailModal" class="modal-bg">
+
+<div class="modal modal-wide">
+
+<h3 id="aggregationDetailTitle">
+🏆 社團成績明細
+</h3>
+
+<div
+id="aggregationDetailMeta"
+class="muted"
+></div>
+
+<div
+id="aggregationDetailBody"
+style="margin-top:12px"
+>
+
+<div class="state">
+讀取中...
+</div>
+
+</div>
+
+<div class="modal-actions">
+
+<button
+class="btn"
+onclick="closeModal('aggregationDetailModal')"
+>
+關閉
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+
+const BACKEND_URL =
+"https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
+
+const SESSION_KEY =
+"HKSP_ADMIN_SESSION";
+
+const EVENT_NAME =
+"115學年度第一學期全校學生社團評選暨觀摩活動";
+
+const DEFAULT_REQUEST_TIMEOUT_MS =
+45000;
+
+const HEAVY_REQUEST_TIMEOUT_MS =
+180000;
+
+const HEAVY_REQUEST_ACTIONS =
+new Set([
+"adminJudgeScoreProgress",
+"adminScoreAggregation",
+"adminScoreAggregationSummary",
+"adminClubScoreAggregation",
+"adminRanking",
+"adminCategoryRanking",
+"adminJudgeConfirmationExport"
+]);
+
+const CLUB_CATEGORIES = [
+"全校自治性",
+"自治綜合性",
+"康樂性",
+"服務性",
+"體能性",
+"學藝性"
+];
+
+const S = {
+token:null,
+scoreConfig:null,
+judges:[],
+availableScoreSections:[],
+judgeProgress:null,
+currentRawScore:null,
+scoreAggregation:null,
+currentAggregationClub:null,
+ranking:null,
+rankingConfig:null,
+rankingMetrics:[],
+judgeConfirmationExport:null,
+clubs:[],
+forms:[],
+bindings:[],
+clouds:[],
+eventConfig:null,
+busy:false
+};
+
+const $ =
+id =>
+document.getElementById(id);
+
+const esc =
+v =>
+String(v??"")
+.replaceAll("&","&amp;")
+.replaceAll("<","&lt;")
+.replaceAll(">","&gt;")
+.replaceAll('"',"&quot;")
+.replaceAll("'","&#039;");
+
+const attr =
+esc;
+
+function uid(prefix){
+return prefix+"_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,9)
+}
+
+function num(v){
+
+if(
+v==="" ||
+v===null ||
+v===undefined
+){
+return 0;
+}
+
+const n =
+Number(v);
+
+return Number.isFinite(n)
+? Math.round(n*10000)/10000
+: 0;
+
+}
+
+function fmt(v){
+return String(num(v))
+}
+
+function deep(v){
+return JSON.parse(JSON.stringify(v))
+}
+
+function togglePanel(btn){
+btn.closest(".panel").classList.toggle("closed")
+}
+
+function showApp(){
+$("loginScreen").style.display="none";
+$("adminApp").style.display="block"
+}
+
+function showLogin(){
+$("loginScreen").style.display="flex";
+$("adminApp").style.display="none"
+}
+
+function closeModal(id){
+$(id).style.display="none"
+}
+
+function openModal(id){
+$(id).style.display="flex"
+}
+
+function toast(msg){
+
+const el =
+$("toast");
+
+el.textContent =
+msg;
+
+el.classList.add("show");
+
+clearTimeout(
+toast.t
+);
+
+toast.t =
+setTimeout(
+()=>el.classList.remove("show"),
+2600
+);
+
+}
+
+async function post(payload){
+
+const c =
+new AbortController();
+
+const timeoutMs =
+HEAVY_REQUEST_ACTIONS.has(
+payload && payload.action
+)
+?
+HEAVY_REQUEST_TIMEOUT_MS
+:
+DEFAULT_REQUEST_TIMEOUT_MS;
+
+const t =
+setTimeout(
+()=>c.abort(),
+timeoutMs
+);
+
+try{
+
+const r =
+await fetch(
+BACKEND_URL,
+{
+method:"POST",
+body:JSON.stringify(payload),
+redirect:"follow",
+signal:c.signal
+}
+);
+
+if(!r.ok){
+throw new Error("HTTP "+r.status);
+}
+
+const x =
+await r.text();
+
+try{
+return JSON.parse(x);
+}
+catch(e){
+
+console.error(x);
+
+throw new Error(
+"後端回傳格式錯誤"
+);
+
+}
+
+}
+catch(e){
+
+if(
+e.name==="AbortError"
+){
+throw new Error(
+"後端連線逾時"
+);
+}
+
+throw e;
+
+}
+finally{
+
+clearTimeout(t);
+
+}
+
+}
+
+async function api(
+action,
+extra={}
+){
+
+return post({
+action,
+sessionToken:S.token,
+...extra
+});
+
+}
+
+function unauthorized(r){
+
+if(
+r &&
+r.error==="ADMIN_UNAUTHORIZED"
+){
+
+clearSession();
+
+showLogin();
+
+$("loginError").textContent =
+"管理員登入已失效，請重新登入。";
+
+return true;
+
+}
+
+return false;
+
+}
+
+function clearSession(){
+
+S.token=null;
+
+sessionStorage.removeItem(
+SESSION_KEY
+);
+
+}
+
+$("loginForm")
+.addEventListener(
+"submit",
+async e=>{
+
+e.preventDefault();
+
+if(S.busy)return;
+
+const p =
+$("adminPassword").value;
+
+const b =
+$("loginBtn");
+
+if(!p)return;
+
+try{
+
+S.busy=true;
+
+b.disabled=true;
+
+b.textContent=
+"登入中...";
+
+$("loginError").textContent="";
+
+const r =
+await post({
+action:"adminLogin",
+password:p
+});
+
+$("adminPassword").value="";
+
+if(
+!r.success ||
+!r.sessionToken
+){
+throw new Error(
+r.message ||
+"登入失敗"
+);
+}
+
+S.token =
+r.sessionToken;
+
+sessionStorage.setItem(
+SESSION_KEY,
+S.token
+);
+
+showApp();
+
+await refreshAllData();
+
+toast(
+"✅ 登入成功"
+);
+
+}
+catch(err){
+
+clearSession();
+
+showLogin();
+
+$("loginError").textContent =
+err.message;
+
+}
+finally{
+
+S.busy=false;
+
+b.disabled=false;
+
+b.textContent=
+"登入管理後台";
+
+}
+
+}
+);
+
+async function logoutAdmin(){
+
+try{
+
+if(S.token){
+await api("adminLogout");
+}
+
+}
+catch(e){}
+
+clearSession();
+
+showLogin();
+
+toast(
+"已登出"
+);
+
+}
+
+async function init(){
+
+const t =
+sessionStorage.getItem(
+SESSION_KEY
+);
+
+if(!t){
+
+showLogin();
+
+return;
+
+}
+
+S.token=t;
+
+showApp();
+
+try{
+
+const r =
+await api(
+"adminListClubs"
+);
+
+if(
+unauthorized(r)
+)return;
+
+await refreshAllData();
+
+}
+catch(e){
+
+clearSession();
+
+showLogin();
+
+$("loginError").textContent=
+"登入已失效，請重新登入。";
+
+}
+
+}
+
+document.addEventListener(
+"DOMContentLoaded",
+init
+);
+
+async function refreshAllData(){
+
+if(!S.token)return;
+
+const basicJobs = [
+
+loadScoreConfig(),
+
+loadJudges(),
+
+loadClubs(),
+
+loadEvent(),
+
+loadForms(),
+
+loadBindings(),
+
+loadClouds()
+
+];
+
+await Promise.allSettled(
+basicJobs
+);
+
+/*
+ * 進度、彙整與排名都會大量讀取評分資料。
+ * 改為依序執行，避免同時啟動三個重型 Apps Script 運算而互相拖慢。
+ */
+await Promise.allSettled([
+loadJudgeProgress()
+]);
+
+await Promise.allSettled([
+loadScoreAggregation()
+]);
+
+await Promise.allSettled([
+loadRanking()
+]);
+
+$("lastRefresh").textContent=
+"最後同步："+
+
+new Intl.DateTimeFormat(
+"zh-TW",
+{
+hour:"2-digit",
+minute:"2-digit",
+second:"2-digit",
+hour12:false
+}
+)
+.format(
+new Date()
+);
+
+}
+
+/* ============================================================
+   SCORE
+   ============================================================ */
+
+async function loadScoreConfig(){
+
+try{
+
+const r =
+await api(
+"adminGetScoreConfig"
+);
+
+if(
+unauthorized(r)
+)return;
+
+if(
+!r.success ||
+!r.config
+){
+
+throw new Error(
+r.message ||
+"無法取得評分設定"
+);
+
+}
+
+S.scoreConfig =
+deep(
+r.config
+);
+
+$("statScoreRev").textContent =
+S.scoreConfig.revision ?? "-";
+
+$("scoreMeta").textContent =
+`版本 ${
+S.scoreConfig.revision ?? "-"
+}｜總配分 ${
+fmt(S.scoreConfig.totalMaxScore)
+}`;
+
+$("scoreState")
+.classList
+.add(
+"hidden"
+);
+
+$("scoreEditor")
+.classList
+.remove(
+"hidden"
+);
+
+renderScoreEditor();
+
+}
+catch(e){
+
+$("scoreState")
+.classList
+.remove(
+"hidden"
+);
+
+$("scoreState").innerHTML=
+"⚠️ "+
+esc(e.message);
+
+}
+
+}
+
+function setTotalMaxScore(v){
+
+S.scoreConfig.totalMaxScore =
+num(v);
+
+renderScoreValidation();
+
+}
+
+function normalizeOrders(){
+
+(
+S.scoreConfig.sections ||
+[]
+)
+.forEach(
+(s,si)=>{
+
+s.order=si;
+
+s.scoringMode="judge";
+
+(
+s.groups ||
+[]
+)
+.forEach(
+(g,gi)=>{
+
+g.order=gi;
+
+(
+g.criteria ||
+[]
+)
+.forEach(
+(c,ci)=>
+c.order=ci
+);
+
+}
+);
+
+}
+);
+
+}
+
+function addSection(){
+
+S.scoreConfig.sections.push({
+id:uid("section"),
+name:"新評分大項",
+icon:"📌",
+scoringMode:"judge",
+enabled:true,
+published:false,
+publishedAt:null,
+maxScore:0,
+groups:[
+{
+id:uid("group"),
+name:"新分類",
+enabled:true,
+maxScore:0,
+criteria:[
+{
+id:uid("criterion"),
+name:"新評分小項",
+enabled:true,
+maxScore:0
+}
+]
+}
+]
+});
+
+normalizeOrders();
+
+renderScoreEditor();
+
+}
+
+function deleteSection(i){
+
+const s =
+S.scoreConfig.sections[i];
+
+if(
+!confirm(
+`確定刪除「${s.name}」？`
+)
+)return;
+
+S.scoreConfig.sections.splice(
+i,
+1
+);
+
+normalizeOrders();
+
+renderScoreEditor();
+
+}
+
+function moveSection(i,d){
+
+const a =
+S.scoreConfig.sections;
+
+const j =
+i+d;
+
+if(
+j<0 ||
+j>=a.length
+)return;
+
+[
+a[i],
+a[j]
+]=
+[
+a[j],
+a[i]
+];
+
+normalizeOrders();
+
+renderScoreEditor();
+
+}
+
+function setSection(i,k,v){
+
+const s =
+S.scoreConfig.sections[i];
+
+if(
+k==="maxScore"
+){
+v=num(v);
+}
+
+if(
+k==="enabled"
+){
+v=!!v;
+}
+
+s[k]=v;
+
+renderScoreValidation();
+
+}
+
+function addGroup(si){
+
+S.scoreConfig.sections[
+si
+]
+.groups
+.push({
+id:uid("group"),
+name:"新分類",
+enabled:true,
+maxScore:0,
+criteria:[
+{
+id:uid("criterion"),
+name:"新評分小項",
+enabled:true,
+maxScore:0
+}
+]
+});
+
+normalizeOrders();
+
+renderScoreEditor();
+
+}
+
+function deleteGroup(si,gi){
+
+const g =
+S.scoreConfig.sections[
+si
+]
+.groups[
+gi
+];
+
+if(
+!confirm(
+`確定刪除分類「${g.name}」？`
+)
+)return;
+
+S.scoreConfig.sections[
+si
+]
+.groups
+.splice(
+gi,
+1
+);
+
+normalizeOrders();
+
+renderScoreEditor();
+
+}
+
+function moveGroup(si,gi,d){
+
+const a =
+S.scoreConfig.sections[
+si
+]
+.groups;
+
+const j =
+gi+d;
+
+if(
+j<0 ||
+j>=a.length
+)return;
+
+[
+a[gi],
+a[j]
+]=
+[
+a[j],
+a[gi]
+];
+
+normalizeOrders();
+
+renderScoreEditor();
+
+}
+
+function setGroup(si,gi,k,v){
+
+const g =
+S.scoreConfig.sections[
+si
+]
+.groups[
+gi
+];
+
+if(
+k==="maxScore"
+){
+v=num(v);
+}
+
+if(
+k==="enabled"
+){
+v=!!v;
+}
+
+g[k]=v;
+
+renderScoreValidation();
+
+}
+
+function addCriterion(si,gi){
+
+S.scoreConfig.sections[
+si
+]
+.groups[
+gi
+]
+.criteria
+.push({
+id:uid("criterion"),
+name:"新評分小項",
+enabled:true,
+maxScore:0
+});
+
+normalizeOrders();
+
+renderScoreEditor();
+
+}
+
+function deleteCriterion(
+si,
+gi,
+ci
+){
+
+const c =
+S.scoreConfig.sections[
+si
+]
+.groups[
+gi
+]
+.criteria[
+ci
+];
+
+if(
+!confirm(
+`確定刪除「${c.name}」？`
+)
+)return;
+
+S.scoreConfig.sections[
+si
+]
+.groups[
+gi
+]
+.criteria
+.splice(
+ci,
+1
+);
+
+normalizeOrders();
+
+renderScoreEditor();
+
+}
+
+function moveCriterion(
+si,
+gi,
+ci,
+d
+){
+
+const a =
+S.scoreConfig.sections[
+si
+]
+.groups[
+gi
+]
+.criteria;
+
+const j =
+ci+d;
+
+if(
+j<0 ||
+j>=a.length
+)return;
+
+[
+a[ci],
+a[j]
+]=
+[
+a[j],
+a[ci]
+];
+
+normalizeOrders();
+
+renderScoreEditor();
+
+}
+
+function setCriterion(
+si,
+gi,
+ci,
+k,
+v
+){
+
+const c =
+S.scoreConfig.sections[
+si
+]
+.groups[
+gi
+]
+.criteria[
+ci
+];
+
+if(
+k==="maxScore"
+){
+v=num(v);
+}
+
+if(
+k==="enabled"
+){
+v=!!v;
+}
+
+c[k]=v;
+
+renderScoreValidation();
+
+}
+
+function criteriaTotal(g){
+
+return num(
+
+(
+g.criteria ||
+[]
+)
+.filter(
+c=>
+c.enabled!==false
+)
+.reduce(
+(a,c)=>
+a+
+num(c.maxScore),
+0
+)
+
+);
+
+}
+
+function groupsTotal(s){
+
+return num(
+
+(
+s.groups ||
+[]
+)
+.filter(
+g=>
+g.enabled!==false
+)
+.reduce(
+(a,g)=>
+a+
+num(g.maxScore),
+0
+)
+
+);
+
+}
+
+function sectionsTotal(){
+
+return num(
+
+(
+S.scoreConfig.sections ||
+[]
+)
+.filter(
+s=>
+s.enabled!==false
+)
+.reduce(
+(a,s)=>
+a+
+num(s.maxScore),
+0
+)
+
+);
+
+}
+
+function validateClientScore(){
+
+const errors=[];
+
+const cfg =
+S.scoreConfig ||
+{
+sections:[]
+};
+
+if(
+num(cfg.totalMaxScore)<0
+){
+errors.push(
+"總配分不得小於 0。"
+);
+}
+
+(
+cfg.sections ||
+[]
+)
+.filter(
+s=>
+s.enabled!==false
+)
+.forEach(
+s=>{
+
+if(
+!String(
+s.name ||
+""
+)
+.trim()
+){
+
+errors.push(
+"有大項尚未填寫名稱。"
+);
+
+}
+
+if(
+num(s.maxScore)<0
+){
+
+errors.push(
+`大項「${s.name}」不得為負分。`
+);
+
+}
+
+const gs =
+(
+s.groups ||
+[]
+)
+.filter(
+g=>
+g.enabled!==false
+);
+
+if(
+!gs.length
+){
+
+errors.push(
+`大項「${s.name}」至少需要一個啟用分類。`
+);
+
+}
+
+gs.forEach(
+g=>{
+
+if(
+!String(
+g.name ||
+""
+)
+.trim()
+){
+
+errors.push(
+`「${s.name}」有分類未命名。`
+);
+
+}
+
+const cs =
+(
+g.criteria ||
+[]
+)
+.filter(
+c=>
+c.enabled!==false
+);
+
+if(
+!cs.length
+){
+
+errors.push(
+`分類「${s.name} → ${g.name}」至少需要一個啟用小項。`
+);
+
+}
+
+cs.forEach(
+c=>{
+
+if(
+!String(
+c.name ||
+""
+)
+.trim()
+){
+
+errors.push(
+`「${s.name} → ${g.name}」有小項未命名。`
+);
+
+}
+
+if(
+num(c.maxScore)<0
+){
+
+errors.push(
+`小項「${c.name}」不得為負分。`
+);
+
+}
+
+}
+);
+
+const ct =
+criteriaTotal(g);
+
+if(
+Math.abs(
+ct-
+num(g.maxScore)
+)
+>
+.000001
+){
+
+errors.push(
+`分類「${s.name} → ${g.name}」：設定 ${fmt(g.maxScore)}，小項合計 ${fmt(ct)}。`
+);
+
+}
+
+}
+);
+
+const gt =
+groupsTotal(s);
+
+if(
+Math.abs(
+gt-
+num(s.maxScore)
+)
+>
+.000001
+){
+
+errors.push(
+`大項「${s.name}」：設定 ${fmt(s.maxScore)}，分類合計 ${fmt(gt)}。`
+);
+
+}
+
+}
+);
+
+const st =
+sectionsTotal();
+
+if(
+Math.abs(
+st-
+num(cfg.totalMaxScore)
+)
+>
+.000001
+){
+
+errors.push(
+`總配分設定 ${fmt(cfg.totalMaxScore)}，啟用大項合計 ${fmt(st)}。`
+);
+
+}
+
+return{
+valid:
+errors.length===0,
+errors,
+total:st
+};
+
+}
+
+function renderScoreEditor(){
+
+if(
+!S.scoreConfig
+)return;
+
+$("totalMaxScore").value =
+fmt(
+S.scoreConfig.totalMaxScore
+);
+
+const box =
+$("sectionsEditor");
+
+box.innerHTML =
+(
+S.scoreConfig.sections ||
+[]
+)
+.map(
+(s,si)=>
+sectionHtml(
+s,
+si
+)
+)
+.join("");
+
+renderScoreValidation();
+
+}
+
+function sectionHtml(s,si){
+
+const pub =
+s.published
+?
+'<span class="badge b-pub">✅ 已發布</span>'
+:
+'<span class="badge b-draft">草稿</span>';
+
+s.scoringMode =
+"judge";
+
+return `
+<div class="score-section">
+
+<div class="score-section-head">
+
+<div class="section-grid">
+
+<div>
+
+<div class="mini-label">
+圖示
+</div>
+
+<input
+class="field mini"
+value="${attr(s.icon||"📌")}"
+oninput="setSection(${si},'icon',this.value)"
+>
+
+</div>
+
+<div>
+
+<div class="mini-label">
+大項名稱
+</div>
+
+<input
+class="field mini"
+value="${attr(s.name)}"
+oninput="setSection(${si},'name',this.value)"
+>
+
+</div>
+
+<div>
+
+<div class="mini-label">
+大項配分
+</div>
+
+<input
+class="field mini"
+type="number"
+min="0"
+step="0.01"
+value="${attr(fmt(s.maxScore))}"
+oninput="setSection(${si},'maxScore',this.value)"
+>
+
+</div>
+
+<div class="mode-wrap">
+
+<div class="mini-label">
+評分方式
+</div>
+
+<div
+class="field mini"
+style="display:flex;align-items:center;background:#f9fafb"
+>
+評審評分
+</div>
+
+</div>
+
+<div class="section-actions">
+
+<div class="row-actions">
+
+<button
+class="icon-btn"
+onclick="moveSection(${si},-1)"
+>
+↑
+</button>
+
+<button
+class="icon-btn"
+onclick="moveSection(${si},1)"
+>
+↓
+</button>
+
+<button
+class="icon-btn danger-icon"
+onclick="deleteSection(${si})"
+>
+✕
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div
+style="
+display:flex;
+justify-content:space-between;
+gap:10px;
+align-items:center;
+margin-top:9px
+"
+>
+
+<div class="toggle-row">
+
+<label>
+
+<input
+type="checkbox"
+${s.enabled!==false?"checked":""}
+onchange="setSection(${si},'enabled',this.checked)"
+>
+
+啟用
+
+</label>
+
+${pub}
+
+<span class="badge b-judge">
+Judge
+</span>
+
+</div>
+
+<button
+class="btn ${s.published?"btn-danger":"btn-success"}"
+onclick="togglePublish(${si})"
+>
+${s.published?"取消發布":"發布給評審"}
+</button>
+
+</div>
+
+</div>
+
+<div class="score-section-body">
+
+${
+
+(
+s.groups ||
+[]
+)
+.map(
+(g,gi)=>
+groupHtml(
+g,
+si,
+gi
+)
+)
+.join("")
+
+}
+
+<button
+class="btn"
+onclick="addGroup(${si})"
+>
+＋ 新增分類
+</button>
+
+<div
+class="calc ${
+Math.abs(
+groupsTotal(s)-
+num(s.maxScore)
+)
+<
+.000001
+?
+"good"
+:
+"bad"
+}"
+>
+
+分類合計
+${fmt(groupsTotal(s))}
+/
+大項
+${fmt(s.maxScore)}
+
+</div>
+
+</div>
+
+</div>
+`;
+
+}
+
+function groupHtml(
+g,
+si,
+gi
+){
+
+return `
+<div class="score-group">
+
+<div class="group-head">
+
+<div>
+
+<div class="mini-label">
+分類名稱
+</div>
+
+<input
+class="field mini"
+value="${attr(g.name)}"
+oninput="setGroup(${si},${gi},'name',this.value)"
+>
+
+</div>
+
+<div>
+
+<div class="mini-label">
+分類配分
+</div>
+
+<input
+class="field mini"
+type="number"
+min="0"
+step="0.01"
+value="${attr(fmt(g.maxScore))}"
+oninput="setGroup(${si},${gi},'maxScore',this.value)"
+>
+
+</div>
+
+<div class="row-actions">
+
+<label class="toggle-row">
+
+<input
+type="checkbox"
+${g.enabled!==false?"checked":""}
+onchange="setGroup(${si},${gi},'enabled',this.checked)"
+>
+
+啟用
+
+</label>
+
+<button
+class="icon-btn"
+onclick="moveGroup(${si},${gi},-1)"
+>
+↑
+</button>
+
+<button
+class="icon-btn"
+onclick="moveGroup(${si},${gi},1)"
+>
+↓
+</button>
+
+<button
+class="icon-btn danger-icon"
+onclick="deleteGroup(${si},${gi})"
+>
+✕
+</button>
+
+</div>
+
+</div>
+
+<div class="criteria">
+
+${
+
+(
+g.criteria ||
+[]
+)
+.map(
+(c,ci)=>
+criterionHtml(
+c,
+si,
+gi,
+ci
+)
+)
+.join("")
+
+}
+
+<button
+class="btn"
+onclick="addCriterion(${si},${gi})"
+>
+＋ 新增小項
+</button>
+
+<div
+class="calc ${
+Math.abs(
+criteriaTotal(g)-
+num(g.maxScore)
+)
+<
+.000001
+?
+"good"
+:
+"bad"
+}"
+>
+
+小項合計
+${fmt(criteriaTotal(g))}
+/
+分類
+${fmt(g.maxScore)}
+
+</div>
+
+</div>
+
+</div>
+`;
+
+}
+
+function criterionHtml(
+c,
+si,
+gi,
+ci
+){
+
+return `
+<div class="criterion">
+
+<div>
+
+<div class="mini-label">
+評分小項
+</div>
+
+<input
+class="field mini"
+value="${attr(c.name)}"
+oninput="setCriterion(${si},${gi},${ci},'name',this.value)"
+>
+
+</div>
+
+<div>
+
+<div class="mini-label">
+最高分
+</div>
+
+<input
+class="field mini"
+type="number"
+min="0"
+step="0.01"
+value="${attr(fmt(c.maxScore))}"
+oninput="setCriterion(${si},${gi},${ci},'maxScore',this.value)"
+>
+
+</div>
+
+<div class="row-actions">
+
+<label class="toggle-row">
+
+<input
+type="checkbox"
+${c.enabled!==false?"checked":""}
+onchange="setCriterion(${si},${gi},${ci},'enabled',this.checked)"
+>
+
+啟用
+
+</label>
+
+<button
+class="icon-btn"
+onclick="moveCriterion(${si},${gi},${ci},-1)"
+>
+↑
+</button>
+
+<button
+class="icon-btn"
+onclick="moveCriterion(${si},${gi},${ci},1)"
+>
+↓
+</button>
+
+<button
+class="icon-btn danger-icon"
+onclick="deleteCriterion(${si},${gi},${ci})"
+>
+✕
+</button>
+
+</div>
+
+</div>
+`;
+
+}
+
+function renderScoreValidation(){
+
+if(
+!S.scoreConfig
+)return;
+
+const v =
+validateClientScore();
+
+const box =
+$("scoreValidation");
+
+if(
+v.valid
+){
+
+box.className =
+"validation notice okbox";
+
+box.innerHTML =
+`✅ 配分架構合理，可發布。<br>
+啟用大項合計：
+<b>${fmt(v.total)}</b>
+/
+總配分
+<b>${fmt(S.scoreConfig.totalMaxScore)}</b>`;
+
+}
+else{
+
+box.className =
+"validation notice badbox";
+
+box.innerHTML =
+`❌ 目前配分尚未通過發布檢查，但仍可儲存草稿。
+<ul>
+${
+v.errors
+.map(
+x=>
+`<li>${esc(x)}</li>`
+)
+.join("")
+}
+</ul>`;
+
+}
+
+}
+
+async function saveScoreConfig(
+silent=false
+){
+
+if(
+!S.scoreConfig
+)return null;
+
+normalizeOrders();
+
+const b =
+$("saveScoreBtn");
+
+try{
+
+b.disabled=true;
+
+const r =
+await api(
+"adminSaveScoreConfig",
+{
+config:S.scoreConfig
+}
+);
+
+if(
+unauthorized(r)
+)
+return null;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"儲存失敗"
+);
+
+}
+
+S.scoreConfig =
+deep(
+r.config
+);
+
+renderScoreEditor();
+
+$("statScoreRev").textContent =
+S.scoreConfig.revision ?? "-";
+
+$("scoreMeta").textContent =
+`版本 ${
+S.scoreConfig.revision ?? "-"
+}｜總配分 ${
+fmt(S.scoreConfig.totalMaxScore)
+}`;
+
+if(
+!silent
+){
+
+toast(
+r.validation &&
+r.validation.valid
+?
+"✅ 設定已儲存，配分檢查通過"
+:
+"💾 草稿已儲存，但尚不能發布"
+);
+
+}
+
+await loadJudges();
+await loadScoreAggregation();
+await loadRanking();
+
+return r;
+
+}
+catch(e){
+
+toast(
+"❌ "+
+e.message
+);
+
+return null;
+
+}
+finally{
+
+b.disabled=false;
+
+}
+
+}
+
+async function togglePublish(si){
+
+const before =
+S.scoreConfig.sections[
+si
+];
+
+if(!before)return;
+
+if(
+before.published
+){
+
+if(
+!confirm(
+`確定取消發布「${before.name}」？`
+)
+)return;
+
+const r =
+await api(
+"adminSetScorePhasePublished",
+{
+sectionId:before.id,
+published:false
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+toast(
+"❌ "+
+(
+r.message ||
+"取消發布失敗"
+)
+);
+
+return;
+
+}
+
+S.scoreConfig =
+deep(
+r.config
+);
+
+renderScoreEditor();
+
+toast(
+"已取消發布"
+);
+
+await loadScoreAggregation();
+await loadRanking();
+
+return;
+
+}
+
+const saved =
+await saveScoreConfig(
+true
+);
+
+if(!saved)return;
+
+if(
+!saved.validation ||
+!saved.validation.valid
+){
+
+toast(
+"❌ 配分尚未合理，不能發布"
+);
+
+return;
+
+}
+
+const current =
+S.scoreConfig.sections.find(
+s=>
+s.id===before.id
+);
+
+if(!current)return;
+
+const r =
+await api(
+"adminSetScorePhasePublished",
+{
+sectionId:current.id,
+published:true
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+toast(
+"❌ "+
+(
+r.message ||
+"發布失敗"
+)
+);
+
+return;
+
+}
+
+S.scoreConfig =
+deep(
+r.config
+);
+
+renderScoreEditor();
+
+toast(
+"✅ 已發布給評審"
+);
+
+await loadScoreAggregation();
+await loadRanking();
+
+}
+
+/* ============================================================
+   JUDGES
+   ============================================================ */
+
+function renderCategoryChecks(
+selected=[]
+){
+
+$("judgeCategories").innerHTML =
+CLUB_CATEGORIES
+.map(
+c=>
+`<label class="check">
+<input
+type="checkbox"
+value="${attr(c)}"
+${selected.includes(c)?"checked":""}
+>
+${esc(c)}
+</label>`
+)
+.join("");
+
+}
+
+function scoreSectionName(id){
+
+const s =
+(
+S.availableScoreSections ||
+[]
+)
+.find(
+x=>
+(x.id||x.key)===id
+);
+
+return s
+?
+(
+s.name ||
+id
+)
+:
+id;
+
+}
+
+function renderScoreSectionChecks(
+selected=[]
+){
+
+const rows =
+S.availableScoreSections ||
+[];
+
+$("judgeScoreSections").innerHTML =
+rows.length
+?
+rows.map(
+s=>{
+
+const id =
+s.id ||
+s.key ||
+"";
+
+return `
+<label class="check">
+
+<input
+type="checkbox"
+value="${attr(id)}"
+${selected.includes(id)?"checked":""}
+>
+
+<span>
+${esc(s.icon||"📌")}
+${esc(s.name||id)}
+<span class="muted">
+(${fmt(s.maxScore)}分)
+</span>
+</span>
+
+</label>
+`;
+
+}
+)
+.join("")
+:
+'<div class="empty-inline">目前沒有可分配的 Judge 評分大項</div>';
+
+}
+
+function judgeIdOf(j){
+
+return j.id ||
+j.judgeId ||
+"";
+
+}
+
+async function loadJudges(
+preferredJudgeId=""
+){
+
+try{
+
+$("judgeManageSelect").disabled =
+true;
+
+const r =
+await api(
+"adminListJudges"
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"無法取得評審"
+);
+
+}
+
+S.judges =
+Array.isArray(
+r.judges
+)
+?
+r.judges
+:
+[];
+
+S.availableScoreSections =
+Array.isArray(
+r.availableScoreSections
+)
+?
+r.availableScoreSections
+:
+Array.isArray(
+r.scoreSections
+)
+?
+r.scoreSections
+:
+(
+S.scoreConfig &&
+Array.isArray(
+S.scoreConfig.sections
+)
+?
+S.scoreConfig.sections.filter(
+x=>
+x.scoringMode==="judge"
+)
+:
+[]
+);
+
+$("statJudges").textContent =
+S.judges.length;
+
+$("judgeMeta").textContent =
+`${S.judges.length} 位評審｜可分配 ${S.availableScoreSections.length} 個評分大項`;
+
+renderJudgeManageOptions(
+preferredJudgeId
+);
+
+renderJudges();
+
+renderJudgeExportOptions();
+
+}
+catch(e){
+
+$("judgeList").innerHTML =
+`<div class="state">
+⚠️ ${esc(e.message)}
+</div>`;
+
+}
+finally{
+
+$("judgeManageSelect").disabled =
+false;
+
+}
+
+}
+
+function renderJudgeManageOptions(
+preferredJudgeId=""
+){
+
+const el =
+$("judgeManageSelect");
+
+if(!el)return;
+
+const current =
+String(
+preferredJudgeId ||
+el.value ||
+""
+);
+
+const judges =
+(S.judges || [])
+.slice()
+.sort(
+(a,b)=>{
+
+const nameCompare =
+String(
+a.displayName ||
+a.name ||
+""
+)
+.localeCompare(
+String(
+b.displayName ||
+b.name ||
+""
+),
+"zh-TW"
+);
+
+if(nameCompare!==0){
+return nameCompare;
+}
+
+return String(
+a.username ||
+""
+)
+.localeCompare(
+String(
+b.username ||
+""
+),
+"zh-TW"
+);
+
+}
+);
+
+el.innerHTML =
+'<option value="">請選擇評審帳號</option>' +
+judges.map(
+judge=>{
+
+const id =
+String(
+judgeIdOf(judge) ||
+""
+);
+
+const name =
+judge.displayName ||
+judge.name ||
+"未命名評審";
+
+const account =
+judge.username ||
+"無帳號";
+
+const active =
+judge.active !== false &&
+judge.status !== "disabled";
+
+return `
+<option value="${attr(id)}">
+${esc(name)}（${esc(account)}）－${active?"啟用":"停用"}
+</option>
+`;
+
+}
+)
+.join("");
+
+el.value =
+judges.some(
+judge=>
+String(
+judgeIdOf(judge) ||
+""
+)===current
+)
+?
+current
+:
+"";
+
+}
+
+function renderJudges(){
+
+const root =
+$("judgeList");
+
+if(!S.judges.length){
+
+$("judgeMeta").textContent =
+"目前沒有評審帳號";
+
+root.innerHTML =
+'<div class="state">目前沒有評審帳號</div>';
+
+return;
+
+}
+
+const selectedJudgeId =
+$("judgeManageSelect")?.value ||
+"";
+
+if(!selectedJudgeId){
+
+$("judgeMeta").textContent =
+`共 ${S.judges.length} 位評審｜請先選擇評審帳號`;
+
+root.innerHTML =
+'<div class="state">請先從上方選擇一位評審進行管理。</div>';
+
+return;
+
+}
+
+const selectedJudge =
+S.judges.find(
+judge=>
+String(
+judgeIdOf(judge) ||
+""
+)===selectedJudgeId
+);
+
+if(!selectedJudge){
+
+$("judgeMeta").textContent =
+"找不到選擇的評審";
+
+root.innerHTML =
+'<div class="state">找不到選擇的評審，請重新選擇。</div>';
+
+return;
+
+}
+
+$("judgeMeta").textContent =
+`目前：${selectedJudge.displayName || selectedJudge.name || "未命名評審"}（${selectedJudge.username || "無帳號"}）｜共 ${S.judges.length} 位評審`;
+
+root.innerHTML =
+[selectedJudge].map(
+j=>{
+
+const id =
+judgeIdOf(j);
+
+const active =
+j.active!==false &&
+j.status!=="disabled";
+
+const cats =
+Array.isArray(
+j.categories
+)
+?
+j.categories
+:
+[];
+
+const secs =
+Array.isArray(
+j.scoreSectionIds
+)
+?
+j.scoreSectionIds
+:
+[];
+
+return `
+<div class="list-row">
+
+<div>
+
+<div class="list-title">
+
+${esc(
+j.displayName ||
+j.name ||
+"-"
+)}
+
+<span class="badge ${active?"b-pub":"b-draft"}">
+${active?"啟用":"停用"}
+</span>
+
+</div>
+
+<div class="list-sub">
+帳號：${esc(j.username||"-")}
+</div>
+
+<div class="permission-block">
+
+<div class="permission-label">
+社團屬性權限
+</div>
+
+${
+cats.length
+?
+`<div class="chips">
+${
+cats.map(
+c=>
+`<span class="chip">
+${esc(c)}
+</span>`
+)
+.join("")
+}
+</div>`
+:
+'<div class="empty-inline">未分配社團屬性</div>'
+}
+
+</div>
+
+<div class="permission-block">
+
+<div class="permission-label">
+評分大項權限
+</div>
+
+${
+secs.length
+?
+`<div class="chips">
+${
+secs.map(
+s=>
+`<span class="chip score-chip">
+${esc(scoreSectionName(s))}
+</span>`
+)
+.join("")
+}
+</div>`
+:
+'<div class="empty-inline">未分配評分大項</div>'
+}
+
+</div>
+
+</div>
+
+<div class="row-actions">
+
+<button
+class="btn"
+onclick="openJudgeModal('${encodeURIComponent(id)}')"
+>
+編輯
+</button>
+
+<button
+class="btn"
+onclick="resetJudgePassword('${encodeURIComponent(id)}')"
+>
+重設密碼
+</button>
+
+<button
+class="btn"
+onclick="setJudgeActive('${encodeURIComponent(id)}',${active?"false":"true"})"
+>
+${active?"停用":"啟用"}
+</button>
+
+<button
+class="btn btn-danger"
+onclick="deleteJudge('${encodeURIComponent(id)}')"
+>
+刪除
+</button>
+
+</div>
+
+</div>
+`;
+
+}
+)
+.join("");
+
+}
+
+function openJudgeModal(
+encoded=""
+){
+
+const id =
+decodeURIComponent(
+encoded ||
+""
+);
+
+const j =
+S.judges.find(
+x=>
+judgeIdOf(x)===id
+);
+
+$("judgeId").value=
+id;
+
+$("judgeName").value=
+j
+?
+(
+j.displayName ||
+j.name ||
+""
+)
+:
+"";
+
+$("judgeUsername").value=
+j
+?
+(
+j.username ||
+""
+)
+:
+"";
+
+$("judgeUsername").disabled=
+!!j;
+
+$("judgePasswordWrap").style.display=
+j
+?
+"none"
+:
+"block";
+
+$("judgePassword").value=
+"";
+
+$("judgeModalTitle").textContent=
+j
+?
+"編輯評審"
+:
+"新增評審";
+
+$("judgeError").textContent=
+"";
+
+renderCategoryChecks(
+j &&
+Array.isArray(
+j.categories
+)
+?
+j.categories
+:
+[]
+);
+
+renderScoreSectionChecks(
+j &&
+Array.isArray(
+j.scoreSectionIds
+)
+?
+j.scoreSectionIds
+:
+[]
+);
+
+openModal(
+"judgeModal"
+);
+
+}
+
+async function saveJudge(){
+
+const id =
+$("judgeId").value;
+
+const name =
+$("judgeName").value.trim();
+
+const username =
+$("judgeUsername").value.trim();
+
+const password =
+$("judgePassword").value;
+
+const categories =
+[
+...$("judgeCategories")
+.querySelectorAll(
+"input:checked"
+)
+]
+.map(
+x=>
+x.value
+);
+
+const scoreSectionIds =
+[
+...$("judgeScoreSections")
+.querySelectorAll(
+"input:checked"
+)
+]
+.map(
+x=>
+x.value
+);
+
+try{
+
+let r;
+
+if(id){
+
+r =
+await api(
+"adminUpdateJudge",
+{
+judgeId:id,
+displayName:name,
+name,
+categories,
+scoreSectionIds
+}
+);
+
+}
+else{
+
+r =
+await api(
+"adminAddJudge",
+{
+displayName:name,
+name,
+username,
+password,
+categories,
+scoreSectionIds
+}
+);
+
+}
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"儲存評審失敗"
+);
+
+}
+
+closeModal(
+"judgeModal"
+);
+
+toast(
+"✅ 評審資料與權限已儲存"
+);
+
+await loadJudges(
+id
+);
+
+if(!id){
+
+const createdJudge =
+S.judges.find(
+judge=>
+String(
+judge.username ||
+""
+)===username
+);
+
+if(createdJudge){
+
+$("judgeManageSelect").value =
+String(
+judgeIdOf(createdJudge) ||
+""
+);
+
+renderJudges();
+
+}
+
+}
+
+await loadJudgeProgress();
+await loadScoreAggregation();
+await loadRanking();
+
+}
+catch(e){
+
+$("judgeError").textContent=
+e.message;
+
+}
+
+}
+
+async function resetJudgePassword(
+encoded
+){
+
+const id =
+decodeURIComponent(
+encoded
+);
+
+const p =
+prompt(
+"請輸入新密碼（至少 6 個字元）"
+);
+
+if(
+p===null
+)
+return;
+
+const r =
+await api(
+"adminResetJudgePassword",
+{
+judgeId:id,
+password:p,
+newPassword:p
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+toast(
+r.success
+?
+"✅ 密碼已重設"
+:
+"❌ "+
+(
+r.message ||
+"重設失敗"
+)
+);
+
+}
+
+async function setJudgeActive(
+encoded,
+active
+){
+
+const id =
+decodeURIComponent(
+encoded
+);
+
+const r =
+await api(
+"adminSetJudgeActive",
+{
+judgeId:id,
+active
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+toast(
+"❌ "+
+(
+r.message ||
+"操作失敗"
+)
+);
+
+return;
+
+}
+
+await loadJudges();
+await loadJudgeProgress();
+await loadScoreAggregation();
+await loadRanking();
+
+toast(
+"✅ 狀態已更新"
+);
+
+}
+
+async function deleteJudge(
+encoded
+){
+
+const id =
+decodeURIComponent(
+encoded
+);
+
+if(
+!confirm(
+"確定刪除此評審帳號？"
+)
+)
+return;
+
+const r =
+await api(
+"adminDeleteJudge",
+{
+judgeId:id
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+toast(
+"❌ "+
+(
+r.message ||
+"刪除失敗"
+)
+);
+
+return;
+
+}
+
+await loadJudges();
+await loadJudgeProgress();
+await loadScoreAggregation();
+await loadRanking();
+
+toast(
+"✅ 評審已刪除"
+);
+
+}
+
+/* ============================================================
+   JUDGE SCORE PROGRESS
+   ============================================================ */
+
+function progressStatusBadge(
+status
+){
+
+if(
+status==="submitted"
+){
+
+return '<span class="badge b-pub">✅ 已送出</span>';
+
+}
+
+if(
+status==="reopened"
+){
+
+return '<span class="badge b-reopened">🔓 已解鎖待重送</span>';
+
+}
+
+if(
+status==="draft"
+){
+
+return '<span class="badge b-judge">💾 草稿</span>';
+
+}
+
+return '<span class="badge b-notstarted">未開始</span>';
+
+}
+
+async function loadJudgeProgress(){
+
+try{
+
+$("judgeProgressJudge").disabled =
+true;
+
+$("judgeProgressClub").disabled =
+true;
+
+$("judgeProgressList").innerHTML =
+'<div class="state"><div class="spinner"></div>正在讀取評審進度...</div>';
+
+const r =
+await api(
+"adminJudgeScoreProgress"
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"無法取得評審評分進度"
+);
+
+}
+
+S.judgeProgress=
+r;
+
+const s =
+r.summary ||
+{};
+
+$("judgeProgressMeta").textContent=
+`已送出 ${
+s.submittedCount??0
+}/${
+s.totalExpected??0
+}｜草稿 ${
+s.draftCount??0
+}｜待重送 ${
+s.reopenedCount??0
+}｜完成率 ${
+s.completionRate??0
+}%`;
+
+renderJudgeProgressJudgeOptions();
+
+renderJudgeProgressClubOptions(
+false
+);
+
+renderJudgeProgress();
+
+}
+catch(e){
+
+$("judgeProgressList").innerHTML=
+`<div class="state">
+⚠️ ${esc(e.message)}
+</div>`;
+
+}
+finally{
+
+$("judgeProgressJudge").disabled =
+false;
+
+}
+
+}
+
+function renderJudgeProgressJudgeOptions(){
+
+const el =
+$("judgeProgressJudge");
+
+if(!el)return;
+
+const current =
+el.value;
+
+const judges =
+S.judgeProgress &&
+Array.isArray(
+S.judgeProgress.judges
+)
+?
+S.judgeProgress.judges
+.slice()
+.sort(
+(a,b)=>
+String(
+a.displayName ||
+a.name ||
+""
+)
+.localeCompare(
+String(
+b.displayName ||
+b.name ||
+""
+),
+"zh-TW"
+)
+)
+:
+[];
+
+el.innerHTML =
+'<option value="">請選擇評審</option>' +
+judges.map(
+judge=>{
+
+const id =
+String(
+judgeIdOf(judge) ||
+""
+);
+
+const name =
+judge.displayName ||
+judge.name ||
+"未命名評審";
+
+const account =
+judge.username
+?
+`（${esc(judge.username)}）`
+:
+"";
+
+const inactive =
+judge.active === false
+?
+"－已停用"
+:
+"";
+
+return `
+<option value="${attr(id)}">
+${esc(name)}${account}${inactive}
+</option>
+`;
+
+}
+)
+.join("");
+
+if(
+current &&
+judges.some(
+judge=>
+String(
+judgeIdOf(judge) ||
+""
+)===current
+)
+){
+
+el.value =
+current;
+
+}
+else{
+
+el.value =
+"";
+
+}
+
+}
+
+function handleJudgeProgressJudgeChange(){
+
+renderJudgeProgressClubOptions(
+true
+);
+
+renderJudgeProgress();
+
+}
+
+function renderJudgeProgressClubOptions(
+resetToAll=false
+){
+
+const el =
+$("judgeProgressClub");
+
+if(!el)return;
+
+const selectedJudgeId =
+$("judgeProgressJudge")?.value ||
+"";
+
+const judges =
+S.judgeProgress &&
+Array.isArray(
+S.judgeProgress.judges
+)
+?
+S.judgeProgress.judges
+:
+[];
+
+const selectedJudge =
+judges.find(
+judge=>
+String(
+judgeIdOf(judge) ||
+""
+)===selectedJudgeId
+);
+
+if(!selectedJudge){
+
+el.innerHTML =
+'<option value="all">全部社團（預設）</option>';
+
+el.value =
+"all";
+
+el.disabled =
+true;
+
+return;
+
+}
+
+const current =
+resetToAll
+?
+"all"
+:
+el.value ||
+"all";
+
+const clubMap =
+new Map();
+
+(selectedJudge.sections || [])
+.forEach(
+section=>{
+
+(section.clubs || [])
+.forEach(
+club=>{
+
+const clubName =
+String(
+club.clubName ||
+club.name ||
+""
+)
+.trim();
+
+if(
+!clubName ||
+clubMap.has(clubName)
+){
+return;
+}
+
+clubMap.set(
+clubName,
+{
+name:clubName,
+category:String(
+club.category ||
+""
+)
+}
+);
+
+}
+);
+
+}
+);
+
+const clubs =
+Array.from(
+clubMap.values()
+)
+.sort(
+(a,b)=>
+a.name.localeCompare(
+b.name,
+"zh-TW"
+)
+);
+
+el.innerHTML =
+'<option value="all">全部社團（預設）</option>' +
+clubs.map(
+club=>`
+<option value="${attr(club.name)}">
+${esc(club.name)}${club.category?`（${esc(club.category)}）`:""}
+</option>
+`
+)
+.join("");
+
+el.disabled =
+clubs.length === 0;
+
+el.value =
+clubs.some(
+club=>club.name===current
+)
+?
+current
+:
+"all";
+
+}
+
+function renderJudgeProgress(){
+
+const root =
+$("judgeProgressList");
+
+if(
+!S.judgeProgress ||
+!Array.isArray(
+S.judgeProgress.judges
+)
+){
+
+root.innerHTML=
+'<div class="state">尚未讀取</div>';
+
+return;
+
+}
+
+const selectedJudgeId =
+$("judgeProgressJudge")?.value ||
+"";
+
+if(!selectedJudgeId){
+
+$("judgeProgressMeta").textContent =
+`共 ${S.judgeProgress.judges.length} 位評審｜請先選擇評審`;
+
+root.innerHTML =
+'<div class="state">請先從上方選擇一位評審查看進度。</div>';
+
+return;
+
+}
+
+const selectedJudge =
+S.judgeProgress.judges.find(
+judge=>
+String(
+judgeIdOf(judge) ||
+""
+)===selectedJudgeId
+);
+
+if(!selectedJudge){
+
+$("judgeProgressMeta").textContent =
+"找不到選擇的評審";
+
+root.innerHTML =
+'<div class="state">找不到選擇的評審，請重新選擇。</div>';
+
+return;
+
+}
+
+const selectedSummary =
+selectedJudge.summary ||
+{};
+
+const selectedClubName =
+$("judgeProgressClub")?.value ||
+"all";
+
+$("judgeProgressMeta").textContent =
+`${selectedJudge.displayName || selectedJudge.name || "未命名評審"}｜社團 ${selectedClubName==="all"?"全部":selectedClubName}｜已送出 ${selectedSummary.submittedCount??0}/${selectedSummary.totalExpected??0}｜草稿 ${selectedSummary.draftCount??0}｜待重送 ${selectedSummary.reopenedCount??0}｜完成率 ${selectedSummary.completionRate??0}%`;
+
+const q =
+(
+$("judgeProgressSearch")?.value ||
+""
+)
+.trim()
+.toLowerCase();
+
+const filter =
+$("judgeProgressFilter")?.value ||
+"all";
+
+const judgeHtml =
+[];
+
+[selectedJudge].forEach(
+j=>{
+
+const sections =
+[];
+
+(
+j.sections ||
+[]
+)
+.forEach(
+s=>{
+
+const clubs =
+(
+s.clubs ||
+[]
+)
+.filter(
+c=>
+(
+filter==="all" ||
+c.status===filter
+)
+&&
+(
+selectedClubName==="all" ||
+String(
+c.clubName ||
+c.name ||
+""
+)===selectedClubName
+)
+&&
+(
+!q ||
+`${j.displayName||j.name||""} ${j.username||""} ${s.name||""} ${c.clubName||c.name||""} ${c.category||""}`
+.toLowerCase()
+.includes(q)
+)
+);
+
+if(
+!clubs.length
+)
+return;
+
+sections.push(
+`
+<div class="progress-section">
+
+<div class="progress-section-head">
+
+<div class="progress-section-title">
+
+${esc(s.icon||"📌")}
+${esc(s.name||s.sectionId)}
+
+<span class="muted">
+/
+${fmt(s.maxScore)}
+分
+</span>
+
+</div>
+
+<div class="sub">
+已送出 ${s.submittedCount??0}
+｜草稿 ${s.draftCount??0}
+｜待重送 ${s.reopenedCount??0}
+｜未開始 ${s.notStartedCount??0}
+</div>
+
+</div>
+
+<div>
+
+${
+clubs.map(
+c=>{
+
+const jid =
+encodeURIComponent(
+j.judgeId ||
+j.id ||
+""
+);
+
+const sid =
+encodeURIComponent(
+s.sectionId ||
+s.id ||
+""
+);
+
+const club =
+encodeURIComponent(
+c.clubName ||
+c.name ||
+""
+);
+
+const judgeName =
+encodeURIComponent(
+j.displayName ||
+j.name ||
+""
+);
+
+const sectionName =
+encodeURIComponent(
+s.name ||
+""
+);
+
+const clubLabel =
+encodeURIComponent(
+c.clubName ||
+c.name ||
+""
+);
+
+return `
+<div class="progress-club">
+
+<div>
+
+<div class="list-title">
+
+${esc(c.clubName||c.name||"-")}
+
+${progressStatusBadge(c.status)}
+
+</div>
+
+<div class="list-sub">
+
+${esc(c.category||"")}
+
+${
+c.updatedAt
+?
+`｜更新 ${esc(formatDate(c.updatedAt))}`
+:
+""
+}
+
+${
+c.submissionRevision
+?
+`｜第 ${esc(c.submissionRevision)} 版`
+:
+""
+}
+
+</div>
+
+</div>
+
+<div class="progress-score">
+
+${
+c.totalScore===null ||
+c.totalScore===undefined
+?
+"—"
+:
+`${fmt(c.totalScore)} / ${fmt(s.maxScore)}`
+}
+
+</div>
+
+<div class="row-actions">
+
+${
+c.hasRecord
+?
+`<button
+class="btn"
+onclick="openRawScore('${jid}','${sid}','${club}')"
+>
+查看原始分數
+</button>`
+:
+""
+}
+
+${
+c.status==="submitted"
+?
+`<button
+class="btn btn-danger"
+onclick="unlockJudgeScore('${jid}','${sid}','${club}','${judgeName}','${sectionName}','${clubLabel}')"
+>
+🔓 解鎖
+</button>`
+:
+""
+}
+
+</div>
+
+</div>
+`;
+
+}
+)
+.join("")
+}
+
+</div>
+
+</div>
+`
+);
+
+}
+);
+
+if(
+!sections.length
+)
+return;
+
+const sum =
+j.summary ||
+{};
+
+judgeHtml.push(
+`
+<div class="progress-judge">
+
+<div class="progress-judge-head">
+
+<div>
+
+<div class="list-title">
+
+${esc(j.displayName||j.name||"-")}
+
+<span class="badge ${j.active!==false?"b-pub":"b-draft"}">
+${j.active!==false?"啟用":"停用"}
+</span>
+
+</div>
+
+<div class="list-sub">
+帳號：${esc(j.username||"-")}
+</div>
+
+<div class="chips">
+
+${
+(j.categories||[])
+.map(
+c=>
+`<span class="chip">
+${esc(c)}
+</span>`
+)
+.join("")
+}
+
+</div>
+
+</div>
+
+<div class="progress-summary">
+
+已送出
+${sum.submittedCount??0}
+/
+${sum.totalExpected??0}
+
+<br>
+
+草稿
+${sum.draftCount??0}
+｜
+待重送
+${sum.reopenedCount??0}
+
+<br>
+
+完成率
+${sum.completionRate??0}%
+
+</div>
+
+</div>
+
+${sections.join("")}
+
+</div>
+`
+);
+
+}
+);
+
+root.innerHTML =
+judgeHtml.length
+?
+judgeHtml.join("")
+:
+'<div class="state">沒有符合條件的評分紀錄</div>';
+
+}
+
+function rawDetailHtml(
+detail
+){
+
+if(!detail){
+
+return '<div class="state">沒有分數資料</div>';
+
+}
+
+const groups =
+(
+detail.groups ||
+[]
+)
+.map(
+g=>
+`
+<div class="raw-group">
+
+<div class="raw-group-head">
+
+<span>
+${esc(g.name||"-")}
+</span>
+
+<span>
+${fmt(g.subtotal)}
+/
+${fmt(g.maxScore)}
+</span>
+
+</div>
+
+${
+(g.criteria||[])
+.map(
+c=>
+`
+<div class="raw-row">
+
+<div>
+${esc(c.name||"-")}
+</div>
+
+<div class="right">
+${
+c.score===null ||
+c.score===undefined
+?
+"—"
+:
+fmt(c.score)
+}
+</div>
+
+<div class="right muted">
+/
+${fmt(c.maxScore)}
+</div>
+
+</div>
+`
+)
+.join("")
+}
+
+</div>
+`
+)
+.join("");
+
+return `
+${
+groups ||
+'<div class="state">沒有評分小項</div>'
+}
+
+<div class="raw-total">
+
+<span>
+大項總分
+</span>
+
+<span>
+${fmt(detail.totalScore)}
+/
+${fmt(detail.maxScore)}
+</span>
+
+</div>
+`;
+
+}
+
+async function openRawScore(
+encodedJudge,
+encodedSection,
+encodedClub
+){
+
+const judgeId =
+decodeURIComponent(
+encodedJudge
+);
+
+const sectionId =
+decodeURIComponent(
+encodedSection
+);
+
+const clubName =
+decodeURIComponent(
+encodedClub
+);
+
+$("rawJudgeId").value=
+judgeId;
+
+$("rawSectionId").value=
+sectionId;
+
+$("rawClubName").value=
+clubName;
+
+$("rawScoreBody").innerHTML=
+'<div class="state"><div class="spinner"></div>正在讀取原始分數...</div>';
+
+$("rawHistoryBtn")
+.classList
+.add(
+"hidden"
+);
+
+$("rawUnlockBtn")
+.classList
+.add(
+"hidden"
+);
+
+openModal(
+"rawScoreModal"
+);
+
+try{
+
+const r =
+await api(
+"adminJudgeGetRawScore",
+{
+judgeId,
+sectionId,
+clubName
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"讀取原始分數失敗"
+);
+
+}
+
+S.currentRawScore=
+r;
+
+$("rawScoreTitle").textContent=
+"📄 評分原始分數";
+
+$("rawScoreMeta").textContent=
+`${r.judge?.displayName||r.judge?.name||"-"}｜${r.club?.name||clubName}｜${r.section?.name||sectionId}`;
+
+$("rawScoreStatus").innerHTML=
+`${progressStatusBadge(r.status)}
+${
+r.staleDraft
+?
+' <span class="badge b-reopened">⚠️ 草稿規則已變更</span>'
+:
+""
+}`;
+
+$("rawScoreBody").innerHTML=
+r.record
+?
+rawDetailHtml(
+r.detail
+)
+:
+'<div class="state">目前沒有任何評分資料</div>';
+
+if(
+r.hasHistory ||
+Number(
+r.historyCount ||
+0
+)>0
+){
+
+$("rawHistoryBtn")
+.classList
+.remove(
+"hidden"
+);
+
+}
+
+if(
+r.status==="submitted"
+){
+
+$("rawUnlockBtn")
+.classList
+.remove(
+"hidden"
+);
+
+}
+
+}
+catch(e){
+
+$("rawScoreBody").innerHTML=
+`<div class="state">
+⚠️ ${esc(e.message)}
+</div>`;
+
+}
+
+}
+
+async function unlockJudgeScore(
+encodedJudge,
+encodedSection,
+encodedClub,
+encodedJudgeName="",
+encodedSectionName="",
+encodedClubLabel=""
+){
+
+const judgeId =
+decodeURIComponent(
+encodedJudge
+);
+
+const sectionId =
+decodeURIComponent(
+encodedSection
+);
+
+const clubName =
+decodeURIComponent(
+encodedClub
+);
+
+const judgeName =
+decodeURIComponent(
+encodedJudgeName ||
+""
+)
+||
+judgeId;
+
+const sectionName =
+decodeURIComponent(
+encodedSectionName ||
+""
+)
+||
+sectionId;
+
+const clubLabel =
+decodeURIComponent(
+encodedClubLabel ||
+""
+)
+||
+clubName;
+
+if(
+!confirm(
+`確定解鎖這筆評分？
+
+評審：${judgeName}
+社團：${clubLabel}
+評分大項：${sectionName}
+
+解鎖後評審可修改原分數並重新正式送出。`
+)
+)
+return;
+
+const r =
+await api(
+"adminUnlockJudgeScore",
+{
+judgeId,
+sectionId,
+clubName
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+toast(
+"❌ "+
+(
+r.message ||
+"解鎖失敗"
+)
+);
+
+return;
+
+}
+
+toast(
+"🔓 已解鎖，評審可以重新修改"
+);
+
+await loadJudgeProgress();
+await loadScoreAggregation();
+await loadRanking();
+
+if(
+$("rawScoreModal").style.display==="flex"
+){
+
+await openRawScore(
+encodeURIComponent(judgeId),
+encodeURIComponent(sectionId),
+encodeURIComponent(clubName)
+);
+
+}
+
+}
+
+async function unlockCurrentRawScore(){
+
+const r =
+S.currentRawScore;
+
+if(!r)return;
+
+await unlockJudgeScore(
+encodeURIComponent(
+$("rawJudgeId").value
+),
+encodeURIComponent(
+$("rawSectionId").value
+),
+encodeURIComponent(
+$("rawClubName").value
+),
+encodeURIComponent(
+r.judge?.displayName ||
+r.judge?.name ||
+""
+),
+encodeURIComponent(
+r.section?.name ||
+""
+),
+encodeURIComponent(
+r.club?.name ||
+""
+)
+);
+
+}
+
+function historySnapshotHtml(
+entry
+){
+
+const snapshot =
+entry.sectionSnapshot ||
+{};
+
+const scores =
+entry.scores ||
+{};
+
+const groups =
+(
+snapshot.groups ||
+[]
+)
+.filter(
+g=>
+g.enabled!==false
+)
+.map(
+g=>{
+
+let subtotal=
+0;
+
+const rows =
+(
+g.criteria ||
+[]
+)
+.filter(
+c=>
+c.enabled!==false
+)
+.map(
+c=>{
+
+const has =
+scores[c.id]!==undefined &&
+scores[c.id]!==null &&
+String(
+scores[c.id]
+)
+.trim()!=="";
+
+const score =
+has
+?
+num(
+scores[c.id]
+)
+:
+null;
+
+if(
+score!==null
+){
+
+subtotal+=score;
+
+}
+
+return `
+<div class="raw-row">
+
+<div>
+${esc(c.name||"-")}
+</div>
+
+<div class="right">
+${score===null?"—":fmt(score)}
+</div>
+
+<div class="right muted">
+/
+${fmt(c.maxScore)}
+</div>
+
+</div>
+`;
+
+}
+)
+.join("");
+
+return `
+<div class="raw-group">
+
+<div class="raw-group-head">
+
+<span>
+${esc(g.name||"-")}
+</span>
+
+<span>
+${fmt(subtotal)}
+/
+${fmt(g.maxScore)}
+</span>
+
+</div>
+
+${rows}
+
+</div>
+`;
+
+}
+)
+.join("");
+
+return `
+${groups}
+
+<div class="raw-total">
+
+<span>
+當時正式總分
+</span>
+
+<span>
+${fmt(entry.totalScore)}
+/
+${fmt(snapshot.maxScore)}
+</span>
+
+</div>
+`;
+
+}
+
+async function openCurrentScoreHistory(){
+
+const judgeId =
+$("rawJudgeId").value;
+
+const sectionId =
+$("rawSectionId").value;
+
+const clubName =
+$("rawClubName").value;
+
+if(
+!judgeId ||
+!sectionId ||
+!clubName
+)
+return;
+
+$("scoreHistoryMeta").textContent=
+`${S.currentRawScore?.judge?.displayName||""}｜${clubName}｜${S.currentRawScore?.section?.name||sectionId}`;
+
+$("scoreHistoryBody").innerHTML=
+'<div class="state"><div class="spinner"></div>正在讀取歷史...</div>';
+
+openModal(
+"scoreHistoryModal"
+);
+
+try{
+
+const r =
+await api(
+"adminGetJudgeScoreHistory",
+{
+judgeId,
+sectionId,
+clubName
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"讀取歷史失敗"
+);
+
+}
+
+const history =
+Array.isArray(
+r.history
+)
+?
+r.history
+.slice()
+.reverse()
+:
+[];
+
+$("scoreHistoryBody").innerHTML=
+history.length
+?
+history.map(
+h=>
+`
+<div class="history-item">
+
+<div class="history-head">
+
+<div class="history-title">
+第 ${esc(h.submissionRevision||"-")} 版正式成績
+｜
+${fmt(h.totalScore)}
+分
+</div>
+
+<div class="history-meta">
+
+送出：
+${esc(formatDate(h.submittedAt))}
+
+<br>
+
+解鎖：
+${esc(formatDate(h.unlockedAt||h.capturedAt))}
+
+${
+h.unlockReason
+?
+`<br>原因：${esc(h.unlockReason)}`
+:
+""
+}
+
+</div>
+
+</div>
+
+<div class="history-body">
+${historySnapshotHtml(h)}
+</div>
+
+</div>
+`
+)
+.join("")
+:
+'<div class="state">目前沒有舊版正式成績紀錄</div>';
+
+}
+catch(e){
+
+$("scoreHistoryBody").innerHTML=
+`<div class="state">
+⚠️ ${esc(e.message)}
+</div>`;
+
+}
+
+}
+
+/* ============================================================
+   SCORE AGGREGATION
+   ============================================================ */
+
+async function loadScoreAggregation(){
+
+try{
+
+$("aggregationState")
+.classList
+.remove(
+"hidden"
+);
+
+$("aggregationTableWrap")
+.classList
+.add(
+"hidden"
+);
+
+$("aggregationState").innerHTML=
+'<div class="spinner"></div>正在重新計算成績...';
+
+const r =
+await api(
+"adminScoreAggregationSummary"
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"無法取得成績彙整"
+);
+
+}
+
+S.scoreAggregation=
+r;
+
+const m =
+r.summary ||
+{};
+
+$("aggComplete").textContent=
+m.completeClubCount ?? 0;
+
+$("aggIncomplete").textContent=
+m.incompleteClubCount ?? 0;
+
+$("aggReopened").textContent=
+m.reopenedClubCount ?? 0;
+
+$("aggMissing").textContent=
+m.missingAssignmentClubCount ?? 0;
+
+$("aggregationMeta").textContent=
+`完成 ${
+m.completeClubCount??0
+}/${
+(r.clubs||[]).length
+}｜設定 v${
+r.configRevision??"-"
+}｜${
+formatDate(r.generatedAt)
+}`;
+
+renderAggregationCategoryOptions();
+
+renderScoreAggregation();
+
+}
+catch(e){
+
+$("aggregationState")
+.classList
+.remove(
+"hidden"
+);
+
+$("aggregationTableWrap")
+.classList
+.add(
+"hidden"
+);
+
+$("aggregationState").innerHTML=
+`⚠️ ${esc(e.message)}`;
+
+}
+
+}
+
+function renderAggregationCategoryOptions(){
+
+const el =
+$("aggregationCategory");
+
+if(!el)return;
+
+const current =
+el.value ||
+"all";
+
+const categories =
+[
+...new Set(
+(
+S.scoreAggregation?.clubs ||
+[]
+)
+.map(
+x=>
+x.category
+)
+.filter(Boolean)
+)
+];
+
+el.innerHTML=
+'<option value="all">全部屬性</option>'
++
+categories
+.map(
+x=>
+`<option value="${attr(x)}">
+${esc(x)}
+</option>`
+)
+.join("");
+
+el.value=
+categories.includes(current)
+?
+current
+:
+"all";
+
+}
+
+function aggregationScoreCell(
+score,
+maxScore,
+complete
+){
+
+if(
+score===null ||
+score===undefined
+){
+
+return `
+<span class="agg-muted">
+— / ${fmt(maxScore)}
+</span>
+`;
+
+}
+
+return `
+<span class="agg-score">
+${fmt(score)} / ${fmt(maxScore)}
+</span>
+${
+complete
+?
+""
+:
+'<div class="mini-label" style="margin-top:2px">目前值</div>'
+}
+`;
+
+}
+
+function aggregationStatusInfo(
+club
+){
+
+if(
+(
+club.missingJudgeAssignments ||
+0
+)>0
+){
+
+return{
+key:"missing",
+label:"⚠️ 缺少評審",
+cls:"agg-status-missing"
+};
+
+}
+
+if(
+(
+club.reopenedSectionCount ||
+0
+)>0
+){
+
+return{
+key:"reopened",
+label:"🔓 待重送",
+cls:"agg-status-reopened"
+};
+
+}
+
+if(
+club.complete
+){
+
+return{
+key:"complete",
+label:"✅ 全部完成",
+cls:"agg-status-complete"
+};
+
+}
+
+return{
+key:"incomplete",
+label:"⏳ 尚未完成",
+cls:"agg-status-incomplete"
+};
+
+}
+
+function aggregationGroup(
+club,
+id
+){
+
+return club.groupScores &&
+club.groupScores[id]
+?
+club.groupScores[id]
+:
+null;
+
+}
+
+function aggregationSection(
+club,
+id
+){
+
+return club.sectionScores &&
+club.sectionScores[id]
+?
+club.sectionScores[id]
+:
+null;
+
+}
+
+function renderScoreAggregation(){
+
+const data =
+S.scoreAggregation;
+
+if(
+!data ||
+!Array.isArray(
+data.clubs
+)
+)
+return;
+
+const q =
+(
+$("aggregationSearch")?.value ||
+""
+)
+.trim()
+.toLowerCase();
+
+const category =
+$("aggregationCategory")?.value ||
+"all";
+
+const status =
+$("aggregationStatus")?.value ||
+"all";
+
+const rows =
+data.clubs.filter(
+c=>{
+
+const si =
+aggregationStatusInfo(c);
+
+return(
+(
+!q ||
+`${c.clubName} ${c.category}`
+.toLowerCase()
+.includes(q)
+)
+&&
+(
+category==="all" ||
+c.category===category
+)
+&&
+(
+status==="all" ||
+si.key===status
+)
+);
+
+}
+);
+
+$("aggregationState")
+.classList
+.toggle(
+"hidden",
+rows.length>0
+);
+
+$("aggregationTableWrap")
+.classList
+.toggle(
+"hidden",
+rows.length===0
+);
+
+if(
+!rows.length
+){
+
+$("aggregationState").innerHTML=
+"沒有符合條件的社團成績。";
+
+return;
+
+}
+
+$("aggregationTableBody").innerHTML=
+rows.map(
+c=>{
+
+const routine =
+aggregationGroup(
+c,
+"routinePerformance"
+);
+
+const dataReview =
+aggregationSection(
+c,
+"dataReview"
+);
+
+const field =
+aggregationSection(
+c,
+"fieldReview"
+);
+
+const si =
+aggregationStatusInfo(c);
+
+return `
+<tr>
+
+<td>
+<div class="agg-club">
+${esc(c.clubName)}
+</div>
+</td>
+
+<td>
+${esc(c.category)}
+</td>
+
+<td>
+${aggregationScoreCell(
+routine?.finalScore ??
+routine?.currentScore,
+routine?.maxScore ?? 30,
+routine?.complete===true
+)}
+</td>
+
+<td>
+${aggregationScoreCell(
+dataReview?.finalScore ??
+dataReview?.averageScore,
+dataReview?.maxScore ?? 50,
+dataReview?.complete===true
+)}
+</td>
+
+<td>
+${aggregationScoreCell(
+field?.finalScore ??
+field?.averageScore,
+field?.maxScore ?? 20,
+field?.complete===true
+)}
+</td>
+
+<td class="agg-score">
+
+${fmt(c.currentTotalScore)}
+/
+${fmt(c.totalMaxScore)}
+
+</td>
+
+<td class="agg-score">
+
+${
+c.finalTotalScore===null ||
+c.finalTotalScore===undefined
+?
+'<span class="agg-muted">尚未產生</span>'
+:
+fmt(c.finalTotalScore)
++
+" / "
++
+fmt(c.totalMaxScore)
+}
+
+</td>
+
+<td>
+
+<span class="badge ${si.cls}">
+${si.label}
+</span>
+
+<div
+class="mini-label"
+style="margin-top:4px"
+>
+
+${c.completedSectionCount??0}
+/
+${c.totalSectionCount??0}
+大項完成
+
+</div>
+
+</td>
+
+<td>
+
+<button
+class="btn"
+onclick="openAggregationDetail('${encodeURIComponent(c.clubName)}')"
+>
+查看明細
+</button>
+
+</td>
+
+</tr>
+`;
+
+}
+)
+.join("");
+
+}
+
+async function openAggregationDetail(
+encoded
+){
+
+const clubName =
+decodeURIComponent(
+encoded
+);
+
+S.currentAggregationClub=
+clubName;
+
+$("aggregationDetailTitle").textContent=
+"🏆 "+
+clubName+
+"｜成績明細";
+
+$("aggregationDetailMeta").textContent=
+"重新讀取中...";
+
+$("aggregationDetailBody").innerHTML=
+'<div class="state"><div class="spinner"></div>正在計算...</div>';
+
+openModal(
+"aggregationDetailModal"
+);
+
+try{
+
+const r =
+await api(
+"adminClubScoreAggregation",
+{
+clubName
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"無法取得社團成績明細"
+);
+
+}
+
+renderAggregationDetail(
+r.club,
+r
+);
+
+}
+catch(e){
+
+$("aggregationDetailBody").innerHTML=
+`<div class="state">
+⚠️ ${esc(e.message)}
+</div>`;
+
+}
+
+}
+
+function renderAggregationDetail(
+club,
+response
+){
+
+if(!club)return;
+
+const si =
+aggregationStatusInfo(
+club
+);
+
+$("aggregationDetailMeta").innerHTML=
+`${esc(club.category)}
+｜
+設定 v${esc(response.configRevision??"-")}
+｜
+計算時間 ${esc(formatDate(response.generatedAt))}
+｜
+<span class="badge ${si.cls}">
+${si.label}
+</span>`;
+
+const routine =
+(
+club.aggregateGroups ||
+[]
+)
+.find(
+x=>
+x.id==="routinePerformance"
+);
+
+$("aggregationDetailBody").innerHTML=
+`
+<div class="agg-final-box">
+
+<div class="agg-final-item">
+
+<div class="agg-final-label">
+平時表現
+</div>
+
+<div class="agg-final-value">
+
+${
+routine
+?
+(
+routine.complete
+?
+fmt(routine.finalScore)
+:
+fmt(routine.currentScore)
+)
+:
+"—"
+}
+
+/
+
+${
+routine
+?
+fmt(routine.maxScore)
+:
+"30"
+}
+
+</div>
+
+</div>
+
+<div class="agg-final-item">
+
+<div class="agg-final-label">
+目前總分
+</div>
+
+<div class="agg-final-value">
+
+${fmt(club.currentTotalScore)}
+/
+${fmt(club.totalMaxScore)}
+
+</div>
+
+</div>
+
+<div class="agg-final-item">
+
+<div class="agg-final-label">
+正式總分
+</div>
+
+<div class="agg-final-value">
+
+${
+club.finalTotalScore===null ||
+club.finalTotalScore===undefined
+?
+"尚未產生"
+:
+fmt(club.finalTotalScore)
++
+" / "
++
+fmt(club.totalMaxScore)
+}
+
+</div>
+
+</div>
+
+<div class="agg-final-item">
+
+<div class="agg-final-label">
+完成大項
+</div>
+
+<div class="agg-final-value">
+${club.completedSectionCount}
+/
+${club.totalSectionCount}
+</div>
+
+</div>
+
+</div>
+
+${
+(club.sections||[])
+.map(
+aggregationDetailSectionHtml
+)
+.join("")
+}
+`;
+
+}
+
+function aggregationDetailSectionHtml(
+section
+){
+
+const status =
+section.status==="complete"
+?
+'<span class="badge agg-status-complete">✅ 完成</span>'
+:
+section.status==="reopened"
+?
+'<span class="badge agg-status-reopened">🔓 待重送</span>'
+:
+section.status==="no_judges"
+?
+'<span class="badge agg-status-missing">⚠️ 未指派評審</span>'
+:
+'<span class="badge agg-status-incomplete">⏳ 尚未完成</span>';
+
+const judges =
+(
+section.judges ||
+[]
+)
+.length
+?
+(
+section.judges ||
+[]
+)
+.map(
+j=>
+`
+<div class="agg-judge-row">
+
+<div>
+
+<div class="agg-judge-name">
+${esc(
+j.displayName ||
+j.username ||
+j.judgeId
+)}
+</div>
+
+<div class="mini-label">
+${esc(
+j.username ||
+j.judgeId ||
+""
+)}
+</div>
+
+</div>
+
+<div>
+
+${
+j.submitted
+?
+`<b>${fmt(j.score)} 分</b>`
+:
+j.reopened
+?
+'<span class="badge agg-status-reopened">待重送</span>'
+:
+'<span class="agg-muted">未送出</span>'
+}
+
+</div>
+
+<div class="agg-time">
+
+${
+j.submittedAt
+?
+esc(
+formatDate(
+j.submittedAt
+)
+)
+:
+j.updatedAt
+?
+esc(
+formatDate(
+j.updatedAt
+)
+)
+:
+"-"
+}
+
+</div>
+
+</div>
+`
+)
+.join("")
+:
+'<div class="state">目前沒有被指派的評審</div>';
+
+const excluded =
+(
+section.excludedOfficialScores ||
+[]
+)
+.length
+?
+`
+<div class="excluded-box">
+
+⚠️ 有 ${
+(section.excludedOfficialScores||[]).length
+} 筆舊正式分數因目前已移除評審權限，所以不列入平均：
+
+${
+(section.excludedOfficialScores||[])
+.map(
+x=>
+`${esc(x.displayName)} ${fmt(x.score)}分`
+)
+.join("、")
+}
+
+</div>
+`
+:
+"";
+
+return `
+<div class="agg-section-card">
+
+<div class="agg-section-head">
+
+<div>
+
+<div class="agg-section-title">
+
+${esc(
+(section.icon||"📌")
++
+" "
++
+section.name
+)}
+
+｜
+${fmt(section.maxScore)}
+分
+
+</div>
+
+<div class="agg-section-meta">
+
+已送出
+${section.submittedJudgeCount}
+/
+${section.assignedJudgeCount}
+位
+
+｜
+目前平均
+
+${
+section.averageScore===null ||
+section.averageScore===undefined
+?
+"—"
+:
+fmt(section.averageScore)
+}
+
+｜
+正式成績
+
+${
+section.finalScore===null ||
+section.finalScore===undefined
+?
+"尚未產生"
+:
+fmt(section.finalScore)
+}
+
+</div>
+
+</div>
+
+${status}
+
+</div>
+
+${judges}
+
+${excluded}
+
+</div>
+`;
+
+}
+
+/* RANKING */
+function rankingMetricKey(x){return`${x.sourceType}__${x.sourceId}`}
+function rankingMetricOptions(selected=""){const list=(S.rankingMetrics||[]).filter(x=>!(x.sourceType==="total"&&x.sourceId==="finalTotalScore"));return list.map(x=>`<option value="${attr(rankingMetricKey(x))}" ${rankingMetricKey(x)===selected?"selected":""}>${esc(x.name||x.sourceId)}${x.maxScore!==null&&x.maxScore!==undefined?` / ${fmt(x.maxScore)}`:""}</option>`).join("")}
+function syncRankingFormIntoState(){if(!S.rankingConfig)return;const c=S.rankingConfig;c.pass=c.pass||{};c.ranking=c.ranking||{};c.pass.threshold=num($("rankPassThreshold").value);c.pass.comparator=$("rankPassComparator").value;c.ranking.eligibility=$("rankEligibility").value;c.ranking.incompletePolicy=$("rankIncompletePolicy").value;c.ranking.tieMode=$("rankTieMode").value;c.ranking.rankStyle=$("rankStyle").value;c.ranking.unresolvedTie=$("rankUnresolvedTie").value}
+function renderRankingSettings(){const c=S.rankingConfig;if(!c)return;$("rankPassThreshold").value=fmt(c.pass?.threshold??70);$("rankPassComparator").value=c.pass?.comparator||"gte";$("rankEligibility").value=c.ranking?.eligibility||"all_completed";$("rankIncompletePolicy").value=c.ranking?.incompletePolicy||"show_unranked";$("rankTieMode").value=c.ranking?.tieMode||"shared";$("rankStyle").value=c.ranking?.rankStyle||"competition";$("rankUnresolvedTie").value=c.ranking?.unresolvedTie||"shared";renderTieBreakers()}
+function renderTieBreakers(){if(!S.rankingConfig)return;syncRankingFormIntoState();const enabled=S.rankingConfig.ranking.tieMode==="rules",box=$("tieBreakerBox");box.classList.toggle("rank-rules-disabled",!enabled);const rows=Array.isArray(S.rankingConfig.ranking.tieBreakers)?S.rankingConfig.ranking.tieBreakers:[];$("tieBreakerList").innerHTML=rows.length?rows.map((x,i)=>{const key=rankingMetricKey(x);return`<div class="tie-row"><div class="tie-order">${i+1}</div><select class="field" ${enabled?"":"disabled"} onchange="setTieBreakerMetric(${i},this.value)">${rankingMetricOptions(key)}</select><select class="field tie-direction" ${enabled?"":"disabled"} onchange="setTieBreakerDirection(${i},this.value)"><option value="desc" ${x.direction!=="asc"?"selected":""}>高分優先</option><option value="asc" ${x.direction==="asc"?"selected":""}>低分優先</option></select><div class="row-actions"><button class="icon-btn" ${!enabled||i===0?"disabled":""} onclick="moveTieBreaker(${i},-1)">↑</button><button class="icon-btn" ${!enabled||i===rows.length-1?"disabled":""} onclick="moveTieBreaker(${i},1)">↓</button><button class="icon-btn danger-icon" ${enabled?"":"disabled"} onclick="deleteTieBreaker(${i})">✕</button></div></div>`}).join(""):'<div class="state" style="padding:14px">目前沒有設定同分比較條件；若啟用規則但沒有條件，總分相同時仍會依最後同分處理方式決定。</div>';$("rankUnresolvedTie").disabled=!enabled;box.querySelector("button.btn").disabled=!enabled}
+function addTieBreaker(){if(!S.rankingConfig)return;syncRankingFormIntoState();if(S.rankingConfig.ranking.tieMode!=="rules")return;const used=new Set((S.rankingConfig.ranking.tieBreakers||[]).map(rankingMetricKey)),metric=(S.rankingMetrics||[]).find(x=>x.sourceType!=="total"&&!used.has(rankingMetricKey(x)));if(!metric){toast("沒有其他可加入的比較欄位");return}S.rankingConfig.ranking.tieBreakers.push({sourceType:metric.sourceType,sourceId:metric.sourceId,direction:"desc"});renderTieBreakers()}
+function setTieBreakerMetric(i,key){const [sourceType,...rest]=String(key||"").split("__"),sourceId=rest.join("__");if(!sourceType||!sourceId)return;const rows=S.rankingConfig.ranking.tieBreakers||[];if(!rows[i])return;rows[i].sourceType=sourceType;rows[i].sourceId=sourceId;renderTieBreakers()}
+function setTieBreakerDirection(i,v){const rows=S.rankingConfig.ranking.tieBreakers||[];if(rows[i])rows[i].direction=v==="asc"?"asc":"desc"}
+function moveTieBreaker(i,d){const a=S.rankingConfig.ranking.tieBreakers||[],j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];renderTieBreakers()}
+function deleteTieBreaker(i){S.rankingConfig.ranking.tieBreakers.splice(i,1);renderTieBreakers()}
+async function saveRankingConfig(){if(!S.rankingConfig)return;syncRankingFormIntoState();const b=$("saveRankingBtn");try{b.disabled=true;const r=await api("adminSaveRankingConfig",{config:S.rankingConfig});if(unauthorized(r))return;if(!r.success)throw new Error(r.message||"排名規則儲存失敗");S.rankingConfig=deep(r.config);S.rankingMetrics=Array.isArray(r.availableMetrics)?r.availableMetrics:S.rankingMetrics;renderRankingSettings();toast("✅ 排名規則已儲存");await loadRanking()}catch(e){toast("❌ "+e.message)}finally{b.disabled=false}}
+async function loadRanking(){try{$("rankingState").classList.remove("hidden");$("rankingTableWrap").classList.add("hidden");$("rankingState").innerHTML='<div class="spinner"></div>正在計算各屬性排名...';const r=await api("adminRanking");if(unauthorized(r))return;if(!r.success)throw new Error(r.message||"無法取得排名");S.ranking=r;S.rankingConfig=deep(r.config||{});S.rankingMetrics=Array.isArray(r.availableMetrics)?r.availableMetrics:[];const m=r.summary||{};$("rankCompleted").textContent=m.completedCount??0;$("rankPassed").textContent=m.passedCount??0;$("rankFailed").textContent=m.failedCount??0;$("rankIncomplete").textContent=m.incompleteCount??0;$("rankingMeta").textContent=`及格 ${S.rankingConfig.pass?.comparator==="gt"?">":"≥"} ${fmt(S.rankingConfig.pass?.threshold??70)}｜完成 ${m.completedCount??0}/${m.clubCount??0}｜${formatDate(r.generatedAt)}`;renderRankingSettings();renderRankingCategoryOptions();updateRankingHeaders();renderRankingTable()}catch(e){$("rankingState").classList.remove("hidden");$("rankingTableWrap").classList.add("hidden");$("rankingState").innerHTML=`⚠️ ${esc(e.message)}`}}
+function renderRankingCategoryOptions(){const el=$("rankingCategory");if(!el||!S.ranking)return;const current=el.value,cats=Array.isArray(S.ranking.categories)?S.ranking.categories:[];el.innerHTML=cats.map(x=>`<option value="${attr(x.category)}">${esc(x.category)}（${x.totalClubCount??0}）</option>`).join("");const preferred=cats.find(x=>x.category===current)||cats.find(x=>(x.totalClubCount??0)>0)||cats[0];if(preferred)el.value=preferred.category}
+function updateRankingHeaders(){const clubs=S.scoreAggregation?.clubs||[],sample=clubs.find(Boolean),routine=sample?aggregationGroup(sample,"routinePerformance"):null,data=sample?aggregationSection(sample,"dataReview"):null,field=sample?aggregationSection(sample,"fieldReview"):null;$("rankRoutineHeader").textContent=`平時表現 / ${fmt(routine?.maxScore??30)}`;$("rankDataHeader").textContent=`數位資料 / ${fmt(data?.maxScore??50)}`;$("rankFieldHeader").textContent=`現場詢答 / ${fmt(field?.maxScore??20)}`;$("rankTotalHeader").textContent=`總分 / ${fmt(S.ranking?.totalMaxScore??100)}`}
+function findAggregationClubForRanking(name){return(S.scoreAggregation?.clubs||[]).find(x=>x.clubName===name)||null}
+function rankingScoreFromAggregation(club,type,id,fallbackMax){if(!club)return'<span class="agg-muted">—</span>';const x=type==="group"?aggregationGroup(club,id):aggregationSection(club,id),score=x?(x.finalScore??x.currentScore??x.averageScore):null,max=x?.maxScore??fallbackMax;return score===null||score===undefined?`<span class="agg-muted">— / ${fmt(max)}</span>`:`<b>${fmt(score)}</b> / ${fmt(max)}`}
+function rankingResultBadge(row){if(!row.complete)return'<span class="badge rank-incomplete">⏳ 未完成</span>';if(row.passed===true)return'<span class="badge rank-passed">✅ 及格</span>';if(row.passed===false)return'<span class="badge rank-failed">❌ 不及格</span>';return'<span class="badge rank-incomplete">-</span>'}
+function rankingStateBadge(row){if(row.rankStatus==="tie_pending")return'<span class="badge rank-tie">⚠️ 待人工決定</span>';if(row.rankStatus==="tied")return'<span class="badge rank-tie">同分並列</span>';if(row.rankStatus==="incomplete")return'<span class="badge rank-incomplete">未完成</span>';if(row.rankStatus==="not_eligible")return'<span class="badge rank-failed">不列入排名</span>';return'<span class="badge b-pub">已排名</span>'}
+function renderRankingTable(){const data=S.ranking;if(!data||!Array.isArray(data.categories))return;const category=$("rankingCategory")?.value||"",q=($("rankingSearch")?.value||"").trim().toLowerCase(),group=data.categories.find(x=>x.category===category);const rows=(group?.rows||[]).filter(x=>!q||String(x.clubName||"").toLowerCase().includes(q));$("rankingState").classList.toggle("hidden",rows.length>0);$("rankingTableWrap").classList.toggle("hidden",rows.length===0);if(!rows.length){$("rankingState").innerHTML="此屬性目前沒有符合條件的社團。";return}$("rankingTableBody").innerHTML=rows.map(row=>{const agg=findAggregationClubForRanking(row.clubName);return`<tr><td class="rank-no">${esc(row.displayRank??"-")}</td><td><div class="rank-club">${esc(row.clubName)}</div><div class="mini-label">${esc(row.category)}</div></td><td>${rankingScoreFromAggregation(agg,"group","routinePerformance",30)}</td><td>${rankingScoreFromAggregation(agg,"section","dataReview",50)}</td><td>${rankingScoreFromAggregation(agg,"section","fieldReview",20)}</td><td><b>${row.finalTotalScore===null||row.finalTotalScore===undefined?"—":fmt(row.finalTotalScore)}</b> / ${fmt(row.totalMaxScore)}</td><td>${rankingResultBadge(row)}</td><td>${rankingStateBadge(row)}</td></tr>`}).join("")}
+
+/* ============================================================
+   JUDGE CONFIRMATION EXPORT
+   ============================================================ */
+
+function judgeExportDisplayName(judge){
+
+return judge &&
+(
+judge.displayName ||
+judge.name
+)
+?
+String(
+judge.displayName ||
+judge.name
+)
+:
+"未命名評審";
+
+}
+
+function renderJudgeExportOptions(){
+
+const el =
+$("judgeExportJudge");
+
+if(!el)return;
+
+const current =
+el.value;
+
+const judges =
+(S.judges || [])
+.slice()
+.sort(
+(a,b)=>
+judgeExportDisplayName(a)
+.localeCompare(
+judgeExportDisplayName(b),
+"zh-TW"
+)
+);
+
+el.innerHTML =
+'<option value="">請先選擇評審</option>' +
+judges.map(
+judge=>{
+
+const id =
+judgeIdOf(judge);
+
+const active =
+judge.active !== false &&
+judge.status !== "disabled";
+
+const account =
+judge.username
+?
+`（${esc(judge.username)}）`
+:
+"";
+
+return `
+<option value="${attr(id)}">
+${esc(judgeExportDisplayName(judge))}${account}${active?"":"－已停用"}
+</option>
+`;
+
+}
+)
+.join("");
+
+if(
+current &&
+judges.some(
+judge=>judgeIdOf(judge)===current
+)
+){
+el.value =
+current;
+}
+
+resetJudgeConfirmationPreview();
+
+}
+
+function resetJudgeConfirmationPreview(){
+
+S.judgeConfirmationExport =
+null;
+
+const selected =
+$("judgeExportJudge").value;
+
+$("judgeExportPreviewBtn").disabled =
+!selected;
+
+$("judgeExportPdfBtn").disabled =
+true;
+
+$("judgeExportPreview").classList.add(
+"hidden"
+);
+
+$("judgeExportPreview").innerHTML =
+"";
+
+$("judgeExportState").classList.remove(
+"hidden"
+);
+
+$("judgeExportState").textContent =
+selected
+?
+"已選擇評審，請按「預覽」讀取最新個人評分資料。"
+:
+"選擇評審後按「預覽」，系統才會讀取該評審目前的個人評分資料。";
+
+$("judgeExportMeta").textContent =
+selected
+?
+"尚未產生預覽"
+:
+"請先選擇評審";
+
+}
+
+function judgeExportScore(value){
+
+if(
+value === null ||
+value === undefined ||
+value === ""
+){
+return "—";
+}
+
+return fmt(value);
+
+}
+
+function judgeExportStatus(record){
+
+const status =
+String(
+record && record.status ||
+""
+);
+
+if(
+status === "submitted"
+){
+return {
+className:"export-status-submitted",
+text:"✅ 已正式送出"
+};
+}
+
+if(
+status === "reopened" ||
+record && record.reopened === true
+){
+return {
+className:"export-status-reopened",
+text:"🔓 已解鎖待重送"
+};
+}
+
+if(
+status === "draft"
+){
+return {
+className:"export-status-draft",
+text:"📝 草稿"
+};
+}
+
+return {
+className:"export-status-other",
+text:
+record && record.statusText
+?
+String(record.statusText)
+:
+"⚠️ 尚未評分"
+};
+
+}
+
+function buildJudgeExportGroup(group){
+
+const criteria =
+Array.isArray(
+group && group.criteria
+)
+?
+group.criteria
+:
+[];
+
+const rows =
+criteria.length
+?
+criteria.map(
+criterion=>`
+<tr>
+<td>${esc(criterion.name || criterion.id || "未命名小項")}</td>
+<td>${criterion.answered===false?"—":esc(judgeExportScore(criterion.score))}</td>
+<td>${esc(judgeExportScore(criterion.maxScore))}</td>
+</tr>
+`
+)
+.join("")
+:
+'<tr><td colspan="3" class="muted">此群組沒有評分小項資料。</td></tr>';
+
+return `
+<div class="export-group">
+<div class="export-group-title">
+<span>${esc(group && (group.name || group.id) || "評分群組")}</span>
+<span>${esc(judgeExportScore(group && group.subtotal))} / ${esc(judgeExportScore(group && group.maxScore))}</span>
+</div>
+<table class="export-score-table">
+<thead>
+<tr>
+<th>評分小項</th>
+<th>得分</th>
+<th>滿分</th>
+</tr>
+</thead>
+<tbody>${rows}</tbody>
+<tfoot>
+<tr>
+<td>群組小計</td>
+<td>${esc(judgeExportScore(group && group.subtotal))}</td>
+<td>${esc(judgeExportScore(group && group.maxScore))}</td>
+</tr>
+</tfoot>
+</table>
+</div>
+`;
+
+}
+
+function buildJudgeExportSection(record){
+
+const detail =
+record && record.detail ||
+{};
+
+const groups =
+Array.isArray(
+detail.groups
+)
+?
+detail.groups
+:
+[];
+
+const status =
+judgeExportStatus(record);
+
+const total =
+detail.totalScore !== null &&
+detail.totalScore !== undefined
+?
+detail.totalScore
+:
+detail.calculatedTotal;
+
+const maxScore =
+detail.maxScore !== null &&
+detail.maxScore !== undefined
+?
+detail.maxScore
+:
+record.sectionMaxScore;
+
+const revision =
+record.submissionRevision !== null &&
+record.submissionRevision !== undefined
+?
+`第 ${esc(record.submissionRevision)} 版`
+:
+"—";
+
+const latestSubmittedAt =
+record.lastSubmittedAt ||
+record.submittedAt;
+
+const metadata = [
+`正式送出：${esc(formatDate(latestSubmittedAt))}`,
+`目前版本：${revision}`,
+`歷史版本：${esc(record.historyCount || 0)} 筆`
+];
+
+if(record.updatedAt){
+metadata.push(
+`最後更新：${esc(formatDate(record.updatedAt))}`
+);
+}
+
+if(
+record.reopened === true ||
+record.status === "reopened"
+){
+metadata.push(
+`解鎖時間：${esc(formatDate(record.unlockedAt))}`
+);
+}
+
+if(record.staleDraft === true){
+metadata.push(
+"目前草稿早於最近一次正式版本"
+);
+}
+
+return `
+<div class="export-section">
+<div class="export-section-head">
+<div>
+<div class="export-section-title">
+${esc(record.sectionIcon || "📌")}
+${esc(record.sectionName || record.sectionId || "評分大項")}
+／${esc(judgeExportScore(maxScore))} 分
+</div>
+<div class="export-section-meta">
+${metadata.join("　｜　")}
+</div>
+</div>
+<span class="export-status ${status.className}">${esc(status.text)}</span>
+</div>
+${
+groups.length
+?
+groups.map(buildJudgeExportGroup).join("")
+:
+'<div class="export-empty">沒有可顯示的評分小項資料。</div>'
+}
+<div class="export-section-total">
+<span>大項總分</span>
+<span>${esc(judgeExportScore(total))} / ${esc(judgeExportScore(maxScore))}</span>
+</div>
+</div>
+`;
+
+}
+
+function groupJudgeExportRecords(records){
+
+const groups =
+[];
+
+const lookup =
+new Map();
+
+(records || [])
+.forEach(
+record=>{
+
+const key =
+`${record.category || ""}\u0001${record.clubName || ""}`;
+
+let group =
+lookup.get(key);
+
+if(!group){
+
+group = {
+category:record.category || "未分類",
+clubName:record.clubName || "未命名社團",
+records:[]
+};
+
+lookup.set(
+key,
+group
+);
+
+groups.push(group);
+
+}
+
+group.records.push(record);
+
+}
+);
+
+return groups;
+
+}
+
+function buildJudgeConfirmationSheet(data){
+
+const judge =
+data && data.judge ||
+{};
+
+const summary =
+data && data.summary ||
+{};
+
+const records =
+Array.isArray(
+data && data.records
+)
+?
+data.records
+:
+[];
+
+const errors =
+Array.isArray(
+data && data.errors
+)
+?
+data.errors
+:
+[];
+
+const clubs =
+groupJudgeExportRecords(records);
+
+const content =
+clubs.length
+?
+clubs.map(
+club=>`
+<article class="export-club-card">
+<div class="export-club-head">
+<div class="export-club-name">${esc(club.clubName)}</div>
+<div class="export-category">${esc(club.category)}</div>
+</div>
+${club.records.map(buildJudgeExportSection).join("")}
+</article>
+`
+)
+.join("")
+:
+'<div class="export-empty">這位評審目前沒有可列入確認表的評分紀錄。</div>';
+
+const errorBox =
+errors.length
+?
+`
+<div class="export-errors">
+<b>⚠️ 有 ${errors.length} 筆資料無法讀取</b><br>
+${errors.map(
+error=>
+`${esc(error.clubName || "未指定社團")}／${esc(error.sectionId || "未指定大項")}：${esc(error.message || "讀取失敗")}`
+).join("<br>")}
+</div>
+`
+:
+"";
+
+return `
+<div class="export-sheet">
+<div class="export-sheet-title">評審個人評分確認表</div>
+<div class="export-sheet-subtitle">${esc(EVENT_NAME)}</div>
+
+<div class="export-meta-grid">
+<div class="export-meta-item"><span class="export-meta-label">評審姓名：</span>${esc(judgeExportDisplayName(judge))}</div>
+<div class="export-meta-item"><span class="export-meta-label">評審帳號：</span>${esc(judge.username || "-")}</div>
+<div class="export-meta-item"><span class="export-meta-label">匯出時間：</span>${esc(formatDate(data.generatedAt))}</div>
+<div class="export-meta-item"><span class="export-meta-label">資料版本：</span>ExportSystem v${esc(data.version || "-")}</div>
+</div>
+
+<div class="export-summary-row">
+<span class="export-summary-chip">社團／大項紀錄 ${esc(summary.recordCount ?? records.length)} 筆</span>
+<span class="export-summary-chip">✅ 已正式送出 ${esc(summary.submittedCount ?? 0)} 筆</span>
+<span class="export-summary-chip">🔓 解鎖待重送 ${esc(summary.reopenedCount ?? 0)} 筆</span>
+<span class="export-summary-chip">⚠️ 讀取異常 ${esc(summary.errorCount ?? errors.length)} 筆</span>
+</div>
+
+<div class="export-note">
+本表只列出上述評審本人的評分資料，不包含其他評審分數、平均成績、排名或及格判定。
+</div>
+
+${content}
+${errorBox}
+</div>
+`;
+
+}
+
+async function previewJudgeConfirmation(){
+
+const judgeId =
+$("judgeExportJudge").value;
+
+if(!judgeId){
+toast("請先選擇評審");
+return;
+}
+
+const button =
+$("judgeExportPreviewBtn");
+
+const select =
+$("judgeExportJudge");
+
+const oldText =
+button.innerHTML;
+
+try{
+
+button.disabled =
+true;
+
+select.disabled =
+true;
+
+$("judgeExportPdfBtn").disabled =
+true;
+
+button.textContent =
+"讀取中...";
+
+$("judgeExportPreview").classList.add(
+"hidden"
+);
+
+$("judgeExportState").classList.remove(
+"hidden"
+);
+
+$("judgeExportState").innerHTML =
+'<div class="spinner"></div>正在整理評審個人評分確認資料...';
+
+const response =
+await api(
+"adminJudgeConfirmationExport",
+{
+judgeId
+}
+);
+
+if(
+unauthorized(response)
+){
+return;
+}
+
+if(
+!response ||
+!response.success
+){
+throw new Error(
+response && response.message ||
+"無法取得評審個人評分確認資料"
+);
+}
+
+S.judgeConfirmationExport =
+response;
+
+$("judgeExportPreview").innerHTML =
+buildJudgeConfirmationSheet(response);
+
+$("judgeExportPreview").classList.remove(
+"hidden"
+);
+
+$("judgeExportState").classList.add(
+"hidden"
+);
+
+$("judgeExportPdfBtn").disabled =
+false;
+
+const judgeName =
+judgeExportDisplayName(
+response.judge
+);
+
+$("judgeExportMeta").textContent =
+`${judgeName}｜${response.summary && response.summary.recordCount || 0} 筆紀錄｜${formatDate(response.generatedAt)}`;
+
+toast(
+"✅ 評審個人評分確認表已產生"
+);
+
+}
+catch(error){
+
+S.judgeConfirmationExport =
+null;
+
+$("judgeExportPdfBtn").disabled =
+true;
+
+$("judgeExportState").classList.remove(
+"hidden"
+);
+
+$("judgeExportState").innerHTML =
+`⚠️ ${esc(error.message)}`;
+
+$("judgeExportMeta").textContent =
+"產生失敗";
+
+}
+finally{
+
+select.disabled =
+false;
+
+button.innerHTML =
+oldText;
+
+button.disabled =
+!select.value;
+
+}
+
+}
+
+function judgeConfirmationPrintCss(){
+
+return `
+@page{size:A4;margin:12mm}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;color:#111;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Arial,sans-serif;font-size:11px;background:#fff}
+.export-sheet{width:100%;margin:0;padding:0}
+.export-sheet-title{text-align:center;font-size:22px;font-weight:900;line-height:1.4}
+.export-sheet-subtitle{text-align:center;color:#444;font-size:12px;margin-top:3px}
+.export-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 18px;margin:16px 0 10px;padding:10px;border:1px solid #aaa;border-radius:6px}
+.export-meta-item{font-size:11px;line-height:1.55}.export-meta-label{color:#555;font-weight:800;margin-right:4px}
+.export-summary-row{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.export-summary-chip{padding:4px 8px;border:1px solid #aaa;border-radius:999px;font-size:10px;font-weight:800}
+.export-note{font-size:10px;line-height:1.6;color:#333;padding:7px 8px;border-left:3px solid #1a73e8;background:#f4f7fb}
+.export-club-card{border:1px solid #888;border-radius:6px;margin-top:12px;overflow:hidden;break-inside:avoid-page;page-break-inside:avoid}
+.export-club-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 10px;background:#eaf1fb;border-bottom:1px solid #999}.export-club-name{font-size:14px;font-weight:900}.export-category{font-size:10px;font-weight:800;color:#174b88}
+.export-section{padding:10px;border-top:1px dashed #aaa}.export-section:first-child{border-top:0}.export-section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.export-section-title{font-size:12px;font-weight:900}.export-section-meta{font-size:9px;color:#555;line-height:1.55;margin-top:3px}
+.export-status{display:inline-block;padding:4px 7px;border:1px solid #888;border-radius:999px;font-size:9px;font-weight:900;white-space:nowrap}.export-status-submitted{background:#edf8f0;color:#145c35}.export-status-reopened{background:#fff4df;color:#7a4307}.export-status-draft{background:#f3efff;color:#53389e}.export-status-other{background:#f2f4f7;color:#475467}
+.export-group{margin-top:8px}.export-group-title{display:flex;justify-content:space-between;gap:10px;font-size:10px;font-weight:900;margin-bottom:4px}
+.export-score-table{width:100%;border-collapse:collapse}.export-score-table th,.export-score-table td{padding:5px 6px;border:1px solid #aaa;text-align:left;font-size:9px}.export-score-table th{background:#f3f4f6}.export-score-table th:nth-child(2),.export-score-table th:nth-child(3),.export-score-table td:nth-child(2),.export-score-table td:nth-child(3){width:65px;text-align:right}.export-score-table tfoot td{font-weight:900;background:#fafafa}
+.export-section-total{display:flex;justify-content:space-between;gap:10px;margin-top:7px;padding:7px 8px;border:1px solid #88aee7;border-radius:5px;background:#f4f8ff;font-size:10px;font-weight:900}.export-empty{padding:18px;text-align:center;color:#666;font-size:10px}.export-errors{margin-top:10px;padding:8px 9px;border:1px solid #d2a34b;border-radius:5px;background:#fff8e8;color:#74420a;font-size:9px;line-height:1.6}
+`;
+
+}
+
+function printJudgeConfirmation(){
+
+const data =
+S.judgeConfirmationExport;
+
+if(!data){
+toast("請先產生預覽");
+return;
+}
+
+const popup =
+window.open(
+"",
+"_blank"
+);
+
+if(!popup){
+toast("瀏覽器已阻擋列印視窗，請允許此網站開啟彈出式視窗");
+return;
+}
+
+const judgeName =
+judgeExportDisplayName(
+data.judge
+);
+
+popup.document.open();
+
+popup.document.write(
+`<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(judgeName)}－評審個人評分確認表</title>
+<style>${judgeConfirmationPrintCss()}</style>
+</head>
+<body>
+${buildJudgeConfirmationSheet(data)}
+</body>
+</html>`
+);
+
+popup.document.close();
+
+setTimeout(
+()=>{
+popup.focus();
+popup.print();
+},
+350
+);
+
+}
+
+/* ============================================================
+   CLUBS
+   ============================================================ */
+
+async function loadClubs(){
+
+try{
+
+const r =
+await api(
+"adminListClubs"
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"無法取得社團"
+);
+
+}
+
+S.clubs =
+Array.isArray(
+r.clubs
+)
+?
+r.clubs
+:
+[];
+
+$("statClubs").textContent =
+S.clubs.length;
+
+$("clubMeta").textContent =
+`${S.clubs.length} 個社團`;
+
+renderClubs();
+
+}
+catch(e){
+
+$("clubList").innerHTML=
+`<div class="state">
+⚠️ ${esc(e.message)}
+</div>`;
+
+}
+
+}
+
+function renderClubs(){
+
+const q =
+(
+$("clubSearch")?.value ||
+""
+)
+.trim()
+.toLowerCase();
+
+const rows =
+S.clubs.filter(
+x=>
+!q ||
+`${x.name} ${x.category}`
+.toLowerCase()
+.includes(q)
+);
+
+$("clubList").innerHTML=
+rows.length
+?
+rows.map(
+c=>
+`
+<div class="list-row">
+
+<div>
+
+<div class="list-title">
+${esc(c.name)}
+</div>
+
+<div class="list-sub">
+${esc(c.category)}
+</div>
+
+</div>
+
+<div class="row-actions">
+
+<button
+class="btn"
+onclick="openClubModal('${encodeURIComponent(c.name)}')"
+>
+編輯
+</button>
+
+<button
+class="btn btn-danger"
+onclick="deleteClub('${encodeURIComponent(c.name)}')"
+>
+刪除
+</button>
+
+</div>
+
+</div>
+`
+)
+.join("")
+:
+'<div class="state">找不到社團</div>';
+
+}
+
+function openClubModal(
+encoded=""
+){
+
+const old =
+decodeURIComponent(
+encoded ||
+""
+);
+
+const c =
+S.clubs.find(
+x=>
+x.name===old
+);
+
+$("clubOldName").value=
+old;
+
+$("clubName").value=
+c
+?
+c.name
+:
+"";
+
+$("clubCategory").innerHTML=
+CLUB_CATEGORIES
+.map(
+x=>
+`<option
+value="${attr(x)}"
+${c&&c.category===x?"selected":""}
+>
+${esc(x)}
+</option>`
+)
+.join("");
+
+$("clubModalTitle").textContent=
+c
+?
+"編輯社團"
+:
+"新增社團";
+
+$("clubError").textContent=
+"";
+
+openModal(
+"clubModal"
+);
+
+}
+
+async function saveClub(){
+
+const oldName =
+$("clubOldName").value;
+
+const clubName =
+$("clubName").value.trim();
+
+const category =
+$("clubCategory").value;
+
+try{
+
+const r =
+oldName
+?
+await api(
+"adminUpdateClub",
+{
+oldName,
+clubName,
+category
+}
+)
+:
+await api(
+"adminAddClub",
+{
+clubName,
+category
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"儲存失敗"
+);
+
+}
+
+closeModal(
+"clubModal"
+);
+
+await Promise.all([
+loadClubs(),
+loadClouds(),
+loadForms()
+]);
+
+await loadScoreAggregation();
+await loadRanking();
+
+toast(
+"✅ 社團資料已儲存"
+);
+
+}
+catch(e){
+
+$("clubError").textContent=
+e.message;
+
+}
+
+}
+
+async function deleteClub(
+encoded
+){
+
+const name =
+decodeURIComponent(
+encoded
+);
+
+if(
+!confirm(
+`確定刪除「${name}」？這可能一併清理綁定、雲端與表單關聯。`
+)
+)
+return;
+
+const r =
+await api(
+"adminDeleteClub",
+{
+clubName:name
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+toast(
+"❌ "+
+(
+r.message ||
+"刪除失敗"
+)
+);
+
+return;
+
+}
+
+await Promise.all([
+loadClubs(),
+loadClouds(),
+loadForms(),
+loadBindings()
+]);
+
+await loadScoreAggregation();
+await loadRanking();
+
+toast(
+"✅ 社團已刪除"
+);
+
+}
+
+/* ============================================================
+   EVENT
+   ============================================================ */
+
+function isoToLocal(v){
+
+if(!v)return"";
+
+const d =
+new Date(v);
+
+if(
+Number.isNaN(
+d.getTime()
+)
+)
+return"";
+
+const f =
+new Intl.DateTimeFormat(
+"en-CA",
+{
+timeZone:"Asia/Taipei",
+year:"numeric",
+month:"2-digit",
+day:"2-digit",
+hour:"2-digit",
+minute:"2-digit",
+hour12:false
+}
+);
+
+const p =
+{};
+
+f.formatToParts(d)
+.forEach(
+x=>{
+
+if(
+x.type!=="literal"
+){
+
+p[x.type]=
+x.value;
+
+}
+
+}
+);
+
+return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+
+}
+
+function localToTaipei(v){
+
+return v
+?
+`${v}:00+08:00`
+:
+"";
+
+}
+
+async function loadEvent(){
+
+try{
+
+const r =
+await post({
+action:"getEventConfig"
+});
+
+if(
+!r.success ||
+!r.config
+){
+
+throw new Error(
+r.message ||
+"無法取得活動時程"
+);
+
+}
+
+S.eventConfig=
+r.config;
+
+[
+"dataDeadline",
+"formDeadline",
+"eventStart",
+"eventEnd"
+]
+.forEach(
+k=>
+$(k).value=
+isoToLocal(
+r.config[k]
+)
+);
+
+$("eventMeta").textContent=
+r.config.updatedAt
+?
+"最後更新 "+
+formatDate(
+r.config.updatedAt
+)
+:
+"使用目前設定";
+
+}
+catch(e){
+
+$("eventError").textContent=
+e.message;
+
+}
+
+}
+
+async function saveEventConfig(){
+
+const dataDeadline =
+localToTaipei(
+$("dataDeadline").value
+);
+
+const formDeadline =
+localToTaipei(
+$("formDeadline").value
+);
+
+const eventStart =
+localToTaipei(
+$("eventStart").value
+);
+
+const eventEnd =
+localToTaipei(
+$("eventEnd").value
+);
+
+try{
+
+$("eventError").textContent=
+"";
+
+const r =
+await api(
+"adminSaveEventConfig",
+{
+dataDeadline,
+formDeadline,
+eventStart,
+eventEnd
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"儲存失敗"
+);
+
+}
+
+S.eventConfig=
+r.config;
+
+$("eventMeta").textContent=
+"最後更新 "+
+formatDate(
+r.config.updatedAt
+);
+
+toast(
+"✅ 活動時程已儲存"
+);
+
+}
+catch(e){
+
+$("eventError").textContent=
+e.message;
+
+}
+
+}
+
+function formatDate(v){
+
+if(!v)return"-";
+
+const d =
+new Date(v);
+
+if(
+Number.isNaN(
+d.getTime()
+)
+)
+return String(v);
+
+return new Intl.DateTimeFormat(
+"zh-TW",
+{
+timeZone:"Asia/Taipei",
+year:"numeric",
+month:"2-digit",
+day:"2-digit",
+hour:"2-digit",
+minute:"2-digit",
+hour12:false
+}
+)
+.format(d);
+
+}
+
+/* ============================================================
+   FORM
+   ============================================================ */
+
+async function loadForms(){
+
+try{
+
+const r =
+await api(
+"adminListFormSubmissions"
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"無法取得表單進度"
+);
+
+}
+
+S.forms =
+Array.isArray(
+r.clubs
+)
+?
+r.clubs
+:
+[];
+
+const done =
+r.submittedCount ??
+S.forms.filter(
+x=>
+x.status==="submitted"
+)
+.length;
+
+$("statForms").textContent=
+`${done}/${S.forms.length}`;
+
+$("formMeta").textContent=
+`已完成 ${done}｜待填 ${r.pendingCount??0}｜重複 ${r.duplicateCount??0}`;
+
+renderForms();
+
+}
+catch(e){
+
+$("formList").innerHTML=
+`<div class="state">
+⚠️ ${esc(e.message)}
+</div>`;
+
+}
+
+}
+
+function renderForms(){
+
+const q =
+(
+$("formSearch")?.value ||
+""
+)
+.trim()
+.toLowerCase();
+
+const f =
+$("formFilter")?.value ||
+"all";
+
+const rows =
+S.forms.filter(
+x=>
+(
+!q ||
+`${x.club} ${x.category}`
+.toLowerCase()
+.includes(q)
+)
+&&
+(
+f==="all" ||
+x.status===f
+)
+);
+
+$("formList").innerHTML=
+rows.length
+?
+rows.map(
+x=>
+`
+<div class="list-row">
+
+<div>
+
+<div class="list-title">
+
+${esc(x.club)}
+
+<span class="badge ${
+x.status==="submitted"
+?
+"b-pub"
+:
+x.status==="duplicate"
+?
+"b-manual"
+:
+"b-draft"
+}">
+
+${
+x.status==="submitted"
+?
+"✅ 已完成"
+:
+x.status==="duplicate"
+?
+"⚠️ 重複填寫"
+:
+"尚未填寫"
+}
+
+</span>
+
+</div>
+
+<div class="list-sub">
+
+${esc(x.category)}
+｜
+回覆數
+${x.responseCount??0}
+
+${
+x.submittedAt
+?
+"｜"+
+esc(
+formatDate(
+x.submittedAt
+)
+)
+:
+""
+}
+
+</div>
+
+</div>
+
+</div>
+`
+)
+.join("")
+:
+'<div class="state">沒有符合條件的社團</div>';
+
+}
+
+async function syncForms(){
+
+toast(
+"正在同步 Google Form..."
+);
+
+const r =
+await api(
+"adminSyncFormSubmissions"
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+toast(
+"❌ "+
+(
+r.message ||
+"同步失敗"
+)
+);
+
+return;
+
+}
+
+S.forms =
+Array.isArray(
+r.clubs
+)
+?
+r.clubs
+:
+[];
+
+await loadForms();
+
+toast(
+"✅ Google Form 已同步"
+);
+
+}
+
+/* ============================================================
+   BINDINGS
+   ============================================================ */
+
+async function loadBindings(){
+
+try{
+
+const r =
+await api(
+"adminListBindings"
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"無法取得綁定資料"
+);
+
+}
+
+S.bindings =
+Array.isArray(
+r.bindings
+)
+?
+r.bindings
+:
+[];
+
+$("bindingMeta").textContent=
+`${S.bindings.length} 筆綁定`;
+
+renderBindings();
+
+}
+catch(e){
+
+$("bindingList").innerHTML=
+`<div class="state">
+⚠️ ${esc(e.message)}
+</div>`;
+
+}
+
+}
+
+function renderBindings(){
+
+const q =
+(
+$("bindingSearch")?.value ||
+""
+)
+.trim()
+.toLowerCase();
+
+const rows =
+S.bindings.filter(
+x=>
+!q ||
+`${x.displayName} ${x.club} ${x.category} ${x.userId}`
+.toLowerCase()
+.includes(q)
+);
+
+$("bindingList").innerHTML=
+rows.length
+?
+rows.map(
+x=>
+`
+<div class="list-row">
+
+<div>
+
+<div class="list-title">
+${esc(x.displayName||"LINE 使用者")}
+→
+${esc(x.club||"-")}
+</div>
+
+<div class="list-sub">
+${esc(x.category||"")}
+｜
+${esc(x.userId||"")}
+</div>
+
+</div>
+
+<button
+class="btn btn-danger"
+onclick="unbindLine('${encodeURIComponent(x.userId||"")}')"
+>
+解除綁定
+</button>
+
+</div>
+`
+)
+.join("")
+:
+'<div class="state">沒有綁定資料</div>';
+
+}
+
+async function unbindLine(
+encoded
+){
+
+const id =
+decodeURIComponent(
+encoded
+);
+
+if(
+!confirm(
+"確定解除此 LINE 綁定？"
+)
+)
+return;
+
+const r =
+await api(
+"adminUnbind",
+{
+userId:id
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+toast(
+"❌ "+
+(
+r.message ||
+"解除失敗"
+)
+);
+
+return;
+
+}
+
+await loadBindings();
+
+toast(
+"✅ 已解除綁定"
+);
+
+}
+
+/* ============================================================
+   CLOUD
+   ============================================================ */
+
+async function loadClouds(){
+
+try{
+
+const r =
+await api(
+"adminListCloudLinks"
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"無法取得雲端資料"
+);
+
+}
+
+S.clouds =
+Array.isArray(
+r.clubs
+)
+?
+r.clubs
+:
+[];
+
+$("cloudMeta").textContent=
+`已設定 ${
+r.configuredCount ??
+S.clouds.filter(
+x=>
+x.configured
+)
+.length
+}
+/
+${S.clouds.length}`;
+
+renderClouds();
+
+}
+catch(e){
+
+$("cloudList").innerHTML=
+`<div class="state">
+⚠️ ${esc(e.message)}
+</div>`;
+
+}
+
+}
+
+function renderClouds(){
+
+const q =
+(
+$("cloudSearch")?.value ||
+""
+)
+.trim()
+.toLowerCase();
+
+const rows =
+S.clouds.filter(
+x=>
+!q ||
+`${x.club} ${x.category}`
+.toLowerCase()
+.includes(q)
+);
+
+$("cloudList").innerHTML=
+rows.length
+?
+rows.map(
+x=>
+`
+<div class="list-row">
+
+<div>
+
+<div class="list-title">
+
+${esc(x.club)}
+
+<span class="badge ${
+x.configured
+?
+"b-pub"
+:
+"b-draft"
+}">
+
+${
+x.configured
+?
+"✅ 已設定"
+:
+"未設定"
+}
+
+</span>
+
+</div>
+
+<div class="list-sub">
+
+${esc(x.category)}
+
+${
+x.url
+?
+`｜<a
+href="${attr(x.url)}"
+target="_blank"
+rel="noopener noreferrer"
+>
+開啟連結
+</a>`
+:
+""
+}
+
+</div>
+
+</div>
+
+<div class="row-actions">
+
+<button
+class="btn"
+onclick="openCloudModal('${encodeURIComponent(x.club)}')"
+>
+設定
+</button>
+
+${
+x.configured
+?
+`<button
+class="btn btn-danger"
+onclick="clearCloud('${encodeURIComponent(x.club)}')"
+>
+清除
+</button>`
+:
+""
+}
+
+</div>
+
+</div>
+`
+)
+.join("")
+:
+'<div class="state">沒有社團資料</div>';
+
+}
+
+function openCloudModal(
+encoded
+){
+
+const name =
+decodeURIComponent(
+encoded
+);
+
+const x =
+S.clouds.find(
+c=>
+c.club===name
+);
+
+$("cloudClubName").value=
+name;
+
+$("cloudModalClub").textContent=
+name+
+(
+x
+?
+`｜${x.category}`
+:
+""
+);
+
+$("cloudUrl").value=
+x &&
+x.url
+?
+x.url
+:
+"";
+
+$("cloudError").textContent=
+"";
+
+openModal(
+"cloudModal"
+);
+
+}
+
+async function saveCloud(){
+
+const clubName =
+$("cloudClubName").value;
+
+const url =
+$("cloudUrl").value.trim();
+
+try{
+
+const r =
+await api(
+"adminSetCloudLink",
+{
+clubName,
+url
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+throw new Error(
+r.message ||
+"儲存失敗"
+);
+
+}
+
+closeModal(
+"cloudModal"
+);
+
+await loadClouds();
+
+toast(
+"✅ 雲端連結已儲存"
+);
+
+}
+catch(e){
+
+$("cloudError").textContent=
+e.message;
+
+}
+
+}
+
+async function clearCloud(
+encoded
+){
+
+const clubName =
+decodeURIComponent(
+encoded
+);
+
+if(
+!confirm(
+`確定清除「${clubName}」的雲端連結？`
+)
+)
+return;
+
+const r =
+await api(
+"adminClearCloudLink",
+{
+clubName
+}
+);
+
+if(
+unauthorized(r)
+)
+return;
+
+if(
+!r.success
+){
+
+toast(
+"❌ "+
+(
+r.message ||
+"清除失敗"
+)
+);
+
+return;
+
+}
+
+await loadClouds();
+
+toast(
+"✅ 已清除雲端連結"
+);
+
+}
+
+[
+"judgeModal",
+"clubModal",
+"cloudModal",
+"rawScoreModal",
+"scoreHistoryModal",
+"aggregationDetailModal"
+]
+.forEach(
+id=>
+$(id)
+.addEventListener(
+"click",
+e=>{
+
+if(
+e.target===
+e.currentTarget
+){
+
+closeModal(id);
+
+}
+
+}
+)
+);
+
+document.addEventListener(
+"keydown",
+e=>{
+
+if(
+e.key==="Escape"
+){
+
+[
+"judgeModal",
+"clubModal",
+"cloudModal",
+"rawScoreModal",
+"scoreHistoryModal",
+"aggregationDetailModal"
+]
+.forEach(
+closeModal
+);
+
+}
+
+}
+);
+
+</script>
+</body>
+</html>
 <style>
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,sans-serif;background:#f5f7fb;color:#202124}button,input,select{font:inherit}button{cursor:pointer}:root{--p:#1a73e8;--pd:#1557b0;--bd:#e4e7ec;--muted:#667085;--ok:#167542;--okbg:#e7f6ec;--warn:#b54708;--warnbg:#fff6e8;--bad:#d92d20;--badbg:#fff1f0;--violet:#6941c6;--violetbg:#f4f0ff;--shadow:0 8px 28px rgba(16,24,40,.07)}.hidden{display:none!important}.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--bd);border-radius:22px;padding:32px;box-shadow:0 20px 60px rgba(16,24,40,.12)}.login-icon{font-size:34px}.login-title{font-size:26px;font-weight:900;margin:12px 0 5px}.muted{color:var(--muted)}.field{width:100%;height:42px;border:1px solid #d0d5dd;border-radius:9px;padding:0 11px;outline:none;background:#fff}.field:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(26,115,232,.08)}.label{display:block;font-size:12px;font-weight:800;margin:14px 0 6px}.btn{min-height:38px;border:1px solid var(--bd);border-radius:9px;background:#fff;padding:0 12px;font-weight:800;color:#344054}.btn:hover{background:#f9fafb}.btn-primary{background:var(--p);border-color:var(--p);color:#fff}.btn-primary:hover{background:var(--pd)}.btn-danger{background:var(--badbg);border-color:#f5c7c4;color:var(--bad)}.btn-success{background:var(--okbg);border-color:#cce7d5;color:var(--ok)}.btn:disabled{opacity:.5;cursor:not-allowed}.login-btn{width:100%;margin-top:20px;height:46px}.error{color:var(--bad);font-size:12px;line-height:1.6;margin-top:9px}.app{display:none}.topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;padding:12px max(16px,calc((100vw - 1200px)/2));gap:12px}.brand{font-weight:900}.sub{font-size:11px;color:var(--muted);margin-top:2px}.top-actions{display:flex;gap:8px}.main{width:min(1200px,calc(100% - 28px));margin:auto;padding:24px 0 50px}.hero{display:flex;justify-content:space-between;gap:14px;align-items:end;margin-bottom:15px}.hero h1{margin:0;font-size:27px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:15px}.stat{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:14px;box-shadow:var(--shadow)}.stat-label{font-size:11px;color:var(--muted);font-weight:800}.stat-value{font-size:22px;font-weight:900;margin-top:4px}.panel{background:#fff;border:1px solid var(--bd);border-radius:15px;box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}.panel-head{width:100%;border:0;background:#fff;padding:15px 17px;display:flex;align-items:center;justify-content:space-between;text-align:left}.panel-title{font-size:15px;font-weight:900}.panel-meta{font-size:11px;color:var(--muted)}.panel-body{border-top:1px solid var(--bd);padding:16px}.chev{transition:.2s}.panel.closed .panel-body{display:none}.panel.closed .chev{transform:rotate(-90deg)}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}.toolbar .field{width:auto;min-width:180px}.grow{flex:1}.card{border:1px solid var(--bd);border-radius:12px;padding:13px;background:#fff}.notice{padding:11px 12px;border:1px solid #bfd7ff;background:#f5f9ff;border-radius:10px;color:#174b88;font-size:12px;line-height:1.7}.okbox{background:var(--okbg);border-color:#cce7d5;color:var(--ok)}.warnbox{background:var(--warnbg);border-color:#f5d6a4;color:#8a4b08}.badbox{background:var(--badbg);border-color:#f5c7c4;color:#7a271a}.score-top{display:grid;grid-template-columns:1fr 160px auto;gap:10px;align-items:end;margin-bottom:12px}.score-section{border:1px solid #dce5f2;border-radius:14px;margin:12px 0;background:#fbfdff;overflow:hidden}.score-section-head{padding:12px;background:#f4f8ff;border-bottom:1px solid #dce5f2}.section-grid{display:grid;grid-template-columns:68px minmax(180px,1fr) 130px 135px auto;gap:8px;align-items:end}.mini-label{font-size:10px;color:var(--muted);font-weight:800;margin-bottom:4px}.mini{height:38px}.toggle-row{display:flex;gap:7px;align-items:center;font-size:11px;font-weight:800}.badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}.b-pub{background:var(--okbg);color:var(--ok)}.b-draft{background:#f2f4f7;color:#667085}.b-manual{background:var(--violetbg);color:var(--violet)}.score-section-body{padding:12px}.score-group{border:1px solid var(--bd);border-radius:11px;margin-bottom:9px;overflow:hidden;background:#fff}.group-head{display:grid;grid-template-columns:minmax(150px,1fr) 120px auto;gap:8px;align-items:end;padding:10px;background:#fcfcfd;border-bottom:1px solid var(--bd)}.criteria{padding:8px}.criterion{display:grid;grid-template-columns:minmax(160px,1fr) 110px auto;gap:8px;align-items:end;padding:7px;border-bottom:1px dashed #e8eaed}.criterion:last-child{border-bottom:0}.calc{font-size:11px;font-weight:800;margin-top:7px}.calc.good{color:var(--ok)}.calc.bad{color:var(--bad)}.row-actions{display:flex;gap:5px;flex-wrap:wrap}.icon-btn{width:34px;height:34px;border:1px solid var(--bd);border-radius:8px;background:#fff}.danger-icon{color:var(--bad)}.score-footer{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-top:12px}.validation{flex:1}.validation ul{margin:6px 0 0;padding-left:18px}.list{display:grid;gap:8px}.list-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px;border:1px solid var(--bd);border-radius:10px}.list-title{font-weight:900;font-size:13px}.list-sub{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.5}.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.chip{padding:4px 7px;background:#eef4ff;color:#1557b0;border-radius:999px;font-size:10px;font-weight:850}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.table-wrap{overflow:auto;border:1px solid var(--bd);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left;font-size:12px;vertical-align:top}th{background:#f9fafb;font-size:11px;color:#475467}.state{text-align:center;color:var(--muted);padding:28px 12px;font-size:12px}.spinner{width:26px;height:26px;margin:0 auto 8px;border:3px solid #e8eef7;border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.modal-bg{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(16,24,40,.58)}.modal{width:min(520px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:18px;box-shadow:0 25px 70px rgba(16,24,40,.28)}.modal h3{margin:0 0 10px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.check{display:flex;align-items:center;gap:6px;padding:7px;border:1px solid var(--bd);border-radius:8px;font-size:11px}.toast{position:fixed;right:18px;bottom:18px;z-index:2000;padding:11px 15px;background:#101828;color:#fff;border-radius:9px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;max-width:390px;font-size:12px}.toast.show{opacity:1;transform:none}.b-reopened{background:var(--warnbg);color:var(--warn)}.b-notstarted{background:#f2f4f7;color:#667085}.b-judge{background:var(--violetbg);color:var(--violet)}.chip.score-chip{background:var(--violetbg);color:var(--violet)}.permission-block{margin-top:6px}.permission-label{font-size:10px;color:var(--muted);font-weight:800;margin-bottom:4px}.progress-judge{border:1px solid var(--bd);border-radius:13px;margin:12px 0;overflow:hidden;background:#fff}.progress-judge-head{padding:12px 14px;background:#f9fafb;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.progress-summary{font-size:11px;color:var(--muted);text-align:right;line-height:1.6}.progress-section{padding:12px 14px;border-bottom:1px solid var(--bd)}.progress-section:last-child{border-bottom:0}.progress-section-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}.progress-section-title{font-weight:900;font-size:13px}.progress-club{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed #e5e7eb}.progress-club:first-child{border-top:0}.progress-score{font-weight:900;font-size:12px;white-space:nowrap}.modal-wide{width:min(760px,100%)}.raw-group{border:1px solid var(--bd);border-radius:11px;margin-bottom:10px;overflow:hidden}.raw-group-head{padding:9px 11px;background:#f9fafb;display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:900}.raw-row{display:grid;grid-template-columns:minmax(0,1fr) 100px 100px;gap:8px;padding:9px 11px;border-top:1px solid var(--bd);font-size:12px;align-items:center}.raw-row .right{text-align:right;font-weight:900}.raw-total{display:flex;justify-content:space-between;gap:10px;padding:11px;border-radius:10px;background:#f5f9ff;border:1px solid #bfd7ff;font-weight:900;margin-top:10px}.history-item{border:1px solid var(--bd);border-radius:11px;margin-bottom:10px;overflow:hidden}.history-head{padding:10px 12px;background:#f9fafb}.history-title{font-weight:900;font-size:12px}.history-meta{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.6}.history-body{padding:10px 12px}.empty-inline{font-size:11px;color:var(--muted);margin-top:5px}@media(max-width:780px){.stats{grid-template-columns:1fr 1fr}.section-grid{grid-template-columns:60px 1fr 100px}.section-grid .mode-wrap,.section-grid .section-actions{grid-column:1/-1}.group-head{grid-template-columns:1fr 100px}.group-head .row-actions{grid-column:1/-1}.criterion{grid-template-columns:1fr 90px}.criterion .row-actions{grid-column:1/-1}.grid2,.grid4{grid-template-columns:1fr}.score-top{grid-template-columns:1fr}.score-footer{flex-direction:column}.topbar .sub{display:none}.hero{align-items:flex-start;flex-direction:column}.toolbar .field{width:100%}.toolbar .grow{flex:auto;width:100%}.list-row{grid-template-columns:1fr}.check-grid{grid-template-columns:1fr}.progress-judge-head{flex-direction:column}.progress-summary{text-align:left}.progress-club{grid-template-columns:1fr}.raw-row{grid-template-columns:1fr 70px 70px}}
 
