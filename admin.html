@@ -211,7 +211,7 @@ onchange="renderJudges()"
 <div class="panel-body">
 
 <div class="notice">
-先選擇一位評審，再選擇要查看的社團；社團預設為「全部社團」，也可以指定單一社團細看。
+先選擇單一評審或「全部評審」，再選擇社團與評分大項；切換社團時會保留目前的評審及評分大項選項。
 已正式送出的分數可以查看原始分數、修改歷史，並由管理員指定單筆解鎖。
 </div>
 
@@ -234,12 +234,14 @@ disabled
 <option value="all">全部社團（預設）</option>
 </select>
 
-<input
-id="judgeProgressSearch"
-class="field grow"
-placeholder="搜尋評分大項、社團或屬性"
-oninput="renderJudgeProgress()"
+<select
+id="judgeProgressSection"
+class="field"
+onchange="renderJudgeProgress()"
+disabled
 >
+<option value="all">全部評分大項（預設）</option>
+</select>
 
 <select
 id="judgeProgressFilter"
@@ -4078,6 +4080,9 @@ true;
 $("judgeProgressClub").disabled =
 true;
 
+$("judgeProgressSection").disabled =
+true;
+
 $("judgeProgressList").innerHTML =
 '<div class="state"><div class="spinner"></div>正在讀取評審進度...</div>';
 
@@ -4125,6 +4130,10 @@ s.completionRate??0
 renderJudgeProgressJudgeOptions();
 
 renderJudgeProgressClubOptions(
+false
+);
+
+renderJudgeProgressSectionOptions(
 false
 );
 
@@ -4187,6 +4196,7 @@ b.name ||
 
 el.innerHTML =
 '<option value="">請選擇評審</option>' +
+'<option value="all">全部評審</option>' +
 judges.map(
 judge=>{
 
@@ -4227,12 +4237,15 @@ ${esc(name)}${account}${inactive}
 
 if(
 current &&
+(
+current === "all" ||
 judges.some(
 judge=>
 String(
 judgeIdOf(judge) ||
 ""
 )===current
+)
 )
 ){
 
@@ -4252,6 +4265,10 @@ el.value =
 function handleJudgeProgressJudgeChange(){
 
 renderJudgeProgressClubOptions(
+true
+);
+
+renderJudgeProgressSectionOptions(
 true
 );
 
@@ -4282,8 +4299,12 @@ S.judgeProgress.judges
 :
 [];
 
-const selectedJudge =
-judges.find(
+const selectedJudges =
+selectedJudgeId === "all"
+?
+judges
+:
+judges.filter(
 judge=>
 String(
 judgeIdOf(judge) ||
@@ -4291,7 +4312,10 @@ judgeIdOf(judge) ||
 )===selectedJudgeId
 );
 
-if(!selectedJudge){
+if(
+!selectedJudgeId ||
+!selectedJudges.length
+){
 
 el.innerHTML =
 '<option value="all">全部社團（預設）</option>';
@@ -4316,6 +4340,9 @@ el.value ||
 
 const clubMap =
 new Map();
+
+selectedJudges.forEach(
+selectedJudge=>{
 
 (selectedJudge.sections || [])
 .forEach(
@@ -4348,6 +4375,9 @@ category:String(
 club.category ||
 ""
 )
+}
+);
+
 }
 );
 
@@ -4394,6 +4424,145 @@ current
 
 }
 
+function renderJudgeProgressSectionOptions(
+resetToAll=false
+){
+
+const el =
+$("judgeProgressSection");
+
+if(!el)return;
+
+const selectedJudgeId =
+$("judgeProgressJudge")?.value ||
+"";
+
+const judges =
+S.judgeProgress &&
+Array.isArray(
+S.judgeProgress.judges
+)
+?
+S.judgeProgress.judges
+:
+[];
+
+const selectedJudges =
+selectedJudgeId === "all"
+?
+judges
+:
+judges.filter(
+judge=>
+String(
+judgeIdOf(judge) ||
+""
+)===selectedJudgeId
+);
+
+if(
+!selectedJudgeId ||
+!selectedJudges.length
+){
+
+el.innerHTML =
+'<option value="all">全部評分大項（預設）</option>';
+
+el.value =
+"all";
+
+el.disabled =
+true;
+
+return;
+
+}
+
+const current =
+resetToAll
+?
+"all"
+:
+el.value ||
+"all";
+
+const sectionMap =
+new Map();
+
+selectedJudges.forEach(
+judge=>{
+
+(judge.sections || [])
+.forEach(
+section=>{
+
+const sectionId =
+String(
+section.sectionId ||
+section.id ||
+""
+)
+.trim();
+
+if(
+!sectionId ||
+sectionMap.has(sectionId)
+){
+return;
+}
+
+sectionMap.set(
+sectionId,
+{
+id:sectionId,
+name:String(
+section.name ||
+sectionId
+),
+icon:String(
+section.icon ||
+"📌"
+),
+maxScore:section.maxScore
+}
+);
+
+}
+);
+
+}
+);
+
+const sections =
+Array.from(
+sectionMap.values()
+);
+
+el.innerHTML =
+'<option value="all">全部評分大項（預設）</option>' +
+sections.map(
+section=>`
+<option value="${attr(section.id)}">
+${esc(section.icon)} ${esc(section.name)}${section.maxScore===null||section.maxScore===undefined?"":` / ${esc(fmt(section.maxScore))} 分`}
+</option>
+`
+)
+.join("");
+
+el.disabled =
+sections.length === 0;
+
+el.value =
+sections.some(
+section=>section.id===current
+)
+?
+current
+:
+"all";
+
+}
+
 function renderJudgeProgress(){
 
 const root =
@@ -4429,8 +4598,12 @@ return;
 
 }
 
-const selectedJudge =
-S.judgeProgress.judges.find(
+const selectedJudges =
+selectedJudgeId === "all"
+?
+S.judgeProgress.judges
+:
+S.judgeProgress.judges.filter(
 judge=>
 String(
 judgeIdOf(judge) ||
@@ -4438,7 +4611,7 @@ judgeIdOf(judge) ||
 )===selectedJudgeId
 );
 
-if(!selectedJudge){
+if(!selectedJudges.length){
 
 $("judgeProgressMeta").textContent =
 "找不到選擇的評審";
@@ -4451,23 +4624,62 @@ return;
 }
 
 const selectedSummary =
-selectedJudge.summary ||
+(
+selectedJudgeId === "all"
+?
+S.judgeProgress.summary
+:
+selectedJudges[0].summary
+) ||
 {};
 
 const selectedClubName =
 $("judgeProgressClub")?.value ||
 "all";
 
-$("judgeProgressMeta").textContent =
-`${selectedJudge.displayName || selectedJudge.name || "未命名評審"}｜社團 ${selectedClubName==="all"?"全部":selectedClubName}｜已送出 ${selectedSummary.submittedCount??0}/${selectedSummary.totalExpected??0}｜草稿 ${selectedSummary.draftCount??0}｜待重送 ${selectedSummary.reopenedCount??0}｜完成率 ${selectedSummary.completionRate??0}%`;
+const selectedSectionId =
+$("judgeProgressSection")?.value ||
+"all";
 
-const q =
-(
-$("judgeProgressSearch")?.value ||
-""
+const selectedSection =
+selectedJudges
+.flatMap(
+judge=>judge.sections || []
 )
-.trim()
-.toLowerCase();
+.find(
+section=>
+String(
+section.sectionId ||
+section.id ||
+""
+)===selectedSectionId
+);
+
+const selectedJudgeLabel =
+selectedJudgeId === "all"
+?
+"全部評審"
+:
+selectedJudges[0].displayName ||
+selectedJudges[0].name ||
+"未命名評審";
+
+const selectedSectionLabel =
+selectedSectionId === "all"
+?
+"全部評分大項"
+:
+selectedSection &&
+(
+selectedSection.name ||
+selectedSection.sectionId ||
+selectedSection.id
+)
+||
+"未指定評分大項";
+
+$("judgeProgressMeta").textContent =
+`${selectedJudgeLabel}｜社團 ${selectedClubName==="all"?"全部":selectedClubName}｜${selectedSectionLabel}｜已送出 ${selectedSummary.submittedCount??0}/${selectedSummary.totalExpected??0}｜草稿 ${selectedSummary.draftCount??0}｜待重送 ${selectedSummary.reopenedCount??0}｜完成率 ${selectedSummary.completionRate??0}%`;
 
 const filter =
 $("judgeProgressFilter")?.value ||
@@ -4476,7 +4688,7 @@ $("judgeProgressFilter")?.value ||
 const judgeHtml =
 [];
 
-[selectedJudge].forEach(
+selectedJudges.forEach(
 j=>{
 
 const sections =
@@ -4488,6 +4700,20 @@ j.sections ||
 )
 .forEach(
 s=>{
+
+const sectionId =
+String(
+s.sectionId ||
+s.id ||
+""
+);
+
+if(
+selectedSectionId !== "all" &&
+sectionId !== selectedSectionId
+){
+return;
+}
 
 const clubs =
 (
@@ -4508,13 +4734,6 @@ c.clubName ||
 c.name ||
 ""
 )===selectedClubName
-)
-&&
-(
-!q ||
-`${j.displayName||j.name||""} ${j.username||""} ${s.name||""} ${c.clubName||c.name||""} ${c.category||""}`
-.toLowerCase()
-.includes(q)
 )
 );
 
