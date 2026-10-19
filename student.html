@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>社團學生註冊／登入</title>
+  <script src="./firebase-client.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
+  <style>
+    :root {
+      --ink: #1c2430;
+      --muted: #5c6b7a;
+      --line: #d7dee7;
+      --bg: #eef3f7;
+      --panel: #ffffff;
+      --accent: #0b6e99;
+      --danger: #a12626;
+      --ok: #1f6b3a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Sans TC", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(11, 110, 153, 0.16), transparent 40%),
+        linear-gradient(180deg, #f7fafc 0%, var(--bg) 100%);
+    }
+    main {
+      width: min(480px, calc(100% - 32px));
+      margin: 32px auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px 24px 32px;
+      box-shadow: 0 18px 40px rgba(28, 36, 48, 0.08);
+    }
+    h1 { margin: 0 0 6px; font-size: 1.45rem; }
+    .sub { margin: 0 0 22px; color: var(--muted); font-size: 0.95rem; line-height: 1.5; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+    .tabs button {
+      flex: 1;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 999px;
+      padding: 10px 12px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+    .tabs button.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    label { display: block; margin: 12px 0 6px; font-size: 0.9rem; }
+    input, select, button.primary {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      font: inherit;
+    }
+    button.primary {
+      margin-top: 18px;
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      cursor: pointer;
+    }
+    button.primary:disabled { opacity: 0.55; cursor: not-allowed; }
+    button.linkish {
+      margin-top: 10px;
+      border: 0;
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      padding: 0;
+      font: inherit;
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .msg {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #f4f7fa;
+      color: var(--muted);
+      white-space: pre-wrap;
+      font-size: 0.92rem;
+    }
+    .msg.error { background: #fceaea; color: var(--danger); }
+    .msg.ok { background: #e8f6ec; color: var(--ok); }
+    .msg.warn { background: #fff7e8; color: #8a5a00; }
+    .meta {
+      margin-top: 18px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .hidden { display: none !important; }
+    .identity {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>社團學生帳號</h1>
+    <p class="sub">以學號登入；社團僅在註冊時選擇，登入後身分以伺服器確認為準。首次登入須修改密碼。同學號跨活動沿用同一帳號，各活動名額分開；既有帳號請先登入再註冊本活動，不可再用生日自動建檔。</p>
+
+    <div id="sessionBar" class="msg warn hidden"></div>
+
+    <div id="authShell">
+      <div class="tabs">
+        <button type="button" class="active" data-tab="login">登入</button>
+        <button type="button" data-tab="register">註冊</button>
+        <button type="button" id="tabForgotAssist" data-tab="forgot">忘記密碼？聯絡帳號協助窗口</button>
+      </div>
+
+      <section id="panel-login" class="panel active">
+        <label for="loginStudentId">學號</label>
+        <input id="loginStudentId" autocomplete="username" maxlength="20">
+        <label for="loginPassword">密碼</label>
+        <input id="loginPassword" type="password" autocomplete="current-password">
+        <button class="primary" id="btnLogin" type="button">登入</button>
+      </section>
+
+      <section id="panel-register" class="panel">
+        <label for="regClub">社團（註冊時選擇，之後不可用下拉冒充）</label>
+        <select id="regClub"><option value="">載入中…</option></select>
+        <label for="regStudentId">學號</label>
+        <input id="regStudentId" maxlength="20" autocomplete="username">
+        <label for="regBirth">西元生日（YYYYMMDD，作為初始密碼；後端加密保存，供有權限管理員重設密碼使用）</label>
+        <input id="regBirth" inputmode="numeric" maxlength="8" autocomplete="off">
+        <button class="primary" id="btnRegister" type="button">註冊主要帳號</button>
+        <button class="linkish hidden" id="btnRetryCleanup" type="button">清理未完成註冊後重試</button>
+      </section>
+
+      <section id="panel-forgot" class="panel">
+        <div id="forgotBox" class="msg">將開啟帳號協助窗口（Instagram）。密碼重設仍由有權限的管理員執行。</div>
+        <button class="primary" id="btnOpenForgotAssist" type="button">開啟帳號協助窗口</button>
+      </section>
+    </div>
+
+    <section id="changePasswordShell" class="hidden">
+      <h2 style="margin:0 0 8px;font-size:1.1rem;">首次強制修改密碼</h2>
+      <p class="sub">完成前無法使用正式功能。新密碼不可與目前密碼、學號或初始生日相同。</p>
+      <label for="curPassword">目前密碼</label>
+      <input id="curPassword" type="password" autocomplete="current-password">
+      <label for="newPassword">新密碼</label>
+      <input id="newPassword" type="password" autocomplete="new-password">
+      <label for="newPassword2">確認新密碼</label>
+      <input id="newPassword2" type="password" autocomplete="new-password">
+      <button class="primary" id="btnChangePassword" type="button">完成改密</button>
+      <button class="linkish hidden" id="btnRetryReconcile" type="button">改密狀態復原重試</button>
+      <button class="linkish" id="btnReloginForPassword" type="button">登入時效不足？重新登入後再改密</button>
+      <button class="linkish" id="btnLogoutFromChange" type="button">登出</button>
+    </section>
+
+    <section id="homeShell" class="hidden">
+      <div class="msg ok" id="homeStatus"></div>
+      <div class="identity" id="homeIdentity"></div>
+      <button class="primary" id="btnLogout" type="button">登出</button>
+    </section>
+
+    <div id="status" class="msg" role="status"></div>
+    <p class="meta" id="envMeta"></p>
+  </main>
+
+  <script>
+(function () {
+  var client = window.HKSP_FIREBASE_CLIENT;
+  if (!client) {
+    document.getElementById("status").textContent = "缺少 firebase-client.js";
+    return;
+  }
+
+  var app = firebase.initializeApp(client.config);
+  var auth = firebase.auth();
+  var functions = firebase.app().functions("asia-east1");
+  var usingEmulator = client.connectEmulatorsIfNeeded(auth, functions, null);
+
+  document.getElementById("envMeta").textContent = usingEmulator
+    ? "測試環境：本機 Firebase Emulator（非正式資料） · 目前活動由伺服器確認"
+    : "目前活動由伺服器確認";
+
+  var pendingClientRequestId = null;
+  var pendingOpId = null;
+  var lastNewPasswordForReconcile = null;
+  var pendingRegisterAfterLogin = null;
+  var busy = false;
+  var accessRequestSeq = 0;
+  var accessAuthGeneration = 0;
+
+  function setStatus(text, kind) {
+    var el = document.getElementById("status");
+    el.className = "msg" + (kind ? " " + kind : "");
+    el.textContent = String(text || "");
+  }
+
+  function setBusy(flag) {
+    busy = !!flag;
+    ["btnLogin", "btnRegister", "btnChangePassword"].forEach(function (id) {
+      var btn = document.getElementById(id);
+      if (btn) btn.disabled = busy;
+    });
+  }
+
+  function safeError(error) {
+    var code = (error && (error.code || (error.details && error.details.code))) || "";
+    var message = (error && error.message) || "操作失敗";
+    message = String(message).replace(/\b\d{8}\b/g, "[已隱藏]");
+    return (code ? code + "：" : "") + message;
+  }
+
+  function showTab(name) {
+    document.querySelectorAll(".tabs button").forEach(function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-tab") === name);
+    });
+    document.querySelectorAll(".panel").forEach(function (panel) {
+      panel.classList.toggle("active", panel.id === "panel-" + name);
+    });
+  }
+
+  document.querySelectorAll(".tabs button").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (btn.id === "tabForgotAssist") {
+        if (client.openForgotPasswordAssist) client.openForgotPasswordAssist();
+        else {
+          window.open(
+            client.FORGOT_PASSWORD_ASSIST_URL ||
+              "https://www.instagram.com/bs_kai_0102/",
+            "_blank",
+            "noopener,noreferrer"
+          );
+        }
+        showTab("forgot");
+        return;
+      }
+      showTab(btn.getAttribute("data-tab"));
+    });
+  });
+  var btnOpenForgotAssist = document.getElementById("btnOpenForgotAssist");
+  if (btnOpenForgotAssist) {
+    btnOpenForgotAssist.addEventListener("click", function () {
+      if (client.openForgotPasswordAssist) client.openForgotPasswordAssist();
+      else {
+        window.open(
+          client.FORGOT_PASSWORD_ASSIST_URL ||
+            "https://www.instagram.com/bs_kai_0102/",
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }
+    });
+  }
+
+  function call(name, data) {
+    return functions.httpsCallable(name)(data || {});
+  }
+
+  function loadClubs() {
+    var select = document.getElementById("regClub");
+    return call("listActiveClubsForRegistration").then(function (res) {
+      var clubs = (res.data && res.data.clubs) || [];
+      select.innerHTML = "";
+      if (!clubs.length) {
+        select.innerHTML = "<option value=\"\">目前沒有可註冊社團</option>";
+        return;
+      }
+      select.appendChild(new Option("請選擇社團", ""));
+      clubs.forEach(function (club) {
+        select.appendChild(new Option(
+          club.clubName + "（" + club.permanentClubId + "）",
+          club.permanentClubId
+        ));
+      });
+    }).catch(function (error) {
+      select.innerHTML = "<option value=\"\">社團名單載入失敗</option>";
+      setStatus(safeError(error), "error");
+    });
+  }
+
+  function loadForgot() {
+    var box = document.getElementById("forgotBox");
+    if (!box) return Promise.resolve();
+    box.className = "msg";
+    box.textContent =
+      (client.FORGOT_PASSWORD_ASSIST_LABEL || "忘記密碼？聯絡帳號協助窗口") +
+      "\n將以新分頁開啟 Instagram 帳號協助窗口核身；密碼重設仍由有權限的管理員執行。\n" +
+      (client.FORGOT_PASSWORD_ASSIST_URL || "https://www.instagram.com/bs_kai_0102/");
+    return Promise.resolve();
+  }
+
+  function setShell(mode) {
+    document.getElementById("authShell").classList.toggle("hidden", mode !== "auth");
+    document.getElementById("changePasswordShell").classList.toggle("hidden", mode !== "change");
+    document.getElementById("homeShell").classList.toggle("hidden", mode !== "home");
+  }
+
+  function isStaleAccessResponse(seq, gen, expectedUid) {
+    if (seq !== accessRequestSeq) return true;
+    if (gen !== accessAuthGeneration) return true;
+    var user = auth.currentUser;
+    if (!user || !expectedUid || user.uid !== expectedUid) return true;
+    return false;
+  }
+
+  function refreshAccess() {
+    var user = auth.currentUser;
+    if (!user) {
+      setShell("auth");
+      return Promise.resolve(null);
+    }
+    var seq = (accessRequestSeq += 1);
+    var gen = accessAuthGeneration;
+    var expectedUid = user.uid;
+    return call("getClubStudentAccessState").then(function (res) {
+      if (isStaleAccessResponse(seq, gen, expectedUid)) {
+        return { stale: true, reason: "superseded_or_auth_changed" };
+      }
+      var data = res.data || {};
+      var bar = document.getElementById("sessionBar");
+      bar.classList.remove("hidden");
+      if (data.status === "disabled") {
+        setShell("auth");
+        bar.className = "msg error";
+        bar.textContent = "帳號已停用，無法使用正式功能。請聯絡管理員／帳號協助窗口。";
+        setStatus("帳號已停用，無法使用正式功能。", "error");
+        return auth.signOut().then(function () { return data; });
+      }
+      if (data.mustChangePassword) {
+        setShell("change");
+        bar.className = "msg warn";
+        bar.textContent = "首次登入：請先完成修改密碼（正式功能已鎖定）。";
+        setStatus("首次登入：請先完成修改密碼。", "warn");
+        return data;
+      }
+      if (!data.access || !data.access.allowed) {
+        setShell("auth");
+        bar.className = "msg error";
+        bar.textContent = (data.access && data.access.message) || "尚無合法社團活動帳號。";
+        setStatus(bar.textContent, "error");
+        return data;
+      }
+      if (isStaleAccessResponse(seq, gen, expectedUid)) {
+        return { stale: true, reason: "superseded_before_apply" };
+      }
+      setShell("home");
+      bar.className = "msg ok";
+      bar.textContent = "伺服器已確認可使用正式功能。";
+      setStatus("登入成功", "ok");
+      document.getElementById("homeStatus").textContent = "登入成功。";
+      var clubLabel = data.clubName
+        ? data.clubName + "（" + (data.permanentClubId || "") + "）"
+        : (data.permanentClubId || "（無）");
+      document.getElementById("homeIdentity").textContent =
+        "活動：" + (data.activityId || "（伺服器確認）") + "\n" +
+        "社團：" + clubLabel + "\n" +
+        "帳號狀態：" + (data.status || "（未知）");
+      return data;
+    });
+  }
+
+  function errorCode(error) {
+    return (error && (error.details && error.details.code || error.code)) || "";
+  }
+
+  function continueRegisterWhileSignedIn() {
+    if (!pendingRegisterAfterLogin || !auth.currentUser) return Promise.resolve();
+    var payload = pendingRegisterAfterLogin;
+    setStatus("已登入既有帳號，正在為本活動完成註冊…", "warn");
+    return call("registerClubStudent", payload).then(function (res) {
+      pendingRegisterAfterLogin = null;
+      pendingClientRequestId = null;
+      pendingOpId = null;
+      setStatus("本活動註冊完成。", "ok");
+      return refreshAccess();
+    });
+  }
+
+  function showRetryCleanup(show) {
+    document.getElementById("btnRetryCleanup").classList.toggle("hidden", !show);
+  }
+
+  document.getElementById("btnRegister").addEventListener("click", function () {
+    if (busy) return;
+    var permanentClubId = document.getElementById("regClub").value;
+    var studentId = client.normalizeStudentId(document.getElementById("regStudentId").value);
+    var birthYYYYMMDD = String(document.getElementById("regBirth").value || "").trim();
+    if (!permanentClubId || !studentId || !/^\d{8}$/.test(birthYYYYMMDD)) {
+      setStatus("請完整填寫社團、學號與生日。", "error");
+      return;
+    }
+    pendingClientRequestId = pendingClientRequestId ||
+      ("web-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+    setBusy(true);
+    setStatus("註冊處理中…", "warn");
+    showRetryCleanup(false);
+    var registerPayload = {
+      permanentClubId: permanentClubId,
+      studentId: studentId,
+      birthYYYYMMDD: birthYYYYMMDD,
+      clientRequestId: pendingClientRequestId
+    };
+    // 既有帳號：必須已登入同一學號，不可再用生日自動沿用
+    var registerPromise = auth.currentUser
+      ? call("registerClubStudent", registerPayload)
+      : call("registerClubStudent", registerPayload);
+    registerPromise.then(function (res) {
+      var data = res.data || {};
+      pendingOpId = data.opId || pendingOpId;
+      document.getElementById("regBirth").value = "";
+      if (auth.currentUser) {
+        pendingClientRequestId = null;
+        pendingOpId = null;
+        setStatus("註冊成功。", "ok");
+        return refreshAccess();
+      }
+      setStatus("註冊成功，正在以學號與初始密碼登入…", "ok");
+      return auth.signInWithEmailAndPassword(
+        client.studentIdToAuthEmail(studentId),
+        birthYYYYMMDD
+      ).then(function () {
+        pendingClientRequestId = null;
+        pendingOpId = null;
+        return refreshAccess();
+      });
+    }).catch(function (error) {
+      var details = error && error.details;
+      if (details && details.opId) pendingOpId = details.opId;
+      var code = errorCode(error);
+      if (code === "EXISTING_AUTH_REQUIRES_LOGIN" || /先.*登入|既有帳號/.test(String(error && error.message || ""))) {
+        pendingRegisterAfterLogin = {
+          permanentClubId: permanentClubId,
+          studentId: studentId,
+          birthYYYYMMDD: birthYYYYMMDD,
+          clientRequestId: pendingClientRequestId ||
+            ("web-" + Date.now() + "-" + Math.random().toString(16).slice(2))
+        };
+        pendingClientRequestId = pendingRegisterAfterLogin.clientRequestId;
+        document.getElementById("loginStudentId").value = studentId;
+        showTab("login");
+        setStatus(
+          "此學號已有帳號。請先以目前密碼登入後，系統會自動完成本活動註冊（不會再用生日自動建檔）。",
+          "warn"
+        );
+        showRetryCleanup(!!(pendingClientRequestId && pendingOpId));
+        return;
+      }
+      showRetryCleanup(!!(pendingClientRequestId && pendingOpId));
+      setStatus(safeError(error) + (pendingClientRequestId ? "\n可按下方清理後以新請求重試。" : ""), "error");
+    }).then(function () {
+      setBusy(false);
+    });
+  });
+
+  document.getElementById("btnRetryCleanup").addEventListener("click", function () {
+    if (!pendingClientRequestId || !pendingOpId || busy) return;
+    setBusy(true);
+    setStatus("正在清理本操作占用的名額／暫存帳號…", "warn");
+    call("cleanupClubStudentRegistrationOp", {
+      opId: pendingOpId,
+      clientRequestId: pendingClientRequestId
+    }).then(function () {
+      pendingClientRequestId = null;
+      pendingOpId = null;
+      showRetryCleanup(false);
+      setStatus("已清理未完成註冊。請再次註冊（將使用新的請求編號）。", "ok");
+    }).catch(function (error) {
+      setStatus(safeError(error), "error");
+    }).then(function () {
+      setBusy(false);
+    });
+  });
+
+  document.getElementById("btnLogin").addEventListener("click", function () {
+    if (busy) return;
+    var studentId = client.normalizeStudentId(document.getElementById("loginStudentId").value);
+    var password = document.getElementById("loginPassword").value;
+    if (!studentId || !password) {
+      setStatus("請輸入學號與密碼。", "error");
+      return;
+    }
+    setBusy(true);
+    setStatus("登入中…", "warn");
+    auth.signInWithEmailAndPassword(client.studentIdToAuthEmail(studentId), password)
+      .then(function () {
+        document.getElementById("loginPassword").value = "";
+        if (pendingRegisterAfterLogin &&
+            client.normalizeStudentId(pendingRegisterAfterLogin.studentId) === studentId) {
+          return continueRegisterWhileSignedIn();
+        }
+        return refreshAccess();
+      })
+      .catch(function (error) {
+        setStatus(safeError(error), "error");
+      })
+      .then(function () {
+        setBusy(false);
+      });
+  });
+
+  function tryReconcilePassword() {
+    if (!lastNewPasswordForReconcile) {
+      setStatus("沒有可復原的改密狀態，請重新輸入新密碼後再試。", "warn");
+      return Promise.resolve();
+    }
+    document.getElementById("btnRetryReconcile").classList.remove("hidden");
+    return call("reconcileClubStudentPasswordChange", {
+      newPassword: lastNewPasswordForReconcile
+    }).then(function () {
+      lastNewPasswordForReconcile = null;
+      document.getElementById("btnRetryReconcile").classList.add("hidden");
+      setStatus("改密狀態已復原。請以新密碼重新登入。", "ok");
+      return auth.signOut().then(function () {
+        setShell("auth");
+        showTab("login");
+      });
+    }).catch(function (err2) {
+      document.getElementById("btnRetryReconcile").classList.remove("hidden");
+      setStatus("復原失敗：" + safeError(err2) + "\n可按「改密狀態復原重試」。", "error");
+    });
+  }
+
+  document.getElementById("btnChangePassword").addEventListener("click", function () {
+    if (busy) return;
+    var currentPassword = document.getElementById("curPassword").value;
+    var newPassword = document.getElementById("newPassword").value;
+    var newPassword2 = document.getElementById("newPassword2").value;
+    if (!currentPassword || !newPassword) {
+      setStatus("請輸入目前密碼與新密碼。", "error");
+      return;
+    }
+    if (newPassword !== newPassword2) {
+      setStatus("兩次新密碼不一致。", "error");
+      return;
+    }
+    if (currentPassword === newPassword) {
+      setStatus("新密碼不可與目前密碼相同。", "error");
+      return;
+    }
+    setBusy(true);
+    setStatus("改密處理中…", "warn");
+    lastNewPasswordForReconcile = newPassword;
+    call("changeClubStudentPassword", {
+      currentPassword: currentPassword,
+      newPassword: newPassword
+    }).then(function () {
+      document.getElementById("curPassword").value = "";
+      document.getElementById("newPassword").value = "";
+      document.getElementById("newPassword2").value = "";
+      var newPass = lastNewPasswordForReconcile;
+      lastNewPasswordForReconcile = null;
+      document.getElementById("btnRetryReconcile").classList.add("hidden");
+      setStatus("改密完成。請以新密碼重新登入。", "ok");
+      return auth.signOut().then(function () {
+        setShell("auth");
+        showTab("login");
+        if (newPass) {
+          document.getElementById("loginPassword").value = "";
+        }
+      });
+    }).catch(function (error) {
+      var code = errorCode(error);
+      if (code === "RECENT_AUTH_REQUIRED" || /近期登入|登入時效/.test(String(error && error.message || ""))) {
+        setStatus("登入時效不足。請重新登入後再改密。", "warn");
+        return auth.signOut().then(function () {
+          setShell("auth");
+          showTab("login");
+        });
+      }
+      if (code === "PASSWORD_STATE_UPDATE_FAILED" && lastNewPasswordForReconcile) {
+        return tryReconcilePassword();
+      }
+      setStatus(safeError(error), "error");
+    }).then(function () {
+      setBusy(false);
+    });
+  });
+
+  document.getElementById("btnRetryReconcile").addEventListener("click", function () {
+    if (busy) return;
+    setBusy(true);
+    tryReconcilePassword().then(function () { setBusy(false); });
+  });
+
+  document.getElementById("btnReloginForPassword").addEventListener("click", function () {
+    auth.signOut().then(function () {
+      setShell("auth");
+      showTab("login");
+      setStatus("請重新登入後再進行改密。", "warn");
+    });
+  });
+
+  function doLogout() {
+    accessAuthGeneration += 1;
+    accessRequestSeq += 1;
+    return auth.signOut().then(function () {
+      setShell("auth");
+      document.getElementById("sessionBar").classList.add("hidden");
+      setStatus("已登出。", "ok");
+    });
+  }
+  document.getElementById("btnLogout").addEventListener("click", doLogout);
+  document.getElementById("btnLogoutFromChange").addEventListener("click", doLogout);
+
+  auth.onAuthStateChanged(function (user) {
+    accessAuthGeneration += 1;
+    if (!user) {
+      setShell("auth");
+      return;
+    }
+    refreshAccess().catch(function (error) {
+      setStatus(safeError(error), "error");
+    });
+  });
+
+  loadClubs();
+  loadForgot();
+})();
+  </script>
+</body>
+</html>

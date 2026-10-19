@@ -3,10 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1a73e8">
+<meta name="theme-color" content="#1e3a5f">
 <title>社團評選管理後台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Roboto,sans-serif;background:#f5f7fb;color:#202124}button,input,select{font:inherit}button{cursor:pointer}:root{--p:#1a73e8;--pd:#1557b0;--bd:#e4e7ec;--muted:#667085;--ok:#167542;--okbg:#e7f6ec;--warn:#b54708;--warnbg:#fff6e8;--bad:#d92d20;--badbg:#fff1f0;--violet:#6941c6;--violetbg:#f4f0ff;--shadow:0 8px 28px rgba(16,24,40,.07)}.hidden{display:none!important}.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--bd);border-radius:22px;padding:32px;box-shadow:0 20px 60px rgba(16,24,40,.12)}.login-icon{font-size:34px}.login-title{font-size:26px;font-weight:900;margin:12px 0 5px}.muted{color:var(--muted)}.field{width:100%;height:42px;border:1px solid #d0d5dd;border-radius:9px;padding:0 11px;outline:none;background:#fff}.field:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(26,115,232,.08)}.label{display:block;font-size:12px;font-weight:800;margin:14px 0 6px}.btn{min-height:38px;border:1px solid var(--bd);border-radius:9px;background:#fff;padding:0 12px;font-weight:800;color:#344054}.btn:hover{background:#f9fafb}.btn-primary{background:var(--p);border-color:var(--p);color:#fff}.btn-primary:hover{background:var(--pd)}.btn-danger{background:var(--badbg);border-color:#f5c7c4;color:var(--bad)}.btn-success{background:var(--okbg);border-color:#cce7d5;color:var(--ok)}.btn:disabled{opacity:.5;cursor:not-allowed}.login-btn{width:100%;margin-top:20px;height:46px}.error{color:var(--bad);font-size:12px;line-height:1.6;margin-top:9px}.app{display:none}.topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;padding:12px max(16px,calc((100vw - 1200px)/2));gap:12px}.brand{font-weight:900}.sub{font-size:11px;color:var(--muted);margin-top:2px}.top-actions{display:flex;gap:8px}.main{width:min(1200px,calc(100% - 28px));margin:auto;padding:24px 0 50px}.hero{display:flex;justify-content:space-between;gap:14px;align-items:end;margin-bottom:15px}.hero h1{margin:0;font-size:27px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:15px}.stat{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:14px;box-shadow:var(--shadow)}.stat-label{font-size:11px;color:var(--muted);font-weight:800}.stat-value{font-size:22px;font-weight:900;margin-top:4px}.panel{background:#fff;border:1px solid var(--bd);border-radius:15px;box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}.panel-head{width:100%;border:0;background:#fff;padding:15px 17px;display:flex;align-items:center;justify-content:space-between;text-align:left}.panel-title{font-size:15px;font-weight:900}.panel-meta{font-size:11px;color:var(--muted)}.panel-body{border-top:1px solid var(--bd);padding:16px}.chev{transition:.2s}.panel.closed .panel-body{display:none}.panel.closed .chev{transform:rotate(-90deg)}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}.toolbar .field{width:auto;min-width:180px}.grow{flex:1}.card{border:1px solid var(--bd);border-radius:12px;padding:13px;background:#fff}.notice{padding:11px 12px;border:1px solid #bfd7ff;background:#f5f9ff;border-radius:10px;color:#174b88;font-size:12px;line-height:1.7}.okbox{background:var(--okbg);border-color:#cce7d5;color:var(--ok)}.warnbox{background:var(--warnbg);border-color:#f5d6a4;color:#8a4b08}.badbox{background:var(--badbg);border-color:#f5c7c4;color:#7a271a}.score-top{display:grid;grid-template-columns:1fr 160px auto;gap:10px;align-items:end;margin-bottom:12px}.score-section{border:1px solid #dce5f2;border-radius:14px;margin:12px 0;background:#fbfdff;overflow:hidden}.score-section-head{padding:12px;background:#f4f8ff;border-bottom:1px solid #dce5f2}.section-grid{display:grid;grid-template-columns:68px minmax(180px,1fr) 130px 135px auto;gap:8px;align-items:end}.mini-label{font-size:10px;color:var(--muted);font-weight:800;margin-bottom:4px}.mini{height:38px}.toggle-row{display:flex;gap:7px;align-items:center;font-size:11px;font-weight:800}.badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}.b-pub{background:var(--okbg);color:var(--ok)}.b-draft{background:#f2f4f7;color:#667085}.b-manual{background:var(--violetbg);color:var(--violet)}.score-section-body{padding:12px}.score-group{border:1px solid var(--bd);border-radius:11px;margin-bottom:9px;overflow:hidden;background:#fff}.group-head{display:grid;grid-template-columns:minmax(150px,1fr) 120px auto;gap:8px;align-items:end;padding:10px;background:#fcfcfd;border-bottom:1px solid var(--bd)}.criteria{padding:8px}.criterion{display:grid;grid-template-columns:minmax(160px,1fr) 110px auto;gap:8px;align-items:end;padding:7px;border-bottom:1px dashed #e8eaed}.criterion:last-child{border-bottom:0}.calc{font-size:11px;font-weight:800;margin-top:7px}.calc.good{color:var(--ok)}.calc.bad{color:var(--bad)}.row-actions{display:flex;gap:5px;flex-wrap:wrap}.icon-btn{width:34px;height:34px;border:1px solid var(--bd);border-radius:8px;background:#fff}.danger-icon{color:var(--bad)}.score-footer{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-top:12px}.validation{flex:1}.validation ul{margin:6px 0 0;padding-left:18px}.list{display:grid;gap:8px}.list-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px;border:1px solid var(--bd);border-radius:10px}.list-title{font-weight:900;font-size:13px}.list-sub{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.5}.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.chip{padding:4px 7px;background:#eef4ff;color:#1557b0;border-radius:999px;font-size:10px;font-weight:850}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.table-wrap{overflow:auto;border:1px solid var(--bd);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left;font-size:12px;vertical-align:top}th{background:#f9fafb;font-size:11px;color:#475467}.state{text-align:center;color:var(--muted);padding:28px 12px;font-size:12px}.spinner{width:26px;height:26px;margin:0 auto 8px;border:3px solid #e8eef7;border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.modal-bg{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(16,24,40,.58)}.modal{width:min(520px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:18px;box-shadow:0 25px 70px rgba(16,24,40,.28)}.modal h3{margin:0 0 10px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.check{display:flex;align-items:center;gap:6px;padding:7px;border:1px solid var(--bd);border-radius:8px;font-size:11px}.toast{position:fixed;right:18px;bottom:18px;z-index:2000;padding:11px 15px;background:#101828;color:#fff;border-radius:9px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;max-width:390px;font-size:12px}.toast.show{opacity:1;transform:none}.b-reopened{background:var(--warnbg);color:var(--warn)}.b-notstarted{background:#f2f4f7;color:#667085}.b-judge{background:var(--violetbg);color:var(--violet)}.chip.score-chip{background:var(--violetbg);color:var(--violet)}.permission-block{margin-top:6px}.permission-label{font-size:10px;color:var(--muted);font-weight:800;margin-bottom:4px}.progress-judge{border:1px solid var(--bd);border-radius:13px;margin:12px 0;overflow:hidden;background:#fff}.progress-judge-head{padding:12px 14px;background:#f9fafb;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.progress-summary{font-size:11px;color:var(--muted);text-align:right;line-height:1.6}.progress-section{padding:12px 14px;border-bottom:1px solid var(--bd)}.progress-section:last-child{border-bottom:0}.progress-section-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}.progress-section-title{font-weight:900;font-size:13px}.progress-club{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed #e5e7eb}.progress-club:first-child{border-top:0}.progress-score{font-weight:900;font-size:12px;white-space:nowrap}.modal-wide{width:min(760px,100%)}.raw-group{border:1px solid var(--bd);border-radius:11px;margin-bottom:10px;overflow:hidden}.raw-group-head{padding:9px 11px;background:#f9fafb;display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:900}.raw-row{display:grid;grid-template-columns:minmax(0,1fr) 100px 100px;gap:8px;padding:9px 11px;border-top:1px solid var(--bd);font-size:12px;align-items:center}.raw-row .right{text-align:right;font-weight:900}.raw-total{display:flex;justify-content:space-between;gap:10px;padding:11px;border-radius:10px;background:#f5f9ff;border:1px solid #bfd7ff;font-weight:900;margin-top:10px}.history-item{border:1px solid var(--bd);border-radius:11px;margin-bottom:10px;overflow:hidden}.history-head{padding:10px 12px;background:#f9fafb}.history-title{font-weight:900;font-size:12px}.history-meta{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.6}.history-body{padding:10px 12px}.empty-inline{font-size:11px;color:var(--muted);margin-top:5px}@media(max-width:780px){.stats{grid-template-columns:1fr 1fr}.section-grid{grid-template-columns:60px 1fr 100px}.section-grid .mode-wrap,.section-grid .section-actions{grid-column:1/-1}.group-head{grid-template-columns:1fr 100px}.group-head .row-actions{grid-column:1/-1}.criterion{grid-template-columns:1fr 90px}.criterion .row-actions{grid-column:1/-1}.grid2,.grid4{grid-template-columns:1fr}.score-top{grid-template-columns:1fr}.score-footer{flex-direction:column}.topbar .sub{display:none}.hero{align-items:flex-start;flex-direction:column}.toolbar .field{width:100%}.toolbar .grow{flex:auto;width:100%}.list-row{grid-template-columns:1fr}.check-grid{grid-template-columns:1fr}.progress-judge-head{flex-direction:column}.progress-summary{text-align:left}.progress-club{grid-template-columns:1fr}.raw-row{grid-template-columns:1fr 70px 70px}}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:"Noto Sans TC","Segoe UI",sans-serif;background:#eef3f8;color:#1a2a3a;overflow-x:hidden}button,input,select{font:inherit}button{cursor:pointer}:root{--p:#1e3a5f;--pd:#2a4f7a;--bd:#d7e3f0;--muted:#5c738a;--ok:#1f6b3a;--okbg:#e8f6ec;--warn:#8a5a00;--warnbg:#fff7e8;--bad:#a12626;--badbg:#fceaea;--violet:#3d5a80;--violetbg:#e8eef6;--shadow:0 14px 36px rgba(28,50,80,.09);--navy:#1e3a5f}.hidden{display:none!important}.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(900px 420px at 12% -10%,rgba(90,140,190,.18),transparent 55%),linear-gradient(180deg,#f8fbfd 0%,#eef3f8 50%,#e7eef6 100%)}.login-card{width:min(430px,100%);background:#fff;border:1px solid rgba(30,58,95,.1);border-radius:22px;padding:32px;box-shadow:var(--shadow)}.login-icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:var(--navy);color:#fff;font-size:18px;font-weight:800;letter-spacing:.02em}.login-title{font-size:26px;font-weight:800;margin:14px 0 5px;color:var(--navy);font-family:"Noto Serif TC","Noto Sans TC",serif}.muted{color:var(--muted)}.field{width:100%;height:42px;border:1px solid var(--bd);border-radius:12px;padding:0 11px;outline:none;background:#fff}.field:focus{border-color:#8aa4c0;box-shadow:0 0 0 3px rgba(47,110,163,.12)}.label{display:block;font-size:12px;font-weight:700;margin:14px 0 6px;color:#3f5366}.btn{min-height:38px;border:1px solid var(--bd);border-radius:12px;background:#fff;padding:0 12px;font-weight:700;color:#344054}.btn:hover{background:#f4f7fb}.btn-primary{background:var(--p);border-color:var(--p);color:#fff}.btn-primary:hover{background:var(--pd)}.btn-danger{background:var(--badbg);border-color:#f5c7c4;color:var(--bad)}.btn-success{background:var(--okbg);border-color:#cce7d5;color:var(--ok)}.btn:disabled{opacity:.5;cursor:not-allowed}.login-btn{width:100%;margin-top:20px;height:46px;border-radius:12px}.error{color:var(--bad);font-size:12px;line-height:1.6;margin-top:9px}.app{display:none}.topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(30,58,95,.08);display:flex;justify-content:space-between;align-items:center;padding:12px max(16px,calc((100vw - 1200px)/2));gap:12px}.brand{font-weight:800;color:var(--navy)}.sub{font-size:11px;color:var(--muted);margin-top:2px}.top-actions{display:flex;gap:8px;flex-wrap:wrap}.main{width:min(1200px,calc(100% - 28px));margin:auto;padding:24px 0 50px}.hero{display:flex;justify-content:space-between;gap:14px;align-items:end;margin-bottom:15px}.hero h1{margin:0;font-size:27px;color:var(--navy);font-family:"Noto Serif TC","Noto Sans TC",serif;font-weight:700}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:15px}.stat{background:#fff;border:1px solid rgba(30,58,95,.09);border-radius:18px;padding:14px;box-shadow:0 8px 20px rgba(28,50,80,.04)}.stat-label{font-size:11px;color:var(--muted);font-weight:700}.stat-value{font-size:22px;font-weight:800;margin-top:4px;color:var(--navy)}.panel{background:#fff;border:1px solid rgba(30,58,95,.09);border-radius:18px;box-shadow:0 8px 20px rgba(28,50,80,.04);margin-bottom:12px;overflow:hidden}.panel-head{width:100%;border:0;background:#fff;padding:15px 17px;display:flex;align-items:center;justify-content:space-between;text-align:left}.panel-title{font-size:15px;font-weight:800;color:var(--navy)}.panel-meta{font-size:11px;color:var(--muted)}.panel-body{border-top:1px solid var(--bd);padding:16px}.chev{transition:.2s}.panel.closed .panel-body{display:none}.panel.closed .chev{transform:rotate(-90deg)}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}.toolbar .field{width:auto;min-width:180px}.grow{flex:1}.card{border:1px solid var(--bd);border-radius:12px;padding:13px;background:#fff}.notice{padding:11px 12px;border:1px solid #d7e3f0;background:#f5f9ff;border-radius:12px;color:#174b88;font-size:12px;line-height:1.7}.okbox{background:var(--okbg);border-color:#cce7d5;color:var(--ok)}.warnbox{background:var(--warnbg);border-color:#f5d6a4;color:#8a4b08}.badbox{background:var(--badbg);border-color:#f5c7c4;color:#7a271a}.score-top{display:grid;grid-template-columns:1fr 160px auto;gap:10px;align-items:end;margin-bottom:12px}.score-section{border:1px solid #dce5f2;border-radius:14px;margin:12px 0;background:#fbfdff;overflow:hidden}.score-section-head{padding:12px;background:#f4f8ff;border-bottom:1px solid #dce5f2}.section-grid{display:grid;grid-template-columns:68px minmax(180px,1fr) 130px 135px auto;gap:8px;align-items:end}.mini-label{font-size:10px;color:var(--muted);font-weight:800;margin-bottom:4px}.mini{height:38px}.toggle-row{display:flex;gap:7px;align-items:center;font-size:11px;font-weight:800}.badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}.b-pub{background:var(--okbg);color:var(--ok)}.b-draft{background:#f2f4f7;color:#667085}.b-manual{background:var(--violetbg);color:var(--violet)}.score-section-body{padding:12px}.score-group{border:1px solid var(--bd);border-radius:11px;margin-bottom:9px;overflow:hidden;background:#fff}.group-head{display:grid;grid-template-columns:minmax(150px,1fr) 120px auto;gap:8px;align-items:end;padding:10px;background:#fcfcfd;border-bottom:1px solid var(--bd)}.criteria{padding:8px}.criterion{display:grid;grid-template-columns:minmax(160px,1fr) 110px auto;gap:8px;align-items:end;padding:7px;border-bottom:1px dashed #e8eaed}.criterion:last-child{border-bottom:0}.calc{font-size:11px;font-weight:800;margin-top:7px}.calc.good{color:var(--ok)}.calc.bad{color:var(--bad)}.row-actions{display:flex;gap:5px;flex-wrap:wrap}.icon-btn{width:34px;height:34px;border:1px solid var(--bd);border-radius:8px;background:#fff}.danger-icon{color:var(--bad)}.score-footer{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-top:12px}.validation{flex:1}.validation ul{margin:6px 0 0;padding-left:18px}.list{display:grid;gap:8px}.list-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px;border:1px solid var(--bd);border-radius:10px}.list-title{font-weight:900;font-size:13px}.list-sub{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.5}.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.chip{padding:4px 7px;background:#eef4ff;color:#1557b0;border-radius:999px;font-size:10px;font-weight:850}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.table-wrap{overflow:auto;border:1px solid var(--bd);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:10px;border-bottom:1px solid var(--bd);text-align:left;font-size:12px;vertical-align:top}th{background:#f9fafb;font-size:11px;color:#475467}.state{text-align:center;color:var(--muted);padding:28px 12px;font-size:12px}.spinner{width:26px;height:26px;margin:0 auto 8px;border:3px solid #e8eef7;border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.modal-bg{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(16,24,40,.58)}.modal{width:min(520px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:18px;box-shadow:0 25px 70px rgba(16,24,40,.28)}.modal h3{margin:0 0 10px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.check{display:flex;align-items:center;gap:6px;padding:7px;border:1px solid var(--bd);border-radius:8px;font-size:11px}.toast{position:fixed;right:18px;bottom:18px;z-index:2000;padding:11px 15px;background:#101828;color:#fff;border-radius:9px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;max-width:390px;font-size:12px}.toast.show{opacity:1;transform:none}.b-reopened{background:var(--warnbg);color:var(--warn)}.b-notstarted{background:#f2f4f7;color:#667085}.b-judge{background:var(--violetbg);color:var(--violet)}.chip.score-chip{background:var(--violetbg);color:var(--violet)}.permission-block{margin-top:6px}.permission-label{font-size:10px;color:var(--muted);font-weight:800;margin-bottom:4px}.progress-judge{border:1px solid var(--bd);border-radius:13px;margin:12px 0;overflow:hidden;background:#fff}.progress-judge-head{padding:12px 14px;background:#f9fafb;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.progress-summary{font-size:11px;color:var(--muted);text-align:right;line-height:1.6}.progress-section{padding:12px 14px;border-bottom:1px solid var(--bd)}.progress-section:last-child{border-bottom:0}.progress-section-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}.progress-section-title{font-weight:900;font-size:13px}.progress-club{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed #e5e7eb}.progress-club:first-child{border-top:0}.progress-score{font-weight:900;font-size:12px;white-space:nowrap}.modal-wide{width:min(760px,100%)}.raw-group{border:1px solid var(--bd);border-radius:11px;margin-bottom:10px;overflow:hidden}.raw-group-head{padding:9px 11px;background:#f9fafb;display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:900}.raw-row{display:grid;grid-template-columns:minmax(0,1fr) 100px 100px;gap:8px;padding:9px 11px;border-top:1px solid var(--bd);font-size:12px;align-items:center}.raw-row .right{text-align:right;font-weight:900}.raw-total{display:flex;justify-content:space-between;gap:10px;padding:11px;border-radius:10px;background:#f5f9ff;border:1px solid #bfd7ff;font-weight:900;margin-top:10px}.history-item{border:1px solid var(--bd);border-radius:11px;margin-bottom:10px;overflow:hidden}.history-head{padding:10px 12px;background:#f9fafb}.history-title{font-weight:900;font-size:12px}.history-meta{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.6}.history-body{padding:10px 12px}.empty-inline{font-size:11px;color:var(--muted);margin-top:5px}@media(max-width:780px){.stats{grid-template-columns:1fr 1fr}.section-grid{grid-template-columns:60px 1fr 100px}.section-grid .mode-wrap,.section-grid .section-actions{grid-column:1/-1}.group-head{grid-template-columns:1fr 100px}.group-head .row-actions{grid-column:1/-1}.criterion{grid-template-columns:1fr 90px}.criterion .row-actions{grid-column:1/-1}.grid2,.grid4{grid-template-columns:1fr}.score-top{grid-template-columns:1fr}.score-footer{flex-direction:column}.topbar .sub{display:none}.hero{align-items:flex-start;flex-direction:column}.toolbar .field{width:100%}.toolbar .grow{flex:auto;width:100%}.list-row{grid-template-columns:1fr}.check-grid{grid-template-columns:1fr}.progress-judge-head{flex-direction:column}.progress-summary{text-align:left}.progress-club{grid-template-columns:1fr}.raw-row{grid-template-columns:1fr 70px 70px}}
 
 .agg-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.agg-stat{padding:11px;border:1px solid var(--bd);border-radius:10px;background:#fcfcfd}.agg-stat-label{font-size:10px;color:var(--muted);font-weight:800}.agg-stat-value{font-size:20px;font-weight:900;margin-top:3px}.agg-table td,.agg-table th{white-space:nowrap}.agg-club{font-weight:900}.agg-score{font-weight:900;text-align:center}.agg-muted{color:var(--muted);font-weight:700}.agg-status-complete{background:var(--okbg);color:var(--ok)}.agg-status-incomplete{background:#f2f4f7;color:#667085}.agg-status-reopened{background:var(--warnbg);color:var(--warn)}.agg-status-missing{background:var(--badbg);color:var(--bad)}.agg-section-card{border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-top:10px}.agg-section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:11px 12px;background:#f9fafb}.agg-section-title{font-size:13px;font-weight:900}.agg-section-meta{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}.agg-judge-row{display:grid;grid-template-columns:minmax(0,1fr) 110px 100px;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--bd);font-size:11px}.agg-judge-name{font-weight:850}.agg-final-box{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.agg-final-item{padding:10px;border:1px solid var(--bd);border-radius:10px;background:#fff}.agg-final-label{font-size:10px;color:var(--muted);font-weight:800}.agg-final-value{font-size:18px;font-weight:900;margin-top:3px}.excluded-box{margin-top:8px;padding:9px 10px;border:1px solid #f5d6a4;border-radius:9px;background:var(--warnbg);font-size:10px;color:#8a4b08;line-height:1.6}@media(max-width:780px){.agg-summary,.agg-final-box{grid-template-columns:1fr 1fr}.agg-judge-row{grid-template-columns:1fr auto}.agg-judge-row .agg-time{grid-column:1/-1}.agg-table{min-width:980px}}
 
@@ -19,6 +22,7 @@
    Judge confirmation export
    ========================================================= */
 .export-toolbar{margin-top:12px}.export-toolbar .field{min-width:260px}.export-preview{margin-top:12px;padding:18px;background:#eef2f7;border:1px solid var(--bd);border-radius:12px;overflow:auto}.export-sheet{width:min(920px,100%);margin:auto;background:#fff;border:1px solid #dfe3e8;border-radius:10px;padding:28px;box-shadow:0 8px 24px rgba(16,24,40,.08);color:#202124}.export-sheet-title{text-align:center;font-size:22px;font-weight:950;line-height:1.4}.export-sheet-subtitle{text-align:center;color:var(--muted);font-size:12px;margin-top:4px}.export-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 18px;margin:20px 0 12px;padding:12px;border:1px solid var(--bd);border-radius:9px;background:#fcfcfd}.export-meta-item{font-size:12px;line-height:1.6}.export-meta-label{color:var(--muted);font-weight:800;margin-right:5px}.export-summary-row{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.export-summary-chip{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid var(--bd);border-radius:999px;background:#fff;font-size:11px;font-weight:850}.export-note{font-size:11px;line-height:1.65;color:#475467;padding:9px 10px;border-left:3px solid var(--p);background:#f5f9ff}.export-club-card{border:1px solid #cfd6df;border-radius:10px;margin-top:16px;overflow:hidden;break-inside:avoid-page}.export-club-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 13px;background:#eef4ff;border-bottom:1px solid #cfd6df}.export-club-name{font-size:15px;font-weight:950}.export-category{font-size:11px;font-weight:850;color:#1557b0}.export-section{padding:13px;border-top:1px dashed #d6dae0}.export-section:first-child{border-top:0}.export-section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.export-section-title{font-size:13px;font-weight:950}.export-section-meta{font-size:10px;color:var(--muted);line-height:1.65;margin-top:4px}.export-status{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900;white-space:nowrap}.export-status-submitted{background:var(--okbg);color:var(--ok)}.export-status-reopened{background:var(--warnbg);color:var(--warn)}.export-status-draft{background:var(--violetbg);color:var(--violet)}.export-status-other{background:#f2f4f7;color:#667085}.export-group{margin-top:11px}.export-group-title{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:900;margin-bottom:5px}.export-score-table{min-width:0}.export-score-table th,.export-score-table td{padding:7px 8px;font-size:11px}.export-score-table th:nth-child(2),.export-score-table th:nth-child(3),.export-score-table td:nth-child(2),.export-score-table td:nth-child(3){width:90px;text-align:right}.export-score-table tfoot td{font-weight:900;background:#fcfcfd}.export-section-total{display:flex;justify-content:space-between;gap:10px;margin-top:10px;padding:9px 10px;border:1px solid #bfd7ff;border-radius:8px;background:#f5f9ff;font-size:12px;font-weight:950}.export-empty{padding:24px;text-align:center;color:var(--muted);font-size:12px}.export-errors{margin-top:14px;padding:10px 12px;border:1px solid #f5d6a4;border-radius:9px;background:var(--warnbg);color:#8a4b08;font-size:11px;line-height:1.65}.export-print-hint{font-size:10px;color:var(--muted);line-height:1.6;margin-top:7px}@media(max-width:780px){.export-toolbar .field{min-width:0}.export-preview{padding:8px}.export-sheet{padding:16px;min-width:650px}.export-meta-grid{grid-template-columns:1fr}.export-club-head,.export-section-head{align-items:flex-start}}
+.club-student-toolbar{align-items:flex-end}.club-student-field{display:flex;flex-direction:column;gap:4px;min-width:min(100%,220px);flex:1 1 180px}.club-student-field .field{width:100%;min-width:0;height:42px}.club-student-toolbar .btn{flex:0 0 auto;white-space:nowrap}@media(max-width:780px){.club-student-toolbar{flex-direction:column;align-items:stretch}.club-student-field{min-width:0;width:100%;flex:1 1 auto}.club-student-toolbar .btn{width:100%}}
 
 </style>
 </head>
@@ -26,9 +30,9 @@
 
 <section id="loginScreen" class="login-screen">
 <div class="login-card">
-<div class="login-icon">🛠️</div>
+<div class="login-icon">HK</div>
 <h1 class="login-title">管理員後台</h1>
-<div class="muted">社團評選暨觀摩活動管理系統</div>
+<div class="muted">弘光社團資訊平台 · 評選暨觀摩活動管理</div>
 <form id="loginForm">
 <label class="label">管理員密碼</label>
 <input id="adminPassword" class="field" type="password" autocomplete="current-password" required placeholder="請輸入管理員密碼">
@@ -42,7 +46,7 @@
 
 <header class="topbar">
 <div>
-<div class="brand">🛠️ 社團評選管理後台</div>
+<div class="brand">HK 社團評選管理後台</div>
 <div class="sub">115學年度第一學期全校學生社團評選暨觀摩活動</div>
 </div>
 <div class="top-actions">
@@ -610,6 +614,72 @@ onclick="openClubModal()"
 
 <div id="clubList" class="list">
 <div class="state">尚未讀取</div>
+</div>
+
+</div>
+
+</section>
+
+<section class="panel closed" data-panel="club-students">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+<div class="panel-title">🔐 社團學生帳號查詢／補登生日／重設密碼</div>
+<div id="clubStudentMeta" class="panel-meta">僅總管理員；後端重新驗證授權</div>
+</div>
+
+<span class="chev">▼</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="notice warnbox">
+依目前活動與永久 Club_ID 查詢已註冊學生。先選社團屬性再選社團；活動由系統帶入（目前 115-1-club-evaluation）。缺生日時可「補登生日」（僅寫入後端加密庫，不可覆寫已保存生日）；補登後再「重設密碼」為 YYYYMMDD（只顯示一次），之後重設不必再輸入生日。學生下次登入必須改密。Auth 密碼變更會影響該 UID 在所有活動的登入憑證，但不會改動各活動 membership、seat 或歷史資料。停用帳號重設後仍維持停用。不可讀取生日／密碼／權杖。
+</div>
+
+<div class="toolbar club-student-toolbar">
+<label class="club-student-field">
+<span class="mini-label">社團屬性</span>
+<select id="clubStudentCategory" class="field" onchange="onClubStudentCategoryChange()">
+<option value="">請選擇社團屬性</option>
+</select>
+</label>
+<label class="club-student-field">
+<span class="mini-label">社團</span>
+<select id="clubStudentClub" class="field" disabled onchange="onClubStudentClubChange()">
+<option value="">請先選擇社團屬性</option>
+</select>
+</label>
+<input type="hidden" id="clubStudentActivityId" value="115-1-club-evaluation">
+<button class="btn btn-primary" type="button" id="clubStudentQueryBtn" onclick="loadClubStudents()">查詢學生</button>
+</div>
+<div id="clubStudentSelectionMeta" class="list-sub" style="margin:-4px 0 10px"></div>
+
+<div id="clubStudentState" class="state">請先選擇社團屬性與社團後查詢。</div>
+<div id="clubStudentList" class="list"></div>
+
+<div id="clubStudentTempBox" class="notice okbox hidden" style="margin-top:12px">
+<div style="font-weight:900;margin-bottom:6px">一次性臨時密碼（只顯示一次）</div>
+<div id="clubStudentTempMeta" class="list-sub" style="margin-bottom:8px"></div>
+<code id="clubStudentTempPassword" style="display:block;padding:10px;background:#fff;border-radius:8px;word-break:break-all;font-size:14px"></code>
+<div class="list-sub" style="margin-top:8px">離開此畫面或重新查詢後將不再顯示。請以安全管道轉交學生。</div>
+<button class="btn" type="button" style="margin-top:8px" onclick="hideClubStudentTemp()">我已抄寫，關閉顯示</button>
+</div>
+
+<div id="clubStudentEnrollBox" class="notice warnbox hidden" style="margin-top:12px">
+<div style="font-weight:900;margin-bottom:6px">補登生日（既有帳號）</div>
+<div id="clubStudentEnrollMeta" class="list-sub" style="margin-bottom:8px"></div>
+<label class="club-student-field" style="display:block;margin-bottom:8px">
+<span class="mini-label">西元生日（YYYYMMDD）</span>
+<input id="clubStudentEnrollBirth" class="field" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="例如 20010315">
+</label>
+<div class="list-sub" style="margin-bottom:8px">僅寫入後端加密庫；不重設密碼、不啟用停用帳號。已保存生日不可由此覆寫。取消／成功／切換學生或登出後會清除輸入。</div>
+<div class="row-actions">
+<button class="btn btn-primary" type="button" id="clubStudentEnrollSubmitBtn" onclick="submitClubStudentEnrollBirth()">確認補登</button>
+<button class="btn" type="button" onclick="cancelClubStudentEnrollBirth()">取消</button>
+</div>
 </div>
 
 </div>
@@ -1279,15 +1349,21 @@ scoreAggregation:null,
 currentAggregationClub:null,
 ranking:null,
 rankingConfig:null,
+scoreScreenVersion:null,
+rankingScreenVersion:null,
 rankingMetrics:[],
 judgeConfirmationExport:null,
 clubs:[],
+studentQueryClubs:[],
 forms:[],
 bindings:[],
 clouds:[],
 eventConfig:null,
+eventScreenVersion:null,
 busy:false
 };
+// 與頁面內 lexical S 同一物件，供預覽腳本／除錯寫入 clubs 等狀態
+window.S = S;
 
 const $ =
 id =>
@@ -1334,6 +1410,59 @@ return String(num(v))
 
 function deep(v){
 return JSON.parse(JSON.stringify(v))
+}
+
+function rememberScreenVersion(
+key,
+response
+){
+
+S[key] = {
+source:
+response &&
+response.source
+? response.source
+: "current",
+updateTime:
+response &&
+typeof response.updateTime ===
+"string"
+? response.updateTime
+: ""
+};
+
+}
+
+function settingsVersionPayload(
+version
+){
+
+if(
+!version ||
+version.source !==
+"firestore"
+){
+return {};
+}
+
+return {
+expectedUpdateTime:
+version.updateTime ||
+""
+};
+
+}
+
+function settingsConflict(
+response
+){
+
+return Boolean(
+response &&
+response.error ===
+"EVALUATION_CONFLICT"
+);
+
 }
 
 function togglePanel(btn){
@@ -1598,6 +1727,10 @@ await api("adminLogout");
 }
 catch(e){}
 
+if(typeof invalidateClubStudentOps==="function"){
+invalidateClubStudentOps("logout");
+}
+
 clearSession();
 
 showLogin();
@@ -1747,6 +1880,11 @@ r.message ||
 );
 
 }
+
+rememberScreenVersion(
+"scoreScreenVersion",
+r
+);
 
 S.scoreConfig =
 deep(
@@ -3019,7 +3157,10 @@ const r =
 await api(
 "adminSaveScoreConfig",
 {
-config:S.scoreConfig
+config:S.scoreConfig,
+...settingsVersionPayload(
+S.scoreScreenVersion
+)
 }
 );
 
@@ -3027,6 +3168,18 @@ if(
 unauthorized(r)
 )
 return null;
+
+if(
+settingsConflict(r)
+){
+
+toast(
+"評分設定已有其他修改，畫面內容已保留。請重新讀取後再儲存。"
+);
+
+return null;
+
+}
 
 if(
 !r.success
@@ -3038,6 +3191,11 @@ r.message ||
 );
 
 }
+
+rememberScreenVersion(
+"scoreScreenVersion",
+r
+);
 
 S.scoreConfig =
 deep(
@@ -3120,7 +3278,10 @@ await api(
 "adminSetScorePhasePublished",
 {
 sectionId:before.id,
-published:false
+published:false,
+...settingsVersionPayload(
+S.scoreScreenVersion
+)
 }
 );
 
@@ -3128,6 +3289,18 @@ if(
 unauthorized(r)
 )
 return;
+
+if(
+settingsConflict(r)
+){
+
+toast(
+"評分設定已有其他修改，畫面內容已保留。請重新讀取後再儲存。"
+);
+
+return;
+
+}
 
 if(
 !r.success
@@ -3144,6 +3317,11 @@ r.message ||
 return;
 
 }
+
+rememberScreenVersion(
+"scoreScreenVersion",
+r
+);
 
 S.scoreConfig =
 deep(
@@ -3196,7 +3374,10 @@ await api(
 "adminSetScorePhasePublished",
 {
 sectionId:current.id,
-published:true
+published:true,
+...settingsVersionPayload(
+S.scoreScreenVersion
+)
 }
 );
 
@@ -3204,6 +3385,18 @@ if(
 unauthorized(r)
 )
 return;
+
+if(
+settingsConflict(r)
+){
+
+toast(
+"評分設定已有其他修改，畫面內容已保留。請重新讀取後再儲存。"
+);
+
+return;
+
+}
 
 if(
 !r.success
@@ -3220,6 +3413,11 @@ r.message ||
 return;
 
 }
+
+rememberScreenVersion(
+"scoreScreenVersion",
+r
+);
 
 S.scoreConfig =
 deep(
@@ -6654,8 +6852,8 @@ function setTieBreakerMetric(i,key){const [sourceType,...rest]=String(key||"").s
 function setTieBreakerDirection(i,v){const rows=S.rankingConfig.ranking.tieBreakers||[];if(rows[i])rows[i].direction=v==="asc"?"asc":"desc"}
 function moveTieBreaker(i,d){const a=S.rankingConfig.ranking.tieBreakers||[],j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];renderTieBreakers()}
 function deleteTieBreaker(i){S.rankingConfig.ranking.tieBreakers.splice(i,1);renderTieBreakers()}
-async function saveRankingConfig(){if(!S.rankingConfig)return;syncRankingFormIntoState();const b=$("saveRankingBtn");try{b.disabled=true;const r=await api("adminSaveRankingConfig",{config:S.rankingConfig});if(unauthorized(r))return;if(!r.success)throw new Error(r.message||"排名規則儲存失敗");S.rankingConfig=deep(r.config);S.rankingMetrics=Array.isArray(r.availableMetrics)?r.availableMetrics:S.rankingMetrics;renderRankingSettings();toast("✅ 排名規則已儲存");await loadRanking()}catch(e){toast("❌ "+e.message)}finally{b.disabled=false}}
-async function loadRanking(){try{$("rankingState").classList.remove("hidden");$("rankingTableWrap").classList.add("hidden");$("rankingState").innerHTML='<div class="spinner"></div>正在計算各屬性排名...';const r=await api("adminRanking");if(unauthorized(r))return;if(!r.success)throw new Error(r.message||"無法取得排名");S.ranking=r;S.rankingConfig=deep(r.config||{});S.rankingMetrics=Array.isArray(r.availableMetrics)?r.availableMetrics:[];const m=r.summary||{};$("rankCompleted").textContent=m.completedCount??0;$("rankPassed").textContent=m.passedCount??0;$("rankFailed").textContent=m.failedCount??0;$("rankIncomplete").textContent=m.incompleteCount??0;$("rankingMeta").textContent=`及格 ${S.rankingConfig.pass?.comparator==="gt"?">":"≥"} ${fmt(S.rankingConfig.pass?.threshold??70)}｜完成 ${m.completedCount??0}/${m.clubCount??0}｜${formatDate(r.generatedAt)}`;renderRankingSettings();renderRankingCategoryOptions();updateRankingHeaders();renderRankingTable()}catch(e){$("rankingState").classList.remove("hidden");$("rankingTableWrap").classList.add("hidden");$("rankingState").innerHTML=`⚠️ ${esc(e.message)}`}}
+async function saveRankingConfig(){if(!S.rankingConfig)return;syncRankingFormIntoState();const b=$("saveRankingBtn");try{b.disabled=true;const r=await api("adminSaveRankingConfig",{config:S.rankingConfig,...settingsVersionPayload(S.rankingScreenVersion)});if(unauthorized(r))return;if(settingsConflict(r)){toast("排名設定已有其他修改，畫面內容已保留。請重新讀取後再儲存。");return}if(!r.success)throw new Error(r.message||"排名規則儲存失敗");rememberScreenVersion("rankingScreenVersion",r);S.rankingConfig=deep(r.config);S.rankingMetrics=Array.isArray(r.availableMetrics)?r.availableMetrics:S.rankingMetrics;renderRankingSettings();toast("✅ 排名規則已儲存");await loadRanking()}catch(e){toast("❌ "+e.message)}finally{b.disabled=false}}
+async function loadRanking(){try{$("rankingState").classList.remove("hidden");$("rankingTableWrap").classList.add("hidden");$("rankingState").innerHTML='<div class="spinner"></div>正在計算各屬性排名...';const r=await api("adminRanking");if(unauthorized(r))return;if(!r.success)throw new Error(r.message||"無法取得排名");S.ranking=r;rememberScreenVersion("rankingScreenVersion",r);S.rankingConfig=deep(r.config||{});S.rankingMetrics=Array.isArray(r.availableMetrics)?r.availableMetrics:[];const m=r.summary||{};$("rankCompleted").textContent=m.completedCount??0;$("rankPassed").textContent=m.passedCount??0;$("rankFailed").textContent=m.failedCount??0;$("rankIncomplete").textContent=m.incompleteCount??0;$("rankingMeta").textContent=`及格 ${S.rankingConfig.pass?.comparator==="gt"?">":"≥"} ${fmt(S.rankingConfig.pass?.threshold??70)}｜完成 ${m.completedCount??0}/${m.clubCount??0}｜${formatDate(r.generatedAt)}`;renderRankingSettings();renderRankingCategoryOptions();updateRankingHeaders();renderRankingTable()}catch(e){$("rankingState").classList.remove("hidden");$("rankingTableWrap").classList.add("hidden");$("rankingState").innerHTML=`⚠️ ${esc(e.message)}`}}
 function renderRankingCategoryOptions(){const el=$("rankingCategory");if(!el||!S.ranking)return;const current=el.value,cats=Array.isArray(S.ranking.categories)?S.ranking.categories:[];el.innerHTML=cats.map(x=>`<option value="${attr(x.category)}">${esc(x.category)}（${x.totalClubCount??0}）</option>`).join("");const preferred=cats.find(x=>x.category===current)||cats.find(x=>(x.totalClubCount??0)>0)||cats[0];if(preferred)el.value=preferred.category}
 function updateRankingHeaders(){const clubs=S.scoreAggregation?.clubs||[],sample=clubs.find(Boolean),routine=sample?aggregationGroup(sample,"routinePerformance"):null,data=sample?aggregationSection(sample,"dataReview"):null,field=sample?aggregationSection(sample,"fieldReview"):null;$("rankRoutineHeader").textContent=`平時表現 / ${fmt(routine?.maxScore??30)}`;$("rankDataHeader").textContent=`數位資料 / ${fmt(data?.maxScore??50)}`;$("rankFieldHeader").textContent=`現場詢答 / ${fmt(field?.maxScore??20)}`;$("rankTotalHeader").textContent=`總分 / ${fmt(S.ranking?.totalMaxScore??100)}`}
 function findAggregationClubForRanking(name){return(S.scoreAggregation?.clubs||[]).find(x=>x.clubName===name)||null}
@@ -7728,6 +7926,16 @@ r.clubs
 :
 [];
 
+// 學生查詢專用名單（含停用）；缺欄位時退回管理清單以免舊後端破版
+S.studentQueryClubs =
+Array.isArray(
+r.studentQueryClubs
+)
+?
+r.studentQueryClubs
+:
+S.clubs.slice();
+
 $("statClubs").textContent =
 S.clubs.length;
 
@@ -7735,6 +7943,7 @@ $("clubMeta").textContent =
 `${S.clubs.length} 個社團`;
 
 renderClubs();
+initClubStudentSelectors();
 
 }
 catch(e){
@@ -7746,6 +7955,645 @@ $("clubList").innerHTML=
 
 }
 
+}
+
+const CLUB_STUDENT_ACTIVITY_ID="115-1-club-evaluation";
+const CLUB_STUDENT_UNCAT="未分類";
+let clubStudentQuerySeq=0;
+let clubStudentResetSeq=0;
+let clubStudentPanelLocked=false;
+let clubStudentEnrollTarget=null;
+
+function maskStudentIdDisplay(id){
+const s=String(id||"");
+if(s.length<=4) return "****";
+return s.slice(0,2)+"******";
+}
+
+function clubStudentSessionToken(){
+return String(S&&S.token||"");
+}
+
+function hideClubStudentTemp(){
+const box=$("clubStudentTempBox");
+const code=$("clubStudentTempPassword");
+const meta=$("clubStudentTempMeta");
+if(code) code.textContent="";
+if(meta) meta.textContent="";
+if(box) box.classList.add("hidden");
+}
+
+function clearClubStudentEnrollForm(){
+const box=$("clubStudentEnrollBox");
+const input=$("clubStudentEnrollBirth");
+const meta=$("clubStudentEnrollMeta");
+if(input) input.value="";
+if(meta) meta.textContent="";
+if(box) box.classList.add("hidden");
+clubStudentEnrollTarget=null;
+}
+
+function clearClubStudentResults(){
+const state=$("clubStudentState");
+const list=$("clubStudentList");
+if(state) state.textContent="請先選擇社團屬性與社團後查詢。";
+if(list) list.innerHTML="";
+hideClubStudentTemp();
+clearClubStudentEnrollForm();
+}
+
+function setClubStudentResetButtonsDisabled(disabled){
+const list=$("clubStudentList");
+if(!list) return;
+list.querySelectorAll("button[data-cs-mutate]").forEach(function(btn){
+btn.disabled=!!disabled;
+});
+const enrollSubmit=$("clubStudentEnrollSubmitBtn");
+if(enrollSubmit) enrollSubmit.disabled=!!disabled;
+}
+
+function setClubStudentPanelLocked(locked){
+clubStudentPanelLocked=!!locked;
+["clubStudentCategory","clubStudentClub","clubStudentQueryBtn"].forEach(function(id){
+const el=$(id);
+if(!el) return;
+if(locked){
+if(el.dataset.csLockPrev==null){
+el.dataset.csLockPrev=el.disabled?"1":"0";
+}
+el.disabled=true;
+}else if(el.dataset.csLockPrev!=null){
+const prev=el.dataset.csLockPrev==="1";
+delete el.dataset.csLockPrev;
+if(id==="clubStudentClub"){
+const cat=$("clubStudentCategory");
+el.disabled=!(cat&&cat.value)||prev;
+}else{
+el.disabled=prev;
+}
+}
+});
+setClubStudentResetButtonsDisabled(locked);
+}
+
+function invalidateClubStudentOps(reason){
+clubStudentQuerySeq+=1;
+clubStudentResetSeq+=1;
+setClubStudentPanelLocked(false);
+hideClubStudentTemp();
+clearClubStudentEnrollForm();
+if(reason==="logout"){
+clearClubStudentResults();
+}
+}
+
+function clubStudentActivityId(){
+const el=$("clubStudentActivityId");
+if(el) el.value=CLUB_STUDENT_ACTIVITY_ID;
+return CLUB_STUDENT_ACTIVITY_ID;
+}
+
+function normalizeClubStudentCategory(raw){
+const c=String(raw||"").trim();
+return c||CLUB_STUDENT_UNCAT;
+}
+
+function clubStudentPermanentId(club){
+const id=String(
+(club&&(club.permanentClubId||club.clubId))||""
+).trim().toUpperCase();
+return /^D\d{3,}$/.test(id)?id:"";
+}
+
+function clubsForStudentQuery(){
+const src=
+Array.isArray(S.studentQueryClubs)&&S.studentQueryClubs.length
+?S.studentQueryClubs
+:(Array.isArray(S.clubs)?S.clubs:[]);
+return src.map(function(c){
+return {
+name:String(c&&c.name||"").trim(),
+category:normalizeClubStudentCategory(c&&c.category),
+permanentClubId:clubStudentPermanentId(c),
+legacyClubId:String(c&&c.legacyClubId||"").trim(),
+active:!(c&&c.active===false)
+};
+}).filter(function(c){ return !!c.name; });
+}
+
+function clubStudentCategories(){
+const set=new Map();
+clubsForStudentQuery().forEach(function(c){
+set.set(c.category,true);
+});
+const known=CLUB_CATEGORIES.filter(function(cat){ return set.has(cat); });
+const extras=Array.from(set.keys()).filter(function(cat){
+return CLUB_CATEGORIES.indexOf(cat)<0 && cat!==CLUB_STUDENT_UNCAT;
+}).sort(function(a,b){ return a.localeCompare(b,"zh-Hant"); });
+const out=known.concat(extras);
+if(set.has(CLUB_STUDENT_UNCAT)) out.push(CLUB_STUDENT_UNCAT);
+return out;
+}
+
+function clubsInStudentCategory(category){
+const cat=String(category||"");
+return clubsForStudentQuery()
+.filter(function(c){ return c.category===cat; })
+.sort(function(a,b){
+const aid=a.permanentClubId||"ZZZ";
+const bid=b.permanentClubId||"ZZZ";
+return aid.localeCompare(bid)||a.name.localeCompare(b.name,"zh-Hant");
+});
+}
+
+function selectedClubStudent(){
+const sel=$("clubStudentClub");
+const id=sel?String(sel.value||"").trim().toUpperCase():"";
+if(!id) return null;
+return clubsForStudentQuery().find(function(c){ return c.permanentClubId===id; })||null;
+}
+
+function updateClubStudentSelectionMeta(){
+const meta=$("clubStudentSelectionMeta");
+if(!meta) return;
+const club=selectedClubStudent();
+const catEl=$("clubStudentCategory");
+const cat=catEl?String(catEl.value||""):"";
+if(!cat){
+meta.textContent="活動 "+CLUB_STUDENT_ACTIVITY_ID+"｜尚未選擇社團屬性";
+return;
+}
+if(!club){
+meta.textContent="活動 "+CLUB_STUDENT_ACTIVITY_ID+"｜屬性 "+cat+"｜尚未選擇社團";
+return;
+}
+meta.textContent=
+"活動 "+CLUB_STUDENT_ACTIVITY_ID+
+"｜屬性 "+club.category+
+"｜"+club.name+
+"｜永久 Club_ID "+(club.permanentClubId||"（缺）");
+}
+
+function initClubStudentSelectors(){
+const catSel=$("clubStudentCategory");
+const clubSel=$("clubStudentClub");
+if(!catSel||!clubSel) return;
+const prevCat=String(catSel.value||"");
+const prevClub=String(clubSel.value||"");
+const cats=clubStudentCategories();
+catSel.innerHTML='<option value="">請選擇社團屬性</option>'+
+cats.map(function(cat){
+return `<option value="${attr(cat)}">${esc(cat)}</option>`;
+}).join("");
+if(prevCat && cats.indexOf(prevCat)>=0) catSel.value=prevCat;
+else catSel.value="";
+populateClubStudentClubOptions(catSel.value, prevClub);
+updateClubStudentSelectionMeta();
+}
+
+function populateClubStudentClubOptions(category, preferredClubId){
+const clubSel=$("clubStudentClub");
+if(!clubSel) return;
+const cat=String(category||"");
+if(!cat){
+clubSel.disabled=true;
+clubSel.innerHTML='<option value="">請先選擇社團屬性</option>';
+return;
+}
+const rows=clubsInStudentCategory(cat);
+clubSel.disabled=false;
+if(!rows.length){
+clubSel.innerHTML='<option value="">此屬性目前沒有社團</option>';
+return;
+}
+clubSel.innerHTML='<option value="">請選擇社團</option>'+
+rows.map(function(c){
+const id=c.permanentClubId;
+if(!id){
+return `<option value="" disabled>${esc(c.name)}（缺 D 編號）</option>`;
+}
+return `<option value="${attr(id)}">${esc(c.name)}（${esc(id)}）</option>`;
+}).join("");
+const pref=String(preferredClubId||"").trim().toUpperCase();
+if(pref && rows.some(function(c){ return c.permanentClubId===pref; })){
+clubSel.value=pref;
+}else{
+clubSel.value="";
+}
+}
+
+function onClubStudentCategoryChange(){
+if(clubStudentPanelLocked) return;
+clubStudentQuerySeq+=1;
+const catEl=$("clubStudentCategory");
+populateClubStudentClubOptions(catEl?catEl.value:"", "");
+clearClubStudentResults();
+clearClubStudentEnrollForm();
+updateClubStudentSelectionMeta();
+$("clubStudentMeta").textContent="僅總管理員；後端重新驗證授權";
+}
+
+function onClubStudentClubChange(){
+if(clubStudentPanelLocked) return;
+clubStudentQuerySeq+=1;
+clearClubStudentResults();
+clearClubStudentEnrollForm();
+updateClubStudentSelectionMeta();
+$("clubStudentMeta").textContent="僅總管理員；後端重新驗證授權";
+}
+
+function normalizeClubStudentBirthInput(raw){
+const text=String(raw==null?"":raw).trim();
+if(!/^\d{8}$/.test(text)){
+return {ok:false,message:"生日格式須為 YYYYMMDD。"};
+}
+const year=Number(text.slice(0,4));
+const month=Number(text.slice(4,6));
+const day=Number(text.slice(6,8));
+const date=new Date(Date.UTC(year,month-1,day));
+if(
+date.getUTCFullYear()!==year||
+date.getUTCMonth()!==month-1||
+date.getUTCDate()!==day||
+year<1980||
+year>2020
+){
+return {ok:false,message:"生日無法核對。"};
+}
+return {ok:true,birthYYYYMMDD:text};
+}
+
+function openClubStudentEnrollBirth(uid,activityId,permanentClubId,studentId){
+if(clubStudentPanelLocked){
+toast("操作進行中，請稍候");
+return;
+}
+const tokenAtStart=clubStudentSessionToken();
+if(!tokenAtStart){
+toast("請重新登入後再補登");
+return;
+}
+const op={
+uid:String(uid||""),
+activityId:String(activityId||clubStudentActivityId()),
+permanentClubId:String(permanentClubId||"").trim().toUpperCase(),
+studentId:String(studentId||""),
+token:tokenAtStart
+};
+if(!op.uid||!op.permanentClubId){
+toast("缺少學生 UID 或永久 Club_ID");
+return;
+}
+const clubMeta=clubsForStudentQuery().find(function(c){
+return c.permanentClubId===op.permanentClubId;
+});
+op.clubName=clubMeta?clubMeta.name:op.permanentClubId;
+op.category=clubMeta?clubMeta.category:"";
+clubStudentEnrollTarget=op;
+hideClubStudentTemp();
+const box=$("clubStudentEnrollBox");
+const meta=$("clubStudentEnrollMeta");
+const input=$("clubStudentEnrollBirth");
+if(meta){
+meta.textContent=
+"活動 "+op.activityId+
+"｜"+op.clubName+"（"+op.permanentClubId+"）"+
+"｜學號 "+maskStudentIdDisplay(op.studentId)+
+"｜UID "+String(op.uid).slice(0,12)+"…";
+}
+if(input) input.value="";
+if(box) box.classList.remove("hidden");
+if(input&&typeof input.focus==="function") input.focus();
+}
+
+function cancelClubStudentEnrollBirth(){
+clearClubStudentEnrollForm();
+}
+
+async function submitClubStudentEnrollBirth(){
+if(clubStudentPanelLocked){
+toast("操作進行中，請稍候");
+return;
+}
+const target=clubStudentEnrollTarget;
+if(!target||!target.uid){
+toast("請先選擇要補登的學生");
+return;
+}
+const tokenAtStart=clubStudentSessionToken();
+if(!tokenAtStart||tokenAtStart!==target.token){
+toast("請重新登入後再補登");
+clearClubStudentEnrollForm();
+return;
+}
+const birthCheck=normalizeClubStudentBirthInput(
+$("clubStudentEnrollBirth")?$("clubStudentEnrollBirth").value:""
+);
+if(!birthCheck.ok){
+toast(birthCheck.message||"生日無法核對");
+return;
+}
+const op={
+resetSeq:++clubStudentResetSeq,
+uid:target.uid,
+activityId:target.activityId,
+permanentClubId:target.permanentClubId,
+studentId:target.studentId,
+clubName:target.clubName,
+category:target.category,
+token:tokenAtStart,
+kind:"enroll"
+};
+setClubStudentPanelLocked(true);
+try{
+const r=await api("adminEnrollClubStudentBirth",{
+uid:op.uid,
+activityId:op.activityId,
+permanentClubId:op.permanentClubId,
+birthYYYYMMDD:birthCheck.birthYYYYMMDD,
+reason:"admin_console_enroll"
+});
+if(!clubStudentOpStillValid(op)){
+return;
+}
+if(unauthorized(r)){
+invalidateClubStudentOps("logout");
+return;
+}
+if(!r||r.success===false){
+const allowed={
+BIRTH_ALREADY_ENROLLED:"此帳號已保存生日，補登不可覆寫。",
+STUDENT_OUT_OF_SCOPE:"該學生不在指定活動／社團範圍內，拒絕補登。",
+STUDENT_ACCOUNT_MISSING:"找不到帳號。",
+INVALID_BIRTHDATE:"生日格式須為 YYYYMMDD。",
+BRIDGE_NOT_CONFIGURED:"生日補登橋接尚未完成設定。",
+BRIDGE_NONCE_USED:"此補登請求已使用或重送，請重新操作。"
+};
+if(r&&r.error&&allowed[r.error]){
+throw new Error(allowed[r.error]);
+}
+throw new Error("補登失敗");
+}
+clearClubStudentEnrollForm();
+if(!clubStudentSelectionMatchesOp(op)){
+toast("已補登；請切回原社團後可再重設密碼");
+return;
+}
+toast("補登成功；可再按「重設密碼」");
+await loadClubStudents({
+preserveTemp:true,
+allowDuringReset:true,
+activityId:op.activityId,
+permanentClubId:op.permanentClubId,
+clubName:op.clubName,
+category:op.category,
+forResetSeq:op.resetSeq
+});
+}catch(e){
+if(!clubStudentOpStillValid(op)){
+return;
+}
+toast("補登失敗："+(e.message||""));
+}finally{
+if(op.resetSeq===clubStudentResetSeq){
+setClubStudentPanelLocked(false);
+const cat=$("clubStudentCategory");
+const clubSel=$("clubStudentClub");
+if(clubSel&&cat){
+clubSel.disabled=!cat.value;
+}
+}
+}
+}
+
+function clubStudentOpStillValid(op){
+if(!op) return false;
+if(op.resetSeq!==clubStudentResetSeq) return false;
+if(clubStudentSessionToken()!==op.token) return false;
+return true;
+}
+
+function clubStudentSelectionMatchesOp(op){
+if(!op) return false;
+const sel=selectedClubStudent();
+return !!(sel&&sel.permanentClubId===op.permanentClubId);
+}
+
+async function loadClubStudents(opts){
+opts=opts||{};
+if(clubStudentPanelLocked&&!opts.allowDuringReset){
+toast("操作進行中，請稍候");
+return;
+}
+const preserveTemp=!!opts.preserveTemp;
+const forcedId=String(opts.permanentClubId||"").trim().toUpperCase();
+const activityId=opts.activityId||clubStudentActivityId();
+let permanentClubId="";
+let category="";
+let name="";
+if(forcedId){
+permanentClubId=forcedId;
+const found=clubsForStudentQuery().find(function(c){ return c.permanentClubId===forcedId; });
+category=opts.category||(found&&found.category)||"";
+name=opts.clubName||(found&&found.name)||forcedId;
+}else{
+const club=selectedClubStudent();
+permanentClubId=club?club.permanentClubId:"";
+category=club?club.category:"";
+name=club?club.name:"";
+}
+const state=$("clubStudentState");
+const list=$("clubStudentList");
+// 手動「查詢」／切換會清除一次性密碼與補登輸入；重設成功後的名單刷新必須保留尚未抄寫的臨時密碼
+if(!preserveTemp){
+hideClubStudentTemp();
+clearClubStudentEnrollForm();
+}
+if(!permanentClubId){
+state.textContent="請先選擇社團屬性與具永久 Club_ID 的社團。";
+list.innerHTML="";
+return;
+}
+const reqSeq=++clubStudentQuerySeq;
+const selectedSnapshot={
+activityId,
+permanentClubId,
+category,
+name
+};
+const tokenAtStart=clubStudentSessionToken();
+state.innerHTML='<div class="spinner"></div>查詢中…';
+list.innerHTML="";
+updateClubStudentSelectionMeta();
+try{
+const r=await api("adminListClubStudents",{
+activityId,
+permanentClubId
+});
+if(reqSeq!==clubStudentQuerySeq) return;
+if(opts.forResetSeq!=null&&opts.forResetSeq!==clubStudentResetSeq) return;
+if(clubStudentSessionToken()!==tokenAtStart) return;
+if(unauthorized(r)) return;
+if(!r || r.success===false){
+throw new Error((r&&(r.message||r.error))||"查詢失敗");
+}
+$("clubStudentMeta").textContent=
+`${selectedSnapshot.name}｜${selectedSnapshot.category}｜${selectedSnapshot.permanentClubId}｜${(r.students||[]).length} 位｜活動 ${r.activityId||activityId}`;
+state.textContent=
+(r.students&&r.students.length)
+?`共 ${(r.students).length} 位已註冊學生（後端已驗證總管理員授權）`
+:"此社團在本活動尚無註冊學生。";
+list.innerHTML=(r.students||[]).map(function(stu){
+const sid=maskStudentIdDisplay(stu.studentId);
+const st=esc(stu.status||"-");
+const mcp=stu.mustChangePassword?"須改密":"已可正式使用";
+const mem=esc(stu.membershipStatus||"-");
+const primary=stu.isPrimary?'<span class="chip">主要名額</span>':"";
+return `<div class="list-row">
+<div>
+<div class="list-title">${sid} ${primary}</div>
+<div class="list-sub">UID：${esc(String(stu.uid||"").slice(0,12))}…｜帳號 ${st}｜${mcp}｜membership ${mem}</div>
+</div>
+<div class="row-actions">
+<button class="btn" data-cs-mutate type="button" onclick='openClubStudentEnrollBirth(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)},${JSON.stringify(String(stu.studentId||""))})'>補登生日</button>
+<button class="btn btn-danger" data-cs-mutate type="button" onclick='resetClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)},${JSON.stringify(String(stu.studentId||""))})'>重設密碼</button>
+</div>
+</div>`;
+}).join("")||'<div class="state">無資料</div>';
+if(clubStudentPanelLocked) setClubStudentResetButtonsDisabled(true);
+}catch(e){
+if(reqSeq!==clubStudentQuerySeq) return;
+if(opts.forResetSeq!=null&&opts.forResetSeq!==clubStudentResetSeq) return;
+if(clubStudentSessionToken()!==tokenAtStart) return;
+state.innerHTML=`⚠️ ${esc(e.message||"查詢失敗")}`;
+}
+}
+
+async function resetClubStudentPassword(uid,activityId,permanentClubId,studentId){
+if(clubStudentPanelLocked){
+toast("操作進行中，請稍候");
+return;
+}
+clearClubStudentEnrollForm();
+const tokenAtStart=clubStudentSessionToken();
+if(!tokenAtStart){
+toast("請重新登入後再重設");
+return;
+}
+const op={
+resetSeq:++clubStudentResetSeq,
+uid:String(uid||""),
+activityId:String(activityId||clubStudentActivityId()),
+permanentClubId:String(permanentClubId||"").trim().toUpperCase(),
+studentId:String(studentId||""),
+token:tokenAtStart
+};
+const clubMeta=clubsForStudentQuery().find(function(c){
+return c.permanentClubId===op.permanentClubId;
+});
+op.clubName=clubMeta?clubMeta.name:op.permanentClubId;
+op.category=clubMeta?clubMeta.category:"";
+if(!op.uid||!op.permanentClubId){
+toast("缺少學生 UID 或永久 Club_ID");
+return;
+}
+const ok=confirm(
+"確定重設此學生密碼？\n\n"+
+"• 後端將依已補登生日重設為 YYYYMMDD（只顯示一次）\n"+
+"• 若尚未補登生日將拒絕重設\n"+
+"• 學生下次登入必須先改密\n"+
+"• Auth 憑證變更會影響該 UID 所有活動登入\n"+
+"• 不會改動 membership／seat／歷史；停用帳號維持停用\n\n"+
+"學號（遮蔽）："+maskStudentIdDisplay(op.studentId)+"\n"+
+"社團："+op.clubName+"（"+op.permanentClubId+"）"
+);
+if(!ok) return;
+
+setClubStudentPanelLocked(true);
+let backendSucceeded=false;
+try{
+const r=await api("adminResetClubStudentPassword",{
+uid:op.uid,
+activityId:op.activityId,
+permanentClubId:op.permanentClubId,
+reason:"admin_console_reset"
+});
+// 舊操作晚到：直接結束，不清密碼、不登出、不改新操作 UI／鎖定
+if(!clubStudentOpStillValid(op)){
+return;
+}
+if(unauthorized(r)){
+invalidateClubStudentOps("logout");
+hideClubStudentTemp();
+return;
+}
+if(!r || r.success===false){
+// 白名單業務錯誤：管理頁固定文案（不透傳任意後端／敏感字串）
+if(r&&r.error==="BIRTH_NOT_ENROLLED"){
+throw new Error("尚未補登生日");
+}
+const allowedResetMsg={
+BIRTH_NOT_ENROLLED:"尚未補登生日",
+STUDENT_OUT_OF_SCOPE:"該學生不在指定活動／社團範圍內，拒絕重設。",
+STUDENT_ACCOUNT_MISSING:"找不到帳號。",
+BRIDGE_NOT_CONFIGURED:"密碼重設橋接尚未完成設定。"
+};
+if(r&&r.error&&allowedResetMsg[r.error]){
+throw new Error(allowedResetMsg[r.error]);
+}
+if(r&&r.message&&String(r.message).indexOf("尚未補登生日")>=0){
+throw new Error("尚未補登生日");
+}
+throw new Error("重設失敗");
+}
+backendSucceeded=true;
+if(!clubStudentSelectionMatchesOp(op)){
+// 選擇已變更：不把原社團密碼顯示在其他社團選擇下
+hideClubStudentTemp();
+toast("密碼已重設；請切回原社團並重新查詢以確認名單");
+return;
+}
+const box=$("clubStudentTempBox");
+const meta=$("clubStudentTempMeta");
+const code=$("clubStudentTempPassword");
+if(meta){
+meta.textContent=
+`學號 ${maskStudentIdDisplay(r.studentId||op.studentId)}｜${op.clubName}（${op.permanentClubId}）｜狀態 ${r.status||"-"}｜`+
+(r.passwordAffectsAllActivities?"此憑證跨活動生效":"");
+}
+if(code) code.textContent=String(r.temporaryPassword||"");
+if(box) box.classList.remove("hidden");
+toast("已重設；請立即抄寫臨時密碼");
+await loadClubStudents({
+preserveTemp:true,
+allowDuringReset:true,
+activityId:op.activityId,
+permanentClubId:op.permanentClubId,
+clubName:op.clubName,
+category:op.category,
+forResetSeq:op.resetSeq
+});
+}catch(e){
+// 失效舊操作的 rejection／錯誤：不可清掉新操作密碼或訊息
+if(!clubStudentOpStillValid(op)){
+return;
+}
+if(backendSucceeded){
+toast("密碼已重設；名單刷新未完成，請重新查詢該社團");
+}else{
+toast("重設失敗："+(e.message||""));
+}
+}finally{
+// 只有自己仍是最新操作時才解鎖；不可解除進行中的新操作鎖定
+if(op.resetSeq===clubStudentResetSeq){
+setClubStudentPanelLocked(false);
+const cat=$("clubStudentCategory");
+const clubSel=$("clubStudentClub");
+if(clubSel&&cat){
+clubSel.disabled=!cat.value;
+}
+}
+}
 }
 
 function renderClubs(){
@@ -8092,6 +8940,11 @@ r.message ||
 
 }
 
+rememberScreenVersion(
+"eventScreenVersion",
+r
+);
+
 S.eventConfig=
 r.config;
 
@@ -8163,7 +9016,10 @@ await api(
 dataDeadline,
 formDeadline,
 eventStart,
-eventEnd
+eventEnd,
+...settingsVersionPayload(
+S.eventScreenVersion
+)
 }
 );
 
@@ -8171,6 +9027,18 @@ if(
 unauthorized(r)
 )
 return;
+
+if(
+settingsConflict(r)
+){
+
+toast(
+"活動時程已有其他修改，畫面內容已保留。請重新讀取後再儲存。"
+);
+
+return;
+
+}
 
 if(
 !r.success
@@ -8182,6 +9050,11 @@ r.message ||
 );
 
 }
+
+rememberScreenVersion(
+"eventScreenVersion",
+r
+);
 
 S.eventConfig=
 r.config;
