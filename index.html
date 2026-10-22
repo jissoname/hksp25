@@ -611,6 +611,10 @@ body.cs-open{overflow-x:hidden;overflow-y:auto}
 .auth-card .msg.ok{background:#e8f6ec;color:var(--hk-ok)}
 .auth-card .msg.warn{background:#fff7e8;color:var(--hk-warn)}
 .auth-card .hidden{display:none!important}
+.club-query{margin-top:14px;padding-top:12px;border-top:1px solid var(--hk-line)}
+.club-query h3{margin:0 0 6px;font-size:1rem;color:var(--hk-navy)}
+.club-query-list{margin:8px 0 0;padding-left:1.1rem}
+.club-query-list li{margin:4px 0;overflow-wrap:anywhere}
 .auth-card .panel{display:none}
 .auth-card .panel.active{display:block}
 .auth-card .identity{
@@ -861,6 +865,13 @@ body.cs-open .cs-fab{display:none}
       <section id="homeShell" class="hidden">
         <div class="msg ok" id="homeStatus">登入成功</div>
         <div class="identity" id="homeIdentity"></div>
+        <section id="clubAccountQuery" class="club-query hidden" aria-label="社團帳號查詢">
+          <h3>社團帳號查詢</h3>
+          <p class="auth-sub" id="clubQueryContext">只顯示伺服器確認的本社團帳號狀態。</p>
+          <button class="primary" id="btnClubQuery" type="button">查詢社團帳號</button>
+          <div id="clubQueryStatus" class="msg" role="status"></div>
+          <ul id="clubQueryList" class="club-query-list"></ul>
+        </section>
         <button class="primary" id="btnLogout" type="button">登出</button>
       </section>
 
@@ -985,6 +996,7 @@ body.cs-open .cs-fab{display:none}
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
 <script src="./platform-student-auth.js"></script>
+<script src="./platform-club-query.js"></script>
 <script src="./platform-home.js"></script>
 
 <script>

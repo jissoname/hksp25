@@ -636,7 +636,22 @@ onclick="openClubModal()"
 <div class="panel-body">
 
 <div class="notice warnbox">
-依目前活動與永久 Club_ID 查詢已註冊學生。先選社團屬性再選社團；活動由系統帶入（目前 115-1-club-evaluation）。缺生日時可「補登生日」（僅寫入後端加密庫，不可覆寫已保存生日）；補登後再「重設密碼」為 YYYYMMDD（只顯示一次），之後重設不必再輸入生日。學生下次登入必須改密。Auth 密碼變更會影響該 UID 在所有活動的登入憑證，但不會改動各活動 membership、seat 或歷史資料。停用帳號重設後仍維持停用。不可讀取生日／密碼／權杖。
+依伺服器目前活動，或明確指定的歷史活動，加上永久 Club_ID 查詢已註冊學生。先選社團屬性再選社團。缺生日時可「補登生日」（僅寫入後端加密庫，不可覆寫已保存生日）；補登後再「重設密碼」為 YYYYMMDD（只顯示一次），之後重設不必再輸入生日。學生下次登入必須改密。Auth 密碼變更會影響該 UID 在所有活動的登入憑證，但不會改動各活動 membership、seat 或歷史資料。停用帳號重設後仍維持停用。不可讀取生日／密碼／權杖。
+</div>
+
+<div class="notice" id="activityHandoverBox">
+<div style="font-weight:900;margin-bottom:6px">活動權限交接</div>
+<p class="list-sub">預覽不寫入。來源活動由伺服器決定，不能只改畫面上的活動編號。執行會撤下來源活動的名額存取與查詢授權，保留文件；不刪帳號、不複製舊分數，也不自動建立目標活動名額。</p>
+<label class="club-student-field">
+<span class="mini-label">目標活動</span>
+<input class="field" id="handoverTargetActivityId" value="115-2-club-evaluation">
+</label>
+<div style="margin-top:8px">
+<button class="btn" type="button" id="handoverPreviewBtn" onclick="previewActivityHandover()">預覽交接</button>
+<button class="btn btn-primary" type="button" id="handoverExecuteBtn" onclick="executeActivityHandover()">執行交接</button>
+</div>
+<div id="handoverState" class="list-sub" style="margin-top:8px"></div>
+<div id="handoverPreview" class="list-sub"></div>
 </div>
 
 <div class="toolbar club-student-toolbar">
@@ -652,7 +667,19 @@ onclick="openClubModal()"
 <option value="">請先選擇社團屬性</option>
 </select>
 </label>
-<input type="hidden" id="clubStudentActivityId" value="115-1-club-evaluation">
+<input type="hidden" id="clubStudentActivityId" value="">
+<label class="club-student-field">
+<span class="mini-label">查詢範圍</span>
+<select id="clubStudentActivityScope" class="field" onchange="onClubStudentActivityScopeChange()">
+<option value="current">目前活動</option>
+<option value="history">歷史活動</option>
+</select>
+</label>
+<label class="club-student-field" id="clubStudentHistoryWrap" style="display:none">
+<span class="mini-label">歷史活動</span>
+<input class="field" id="clubStudentHistoryActivityId" placeholder="例如 115-1-club-evaluation" oninput="updateClubStudentSelectionMeta()">
+</label>
+<p class="list-sub" id="clubStudentCurrentActivity">目前活動由伺服器提供。</p>
 <button class="btn btn-primary" type="button" id="clubStudentQueryBtn" onclick="loadClubStudents()">查詢學生</button>
 </div>
 <div id="clubStudentSelectionMeta" class="list-sub" style="margin:-4px 0 10px"></div>
@@ -1675,6 +1702,7 @@ r.message ||
 );
 }
 
+if(typeof invalidateHandoverView==="function") invalidateHandoverView();
 S.token =
 r.sessionToken;
 
@@ -1686,6 +1714,7 @@ S.token
 showApp();
 
 await refreshAllData();
+if(typeof loadServerStudentActivity==="function") await loadServerStudentActivity();
 
 toast(
 "✅ 登入成功"
@@ -1730,6 +1759,9 @@ catch(e){}
 if(typeof invalidateClubStudentOps==="function"){
 invalidateClubStudentOps("logout");
 }
+if(typeof invalidateHandoverView==="function"){
+invalidateHandoverView();
+}
 
 clearSession();
 
@@ -1772,6 +1804,7 @@ unauthorized(r)
 )return;
 
 await refreshAllData();
+if(typeof loadServerStudentActivity==="function") await loadServerStudentActivity();
 
 }
 catch(e){
@@ -7957,7 +7990,6 @@ $("clubList").innerHTML=
 
 }
 
-const CLUB_STUDENT_ACTIVITY_ID="115-1-club-evaluation";
 const CLUB_STUDENT_UNCAT="未分類";
 let clubStudentQuerySeq=0;
 let clubStudentResetSeq=0;
@@ -8036,21 +8068,36 @@ el.disabled=prev;
 setClubStudentResetButtonsDisabled(locked);
 }
 
+let clubStudentServerActivityId="";
+
 function invalidateClubStudentOps(reason){
 clubStudentQuerySeq+=1;
 clubStudentResetSeq+=1;
 setClubStudentPanelLocked(false);
 hideClubStudentTemp();
 clearClubStudentEnrollForm();
-if(reason==="logout"){
+if(reason==="logout"||reason==="activity"){
 clearClubStudentResults();
 }
 }
 
+function clubStudentActivityScope(){
+const el=$("clubStudentActivityScope");
+return el&&el.value==="history"?"history":"current";
+}
+
 function clubStudentActivityId(){
-const el=$("clubStudentActivityId");
-if(el) el.value=CLUB_STUDENT_ACTIVITY_ID;
-return CLUB_STUDENT_ACTIVITY_ID;
+if(clubStudentActivityScope()==="history"){
+return String(($("clubStudentHistoryActivityId")||{}).value||"").trim();
+}
+return clubStudentServerActivityId;
+}
+
+function onClubStudentActivityScopeChange(){
+const history=$("clubStudentHistoryWrap");
+if(history) history.style.display=clubStudentActivityScope()==="history"?"":"none";
+invalidateClubStudentOps("activity");
+updateClubStudentSelectionMeta();
 }
 
 function normalizeClubStudentCategory(raw){
@@ -8113,22 +8160,31 @@ if(!id) return null;
 return clubsForStudentQuery().find(function(c){ return c.permanentClubId===id; })||null;
 }
 
+function queriedClubStudentActivityLabel(){
+if(clubStudentActivityScope()==="history"){
+const history=clubStudentActivityId();
+return history?("歷史活動 "+history):"尚未填寫歷史活動";
+}
+return clubStudentServerActivityId?("目前活動 "+clubStudentServerActivityId):"尚未取得伺服器目前活動";
+}
+
 function updateClubStudentSelectionMeta(){
 const meta=$("clubStudentSelectionMeta");
 if(!meta) return;
+const activityLabel=queriedClubStudentActivityLabel();
 const club=selectedClubStudent();
 const catEl=$("clubStudentCategory");
 const cat=catEl?String(catEl.value||""):"";
 if(!cat){
-meta.textContent="活動 "+CLUB_STUDENT_ACTIVITY_ID+"｜尚未選擇社團屬性";
+meta.textContent=activityLabel+"｜尚未選擇社團屬性";
 return;
 }
 if(!club){
-meta.textContent="活動 "+CLUB_STUDENT_ACTIVITY_ID+"｜屬性 "+cat+"｜尚未選擇社團";
+meta.textContent=activityLabel+"｜屬性 "+cat+"｜尚未選擇社團";
 return;
 }
 meta.textContent=
-"活動 "+CLUB_STUDENT_ACTIVITY_ID+
+activityLabel+
 "｜屬性 "+club.category+
 "｜"+club.name+
 "｜永久 Club_ID "+(club.permanentClubId||"（缺）");
@@ -8373,6 +8429,298 @@ if(clubStudentSessionToken()!==op.token) return false;
 return true;
 }
 
+async function recoverClubStudentPassword(uid,activityId,permanentClubId,holderOpId,securityGeneration){
+if(clubStudentPanelLocked){
+toast("操作進行中，請稍候");
+return;
+}
+const tokenAtStart=clubStudentSessionToken();
+if(!tokenAtStart){
+toast("請重新登入後再處理密碼鎖定");
+return;
+}
+const op={
+resetSeq:++clubStudentResetSeq,
+uid:String(uid||""),
+activityId:String(activityId||clubStudentActivityId()),
+permanentClubId:String(permanentClubId||"").trim().toUpperCase(),
+holderOpId:String(holderOpId||""),
+securityGeneration:Number(securityGeneration),
+token:tokenAtStart,
+kind:"recover"
+};
+if(!op.uid||!op.holderOpId||!Number.isFinite(op.securityGeneration)){
+toast("缺少帳號、原操作或安全世代，沒有解除鎖定");
+return;
+}
+const ok=confirm(
+"檢查這筆密碼鎖定？\n\n"+
+"• 只處理畫面上這個帳號、這次操作與這個安全世代\n"+
+"• 若還不能確定舊的密碼更新有沒有送出，鎖定會維持\n"+
+"• 不會顯示或變更密碼，也不會把停用帳號改成啟用\n"+
+"• 只有確認尚未送出更新時，才改記為已復原；之後仍要用「重設密碼」"
+);
+if(!ok) return;
+setClubStudentPanelLocked(true);
+try{
+const r=await api("adminRecoverPasswordAuthUnknown",{
+uid:op.uid,
+activityId:op.activityId,
+permanentClubId:op.permanentClubId,
+holderOpId:op.holderOpId,
+securityGeneration:op.securityGeneration,
+reason:"admin_console_recover"
+});
+if(!clubStudentOpStillValid(op)) return;
+if(unauthorized(r)){
+invalidateClubStudentOps("logout");
+return;
+}
+if(!r||r.success===false){
+const allowed={
+PASSWORD_RECOVERY_UNSAFE:"還不能確定先前的密碼更新有沒有送出。鎖定維持，沒有改密碼。",
+PASSWORD_RECOVERY_STALE:"畫面上的操作已經過期，沒有解除目前的鎖。",
+PASSWORD_RECOVERY_INVALID:"目前不能復原這筆密碼鎖定。",
+STUDENT_OUT_OF_SCOPE:"該學生不在指定活動／社團範圍內。",
+BRIDGE_NOT_CONFIGURED:"密碼鎖定復原尚未完成設定，鎖定沒有被解除。",
+ADMIN_REQUIRED:"需要總管理員授權。"
+};
+throw new Error((r&&r.error&&allowed[r.error])||(r&&allowed[r.error])||"沒有解除鎖定");
+}
+toast(r.notice||"已復原這筆尚未送出的密碼鎖定。若要重設，請再用「重設密碼」。");
+await loadClubStudents({
+preserveTemp:true,
+allowDuringReset:true,
+activityId:op.activityId,
+permanentClubId:op.permanentClubId,
+forResetSeq:op.resetSeq
+});
+}catch(e){
+if(!clubStudentOpStillValid(op)) return;
+toast(e.message||"沒有解除鎖定");
+}finally{
+if(op.resetSeq===clubStudentResetSeq) setClubStudentPanelLocked(false);
+}
+}
+
+let handoverView=null;
+let handoverSeq=0;
+let handoverBusy=false;
+
+function invalidateHandoverView(){
+handoverSeq+=1;
+handoverBusy=false;
+handoverView=null;
+const state=$("handoverState");
+const preview=$("handoverPreview");
+if(state) state.textContent="";
+if(preview) preview.textContent="";
+}
+
+function handoverStill(seq, token){
+return seq===handoverSeq && token===String(S&&S.token||"");
+}
+
+function applyServerActivity(activityId){
+const next=String(activityId||"");
+if(clubStudentServerActivityId && next && clubStudentServerActivityId!==next){
+invalidateClubStudentOps("activity");
+}
+if(next) clubStudentServerActivityId=next;
+const label=$("clubStudentCurrentActivity");
+if(label) label.textContent=next?("目前活動："+next+"（伺服器）"):"尚未取得伺服器目前活動。";
+if(typeof updateClubStudentSelectionMeta==="function") updateClubStudentSelectionMeta();
+}
+
+function adoptHandoverProgress(result){
+if(!result||result.inProgress!==true||!result.handoverOpId) return false;
+handoverView={
+sourceActivityId:result.sourceActivityId,
+targetActivityId:result.targetActivityId,
+previewVersion:result.previewVersion,
+activityVersion:result.activityVersion,
+handoverOpId:result.handoverOpId,
+token:String(S&&S.token||"")
+};
+const target=$("handoverTargetActivityId");
+if(target&&result.targetActivityId) target.value=result.targetActivityId;
+return true;
+}
+
+async function loadServerStudentActivity(){
+const seq=handoverSeq;
+const token=String(S&&S.token||"");
+if(!token||handoverBusy) return;
+const result=await api("adminReadActivityHandover",{});
+if(!handoverStill(seq, token)) return;
+if(unauthorized(result)) return;
+if(!result||result.success===false||result.error){
+const state=$("handoverState");
+if(state) state.textContent=(result&&result.message)||"讀不到交接進度。";
+return;
+}
+applyServerActivity(result.activeActivityId);
+if(adoptHandoverProgress(result)){
+$("handoverState").textContent="伺服器上有未完成交接，沿用原操作 "+result.handoverOpId+"。";
+}
+}
+
+async function previewActivityHandover(){
+  if(handoverBusy) return;
+  const seq=handoverSeq;
+  const token=String(S&&S.token||"");
+  const target=($("handoverTargetActivityId").value||"").trim();
+  handoverBusy=true;
+  $("handoverState").textContent="正在向伺服器預覽，尚未寫入。";
+  try{
+  const result=await api("adminPreviewActivityHandover",{targetActivityId:target});
+  if(!handoverStill(seq, token)) return;
+  if(unauthorized(result)) return;
+  if(!result||result.success===false||result.error){
+    if(!(handoverView&&handoverView.handoverOpId)) handoverView=null;
+    $("handoverState").textContent=(result&&result.message)||"預覽沒有完成，沒有寫入。";
+    return;
+  }
+  applyServerActivity(result.activeActivityId||result.sourceActivityId);
+  if(result.inProgress){
+    adoptHandoverProgress(result);
+    $("handoverState").textContent="交接進行中，不能另開新操作。沿用 "+result.handoverOpId+"。";
+    $("handoverPreview").textContent="";
+    return;
+  }
+  handoverView={
+    sourceActivityId:result.sourceActivityId,
+    targetActivityId:result.targetActivityId,
+    previewVersion:result.previewVersion,
+    activityVersion:result.activityVersion,
+    handoverOpId:"handover_"+Date.now()+"_"+Math.random().toString(16).slice(2,10),
+    token:token
+  };
+  const clubs=(result.clubs||[]).map(function(club){
+    return club.permanentClubId+" 名額 "+(club.seatStatus||"無")+"／有效成員 "+club.activeMemberships+"／查詢授權 "+club.activeQueryGrants;
+  }).join("\n");
+  $("handoverState").textContent="預覽完成，尚未寫入。來源 "+result.sourceActivityId+" → 目標 "+result.targetActivityId;
+  $("handoverPreview").textContent=clubs||"來源活動目前沒有須撤下的名額或查詢授權。";
+  }finally{
+  if(handoverStill(seq, token)) handoverBusy=false;
+  }
+}
+
+async function executeActivityHandover(){
+  if(handoverBusy) return;
+  if(!handoverView||!handoverView.previewVersion||!handoverView.handoverOpId){
+    $("handoverState").textContent="請先讀取伺服器進度或預覽。過期畫面不能直接執行。";
+    return;
+  }
+  if(handoverView.token!==String(S&&S.token||"")){
+    $("handoverState").textContent="登入已更換，請重新讀取交接進度。";
+    return;
+  }
+  if(!confirm("確定執行交接？來源 "+handoverView.sourceActivityId+" 的名額存取與查詢授權會撤下，目標 "+handoverView.targetActivityId+" 不會自動建立學生。")) return;
+  const seq=handoverSeq;
+  const token=handoverView.token;
+  const view=handoverView;
+  handoverBusy=true;
+  try{
+  const result=await api("adminExecuteActivityHandover",{
+    expectedSourceActivityId:view.sourceActivityId,
+    targetActivityId:view.targetActivityId,
+    previewVersion:view.previewVersion,
+    activityVersion:view.activityVersion,
+    handoverOpId:view.handoverOpId
+  });
+  if(!handoverStill(seq, token)) return;
+  if(unauthorized(result)) return;
+  if(!result||result.success===false||result.error){
+    $("handoverState").textContent=(result&&result.message)||"交接沒有完成。";
+    return;
+  }
+  $("handoverState").textContent="交接狀態："+(result.status||"")+(result.idempotent?"（同一操作重送）":"");
+  if(result.status==="completed"&&result.activeActivityId){
+    applyServerActivity(result.activeActivityId);
+    handoverView=null;
+  }
+  }finally{
+  if(handoverStill(seq, token)) handoverBusy=false;
+  }
+}
+
+async function mutateClubQueryPermission(kind, uid, activityId, permanentClubId){
+if(clubStudentPanelLocked){
+toast("操作進行中，請稍候");
+return;
+}
+const tokenAtStart=clubStudentSessionToken();
+if(!tokenAtStart){
+toast("請重新登入後再變更查詢權限");
+return;
+}
+const granting=kind==="grant";
+const op={
+resetSeq:++clubStudentResetSeq,
+uid:String(uid||""),
+activityId:String(activityId||clubStudentActivityId()),
+permanentClubId:String(permanentClubId||"").trim().toUpperCase(),
+token:tokenAtStart,
+kind:granting?"grant-query":"revoke-query"
+};
+if(!op.uid||!op.activityId||!op.permanentClubId){
+toast("缺少活動、社團或帳號，沒有變更查詢權限");
+return;
+}
+const ok=confirm(granting
+?"授予這個學生查詢自己社團的帳號狀態？\n\n• 只限畫面上這個活動、社團與帳號\n• 不能重設密碼、補登生日、解除鎖定或授權他人\n• 不會建立新帳號或名額"
+:"撤銷這個學生的社團查詢權限？\n\n• 只限畫面上這個活動、社團與帳號\n• 撤銷後，舊的登入也不能再查");
+if(!ok) return;
+setClubStudentPanelLocked(true);
+try{
+const r=await api(granting?"adminGrantClubQuery":"adminRevokeClubQuery",{
+uid:op.uid,
+activityId:op.activityId,
+permanentClubId:op.permanentClubId,
+reason:granting?"admin_console_grant_query":"admin_console_revoke_query"
+});
+if(!clubStudentOpStillValid(op)) return;
+if(unauthorized(r)){
+invalidateClubStudentOps("logout");
+return;
+}
+if(!r||r.success===false){
+const allowed={
+BRIDGE_NOT_CONFIGURED:"查詢權限橋接尚未設定，沒有變更授權。",
+STUDENT_OUT_OF_SCOPE:"該學生在這個活動／社團沒有有效身分。",
+STUDENT_ACCOUNT_MISSING:"找不到既有學生帳號。",
+STUDENT_DISABLED:"帳號不是有效狀態，沒有變更授權。",
+QUERY_GRANT_ABSENT:"這個範圍沒有查詢授權可撤。",
+QUERY_TARGET_INVALID:"只能授權既有社團學生帳號。",
+ADMIN_REQUIRED:"需要總管理員授權。"
+};
+throw new Error((r&&r.error&&allowed[r.error])||"沒有變更查詢權限");
+}
+toast(granting?"已授予社團查詢權限。":"已撤銷社團查詢權限。");
+await loadClubStudents({
+preserveTemp:true,
+allowDuringReset:true,
+activityId:op.activityId,
+permanentClubId:op.permanentClubId,
+forResetSeq:op.resetSeq
+});
+}catch(e){
+if(!clubStudentOpStillValid(op)) return;
+toast(e.message||"沒有變更查詢權限");
+}finally{
+if(op.resetSeq===clubStudentResetSeq) setClubStudentPanelLocked(false);
+}
+}
+
+function grantClubQueryPermission(uid, activityId, permanentClubId){
+return mutateClubQueryPermission("grant", uid, activityId, permanentClubId);
+}
+
+function revokeClubQueryPermission(uid, activityId, permanentClubId){
+return mutateClubQueryPermission("revoke", uid, activityId, permanentClubId);
+}
+
 function clubStudentSelectionMatchesOp(op){
 if(!op) return false;
 const sel=selectedClubStudent();
@@ -8404,6 +8752,11 @@ name=club?club.name:"";
 }
 const state=$("clubStudentState");
 const list=$("clubStudentList");
+if(!activityId){
+state.textContent="尚未取得伺服器目前活動，沒有用畫面預設活動查詢。";
+list.innerHTML="";
+return;
+}
 // 手動「查詢」／切換會清除一次性密碼與補登輸入；重設成功後的名單刷新必須保留尚未抄寫的臨時密碼
 if(!preserveTemp){
 hideClubStudentTemp();
@@ -8428,6 +8781,7 @@ updateClubStudentSelectionMeta();
 try{
 const r=await api("adminListClubStudents",{
 activityId,
+activityScope:clubStudentActivityScope(),
 permanentClubId
 });
 if(reqSeq!==clubStudentQuerySeq) return;
@@ -8449,14 +8803,23 @@ const st=esc(stu.status||"-");
 const mcp=stu.mustChangePassword?"須改密":"已可正式使用";
 const mem=esc(stu.membershipStatus||"-");
 const primary=stu.isPrimary?'<span class="chip">主要名額</span>':"";
+const unknown=stu.authUnknown?`<div class="list-sub">${esc(stu.authNotice||"先前的密碼更新結果還不能確定，暫時不能再改密碼。")}</div>`:"";
+const recoverBtn=stu.authUnknown?`<button class="btn" data-cs-mutate type="button" onclick='recoverClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)},${JSON.stringify(String(stu.authHolderOpId||""))},${JSON.stringify(Number(stu.authSecurityGeneration))})'>檢查密碼鎖定</button>`:"";
+const queryLabel=stu.queryAccess==="active"?"查詢權限：已授權":"查詢權限：未授權";
+const queryArgs=`${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)}`;
 return `<div class="list-row">
 <div>
 <div class="list-title">${sid} ${primary}</div>
 <div class="list-sub">UID：${esc(String(stu.uid||"").slice(0,12))}…｜帳號 ${st}｜${mcp}｜membership ${mem}</div>
+<div class="list-sub">${esc(queryLabel)}</div>
+${unknown}
 </div>
 <div class="row-actions">
 <button class="btn" data-cs-mutate type="button" onclick='openClubStudentEnrollBirth(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)},${JSON.stringify(String(stu.studentId||""))})'>補登生日</button>
+${recoverBtn}
 <button class="btn btn-danger" data-cs-mutate type="button" onclick='resetClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)},${JSON.stringify(String(stu.studentId||""))})'>重設密碼</button>
+<button class="btn" data-cs-mutate type="button" onclick='grantClubQueryPermission(${queryArgs})'>授予查詢權限</button>
+<button class="btn" data-cs-mutate type="button" onclick='revokeClubQueryPermission(${queryArgs})'>撤銷查詢權限</button>
 </div>
 </div>`;
 }).join("")||'<div class="state">無資料</div>';
