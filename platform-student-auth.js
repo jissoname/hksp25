@@ -218,9 +218,6 @@ function createRequireStudentAccess(deps) {
     if (authShell) authShell.classList.toggle("hidden", mode !== "auth");
     if (change) change.classList.toggle("hidden", mode !== "change");
     if (home) home.classList.toggle("hidden", mode !== "home");
-    if (mode !== "home" && window.HKSP_CLUB_QUERY && HKSP_CLUB_QUERY.onSignedOut) {
-      HKSP_CLUB_QUERY.onSignedOut();
-    }
   }
 
   function call(name, data) {
@@ -371,9 +368,6 @@ function createRequireStudentAccess(deps) {
           clubLabel +
           "\n帳號狀態：" +
           (data.status || "（未知）");
-      }
-      if (window.HKSP_CLUB_QUERY && HKSP_CLUB_QUERY.onAccess) {
-        HKSP_CLUB_QUERY.onAccess();
       }
       return data;
     });

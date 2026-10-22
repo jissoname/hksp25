@@ -8645,82 +8645,6 @@ async function executeActivityHandover(){
   }
 }
 
-async function mutateClubQueryPermission(kind, uid, activityId, permanentClubId){
-if(clubStudentPanelLocked){
-toast("操作進行中，請稍候");
-return;
-}
-const tokenAtStart=clubStudentSessionToken();
-if(!tokenAtStart){
-toast("請重新登入後再變更查詢權限");
-return;
-}
-const granting=kind==="grant";
-const op={
-resetSeq:++clubStudentResetSeq,
-uid:String(uid||""),
-activityId:String(activityId||clubStudentActivityId()),
-permanentClubId:String(permanentClubId||"").trim().toUpperCase(),
-token:tokenAtStart,
-kind:granting?"grant-query":"revoke-query"
-};
-if(!op.uid||!op.activityId||!op.permanentClubId){
-toast("缺少活動、社團或帳號，沒有變更查詢權限");
-return;
-}
-const ok=confirm(granting
-?"授予這個學生查詢自己社團的帳號狀態？\n\n• 只限畫面上這個活動、社團與帳號\n• 不能重設密碼、補登生日、解除鎖定或授權他人\n• 不會建立新帳號或名額"
-:"撤銷這個學生的社團查詢權限？\n\n• 只限畫面上這個活動、社團與帳號\n• 撤銷後，舊的登入也不能再查");
-if(!ok) return;
-setClubStudentPanelLocked(true);
-try{
-const r=await api(granting?"adminGrantClubQuery":"adminRevokeClubQuery",{
-uid:op.uid,
-activityId:op.activityId,
-permanentClubId:op.permanentClubId,
-reason:granting?"admin_console_grant_query":"admin_console_revoke_query"
-});
-if(!clubStudentOpStillValid(op)) return;
-if(unauthorized(r)){
-invalidateClubStudentOps("logout");
-return;
-}
-if(!r||r.success===false){
-const allowed={
-BRIDGE_NOT_CONFIGURED:"查詢權限橋接尚未設定，沒有變更授權。",
-STUDENT_OUT_OF_SCOPE:"該學生在這個活動／社團沒有有效身分。",
-STUDENT_ACCOUNT_MISSING:"找不到既有學生帳號。",
-STUDENT_DISABLED:"帳號不是有效狀態，沒有變更授權。",
-QUERY_GRANT_ABSENT:"這個範圍沒有查詢授權可撤。",
-QUERY_TARGET_INVALID:"只能授權既有社團學生帳號。",
-ADMIN_REQUIRED:"需要總管理員授權。"
-};
-throw new Error((r&&r.error&&allowed[r.error])||"沒有變更查詢權限");
-}
-toast(granting?"已授予社團查詢權限。":"已撤銷社團查詢權限。");
-await loadClubStudents({
-preserveTemp:true,
-allowDuringReset:true,
-activityId:op.activityId,
-permanentClubId:op.permanentClubId,
-forResetSeq:op.resetSeq
-});
-}catch(e){
-if(!clubStudentOpStillValid(op)) return;
-toast(e.message||"沒有變更查詢權限");
-}finally{
-if(op.resetSeq===clubStudentResetSeq) setClubStudentPanelLocked(false);
-}
-}
-
-function grantClubQueryPermission(uid, activityId, permanentClubId){
-return mutateClubQueryPermission("grant", uid, activityId, permanentClubId);
-}
-
-function revokeClubQueryPermission(uid, activityId, permanentClubId){
-return mutateClubQueryPermission("revoke", uid, activityId, permanentClubId);
-}
-
 function clubStudentSelectionMatchesOp(op){
 if(!op) return false;
 const sel=selectedClubStudent();
@@ -8805,21 +8729,16 @@ const mem=esc(stu.membershipStatus||"-");
 const primary=stu.isPrimary?'<span class="chip">主要名額</span>':"";
 const unknown=stu.authUnknown?`<div class="list-sub">${esc(stu.authNotice||"先前的密碼更新結果還不能確定，暫時不能再改密碼。")}</div>`:"";
 const recoverBtn=stu.authUnknown?`<button class="btn" data-cs-mutate type="button" onclick='recoverClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)},${JSON.stringify(String(stu.authHolderOpId||""))},${JSON.stringify(Number(stu.authSecurityGeneration))})'>檢查密碼鎖定</button>`:"";
-const queryLabel=stu.queryAccess==="active"?"查詢權限：已授權":"查詢權限：未授權";
-const queryArgs=`${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)}`;
 return `<div class="list-row">
 <div>
 <div class="list-title">${sid} ${primary}</div>
 <div class="list-sub">UID：${esc(String(stu.uid||"").slice(0,12))}…｜帳號 ${st}｜${mcp}｜membership ${mem}</div>
-<div class="list-sub">${esc(queryLabel)}</div>
 ${unknown}
 </div>
 <div class="row-actions">
 <button class="btn" data-cs-mutate type="button" onclick='openClubStudentEnrollBirth(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)},${JSON.stringify(String(stu.studentId||""))})'>補登生日</button>
 ${recoverBtn}
 <button class="btn btn-danger" data-cs-mutate type="button" onclick='resetClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)},${JSON.stringify(String(stu.studentId||""))})'>重設密碼</button>
-<button class="btn" data-cs-mutate type="button" onclick='grantClubQueryPermission(${queryArgs})'>授予查詢權限</button>
-<button class="btn" data-cs-mutate type="button" onclick='revokeClubQueryPermission(${queryArgs})'>撤銷查詢權限</button>
 </div>
 </div>`;
 }).join("")||'<div class="state">無資料</div>';
