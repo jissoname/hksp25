@@ -679,8 +679,9 @@ onclick="openClubModal()"
 <span class="mini-label">歷史活動</span>
 <input class="field" id="clubStudentHistoryActivityId" placeholder="例如 115-1-club-evaluation" oninput="updateClubStudentSelectionMeta()">
 </label>
-<p class="list-sub" id="clubStudentCurrentActivity">目前活動由伺服器提供。</p>
-<button class="btn btn-primary" type="button" id="clubStudentQueryBtn" onclick="loadClubStudents()">查詢學生</button>
+<p class="list-sub" id="clubStudentCurrentActivity">尚未取得伺服器目前活動。</p>
+<button class="btn hidden" type="button" id="clubStudentActivityRetryBtn" onclick="loadServerStudentActivity()">重試讀取目前活動</button>
+<button class="btn btn-primary" type="button" id="clubStudentQueryBtn" onclick="loadClubStudents()" disabled>查詢學生</button>
 </div>
 <div id="clubStudentSelectionMeta" class="list-sub" style="margin:-4px 0 10px"></div>
 
@@ -1702,23 +1703,7 @@ r.message ||
 );
 }
 
-if(typeof invalidateHandoverView==="function") invalidateHandoverView();
-S.token =
-r.sessionToken;
-
-sessionStorage.setItem(
-SESSION_KEY,
-S.token
-);
-
-showApp();
-
-await refreshAllData();
-if(typeof loadServerStudentActivity==="function") await loadServerStudentActivity();
-
-toast(
-"✅ 登入成功"
-);
+await acceptAdminLogin(r);
 
 }
 catch(err){
@@ -1762,6 +1747,9 @@ invalidateClubStudentOps("logout");
 if(typeof invalidateHandoverView==="function"){
 invalidateHandoverView();
 }
+if(typeof clearServerActivityForNewLogin==="function"){
+clearServerActivityForNewLogin();
+}
 
 clearSession();
 
@@ -1792,19 +1780,28 @@ S.token=t;
 
 showApp();
 
+if(typeof clearServerActivityForNewLogin==="function") clearServerActivityForNewLogin();
+
 try{
 
-const r =
-await api(
+const clubsPromise =
+api(
 "adminListClubs"
 );
+
+const activityPromise =
+loadServerStudentActivity();
+
+const r =
+await clubsPromise;
 
 if(
 unauthorized(r)
 )return;
 
-await refreshAllData();
-if(typeof loadServerStudentActivity==="function") await loadServerStudentActivity();
+await refreshAllData({reuseActivity:true});
+
+await activityPromise;
 
 }
 catch(e){
@@ -1825,9 +1822,36 @@ document.addEventListener(
 init
 );
 
-async function refreshAllData(){
+async function acceptAdminLogin(loginResult){
+
+if(typeof invalidateHandoverView==="function") invalidateHandoverView();
+
+S.token =
+loginResult.sessionToken;
+
+sessionStorage.setItem(
+SESSION_KEY,
+S.token
+);
+
+showApp();
+
+if(typeof clearServerActivityForNewLogin==="function") clearServerActivityForNewLogin();
+
+await refreshAllData();
+
+toast(
+"✅ 登入成功"
+);
+
+}
+
+async function refreshAllData(opts){
 
 if(!S.token)return;
+
+const activityPromise =
+loadServerStudentActivity(opts);
 
 const basicJobs = [
 
@@ -1882,6 +1906,8 @@ hour12:false
 .format(
 new Date()
 );
+
+if(activityPromise) await activityPromise;
 
 }
 
@@ -8066,9 +8092,13 @@ el.disabled=prev;
 }
 });
 setClubStudentResetButtonsDisabled(locked);
+syncClubStudentQueryButton();
 }
 
 let clubStudentServerActivityId="";
+let serverActivityReading=false;
+let serverActivityFlight=null;
+let serverActivityAttemptKey="";
 
 function invalidateClubStudentOps(reason){
 clubStudentQuerySeq+=1;
@@ -8529,6 +8559,30 @@ invalidateClubStudentOps("activity");
 if(next) clubStudentServerActivityId=next;
 const label=$("clubStudentCurrentActivity");
 if(label) label.textContent=next?("目前活動："+next+"（伺服器）"):"尚未取得伺服器目前活動。";
+syncClubStudentQueryButton();
+if(typeof updateClubStudentSelectionMeta==="function") updateClubStudentSelectionMeta();
+}
+
+function syncClubStudentQueryButton(){
+const query=$("clubStudentQueryBtn");
+if(!query) return;
+query.disabled=!!(clubStudentPanelLocked||serverActivityReading||!clubStudentServerActivityId);
+}
+
+function setServerActivityRetryVisible(visible){
+const retry=$("clubStudentActivityRetryBtn");
+if(!retry||!retry.classList) return;
+if(visible) retry.classList.remove("hidden");
+else retry.classList.add("hidden");
+}
+
+function clearServerActivityForNewLogin(){
+clubStudentServerActivityId="";
+serverActivityReading=false;
+const label=$("clubStudentCurrentActivity");
+if(label) label.textContent="尚未取得伺服器目前活動。";
+setServerActivityRetryVisible(false);
+syncClubStudentQueryButton();
 if(typeof updateClubStudentSelectionMeta==="function") updateClubStudentSelectionMeta();
 }
 
@@ -8547,22 +8601,58 @@ if(target&&result.targetActivityId) target.value=result.targetActivityId;
 return true;
 }
 
-async function loadServerStudentActivity(){
+async function loadServerStudentActivity(opts){
+const reuse=!!(opts&&opts.reuseActivity);
 const seq=handoverSeq;
 const token=String(S&&S.token||"");
+const key=seq+"\n"+token;
 if(!token||handoverBusy) return;
-const result=await api("adminReadActivityHandover",{});
+if(serverActivityFlight&&serverActivityFlight.key===key) return serverActivityFlight.promise;
+if(reuse&&serverActivityAttemptKey===key) return;
+serverActivityAttemptKey=key;
+const flight={key:key,promise:null};
+serverActivityFlight=flight;
+flight.promise=(async function(){
 if(!handoverStill(seq, token)) return;
+serverActivityReading=true;
+const label=$("clubStudentCurrentActivity");
+if(label) label.textContent="正在讀取伺服器目前活動…";
+setServerActivityRetryVisible(false);
+syncClubStudentQueryButton();
+if(typeof updateClubStudentSelectionMeta==="function") updateClubStudentSelectionMeta();
+let result=null;
+try{
+result=await api("adminReadActivityHandover",{});
+}catch(e){
+result=null;
+}
+if(!handoverStill(seq, token)) return;
+serverActivityReading=false;
 if(unauthorized(result)) return;
-if(!result||result.success===false||result.error){
+if(!result||result.success===false||result.error||!String(result.activeActivityId||"").trim()){
 const state=$("handoverState");
 if(state) state.textContent=(result&&result.message)||"讀不到交接進度。";
+const failed=$("clubStudentCurrentActivity");
+if(failed){
+failed.textContent=clubStudentServerActivityId
+?("目前活動："+clubStudentServerActivityId+"（伺服器）")
+:"尚未取得伺服器目前活動。";
+}
+setServerActivityRetryVisible(true);
+syncClubStudentQueryButton();
 return;
 }
 applyServerActivity(result.activeActivityId);
+setServerActivityRetryVisible(false);
 if(adoptHandoverProgress(result)){
 $("handoverState").textContent="伺服器上有未完成交接，沿用原操作 "+result.handoverOpId+"。";
 }
+})().finally(function(){
+if(serverActivityFlight===flight) serverActivityFlight=null;
+if(handoverStill(seq, token)) serverActivityReading=false;
+syncClubStudentQueryButton();
+});
+return flight.promise;
 }
 
 async function previewActivityHandover(){
@@ -8676,6 +8766,11 @@ name=club?club.name:"";
 }
 const state=$("clubStudentState");
 const list=$("clubStudentList");
+if(serverActivityReading){
+state.textContent="正在讀取伺服器目前活動，請稍候。";
+list.innerHTML="";
+return;
+}
 if(!activityId){
 state.textContent="尚未取得伺服器目前活動，沒有用畫面預設活動查詢。";
 list.innerHTML="";
