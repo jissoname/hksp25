@@ -9265,16 +9265,34 @@ const existing=(Array.isArray(S.clubs)?S.clubs:[]).find(function(row){
 return oldName && row.name===oldName;
 });
 const permanentClubId=fromSaved||clubPermanentId_(existing);
+function rowMatchesSavedClub_(row){
+const rowId=clubPermanentId_(row);
+if(permanentClubId){
+if(rowId===permanentClubId) return true;
+/*
+ * 清單列若尚未帶永久 Club_ID，改屬性後不可另插一列；
+ * 以舊名稱吸收並寫入同一 Club_ID。
+ */
+if(!rowId && oldName && row.name===oldName) return true;
+return false;
+}
+return !!(oldName && row.name===oldName);
+}
 function patchList(list, allowInsert){
 const rows=Array.isArray(list)?list.slice():[];
 let found=null;
-const next=rows.map(function(row){
-const match=permanentClubId
-? clubPermanentId_(row)===permanentClubId
-: (oldName && row.name===oldName);
-if(!match) return row;
+const next=[];
+rows.forEach(function(row){
+if(!rowMatchesSavedClub_(row)){
+next.push(row);
+return;
+}
+if(found){
+/* 同 Club_ID／同舊名殘列只保留一筆 */
+return;
+}
 found=patchClubRowById_(row, clubName, category, permanentClubId);
-return found;
+next.push(found);
 });
 if(!found && allowInsert){
 found={
@@ -9405,14 +9423,20 @@ toast("✅ 社團資料已儲存");
 }
 else{
 toast("✅ 社團資料已儲存");
+}
+/*
+ * 本地已依 Club_ID 更新後仍背景重讀；較早發出的名單請求受 clubListSeq 擋下，
+ * 不可把舊屬性列蓋回或與新列並存。
+ */
 refreshClubListsAfterSave_(seq, tokenAtStart).then(function(result){
 if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")) return;
 if(result && result.stale) return;
 if(!result || result.ok!==true){
+if(!listPatched){
 toast("已儲存，清單尚未更新。請重新載入社團清單，不要再次送出儲存。");
 }
-});
 }
+});
 }
 catch(e){
 if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
