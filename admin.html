@@ -1117,6 +1117,7 @@ onclick="closeModal('clubModal')"
 </button>
 
 <button
+id="clubSaveBtn"
 class="btn btn-primary"
 onclick="saveClub()"
 >
@@ -1388,7 +1389,10 @@ bindings:[],
 clouds:[],
 eventConfig:null,
 eventScreenVersion:null,
-busy:false
+busy:false,
+clubSaveSeq:0,
+clubSaveBusy:false,
+judgeListSeq:0
 };
 // 與頁面內 lexical S 同一物件，供預覽腳本／除錯寫入 clubs 等狀態
 window.S = S;
@@ -3597,9 +3601,55 @@ j.judgeId ||
 
 }
 
+function bumpJudgeListSeq_(){
+S.judgeListSeq=(Number(S.judgeListSeq)||0)+1;
+return Number(S.judgeListSeq);
+}
+
+function beginJudgeListLoad_(){
+return {
+seq:bumpJudgeListSeq_(),
+token:String(S.token||"")
+};
+}
+
+function judgeListLoadLive_(loadId){
+return !!(loadId &&
+Number(loadId.seq)===Number(S.judgeListSeq||0) &&
+String(loadId.token||"")===String(S.token||""));
+}
+
+function applySavedJudgeToList_(saved){
+bumpJudgeListSeq_();
+if(!saved || typeof saved!=="object") return null;
+const id=String(judgeIdOf(saved)||"");
+if(!id) return null;
+const rows=Array.isArray(S.judges)?S.judges.slice():[];
+let found=false;
+const next=rows.map(function(row){
+if(String(judgeIdOf(row)||"")===id){
+found=true;
+return Object.assign({}, row, saved);
+}
+return row;
+});
+if(!found) next.push(saved);
+S.judges=next;
+const stat=$("statJudges");
+if(stat) stat.textContent=S.judges.length;
+const meta=$("judgeMeta");
+if(meta){
+const sectionCount=Array.isArray(S.availableScoreSections)?S.availableScoreSections.length:0;
+meta.textContent=`${S.judges.length} 位評審｜可分配 ${sectionCount} 個評分大項`;
+}
+return saved;
+}
+
 async function loadJudges(
 preferredJudgeId=""
 ){
+
+const loadId=beginJudgeListLoad_();
 
 try{
 
@@ -3610,6 +3660,8 @@ const r =
 await api(
 "adminListJudges"
 );
+
+if(!judgeListLoadLive_(loadId)) return;
 
 if(
 unauthorized(r)
@@ -3626,6 +3678,8 @@ r.message ||
 );
 
 }
+
+if(!judgeListLoadLive_(loadId)) return;
 
 S.judges =
 Array.isArray(
@@ -3680,6 +3734,8 @@ renderJudgeExportOptions();
 }
 catch(e){
 
+if(!judgeListLoadLive_(loadId)) return;
+
 $("judgeList").innerHTML =
 `<div class="state">
 ⚠️ ${esc(e.message)}
@@ -3688,8 +3744,10 @@ $("judgeList").innerHTML =
 }
 finally{
 
+if(judgeListLoadLive_(loadId)){
 $("judgeManageSelect").disabled =
 false;
+}
 
 }
 
@@ -4185,15 +4243,65 @@ r.message ||
 
 }
 
+if(
+Array.isArray(
+r.availableScoreSections
+)
+){
+
+S.availableScoreSections =
+r.availableScoreSections;
+
+}
+
+const savedJudge =
+r.judge &&
+judgeIdOf(r.judge)
+?
+applySavedJudgeToList_(
+r.judge
+)
+:
+null;
+
 closeModal(
 "judgeModal"
 );
 
-toast(
-"✅ 評審資料與權限已儲存"
+const preferredId =
+id ||
+(
+savedJudge
+? judgeIdOf(
+savedJudge
+)
+: ""
 );
 
+if(savedJudge){
+
+if(preferredId){
+
+$("judgeManageSelect").value =
+String(
+preferredId
+);
+
+}
+
+renderJudgeManageOptions(
+preferredId
+);
+
+renderJudges();
+
+renderJudgeExportOptions();
+
+}
+else{
+
 await loadJudges(
+preferredId ||
 id
 );
 
@@ -4221,6 +4329,12 @@ renderJudges();
 }
 
 }
+
+}
+
+toast(
+"✅ 評審資料與權限已儲存"
+);
 
 await loadJudgeProgress();
 await loadScoreAggregation();
@@ -9094,78 +9208,154 @@ openModal(
 
 }
 
+function clubPermanentId_(club){
+return String((club&&(club.permanentClubId||club.clubId))||"").trim().toUpperCase();
+}
+
+function patchClubRowById_(row, clubName, category, permanentClubId){
+return Object.assign({}, row||{}, {
+name:clubName,
+category:category,
+permanentClubId:permanentClubId||clubPermanentId_(row)||"",
+active:row&&row.active===false?false:true
+});
+}
+
+function clubMatchesCurrentSearch_(club){
+const q=String(($("clubSearch")&&$("clubSearch").value)||"").trim().toLowerCase();
+if(!q) return true;
+return `${club.name||""} ${club.category||""}`.toLowerCase().includes(q);
+}
+
+function applySavedClubToList_(oldName, clubName, category, saved){
+const fromSaved=clubPermanentId_(saved);
+const existing=(Array.isArray(S.clubs)?S.clubs:[]).find(function(row){
+return oldName && row.name===oldName;
+});
+const permanentClubId=fromSaved||clubPermanentId_(existing);
+function patchList(list, allowInsert){
+const rows=Array.isArray(list)?list.slice():[];
+let found=null;
+const next=rows.map(function(row){
+const match=permanentClubId
+? clubPermanentId_(row)===permanentClubId
+: (oldName && row.name===oldName);
+if(!match) return row;
+found=patchClubRowById_(row, clubName, category, permanentClubId);
+return found;
+});
+if(!found && allowInsert){
+found={
+name:clubName,
+category:category,
+permanentClubId:permanentClubId,
+active:true
+};
+next.push(found);
+}
+return {list:next, found:found};
+}
+const managed=patchList(S.clubs, true);
+S.clubs=managed.list;
+if(Array.isArray(S.studentQueryClubs) && S.studentQueryClubs.length){
+const query=patchList(S.studentQueryClubs, false);
+S.studentQueryClubs=query.list;
+}
+return managed.found||{
+name:clubName,
+category:category,
+permanentClubId:permanentClubId
+};
+}
+
+function clubSaveCanPatchLocally_(oldName, saved){
+if(clubPermanentId_(saved)) return true;
+if(oldName && (Array.isArray(S.clubs)?S.clubs:[]).some(function(row){ return row.name===oldName; })){
+return true;
+}
+return false;
+}
+
 async function saveClub(){
-
-const oldName =
-$("clubOldName").value;
-
-const clubName =
-$("clubName").value.trim();
-
-const category =
-$("clubCategory").value;
-
+if(S.clubSaveBusy) return;
+const seq=++S.clubSaveSeq;
+const tokenAtStart=String(S.token||"");
+const oldName=$("clubOldName").value;
+const clubName=$("clubName").value.trim();
+const category=$("clubCategory").value;
+const saveBtn=$("clubSaveBtn");
+const listEl=$("clubList");
+const listScroll=listEl?listEl.scrollTop:0;
+const pageScroll=window.scrollY||0;
+$("clubError").textContent="";
+S.clubSaveBusy=true;
+if(saveBtn){
+saveBtn.disabled=true;
+}
 try{
-
-const r =
-oldName
-?
-await api(
-"adminUpdateClub",
-{
-oldName,
-clubName,
-category
-}
-)
-:
-await api(
-"adminAddClub",
-{
-clubName,
-category
-}
-);
-
-if(
-unauthorized(r)
-)
+const r=oldName
+? await api("adminUpdateClub",{oldName,clubName,category})
+: await api("adminAddClub",{clubName,category});
+if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
 return;
-
-if(
-!r.success
-){
-
-throw new Error(
-r.message ||
-"儲存失敗"
-);
-
 }
-
-closeModal(
-"clubModal"
-);
-
+if(unauthorized(r)) return;
+if(!r.success){
+throw new Error(r.message||"儲存失敗");
+}
+const saved=Object.assign({}, r.club||{}, {
+permanentClubId:clubPermanentId_(r.club)||String(r.permanentClubId||"").trim().toUpperCase(),
+legacyClubId:String((r.club&&r.club.legacyClubId)||r.legacyClubId||"").trim()
+});
+let patched=null;
+if(clubSaveCanPatchLocally_(oldName, saved)){
+patched=applySavedClubToList_(oldName, clubName, category, saved);
+$("statClubs").textContent=S.clubs.length;
+$("clubMeta").textContent=`${S.clubs.length} 個社團`;
+closeModal("clubModal");
+renderClubs();
+if(typeof initClubStudentSelectors==="function"){
+initClubStudentSelectors();
+}
+if(listEl) listEl.scrollTop=listScroll;
+window.scrollTo(0, pageScroll);
+if(patched && !clubMatchesCurrentSearch_(patched)){
+toast("✅ 社團已改為「"+patched.category+"／"+patched.name+"」，已從目前搜尋結果移出");
+}
+else{
+toast("✅ 社團資料已儲存");
+}
+}
+else{
+closeModal("clubModal");
 await Promise.all([
 loadClubs(),
 loadClouds(),
 loadForms()
 ]);
-
-await loadScoreAggregation();
-await loadRanking();
-
-toast(
-"✅ 社團資料已儲存"
-);
-
+if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
+return;
+}
+toast("✅ 社團資料已儲存");
+}
 }
 catch(e){
-
-$("clubError").textContent=
-e.message;
-
+if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
+return;
+}
+const message=String(e&&e.message||"");
+if(/逾時|Failed to fetch|網路|unconfirmed|未確認/i.test(message)){
+$("clubError").textContent="儲存結果不明，請先核對目前清單，不要重複送出。";
+}
+else{
+$("clubError").textContent=message||"儲存失敗";
+}
+}
+finally{
+if(seq===S.clubSaveSeq){
+S.clubSaveBusy=false;
+if(saveBtn) saveBtn.disabled=false;
+}
 }
 
 }
