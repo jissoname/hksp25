@@ -862,12 +862,17 @@ onchange="renderForms()"
 </select>
 
 <button
+id="formSyncBtn"
 class="btn"
 onclick="syncForms()"
 >
 🔄 立即同步
 </button>
 
+</div>
+
+<div id="formSyncStatus" class="notice" style="margin:0 0 10px">
+尚未讀取同步狀態
 </div>
 
 <div id="formList" class="list">
@@ -1385,6 +1390,19 @@ judgeConfirmationExport:null,
 clubs:[],
 studentQueryClubs:[],
 forms:[],
+formLastSyncAt:null,
+formLastSyncAtTaipei:null,
+formSyncUi:"idle",
+formSyncError:"",
+formCatchUpBusy:false,
+formCatchUpSeq:0,
+loginGen:0,
+formSyncWatchEpoch:0,
+formSyncWatchTimer:null,
+formSyncWatchBusy:false,
+formSyncWatchBusyRequestId:0,
+formSyncWatchRequestSeq:0,
+formSyncWatchVisibilityBound:false,
 bindings:[],
 clouds:[],
 eventConfig:null,
@@ -1652,7 +1670,45 @@ return false;
 
 }
 
+function formOpIdentity_(){
+return {
+loginGen:Number(S.loginGen||0),
+token:String(S.token||""),
+watchEpoch:Number(S.formSyncWatchEpoch||0)
+};
+}
+
+function formOpLive_(id){
+return !!(
+id
+&& Number(id.loginGen)===Number(S.loginGen||0)
+&& String(id.token||"")===String(S.token||"")
+&& id.token
+);
+}
+
+function formWatchLive_(id){
+return formOpLive_(id)
+&& Number(id.watchEpoch)===Number(S.formSyncWatchEpoch||0);
+}
+
+function invalidateFormSessionOps_(){
+stopFormSyncWatch_({clearBusy:true});
+S.formCatchUpSeq=Number(S.formCatchUpSeq||0)+1;
+S.loginGen=Number(S.loginGen||0)+1;
+S.formCatchUpBusy=false;
+if(
+S.formSyncUi==="syncing"
+|| S.formSyncUi==="checking"
+|| S.formSyncUi==="reading"
+){
+S.formSyncUi="idle";
+}
+}
+
 function clearSession(){
+
+invalidateFormSessionOps_();
 
 S.token=null;
 
@@ -1690,10 +1746,21 @@ b.textContent=
 
 $("loginError").textContent="";
 
+window.__adminBootMetrics={
+marks:{loginClick:Date.now(), t0:Date.now()},
+events:[{key:"loginClick", at:new Date().toISOString(), msFromStart:0}],
+mode:"login"
+};
+markAdminBoot_("loginClick");
+
 const r =
 await post({
 action:"adminLogin",
-password:p
+password:p,
+includeFormSubmissions:true
+});
+markAdminBoot_("loginOk", {
+attachedForms:!!(r && r.formSubmissions && r.formSubmissions.success)
 });
 
 $("adminPassword").value="";
@@ -1768,6 +1835,12 @@ toast(
 
 async function init(){
 
+window.__adminBootMetrics={
+marks:{pageOpen:Date.now(), t0:Date.now()},
+events:[{key:"pageOpen", at:new Date().toISOString(), msFromStart:0}],
+mode:"unknown"
+};
+
 const t =
 sessionStorage.getItem(
 SESSION_KEY
@@ -1775,38 +1848,30 @@ SESSION_KEY
 
 if(!t){
 
+window.__adminBootMetrics.mode="needsLogin";
 showLogin();
 
 return;
 
 }
 
+window.__adminBootMetrics.mode="sessionRestore";
 S.token=t;
 
 showApp();
+markAdminBoot_("shellShown");
+markAdminBoot_("operable");
 
 if(typeof clearServerActivityForNewLogin==="function") clearServerActivityForNewLogin();
 
 try{
 
-const clubsPromise =
-api(
-"adminListClubs"
-);
-
-const activityPromise =
-loadServerStudentActivity();
-
-const r =
-await clubsPromise;
-
-if(
-unauthorized(r)
-)return;
-
-await refreshAllData({reuseActivity:true});
-
-await activityPromise;
+refreshAllData().catch(function(){
+clearSession();
+showLogin();
+$("loginError").textContent=
+"登入已失效，請重新登入。";
+});
 
 }
 catch(e){
@@ -1831,6 +1896,8 @@ async function acceptAdminLogin(loginResult){
 
 if(typeof invalidateHandoverView==="function") invalidateHandoverView();
 
+invalidateFormSessionOps_();
+
 S.token =
 loginResult.sessionToken;
 
@@ -1840,25 +1907,56 @@ S.token
 );
 
 showApp();
+markAdminBoot_("shellShown");
+markAdminBoot_("operable");
 
 if(typeof clearServerActivityForNewLogin==="function") clearServerActivityForNewLogin();
 
-await refreshAllData();
+let formsFromLogin=false;
+if(
+loginResult &&
+loginResult.formSubmissions &&
+loginResult.formSubmissions.success===true
+){
+applyFormListSuccess_(loginResult.formSubmissions, "idle");
+markAdminBoot_("formsReady", {
+source:"loginAttach",
+lastSyncAt:S.formLastSyncAt||null,
+lastSyncAtTaipei:S.formLastSyncAtTaipei||null,
+formsCount:Array.isArray(S.forms)?S.forms.length:0
+});
+formsFromLogin=true;
+scheduleFormCatchUp_();
+}
 
 toast(
 "✅ 登入成功"
 );
 
+refreshAllData({
+skipForms:formsFromLogin
+}).catch(function(){});
+
 }
 
 async function refreshAllData(opts){
 
+opts=opts||{};
 if(!S.token)return;
 
 const activityPromise =
 loadServerStudentActivity(opts);
 
-const basicJobs = [
+const formsPromise =
+opts.skipForms
+? Promise.resolve(true)
+: loadForms()
+.then(function(ok){
+if(ok) scheduleFormCatchUp_();
+return ok;
+});
+
+const criticalJobs = [
 
 loadScoreConfig(),
 
@@ -1868,37 +1966,19 @@ loadClubs(),
 
 loadEvent(),
 
-loadForms(),
-
-loadBindings(),
-
-loadClouds()
+formsPromise
 
 ];
 
-await Promise.allSettled(
-basicJobs
-);
-
-/*
- * 進度、彙整與排名都會大量讀取評分資料。
- * 改為依序執行，避免同時啟動三個重型 Apps Script 運算而互相拖慢。
- */
-await Promise.allSettled([
-loadJudgeProgress()
-]);
-
-await Promise.allSettled([
-loadScoreAggregation()
-]);
-
-await Promise.allSettled([
-loadRanking()
-]);
-
+Promise.allSettled(
+criticalJobs
+).then(function(){
+markAdminBoot_("criticalSettled");
+if(!(window.__adminBootMetrics && window.__adminBootMetrics.marks && window.__adminBootMetrics.marks.operable)){
+markAdminBoot_("operable");
+}
 $("lastRefresh").textContent=
 "最後同步："+
-
 new Intl.DateTimeFormat(
 "zh-TW",
 {
@@ -1911,8 +1991,25 @@ hour12:false
 .format(
 new Date()
 );
+if(typeof startAdminChangeFeed_==="function"){
+startAdminChangeFeed_();
+}
+}).catch(function(){});
 
-if(activityPromise) await activityPromise;
+Promise.allSettled([
+loadBindings(),
+loadClouds()
+]).catch(function(){});
+
+Promise.resolve()
+.then(function(){ return loadJudgeProgress(); })
+.then(function(){ return loadScoreAggregation(); })
+.then(function(){ return loadRanking(); })
+.catch(function(){});
+
+if(activityPromise){
+activityPromise.catch(function(){});
+}
 
 }
 
@@ -9778,7 +9875,76 @@ hour12:false
    FORM
    ============================================================ */
 
-async function loadForms(){
+function formSyncStampText_(){
+return S.formLastSyncAtTaipei ||
+(
+S.formLastSyncAt
+?
+formatDate(S.formLastSyncAt)
+:
+"尚無"
+);
+}
+
+function paintFormPanelMeta_(counts, uiState, errorMessage){
+const forms=Array.isArray(S.forms)?S.forms:[];
+const done=counts && counts.done!=null
+? counts.done
+: forms.filter(function(x){ return x.status==="submitted"; }).length;
+const pending=counts && counts.pending!=null
+? counts.pending
+: forms.filter(function(x){ return x.status==="pending"; }).length;
+const duplicate=counts && counts.duplicate!=null
+? counts.duplicate
+: forms.filter(function(x){ return x.status==="duplicate"; }).length;
+const total=forms.length;
+$("statForms").textContent=`${done}/${total}`;
+$("formMeta").textContent=
+`已完成 ${done}｜待填 ${pending}｜重複 ${duplicate}｜最後成功同步 ${formSyncStampText_()}`;
+const statusEl=$("formSyncStatus");
+const btn=$("formSyncBtn");
+S.formSyncUi=uiState||S.formSyncUi||"idle";
+if(statusEl){
+if(S.formSyncUi==="syncing"){
+statusEl.textContent="正在同步表單回覆…";
+}else if(S.formSyncUi==="reading"){
+statusEl.textContent="正在讀取最新表單進度…";
+}else if(S.formSyncUi==="checking"){
+statusEl.textContent="背景檢查是否需補同步…｜畫面已顯示上次成功資料 "+formSyncStampText_();
+}else if(S.formSyncUi==="complete"){
+statusEl.textContent="同步完成（後端已確認且畫面已套用）｜最後成功同步 "+formSyncStampText_();
+}else if(S.formSyncUi==="failed"){
+statusEl.textContent="同步失敗："+(errorMessage||S.formSyncError||"請重試")+"｜仍顯示原進度與原同步時間 "+formSyncStampText_();
+}else{
+statusEl.textContent="最後成功同步 "+formSyncStampText_()+"｜登入／開頁先讀最新結果；有待同步時背景補同步；送出觸發／兩小時排程／手動同步為備援";
+}
+}
+if(btn){
+btn.disabled=S.formSyncUi==="syncing"||S.formSyncUi==="reading"||S.formSyncUi==="checking";
+btn.textContent=S.formSyncUi==="failed"?"🔄 重試同步":"🔄 立即同步";
+}
+}
+
+function applyFormListSuccess_(r, uiState){
+S.forms=Array.isArray(r.clubs)?r.clubs:[];
+if(r.lastSyncAt) S.formLastSyncAt=r.lastSyncAt;
+if(r.lastSyncAtTaipei) S.formLastSyncAtTaipei=r.lastSyncAtTaipei;
+S.formSyncError="";
+const done=r.submittedCount ?? S.forms.filter(function(x){ return x.status==="submitted"; }).length;
+paintFormPanelMeta_({
+done:done,
+pending:r.pendingCount??0,
+duplicate:r.duplicateCount??0
+}, uiState||"complete");
+renderForms();
+}
+
+async function loadForms(opts){
+opts=opts||{};
+const id=opts.opId||formOpIdentity_();
+if(!formOpLive_(id)) return false;
+const previousUi=S.formSyncUi;
+paintFormPanelMeta_(null, "reading");
 
 try{
 
@@ -9787,10 +9953,14 @@ await api(
 "adminListFormSubmissions"
 );
 
+if(!formOpLive_(id)) return false;
+
 if(
 unauthorized(r)
-)
-return;
+){
+paintFormPanelMeta_(null, previousUi==="failed"?"failed":"idle");
+return false;
+}
 
 if(
 !r.success
@@ -9803,41 +9973,203 @@ r.message ||
 
 }
 
-S.forms =
-Array.isArray(
-r.clubs
-)
-?
-r.clubs
-:
-[];
-
-const done =
-r.submittedCount ??
-S.forms.filter(
-x=>
-x.status==="submitted"
-)
-.length;
-
-$("statForms").textContent=
-`${done}/${S.forms.length}`;
-
-$("formMeta").textContent=
-`已完成 ${done}｜待填 ${r.pendingCount??0}｜重複 ${r.duplicateCount??0}`;
-
-renderForms();
+applyFormListSuccess_(
+r,
+previousUi==="syncing"?"complete":"idle"
+);
+markAdminBoot_("formsReady", {
+lastSyncAt:S.formLastSyncAt||null,
+lastSyncAtTaipei:S.formLastSyncAtTaipei||null,
+formsCount:Array.isArray(S.forms)?S.forms.length:0
+});
+markAdminBoot_("operable");
+return true;
 
 }
 catch(e){
+if(!formOpLive_(id)) return false;
 
+S.formSyncError=String(e&&e.message||"無法取得表單進度");
+paintFormPanelMeta_(null, "failed", S.formSyncError);
+if(!Array.isArray(S.forms) || !S.forms.length){
 $("formList").innerHTML=
 `<div class="state">
-⚠️ ${esc(e.message)}
+⚠️ ${esc(S.formSyncError)}
 </div>`;
+}
+return false;
 
 }
 
+}
+
+function markAdminBoot_(key, extra){
+try{
+if(!window.__adminBootMetrics){
+window.__adminBootMetrics={marks:{}, events:[]};
+}
+const now=Date.now();
+const m=window.__adminBootMetrics;
+if(!m.marks[key]) m.marks[key]=now;
+const t0=m.marks.t0||m.marks.loginClick||m.marks.pageOpen||now;
+const row=Object.assign({
+key:key,
+at:new Date().toISOString(),
+msFromStart:now-t0
+}, extra||{});
+m.events.push(row);
+m.latest=row;
+}catch(error){}
+}
+
+function scheduleFormCatchUp_(){
+const seq=++S.formCatchUpSeq;
+Promise.resolve()
+.then(function(){
+return maybeBackgroundFormCatchUp_(seq);
+})
+.catch(function(){});
+scheduleFormSyncWatch_();
+}
+
+/*
+ * 正式無 change-feed：平常只查同步時間戳（adminGetFormSyncStamp），
+ * lastSyncAt 前進才重讀表單清單。同一頁不重疊請求；隱藏分頁／登出停查。
+ * 輪詢／補同步／同步後重讀皆綁定發出當下的 loginGen＋session；await 後失效則停。
+ * 隱藏時 bump epoch 並停排程，但保留在途 busy；由發出該輪的 requestId 在 finally 自解占用。
+ */
+function stopFormSyncWatch_(opts){
+opts=opts||{};
+S.formSyncWatchEpoch=Number(S.formSyncWatchEpoch||0)+1;
+if(S.formSyncWatchTimer){
+clearInterval(S.formSyncWatchTimer);
+S.formSyncWatchTimer=null;
+}
+if(opts.clearBusy===true){
+S.formSyncWatchBusy=false;
+S.formSyncWatchBusyRequestId=0;
+}
+}
+
+function scheduleFormSyncWatch_(){
+if(!S.token) return;
+if(S.formSyncWatchTimer) return;
+if(!S.formSyncWatchVisibilityBound && typeof document!=="undefined"){
+S.formSyncWatchVisibilityBound=true;
+document.addEventListener("visibilitychange", function(){
+if(document.hidden){
+stopFormSyncWatch_();
+}else if(S.token){
+scheduleFormSyncWatch_();
+}
+});
+}
+if(typeof document!=="undefined" && document.hidden) return;
+S.formSyncWatchTimer=setInterval(function(){
+maybeReloadFormsIfSyncAdvanced_();
+}, 3000);
+}
+
+async function maybeReloadFormsIfSyncAdvanced_(){
+if(!S.token) return;
+if(S.formSyncWatchBusy) return;
+if(S.formCatchUpBusy) return;
+if(S.formSyncUi==="syncing"||S.formSyncUi==="reading"||S.formSyncUi==="checking") return;
+if(typeof document!=="undefined" && document.hidden){
+stopFormSyncWatch_();
+return;
+}
+const id=formOpIdentity_();
+if(!formWatchLive_(id)) return;
+const requestId=++S.formSyncWatchRequestSeq;
+S.formSyncWatchBusy=true;
+S.formSyncWatchBusyRequestId=requestId;
+try{
+const stamp=await api("adminGetFormSyncStamp");
+if(!formWatchLive_(id)) return;
+if(!stamp || stamp.success!==true){
+if(stamp && unauthorized(stamp)) return;
+return;
+}
+const next=stamp.lastSyncAt?String(stamp.lastSyncAt):"";
+const prev=S.formLastSyncAt?String(S.formLastSyncAt):"";
+if(!next) return;
+if(prev && !(next>prev)) return;
+const r=await api("adminListFormSubmissions");
+if(!formWatchLive_(id)) return;
+if(!r || r.success!==true) return;
+if(unauthorized(r)) return;
+applyFormListSuccess_(r, "idle");
+markAdminBoot_("formsLiveApplied", {
+lastSyncAt:S.formLastSyncAt||null,
+via:"stampThenList"
+});
+}catch(error){
+}finally{
+if(Number(S.formSyncWatchBusyRequestId)===Number(requestId)){
+S.formSyncWatchBusy=false;
+S.formSyncWatchBusyRequestId=0;
+}
+}
+}
+
+async function maybeBackgroundFormCatchUp_(seq){
+if(seq!=null && seq!==S.formCatchUpSeq) return false;
+if(S.formCatchUpBusy) return false;
+if(!S.token) return false;
+const id=formOpIdentity_();
+if(!formOpLive_(id)) return false;
+S.formCatchUpBusy=true;
+const previousUi=S.formSyncUi;
+paintFormPanelMeta_(null, "checking");
+markAdminBoot_("formCatchUpStart");
+try{
+const check=await api("adminCheckFormSubmissions");
+if(!formOpLive_(id) || (seq!=null && seq!==S.formCatchUpSeq)) return false;
+if(unauthorized(check)){
+paintFormPanelMeta_(null, previousUi==="failed"?"failed":"idle");
+return false;
+}
+if(!check || check.success!==true){
+const code=String((check && (check.error||check.message))||"");
+if(/FORM_CHECK_NOT_AVAILABLE|UNKNOWN|unknown action|不支援|找不到/i.test(code)){
+paintFormPanelMeta_(null, "idle");
+markAdminBoot_("formCatchUpUnavailable", {code:code.slice(0,120)});
+return false;
+}
+throw new Error((check && check.message) || "無法檢查表單同步狀態");
+}
+markAdminBoot_("formCatchUpChecked", {
+needsSync:check.needsSync===true,
+reason:check.reason||null,
+liveResponseCount:check.liveResponseCount,
+storedTotalFormResponses:check.storedTotalFormResponses
+});
+if(check.needsSync!==true){
+paintFormPanelMeta_(null, "idle");
+markAdminBoot_("formCatchUpSkippedCurrent");
+return true;
+}
+const synced=await syncForms({
+background:true,
+force:false,
+catchUpSeq:seq,
+opId:id
+});
+if(!formOpLive_(id) || (seq!=null && seq!==S.formCatchUpSeq)) return false;
+markAdminBoot_("formCatchUpDone", {synced:synced===true});
+return synced===true;
+}catch(e){
+if(!formOpLive_(id) || (seq!=null && seq!==S.formCatchUpSeq)) return false;
+S.formSyncError=String(e&&e.message||"背景補同步失敗");
+paintFormPanelMeta_(null, "failed", S.formSyncError);
+markAdminBoot_("formCatchUpFailed", {message:S.formSyncError});
+return false;
+}finally{
+if(formOpLive_(id) && (seq==null || seq===S.formCatchUpSeq)){
+S.formCatchUpBusy=false;
+}
+}
 }
 
 function renderForms(){
@@ -9945,53 +10277,69 @@ x.submittedAt
 
 }
 
-async function syncForms(){
+async function syncForms(opts){
+opts=opts||{};
+const background=opts.background===true;
+const id=opts.opId||formOpIdentity_();
+if(!formOpLive_(id)) return false;
+if(opts.catchUpSeq!=null && opts.catchUpSeq!==S.formCatchUpSeq) return false;
+/*
+ * 未傳 force → 不帶 force 欄位（完整同步）。
+ * 僅明確 force:false（背景補同步）或 force:true 才寫入 payload。
+ */
+const payload={};
+if(opts.force===false) payload.force=false;
+else if(opts.force===true) payload.force=true;
+const previousForms=Array.isArray(S.forms)?S.forms.slice():[];
+const previousAt=S.formLastSyncAt;
+const previousTaipei=S.formLastSyncAtTaipei;
+S.formSyncUi="syncing";
+S.formSyncError="";
+paintFormPanelMeta_(null, "syncing");
+if(!background) toast("正在同步 Google Form...");
 
-toast(
-"正在同步 Google Form..."
-);
-
-const r =
-await api(
-"adminSyncFormSubmissions"
-);
-
-if(
-unauthorized(r)
-)
-return;
-
-if(
-!r.success
-){
-
-toast(
-"❌ "+
-(
-r.message ||
-"同步失敗"
-)
-);
-
-return;
-
+try{
+const r=await api("adminSyncFormSubmissions", payload);
+if(!formOpLive_(id) || (opts.catchUpSeq!=null && opts.catchUpSeq!==S.formCatchUpSeq)) return false;
+if(unauthorized(r)){
+S.forms=previousForms;
+S.formLastSyncAt=previousAt;
+S.formLastSyncAtTaipei=previousTaipei;
+paintFormPanelMeta_(null, "failed", "未授權");
+return false;
 }
-
-S.forms =
-Array.isArray(
-r.clubs
-)
-?
-r.clubs
-:
-[];
-
-await loadForms();
-
-toast(
-"✅ Google Form 已同步"
-);
-
+if(!r.success){
+throw new Error(r.message || "同步失敗");
+}
+if(r.lastSyncAt) S.formLastSyncAt=r.lastSyncAt;
+if(r.lastSyncAtTaipei) S.formLastSyncAtTaipei=r.lastSyncAtTaipei;
+S.formSyncUi="syncing";
+const applied=await loadForms({opId:id});
+if(!formOpLive_(id) || (opts.catchUpSeq!=null && opts.catchUpSeq!==S.formCatchUpSeq)) return false;
+if(!applied){
+S.forms=previousForms.length?previousForms:S.forms;
+S.formLastSyncAt=previousAt;
+S.formLastSyncAtTaipei=previousTaipei;
+S.formSyncError=S.formSyncError||"同步後讀取失敗";
+paintFormPanelMeta_(null, "failed", S.formSyncError);
+if(!background) toast("❌ "+S.formSyncError);
+return false;
+}
+paintFormPanelMeta_(null, "complete");
+if(!background){
+toast(r.syncResult && r.syncResult.skipped ? "✅ 表單已是最新（略過重掃）" : "✅ Google Form 已同步");
+}
+return true;
+}catch(e){
+if(!formOpLive_(id) || (opts.catchUpSeq!=null && opts.catchUpSeq!==S.formCatchUpSeq)) return false;
+S.forms=previousForms;
+S.formLastSyncAt=previousAt;
+S.formLastSyncAtTaipei=previousTaipei;
+S.formSyncError=String(e&&e.message||"同步失敗");
+paintFormPanelMeta_(null, "failed", S.formSyncError);
+if(!background) toast("❌ "+S.formSyncError);
+return false;
+}
 }
 
 /* ============================================================
