@@ -1392,6 +1392,7 @@ eventScreenVersion:null,
 busy:false,
 clubSaveSeq:0,
 clubSaveBusy:false,
+clubListSeq:0,
 judgeListSeq:0
 };
 // 與頁面內 lexical S 同一物件，供預覽腳本／除錯寫入 clubs 等狀態
@@ -8065,7 +8066,29 @@ oldText;
    CLUBS
    ============================================================ */
 
-async function loadClubs(){
+function bumpClubListSeq_(){
+S.clubListSeq=(Number(S.clubListSeq)||0)+1;
+return Number(S.clubListSeq);
+}
+
+function beginClubListLoad_(){
+return {
+seq:bumpClubListSeq_(),
+token:String(S.token||"")
+};
+}
+
+function clubListLoadLive_(loadId){
+return !!(loadId &&
+Number(loadId.seq)===Number(S.clubListSeq||0) &&
+String(loadId.token||"")===String(S.token||""));
+}
+
+async function loadClubs(existingLoadId){
+
+const loadId =
+existingLoadId ||
+beginClubListLoad_();
 
 try{
 
@@ -8074,10 +8097,12 @@ await api(
 "adminListClubs"
 );
 
+if(!clubListLoadLive_(loadId)) return false;
+
 if(
 unauthorized(r)
 )
-return;
+return false;
 
 if(
 !r.success
@@ -8089,6 +8114,8 @@ r.message ||
 );
 
 }
+
+if(!clubListLoadLive_(loadId)) return false;
 
 S.clubs =
 Array.isArray(
@@ -8117,14 +8144,18 @@ $("clubMeta").textContent =
 
 renderClubs();
 initClubStudentSelectors();
+return true;
 
 }
 catch(e){
+
+if(!clubListLoadLive_(loadId)) return false;
 
 $("clubList").innerHTML=
 `<div class="state">
 ⚠️ ${esc(e.message)}
 </div>`;
+return false;
 
 }
 
@@ -9228,6 +9259,7 @@ return `${club.name||""} ${club.category||""}`.toLowerCase().includes(q);
 }
 
 function applySavedClubToList_(oldName, clubName, category, saved){
+bumpClubListSeq_();
 const fromSaved=clubPermanentId_(saved);
 const existing=(Array.isArray(S.clubs)?S.clubs:[]).find(function(row){
 return oldName && row.name===oldName;
@@ -9276,6 +9308,39 @@ return true;
 return false;
 }
 
+function finishClubSaveControls_(seq, saveBtn, prevLabel){
+if(seq!==S.clubSaveSeq) return;
+S.clubSaveBusy=false;
+if(saveBtn){
+saveBtn.disabled=false;
+if(prevLabel!=null) saveBtn.textContent=prevLabel;
+}
+}
+
+async function refreshClubListsAfterSave_(saveSeq, tokenAtStart){
+if(saveSeq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
+return {ok:false, stale:true};
+}
+const loadId=beginClubListLoad_();
+try{
+const clubOk=await loadClubs(loadId);
+await Promise.all([
+loadClouds(),
+loadForms()
+]);
+if(saveSeq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
+return {ok:false, stale:true};
+}
+if(!clubListLoadLive_(loadId)){
+return {ok:false, stale:true};
+}
+return {ok:clubOk!==false, stale:false};
+}
+catch(e){
+return {ok:false, stale:false, error:e};
+}
+}
+
 async function saveClub(){
 if(S.clubSaveBusy) return;
 const seq=++S.clubSaveSeq;
@@ -9284,6 +9349,7 @@ const oldName=$("clubOldName").value;
 const clubName=$("clubName").value.trim();
 const category=$("clubCategory").value;
 const saveBtn=$("clubSaveBtn");
+const prevLabel=saveBtn?String(saveBtn.textContent||"儲存"):"儲存";
 const listEl=$("clubList");
 const listScroll=listEl?listEl.scrollTop:0;
 const pageScroll=window.scrollY||0;
@@ -9291,7 +9357,9 @@ $("clubError").textContent="";
 S.clubSaveBusy=true;
 if(saveBtn){
 saveBtn.disabled=true;
+saveBtn.textContent="儲存中…";
 }
+let confirmedSuccess=false;
 try{
 const r=oldName
 ? await api("adminUpdateClub",{oldName,clubName,category})
@@ -9300,25 +9368,34 @@ if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
 return;
 }
 if(unauthorized(r)) return;
-if(!r.success){
-throw new Error(r.message||"儲存失敗");
+if(!r || r.success!==true){
+throw new Error((r&&r.message)||"儲存失敗");
 }
+confirmedSuccess=true;
 const saved=Object.assign({}, r.club||{}, {
 permanentClubId:clubPermanentId_(r.club)||String(r.permanentClubId||"").trim().toUpperCase(),
 legacyClubId:String((r.club&&r.club.legacyClubId)||r.legacyClubId||"").trim()
 });
 let patched=null;
+let listPatched=false;
 if(clubSaveCanPatchLocally_(oldName, saved)){
 patched=applySavedClubToList_(oldName, clubName, category, saved);
+listPatched=true;
 $("statClubs").textContent=S.clubs.length;
 $("clubMeta").textContent=`${S.clubs.length} 個社團`;
-closeModal("clubModal");
 renderClubs();
 if(typeof initClubStudentSelectors==="function"){
 initClubStudentSelectors();
 }
 if(listEl) listEl.scrollTop=listScroll;
 window.scrollTo(0, pageScroll);
+}
+/*
+ * 瀏覽器確認成功後立刻關窗解鎖；清單補讀不得卡住視窗或儲存按鈕。
+ */
+closeModal("clubModal");
+finishClubSaveControls_(seq, saveBtn, prevLabel);
+if(listPatched){
 if(patched && !clubMatchesCurrentSearch_(patched)){
 toast("✅ 社團已改為「"+patched.category+"／"+patched.name+"」，已從目前搜尋結果移出");
 }
@@ -9327,16 +9404,14 @@ toast("✅ 社團資料已儲存");
 }
 }
 else{
-closeModal("clubModal");
-await Promise.all([
-loadClubs(),
-loadClouds(),
-loadForms()
-]);
-if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
-return;
-}
 toast("✅ 社團資料已儲存");
+refreshClubListsAfterSave_(seq, tokenAtStart).then(function(result){
+if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")) return;
+if(result && result.stale) return;
+if(!result || result.ok!==true){
+toast("已儲存，清單尚未更新。請重新載入社團清單，不要再次送出儲存。");
+}
+});
 }
 }
 catch(e){
@@ -9344,17 +9419,16 @@ if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
 return;
 }
 const message=String(e&&e.message||"");
-if(/逾時|Failed to fetch|網路|unconfirmed|未確認/i.test(message)){
-$("clubError").textContent="儲存結果不明，請先核對目前清單，不要重複送出。";
+if(/逾時|Failed to fetch|網路|NetworkError|unconfirmed|未確認/i.test(message)){
+$("clubError").textContent="儲存結果未確認，請先核對清單";
 }
 else{
 $("clubError").textContent=message||"儲存失敗";
 }
 }
 finally{
-if(seq===S.clubSaveSeq){
-S.clubSaveBusy=false;
-if(saveBtn) saveBtn.disabled=false;
+if(!confirmedSuccess){
+finishClubSaveControls_(seq, saveBtn, prevLabel);
 }
 }
 
