@@ -1753,14 +1753,17 @@ mode:"login"
 };
 markAdminBoot_("loginClick");
 
+/*
+ * 登入請求只做身分驗證，不附帶表單清單。
+ * 表單進度改於可操作後背景讀取。
+ */
 const r =
 await post({
 action:"adminLogin",
-password:p,
-includeFormSubmissions:true
+password:p
 });
 markAdminBoot_("loginOk", {
-attachedForms:!!(r && r.formSubmissions && r.formSubmissions.success)
+attachedForms:false
 });
 
 $("adminPassword").value="";
@@ -1892,6 +1895,53 @@ document.addEventListener(
 init
 );
 
+function paintFormsLoading_(){
+paintFormPanelMeta_(null, "reading");
+const list=$("formList");
+if(list){
+list.innerHTML='<div class="state">載入中…</div>';
+}
+}
+
+function paintFormsLoadFailed_(message){
+S.formSyncError=String(message||"無法取得表單進度");
+paintFormPanelMeta_(null, "failed", S.formSyncError);
+const list=$("formList");
+if(list && (!Array.isArray(S.forms) || !S.forms.length)){
+list.innerHTML=
+`<div class="state">
+⚠️ ${esc(S.formSyncError)}
+<div style="margin-top:8px">
+<button class="btn" type="button" onclick="retryLoadForms_()">重試載入表單</button>
+</div>
+</div>`;
+}
+}
+
+function retryLoadForms_(){
+const id=formOpIdentity_();
+if(!formOpLive_(id)) return;
+paintFormsLoading_();
+loadForms({opId:id}).then(function(ok){
+if(!formOpLive_(id)) return;
+if(ok) scheduleFormCatchUp_();
+}).catch(function(){});
+}
+
+function startBackgroundFormsAfterLogin_(){
+const id=formOpIdentity_();
+if(!formOpLive_(id)) return;
+paintFormsLoading_();
+loadForms({opId:id}).then(function(ok){
+if(!formOpLive_(id)) return;
+if(ok){
+scheduleFormCatchUp_();
+}else{
+/* loadForms 已處理失敗 UI／重試；不阻塞管理台 */
+}
+}).catch(function(){});
+}
+
 async function acceptAdminLogin(loginResult){
 
 if(typeof invalidateHandoverView==="function") invalidateHandoverView();
@@ -1908,33 +1958,22 @@ S.token
 
 showApp();
 markAdminBoot_("shellShown");
+/*
+ * 身分驗證成功且管理台畫面已開＝可操作。
+ * 表單進度在背景載入；失敗不回退登入態。
+ */
 markAdminBoot_("operable");
 
 if(typeof clearServerActivityForNewLogin==="function") clearServerActivityForNewLogin();
 
-let formsFromLogin=false;
-if(
-loginResult &&
-loginResult.formSubmissions &&
-loginResult.formSubmissions.success===true
-){
-applyFormListSuccess_(loginResult.formSubmissions, "idle");
-markAdminBoot_("formsReady", {
-source:"loginAttach",
-lastSyncAt:S.formLastSyncAt||null,
-lastSyncAtTaipei:S.formLastSyncAtTaipei||null,
-formsCount:Array.isArray(S.forms)?S.forms.length:0
-});
-formsFromLogin=true;
-scheduleFormCatchUp_();
-}
+startBackgroundFormsAfterLogin_();
 
 toast(
 "✅ 登入成功"
 );
 
 refreshAllData({
-skipForms:formsFromLogin
+skipForms:true
 }).catch(function(){});
 
 }
@@ -9978,25 +10017,17 @@ r,
 previousUi==="syncing"?"complete":"idle"
 );
 markAdminBoot_("formsReady", {
+source:opts.source||"list",
 lastSyncAt:S.formLastSyncAt||null,
 lastSyncAtTaipei:S.formLastSyncAtTaipei||null,
 formsCount:Array.isArray(S.forms)?S.forms.length:0
 });
-markAdminBoot_("operable");
 return true;
 
 }
 catch(e){
 if(!formOpLive_(id)) return false;
-
-S.formSyncError=String(e&&e.message||"無法取得表單進度");
-paintFormPanelMeta_(null, "failed", S.formSyncError);
-if(!Array.isArray(S.forms) || !S.forms.length){
-$("formList").innerHTML=
-`<div class="state">
-⚠️ ${esc(S.formSyncError)}
-</div>`;
-}
+paintFormsLoadFailed_(e&&e.message||"無法取得表單進度");
 return false;
 
 }
