@@ -2053,7 +2053,13 @@ const APP = {
     null,
 
   busy:
-    false
+    false,
+
+  localDraftMem:
+    {},
+
+  loginGen:
+    0
 
 };
 
@@ -2760,6 +2766,11 @@ async function handleLogin(
 
     APP.sessionToken =
       result.sessionToken;
+
+
+    APP.loginGen =
+      Number(APP.loginGen || 0) +
+      1;
 
 
     APP.expiresAt =
@@ -4643,6 +4654,437 @@ function statusUi(
 }
 
 
+
+const JUDGE_ACTIVITY_ID =
+  "115-1-club-evaluation";
+
+
+const LOCAL_DRAFT_STORE_KEY =
+  "HKSP_JUDGE_LOCAL_DRAFTS_V1";
+
+
+function judgeActivityId_() {
+  return String(JUDGE_ACTIVITY_ID || "115-1-club-evaluation");
+}
+
+
+function currentJudgeId_() {
+  return String(
+    (APP.judge && (APP.judge.id || APP.judge.judgeId)) ||
+    ""
+  ).trim();
+}
+
+
+function currentSessionToken_() {
+  return String(APP.sessionToken || "").trim();
+}
+
+
+function currentLoginGen_() {
+  return Number(APP.loginGen || 0);
+}
+
+
+function captureJudgeOpIdentity_(extra) {
+  return Object.assign({
+    loginGen: currentLoginGen_(),
+    sessionToken: currentSessionToken_(),
+    judgeId: currentJudgeId_()
+  }, extra || {});
+}
+
+
+function sameJudgeOpIdentity_(snap) {
+  if (!snap) {
+    return false;
+  }
+  return (
+    Number(snap.loginGen) === currentLoginGen_() &&
+    String(snap.sessionToken || "") === currentSessionToken_() &&
+    String(snap.judgeId || "") === currentJudgeId_()
+  );
+}
+
+
+/**
+ * Draft write key may only use Club_ID from THIS judgeGetScore response.
+ * Cache / dashboard / previous openScore context must not decide the key.
+ */
+function permanentClubIdFromGetScore_(result) {
+  if (!result) {
+    return "";
+  }
+  const fromClub =
+    result.club &&
+    result.club.permanentClubId;
+  const fromTop =
+    result.permanentClubId;
+  const fromRecord =
+    result.record &&
+    result.record.permanentClubId;
+  return String(
+    fromClub ||
+    fromTop ||
+    fromRecord ||
+    ""
+  ).trim();
+}
+
+
+function localDraftStorageKey_(parts) {
+  return [
+    "v1",
+    String(parts.activityId || ""),
+    String(parts.judgeId || ""),
+    String(parts.permanentClubId || ""),
+    String(parts.sectionId || "")
+  ].join("::");
+}
+
+
+function readLocalDraftStore_() {
+  try {
+    const raw = localStorage.getItem(LOCAL_DRAFT_STORE_KEY);
+    if (!raw) {
+      return {};
+    }
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+
+function writeLocalDraftStore_(store) {
+  localStorage.setItem(
+    LOCAL_DRAFT_STORE_KEY,
+    JSON.stringify(store || {})
+  );
+}
+
+
+function readLocalDraft_(parts) {
+  const key = localDraftStorageKey_(parts);
+  if (APP.localDraftMem && APP.localDraftMem[key]) {
+    return APP.localDraftMem[key];
+  }
+  const store = readLocalDraftStore_();
+  const entry = store[key] || null;
+  if (entry && APP.localDraftMem) {
+    APP.localDraftMem[key] = entry;
+  }
+  return entry;
+}
+
+
+function writeLocalDraft_(parts, payload) {
+  const key = localDraftStorageKey_(parts);
+  const entry = Object.assign({}, payload, {
+    activityId: parts.activityId,
+    judgeId: parts.judgeId,
+    permanentClubId: parts.permanentClubId,
+    sectionId: parts.sectionId,
+    savedAt: new Date().toISOString()
+  });
+  const store = readLocalDraftStore_();
+  store[key] = entry;
+  writeLocalDraftStore_(store);
+  if (!APP.localDraftMem || typeof APP.localDraftMem !== "object") {
+    APP.localDraftMem = {};
+  }
+  APP.localDraftMem[key] = entry;
+  return entry;
+}
+
+
+function clearLocalDraft_(parts) {
+  const key = localDraftStorageKey_(parts);
+  try {
+    const store = readLocalDraftStore_();
+    if (Object.prototype.hasOwnProperty.call(store, key)) {
+      delete store[key];
+      writeLocalDraftStore_(store);
+    }
+  } catch (error) {
+  }
+  if (APP.localDraftMem && Object.prototype.hasOwnProperty.call(APP.localDraftMem, key)) {
+    delete APP.localDraftMem[key];
+  }
+}
+
+
+function localDraftPartsPinned_(judgeId, permanentClubId, sectionId, clubName) {
+  return {
+    activityId: judgeActivityId_(),
+    judgeId: String(judgeId || "").trim(),
+    permanentClubId: String(permanentClubId || "").trim(),
+    sectionId: sectionId,
+    clubName: clubName
+  };
+}
+
+
+function revisionOrNull_(raw) {
+  if (raw === null || raw === undefined || raw === "") {
+    return null;
+  }
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+
+function ruleOrNull_(raw) {
+  const text = String(raw || "").trim();
+  return text ? text : null;
+}
+
+
+/**
+ * Classify THIS authorized judgeGetScore response (raw backend payload only).
+ * - no-record: success AND own property record === null (confirmed empty)
+ * - record: success with a record object that carries submission + rule proof
+ * - unproven: success but record missing/undefined, or version fields incomplete
+ * - unclear: not a successful authorized score payload
+ * Never coerce missing versions to 0.
+ * Never classify from mergeLocalDraftIntoResult_ display records.
+ */
+function authorizedScoreBaseline_(result) {
+  if (!result || result.success !== true) {
+    return { kind: "unclear" };
+  }
+  const stage = (result.stage || result.section) || {};
+  const hasRecordField = Object.prototype.hasOwnProperty.call(result, "record");
+  if (!hasRecordField || result.record === undefined) {
+    return {
+      kind: "unproven",
+      baselineKind: "unproven",
+      submissionRevision: null,
+      ruleSignature: ruleOrNull_(stage.ruleSignature),
+      configRevision: revisionOrNull_(stage.configRevision)
+    };
+  }
+  if (result.record === null) {
+    return {
+      kind: "no-record",
+      baselineKind: "no-record",
+      submissionRevision: null,
+      ruleSignature: ruleOrNull_(stage.ruleSignature),
+      configRevision: revisionOrNull_(stage.configRevision)
+    };
+  }
+  const record = result.record;
+  const submissionRevision = revisionOrNull_(record.submissionRevision);
+  const ruleSignature =
+    ruleOrNull_(record.ruleSignature) ||
+    ruleOrNull_(stage.ruleSignature);
+  const configRevision =
+    revisionOrNull_(record.configRevision) != null
+      ? revisionOrNull_(record.configRevision)
+      : revisionOrNull_(stage.configRevision);
+  if (submissionRevision === null || ruleSignature === null) {
+    return {
+      kind: "unproven",
+      baselineKind: "unproven",
+      submissionRevision: submissionRevision,
+      ruleSignature: ruleSignature,
+      configRevision: configRevision
+    };
+  }
+  return {
+    kind: "record",
+    baselineKind: "record",
+    submissionRevision: submissionRevision,
+    ruleSignature: ruleSignature,
+    configRevision: configRevision
+  };
+}
+
+
+function authorizedScoreVersions_(result) {
+  const baseline = authorizedScoreBaseline_(result);
+  return {
+    submissionRevision:
+      baseline.kind === "no-record" ? null : baseline.submissionRevision,
+    ruleSignature: baseline.ruleSignature || null,
+    configRevision: baseline.configRevision != null ? baseline.configRevision : null,
+    baselineKind: baseline.baselineKind || baseline.kind || null
+  };
+}
+
+
+function localDraftIsNoRecordBaseline_(localDraft) {
+  // Only an explicit no-record baseline counts. Missing fields are unproven, not inferred.
+  return !!(localDraft && localDraft.baselineKind === "no-record");
+}
+
+
+function localDraftVersionsProveConsistent_(serverResult, localDraft) {
+  if (!localDraft) {
+    return { ok: false, reason: "no-local" };
+  }
+  const baseline = authorizedScoreBaseline_(serverResult);
+  const localRule = ruleOrNull_(localDraft.ruleSignature);
+  const localCfg = revisionOrNull_(localDraft.configRevision);
+  const localSub = revisionOrNull_(localDraft.submissionRevision);
+
+  if (baseline.kind === "unclear" || baseline.kind === "unproven") {
+    return { ok: false, reason: "version-unproven" };
+  }
+
+  if (baseline.kind === "no-record") {
+    if (!localDraftIsNoRecordBaseline_(localDraft)) {
+      return { ok: false, reason: "version-mismatch" };
+    }
+    if (!baseline.ruleSignature || !localRule) {
+      return { ok: false, reason: "version-unproven" };
+    }
+    if (localRule !== baseline.ruleSignature) {
+      return { ok: false, reason: "version-mismatch" };
+    }
+    if (
+      localCfg !== null &&
+      baseline.configRevision !== null &&
+      localCfg !== baseline.configRevision
+    ) {
+      return { ok: false, reason: "version-mismatch" };
+    }
+    return { ok: true, reason: "no-record-ok" };
+  }
+
+  // Server has an authorized record with proof.
+  if (localDraftIsNoRecordBaseline_(localDraft)) {
+    return { ok: false, reason: "version-mismatch" };
+  }
+  if (localSub === null || !localRule) {
+    return { ok: false, reason: "version-unproven" };
+  }
+  if (localSub !== baseline.submissionRevision) {
+    return { ok: false, reason: "version-mismatch" };
+  }
+  if (localRule !== baseline.ruleSignature) {
+    return { ok: false, reason: "version-mismatch" };
+  }
+  if (
+    localCfg !== null &&
+    baseline.configRevision !== null &&
+    localCfg !== baseline.configRevision
+  ) {
+    return { ok: false, reason: "version-mismatch" };
+  }
+  return { ok: true, reason: "version-ok" };
+}
+
+
+function noteLocalDraftVersionGap_(choice) {
+  if (!choice || choice.applyLocal) {
+    return;
+  }
+  if (
+    choice.reason !== "version-mismatch" &&
+    choice.reason !== "version-unproven"
+  ) {
+    return;
+  }
+  const msg =
+    choice.reason === "version-mismatch"
+      ? "本機草稿與目前正式／規則版本不一致，已保留舊稿，未覆蓋畫面上的分數。"
+      : "無法證明本機草稿與目前正式／規則版本一致，已保留舊稿，未覆蓋畫面上的分數。";
+  const errorEl = byId("scoreError");
+  if (errorEl) {
+    errorEl.textContent = msg;
+  }
+  const banner = byId("scoreBanner");
+  if (banner) {
+    banner.className = "score-banner";
+    banner.textContent = msg;
+  }
+  toast(msg);
+}
+
+
+function chooseOpenScores_(serverResult, localDraft) {
+  const locked = !!(serverResult && serverResult.locked);
+  const serverRecord = serverResult && serverResult.record;
+  if (locked) {
+    return {
+      source: "official",
+      scores: (serverRecord && serverRecord.scores) || {},
+      applyLocal: false,
+      reason: "locked"
+    };
+  }
+  if (!localDraft || !localDraft.scores) {
+    return {
+      source: "server",
+      scores: (serverRecord && serverRecord.scores) || {},
+      applyLocal: false,
+      reason: "no-local"
+    };
+  }
+  if (localDraft.judgeId && localDraft.judgeId !== currentJudgeId_()) {
+    return {
+      source: "server",
+      scores: (serverRecord && serverRecord.scores) || {},
+      applyLocal: false,
+      reason: "other-judge"
+    };
+  }
+  const versionCheck = localDraftVersionsProveConsistent_(serverResult, localDraft);
+  if (!versionCheck.ok) {
+    return {
+      source: "server",
+      scores: (serverRecord && serverRecord.scores) || {},
+      applyLocal: false,
+      reason: versionCheck.reason,
+      keepLocalDraft: true,
+      localDraft: localDraft
+    };
+  }
+  if (serverResult && serverResult.staleDraft) {
+    return {
+      source: "server",
+      scores: (serverRecord && serverRecord.scores) || {},
+      applyLocal: false,
+      reason: "stale-server-draft",
+      keepLocalDraft: true,
+      localDraft: localDraft
+    };
+  }
+  return {
+    source: "local",
+    scores: localDraft.scores,
+    applyLocal: true,
+    reason:
+      versionCheck.reason === "no-record-ok"
+        ? "no-record-ok"
+        : "local-ok",
+    localDraft: localDraft
+  };
+}
+
+
+function mergeLocalDraftIntoResult_(result, choice) {
+  if (!choice || !choice.applyLocal || !choice.scores) {
+    return result;
+  }
+  const displayResult = JSON.parse(JSON.stringify(result));
+  if (!displayResult.record) {
+    displayResult.record = {
+      scores: choice.scores,
+      status: "draft"
+    };
+  } else {
+    displayResult.record.scores = choice.scores;
+  }
+  displayResult._localDraftApplied = true;
+  displayResult._localDraftSavedAt =
+    choice.localDraft && choice.localDraft.savedAt;
+  return displayResult;
+}
+
+
 async function openScore(
   encodedSection,
   encodedClub
@@ -4667,6 +5109,13 @@ async function openScore(
     decodeURIComponent(
       encodedClub
     );
+
+
+  const opIdentity =
+    captureJudgeOpIdentity_({
+      sectionId: sectionId,
+      clubName: clubName
+    });
 
 
   try {
@@ -4748,6 +5197,17 @@ async function openScore(
 
 
     if (
+      !sameJudgeOpIdentity_(
+        opIdentity
+      )
+    ) {
+
+      return;
+
+    }
+
+
+    if (
       isUnauthorized(
         result
       )
@@ -4781,6 +5241,47 @@ async function openScore(
     }
 
 
+    const permanentClubId =
+      permanentClubIdFromGetScore_(
+        result
+      );
+
+
+    const draftParts =
+      localDraftPartsPinned_(
+        opIdentity.judgeId,
+        permanentClubId,
+        sectionId,
+        clubName
+      );
+
+
+    const localDraft =
+
+      draftParts.permanentClubId &&
+      draftParts.judgeId
+
+        ? readLocalDraft_(
+            draftParts
+          )
+
+        : null;
+
+
+    const choice =
+      chooseOpenScores_(
+        result,
+        localDraft
+      );
+
+
+    const displayResult =
+      mergeLocalDraftIntoResult_(
+        result,
+        choice
+      );
+
+
     APP.scoreContext = {
 
       sectionId:
@@ -4789,22 +5290,54 @@ async function openScore(
       clubName:
         clubName,
 
+      permanentClubId:
+        permanentClubId,
+
+      draftKeyParts:
+        draftParts,
+
+      authorizedResult:
+        JSON.parse(
+          JSON.stringify(
+            result
+          )
+        ),
+
       result:
-        result,
+        displayResult,
 
       pendingSubmitScores:
-        null
+        null,
+
+      localDraftChoice:
+        choice.reason
 
     };
 
 
     renderScoreModal();
 
+
+    noteLocalDraftVersionGap_(
+      choice
+    );
+
   }
 
   catch (
     error
   ) {
+
+    if (
+      !sameJudgeOpIdentity_(
+        opIdentity
+      )
+    ) {
+
+      return;
+
+    }
+
 
     byId(
       "scoreModalTitle"
@@ -4835,8 +5368,16 @@ async function openScore(
 
   finally {
 
-    APP.busy =
-      false;
+    if (
+      sameJudgeOpIdentity_(
+        opIdentity
+      )
+    ) {
+
+      APP.busy =
+        false;
+
+    }
 
   }
 
@@ -5600,6 +6141,28 @@ async function saveDraft() {
   }
 
 
+  const context =
+    APP.scoreContext;
+
+
+  if (
+    context.result &&
+    context.result.locked ===
+    true
+  ) {
+
+    byId(
+      "scoreError"
+    )
+    .textContent =
+      "此筆評分已鎖定，無法暫存。";
+
+
+    return;
+
+  }
+
+
   const data =
     collectScores(
       false
@@ -5628,8 +6191,81 @@ async function saveDraft() {
     );
 
 
-  const context =
-    APP.scoreContext;
+  const permanentClubId =
+    String(
+      context.permanentClubId ||
+      ""
+    )
+    .trim();
+
+
+  if (
+    !permanentClubId
+  ) {
+
+    byId(
+      "scoreError"
+    )
+    .textContent =
+      "無法本機存稿：缺少永久社團編號。畫面上的分數仍保留。";
+
+
+    toast(
+      "無法本機存稿：缺少永久社團編號"
+    );
+
+
+    return;
+
+  }
+
+
+  const opIdentity =
+    captureJudgeOpIdentity_();
+
+
+  const parts =
+    context.draftKeyParts &&
+    context.draftKeyParts.judgeId &&
+    context.draftKeyParts.permanentClubId
+
+      ? {
+          activityId:
+            context.draftKeyParts.activityId ||
+            judgeActivityId_(),
+          judgeId:
+            context.draftKeyParts.judgeId,
+          permanentClubId:
+            context.draftKeyParts.permanentClubId,
+          sectionId:
+            context.draftKeyParts.sectionId ||
+            context.sectionId,
+          clubName:
+            context.clubName
+        }
+
+      : localDraftPartsPinned_(
+          opIdentity.judgeId,
+          permanentClubId,
+          context.sectionId,
+          context.clubName
+        );
+
+
+  if (
+    !parts.judgeId
+  ) {
+
+    byId(
+      "scoreError"
+    )
+    .textContent =
+      "無法本機存稿：評審身分尚未確認。畫面上的分數仍保留。";
+
+
+    return;
+
+  }
 
 
   try {
@@ -5643,44 +6279,14 @@ async function saveDraft() {
 
 
     button.textContent =
-      "儲存中...";
-
-
-    const result =
-      await judgeApi(
-
-        "judgeSaveScoreDraft",
-
-        {
-
-          sectionId:
-            context.sectionId,
-
-          stageKey:
-            context.sectionId,
-
-          clubName:
-            context.clubName,
-
-          scores:
-            data.scores
-
-        }
-
-      );
+      "暫存中...";
 
 
     if (
-      isUnauthorized(
-        result
+      !sameJudgeOpIdentity_(
+        opIdentity
       )
     ) {
-
-      closeScoreModal(
-        true
-      );
-
-      handleUnauthorized();
 
       return;
 
@@ -5688,65 +6294,151 @@ async function saveDraft() {
 
 
     if (
-      !result?.success
+      !context.authorizedResult
     ) {
 
-      throw new Error(
+      byId(
+        "scoreError"
+      )
+      .textContent =
+        "無法本機存稿：缺少本次後端授權原始結果。畫面上的分數仍保留。";
 
-        result?.message
 
-        ||
-
-        "草稿儲存失敗"
-
+      toast(
+        "無法本機存稿：缺少授權原始結果"
       );
+
+
+      return;
 
     }
 
 
-    context.result.record =
-      result.record;
+    const baseline =
+      authorizedScoreBaseline_(
+        context.authorizedResult
+      );
 
 
-    context.result.locked =
-      false;
-
-
-    context.result.reopened =
-
-      result.reopened ===
-      true
+    if (
+      baseline.kind ===
+        "unclear"
 
       ||
 
-      context.result.reopened ===
-      true;
+      baseline.kind ===
+        "unproven"
+
+      ||
+
+      (
+        baseline.kind ===
+          "no-record"
+
+        &&
+
+        !baseline.ruleSignature
+      )
+    ) {
+
+      byId(
+        "scoreError"
+      )
+      .textContent =
+        "無法本機存稿：目前授權回應無法確認評分版本基準。畫面上的分數仍保留。";
+
+
+      toast(
+        "無法本機存稿：評分版本基準不明"
+      );
+
+
+      return;
+
+    }
+
+
+    const entry =
+      writeLocalDraft_(
+        parts,
+        {
+
+          clubName:
+            context.clubName,
+
+          scores:
+            data.scores,
+
+          totalScore:
+            data.total,
+
+          baselineKind:
+            baseline.baselineKind,
+
+          configRevision:
+            baseline.configRevision,
+
+          submissionRevision:
+            baseline.submissionRevision,
+
+          ruleSignature:
+            baseline.ruleSignature
+
+        }
+      );
+
+
+    if (
+      !sameJudgeOpIdentity_(
+        opIdentity
+      )
+    ) {
+
+      return;
+
+    }
 
 
     byId(
       "scoreUpdatedText"
     )
     .textContent =
+      "已暫存於此瀏覽器：" +
+      formatDate(
+        entry.savedAt
+      );
 
-      context.result.reopened
 
-        ? "已解鎖草稿更新：" +
-          formatDate(
-            result.record?.updatedAt
-          )
+    byId(
+      "scoreError"
+    )
+    .textContent =
+      "";
 
-        : "草稿更新：" +
-          formatDate(
-            result.record?.updatedAt
-          );
+
+    const banner =
+      byId(
+        "scoreBanner"
+      );
+
+
+    if (
+      banner
+    ) {
+
+      banner.className =
+        "score-banner";
+
+
+      banner.textContent =
+        "已暫存於此瀏覽器。換裝置或清除瀏覽器資料後不會保留；正式送出前請再確認分數。";
+
+    }
 
 
     toast(
-      "💾 草稿已儲存"
+      "已暫存於此瀏覽器"
     );
-
-
-    await refreshDashboardSilently();
 
   }
 
@@ -5759,11 +6451,19 @@ async function saveDraft() {
     )
     .textContent =
 
-      error.message
+      (
+        error &&
+        error.message
+      )
 
       ||
 
-      "草稿儲存失敗";
+      "本機暫存失敗，畫面上的分數仍保留，請再試一次。";
+
+
+    toast(
+      "本機暫存失敗，分數仍保留在畫面上"
+    );
 
   }
 
@@ -6023,6 +6723,40 @@ async function submitScore() {
     true;
 
 
+  const pinnedDraftParts =
+    context.draftKeyParts &&
+    context.draftKeyParts.judgeId &&
+    context.draftKeyParts.permanentClubId
+
+      ? {
+          activityId:
+            context.draftKeyParts.activityId ||
+            judgeActivityId_(),
+          judgeId:
+            context.draftKeyParts.judgeId,
+          permanentClubId:
+            context.draftKeyParts.permanentClubId,
+          sectionId:
+            context.draftKeyParts.sectionId ||
+            context.sectionId,
+          clubName:
+            context.clubName
+        }
+
+      : localDraftPartsPinned_(
+          currentJudgeId_(),
+          context.permanentClubId,
+          context.sectionId,
+          context.clubName
+        );
+
+
+  const opIdentity =
+    captureJudgeOpIdentity_({
+      draftParts: pinnedDraftParts
+    });
+
+
   try {
 
     APP.busy =
@@ -6059,6 +6793,17 @@ async function submitScore() {
         }
 
       );
+
+
+    if (
+      !sameJudgeOpIdentity_(
+        opIdentity
+      )
+    ) {
+
+      return;
+
+    }
 
 
     if (
@@ -6124,7 +6869,42 @@ async function submitScore() {
     );
 
 
+    try {
+
+      if (
+        opIdentity.draftParts &&
+        opIdentity.draftParts.judgeId &&
+        opIdentity.draftParts.permanentClubId &&
+        opIdentity.draftParts.sectionId
+      ) {
+
+        clearLocalDraft_(
+          opIdentity.draftParts
+        );
+
+      }
+
+    }
+
+    catch (
+      clearDraftError
+    ) {
+
+    }
+
+
     await refreshDashboardSilently();
+
+
+    if (
+      !sameJudgeOpIdentity_(
+        opIdentity
+      )
+    ) {
+
+      return;
+
+    }
 
 
     closeScoreModal(
@@ -6136,6 +6916,17 @@ async function submitScore() {
   catch (
     error
   ) {
+
+    if (
+      !sameJudgeOpIdentity_(
+        opIdentity
+      )
+    ) {
+
+      return;
+
+    }
+
 
     byId(
       "confirmModal"
@@ -6175,21 +6966,29 @@ async function submitScore() {
 
   finally {
 
-    APP.busy =
-      false;
+    if (
+      sameJudgeOpIdentity_(
+        opIdentity
+      )
+    ) {
+
+      APP.busy =
+        false;
 
 
-    button.disabled =
-      false;
+      button.disabled =
+        false;
 
 
-    button.textContent =
+      button.textContent =
 
-      reopened
+        reopened
 
-        ? "確認重新送出並鎖定"
+          ? "確認重新送出並鎖定"
 
-        : "確認送出並鎖定";
+          : "確認送出並鎖定";
+
+    }
 
   }
 
@@ -6402,6 +7201,10 @@ function clearSession() {
 
   APP.scoreContext =
     null;
+
+
+  APP.localDraftMem =
+    {};
 
 
   sessionStorage
