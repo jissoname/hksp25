@@ -1950,6 +1950,15 @@ button{
         ✅ 正式送出
       </button>
 
+      <button
+        id="scoreSubmitRecheckBtn"
+        class="btn btn-primary"
+        type="button"
+        style="display:none"
+      >
+        重新整理查看
+      </button>
+
     </div>
 
   </div>
@@ -1987,6 +1996,12 @@ button{
     ⚠️ 正式送出後，此筆評分會立即鎖定，評審本人不能再修改。若真的需要修改，必須由管理員解鎖。
   </div>
 
+  <div
+    id="confirmStatus"
+    class="confirm-text"
+    style="display:none"
+  ></div>
+
   <div class="confirm-actions">
 
     <button
@@ -2020,9 +2035,413 @@ button{
 
 
 <script>
+/**
+ * Isolated judge page session / abort-confirmation helpers.
+ * Loaded by pages/judge.html. Tests execute this file directly.
+ * Does not store passwords or request bodies.
+ */
+(function (root) {
+  "use strict";
+
+  var UNAUTH_ERRORS = [
+    "JUDGE_UNAUTHORIZED",
+    "JUDGE_SESSION_INVALID",
+    "JUDGE_SESSION_EXPIRED"
+  ];
+
+  function isUnauthorized(result) {
+    return !!(result && UNAUTH_ERRORS.indexOf(String(result.error || "")) >= 0);
+  }
+
+  function sessionRestoreKind(kind, message) {
+    return {
+      kind: kind,
+      message: message || "",
+      clearSession: kind === "unauthorized"
+    };
+  }
+
+  var DEFINITE_SUBMIT_REJECT_ERRORS = [
+    "SCORE_INCOMPLETE",
+    "SCORE_INPUT_INVALID",
+    "SCORE_SECTION_REQUIRED",
+    "SCORE_SECTION_NOT_FOUND",
+    "SCORE_SECTION_NOT_PUBLISHED",
+    "JUDGE_SCORE_LOCKED",
+    "JUDGE_CLUB_FORBIDDEN",
+    "JUDGE_SCORE_SECTION_FORBIDDEN",
+    "JUDGE_DISABLED",
+    "JUDGE_ID_REQUIRED",
+    "JUDGE_NOT_FOUND",
+    "CLUB_NAME_REQUIRED",
+    "CLUB_NOT_FOUND"
+  ];
+
+  function isFiniteScoreNumber(value) {
+    return typeof value === "number" && Number.isFinite(value);
+  }
+
+  function scoresMatch(expected, actual) {
+    if (!expected || typeof expected !== "object" || Array.isArray(expected)) {
+      return false;
+    }
+    if (!actual || typeof actual !== "object" || Array.isArray(actual)) {
+      return false;
+    }
+    var keys = Object.keys(expected);
+    if (!keys.length) return false;
+    for (var i = 0; i < keys.length; i += 1) {
+      var key = keys[i];
+      if (!Object.prototype.hasOwnProperty.call(expected, key)) continue;
+      if (!Object.prototype.hasOwnProperty.call(actual, key)) return false;
+      if (!isFiniteScoreNumber(expected[key]) || !isFiniteScoreNumber(actual[key])) {
+        return false;
+      }
+      if (actual[key] !== expected[key]) return false;
+    }
+    return true;
+  }
+
+  function isDefiniteSubmitReject(result) {
+    if (!result || result.success !== false) return false;
+    var code = String(result.error || "");
+    return DEFINITE_SUBMIT_REJECT_ERRORS.indexOf(code) >= 0;
+  }
+
+  function isSubmitOutcomeUnknown(result) {
+    if (!result) return true;
+    if (result.success === true) return false;
+    var code = String(result.error || "");
+    if (isUnauthorized(result)) return false;
+    if (isDefiniteSubmitReject(result)) return false;
+    if (code === "EVALUATION_UNCONFIRMED") return true;
+    if (code.indexOf("EVALUATION_") === 0) return true;
+    if (code === "TRANSACTION_RETRY_EXHAUSTED" || code === "COMMIT_UNCLEAR") return true;
+    return true;
+  }
+
+  function sameSubmitTarget(intent, loaded) {
+    if (!intent || !loaded) return false;
+    var loadedSection = String(
+      loaded.sectionId ||
+      (loaded.record && loaded.record.sectionId) ||
+      (loaded.section && loaded.section.id) ||
+      ""
+    );
+    var loadedClub = String(
+      loaded.clubName ||
+      (loaded.club && (loaded.club.name || loaded.club.clubName)) ||
+      (loaded.record && loaded.record.clubName) ||
+      ""
+    );
+    return String(intent.sectionId || "") === loadedSection &&
+      String(intent.clubName || "") === loadedClub;
+  }
+
+  function finiteRevision(value) {
+    if (value == null || value === "") return null;
+    var num = Number(value);
+    return Number.isFinite(num) ? num : null;
+  }
+
+  function unconfirmedKind(message) {
+    return {
+      kind: "unconfirmed",
+      apply: false,
+      clearSession: false,
+      allowRetry: false,
+      definiteFailure: false,
+      message: message || "目前只能看到資料狀態，還不能確認是本次送出。請重新整理查看，不要重複送出"
+    };
+  }
+
+  function createGuard() {
+    var state = {
+      generation: 0,
+      dashboardRequestId: 0,
+      confirmGeneration: 0,
+      sessionToken: "",
+      judgeId: "",
+      activeSubmit: null
+    };
+
+    function bumpGeneration() {
+      state.generation += 1;
+      state.confirmGeneration += 1;
+      state.dashboardRequestId += 1;
+      state.activeSubmit = null;
+      return state.generation;
+    }
+
+    function setSession(sessionToken, judgeId) {
+      state.sessionToken = String(sessionToken || "");
+      state.judgeId = String(judgeId || "");
+      bumpGeneration();
+      return state.generation;
+    }
+
+    function clearSession() {
+      state.sessionToken = "";
+      state.judgeId = "";
+      bumpGeneration();
+      return state.generation;
+    }
+
+    function nextDashboardRequestId() {
+      state.dashboardRequestId += 1;
+      return state.dashboardRequestId;
+    }
+
+    function isCurrentDashboardRequest(requestId) {
+      return requestId === state.dashboardRequestId;
+    }
+
+    function captureDashboardOp() {
+      return {
+        generation: state.generation,
+        requestId: nextDashboardRequestId(),
+        sessionToken: state.sessionToken,
+        judgeId: state.judgeId
+      };
+    }
+
+    function isLiveDashboardOp(op) {
+      if (!op) return false;
+      if (op.generation !== state.generation) return false;
+      if (op.requestId !== state.dashboardRequestId) return false;
+      if (!state.sessionToken || op.sessionToken !== state.sessionToken) return false;
+      if (op.judgeId && state.judgeId && op.judgeId !== state.judgeId) return false;
+      return true;
+    }
+
+    function beginSubmitOperation(details) {
+      details = details || {};
+      state.confirmGeneration += 1;
+      var intent = {
+        generation: state.generation,
+        confirmGeneration: state.confirmGeneration,
+        sessionToken: state.sessionToken,
+        judgeId: state.judgeId,
+        sectionId: String(details.sectionId || ""),
+        clubName: String(details.clubName || ""),
+        scores: details.scores || {},
+        previousRevision: finiteRevision(details.previousRevision),
+        expectedRevision: finiteRevision(details.expectedRevision)
+      };
+      state.activeSubmit = intent;
+      return intent;
+    }
+
+    function beginSubmitConfirm() {
+      return beginSubmitOperation({});
+    }
+
+    function isLiveSubmitIntent(intent) {
+      if (!intent) return false;
+      if (intent.generation !== state.generation) return false;
+      if (intent.confirmGeneration !== state.confirmGeneration) return false;
+      if (!state.sessionToken || intent.sessionToken !== state.sessionToken) return false;
+      if (intent.judgeId && state.judgeId && intent.judgeId !== state.judgeId) return false;
+      if (state.activeSubmit && state.activeSubmit.confirmGeneration !== intent.confirmGeneration) {
+        return false;
+      }
+      return true;
+    }
+
+    function classifyDashboardResult(result, requestId) {
+      if (!isCurrentDashboardRequest(requestId)) {
+        return sessionRestoreKind("stale", "");
+      }
+      if (isUnauthorized(result)) {
+        return sessionRestoreKind("unauthorized", (result && result.message) || "評審登入已失效，請重新登入。");
+      }
+      if (!result || result.success !== true) {
+        return sessionRestoreKind("loadFailed", (result && result.message) || "無法取得評分清單");
+      }
+      return sessionRestoreKind("ok", "");
+    }
+
+    function classifyLoginDashboard(loginResult) {
+      if (!loginResult || loginResult.success !== true || !loginResult.sessionToken) {
+        return sessionRestoreKind("unauthorized", (loginResult && loginResult.message) || "登入失敗，請確認帳號與密碼。");
+      }
+      var dashboard = loginResult.dashboard;
+      if (dashboard && dashboard.success === true) {
+        return sessionRestoreKind("ok", "");
+      }
+      return sessionRestoreKind("loadFailed", (dashboard && dashboard.message) || "評分清單載入失敗，請重試。");
+    }
+
+    function classifySubmitBusinessResult(result) {
+      if (isUnauthorized(result)) {
+        return {
+          kind: "unauthorized",
+          apply: false,
+          clearSession: true,
+          allowRetry: false,
+          definiteFailure: true,
+          message: (result && result.message) || "評審登入已失效，請重新登入。"
+        };
+      }
+      if (result && result.success === true) {
+        return {
+          kind: "success",
+          apply: true,
+          clearSession: false,
+          allowRetry: false,
+          record: result.record || null
+        };
+      }
+      if (isDefiniteSubmitReject(result)) {
+        return {
+          kind: "rejected",
+          apply: false,
+          clearSession: false,
+          allowRetry: false,
+          definiteFailure: true,
+          message: result.message || "正式送出失敗"
+        };
+      }
+      return {
+        kind: "confirming",
+        apply: false,
+        clearSession: false,
+        allowRetry: false,
+        definiteFailure: false,
+        message: "正在確認送出結果"
+      };
+    }
+
+    function classifySubmitNetworkError(error) {
+      /* AbortError, TypeError Failed to fetch, lost/unparseable responses: confirming. */
+      if (error && error.business === true) {
+        return {
+          kind: "failed",
+          message: (error && error.message) || "正式送出失敗",
+          allowRetry: false,
+          definiteFailure: true
+        };
+      }
+      return {
+        kind: "confirming",
+        message: "正在確認送出結果",
+        allowRetry: false,
+        definiteFailure: false
+      };
+    }
+
+    function classifyConfirmRead(intent, loaded) {
+      if (!intent) {
+        return { kind: "stale", apply: false, clearSession: false, allowRetry: false };
+      }
+      if (!isLiveSubmitIntent(intent)) {
+        return { kind: "stale", apply: false, clearSession: false, allowRetry: false };
+      }
+      if (isUnauthorized(loaded)) {
+        return {
+          kind: "unauthorized",
+          apply: false,
+          clearSession: true,
+          allowRetry: false,
+          message: (loaded && loaded.message) || "評審登入已失效，請重新登入。"
+        };
+      }
+      if (!loaded || loaded.success !== true) {
+        return unconfirmedKind("送出結果尚未確認，請稍候重新整理查看，不要重複送出");
+      }
+      if (!sameSubmitTarget(intent, loaded)) {
+        return unconfirmedKind("讀回的評分對象與本次送出不同，請重新整理查看，不要重複送出");
+      }
+      var record = loaded.record || {};
+      var locked = loaded.locked === true || record.locked === true || record.status === "submitted";
+      var actualScores = record.scores || loaded.scores;
+      if (!locked) {
+        return unconfirmedKind("送出結果尚未確認，請稍候重新整理查看，不要重複送出");
+      }
+      if (!scoresMatch(intent.scores, actualScores)) {
+        return {
+          kind: "conflict",
+          apply: false,
+          clearSession: false,
+          allowRetry: false,
+          definiteFailure: false,
+          message: "此筆已鎖定，分數與本次送出不一致，請重新整理查看，不要重複送出"
+        };
+      }
+      var actualRevision = finiteRevision(record.submissionRevision);
+      var previousRevision = finiteRevision(intent.previousRevision);
+      var expectedRevision = finiteRevision(intent.expectedRevision);
+      if (actualRevision == null || previousRevision == null) {
+        return unconfirmedKind();
+      }
+      if (actualRevision <= previousRevision) {
+        return unconfirmedKind("讀回版本無法證明有新的提交，請重新整理查看，不要重複送出");
+      }
+      if (expectedRevision != null && actualRevision !== expectedRevision) {
+        return unconfirmedKind("讀回版本與本次送出不符，請重新整理查看，不要重複送出");
+      }
+      return {
+        kind: "confirmed",
+        apply: true,
+        clearSession: false,
+        allowRetry: false,
+        record: record,
+        submissionRevision: actualRevision
+      };
+    }
+
+    return {
+      getState: function () {
+        return {
+          generation: state.generation,
+          dashboardRequestId: state.dashboardRequestId,
+          confirmGeneration: state.confirmGeneration,
+          sessionToken: state.sessionToken,
+          judgeId: state.judgeId,
+          hasActiveSubmit: !!state.activeSubmit
+        };
+      },
+      setSession: setSession,
+      clearSession: clearSession,
+      nextDashboardRequestId: nextDashboardRequestId,
+      isCurrentDashboardRequest: isCurrentDashboardRequest,
+      captureDashboardOp: captureDashboardOp,
+      isLiveDashboardOp: isLiveDashboardOp,
+      beginSubmitOperation: beginSubmitOperation,
+      beginSubmitConfirm: beginSubmitConfirm,
+      isLiveSubmitIntent: isLiveSubmitIntent,
+      classifyDashboardResult: classifyDashboardResult,
+      classifyLoginDashboard: classifyLoginDashboard,
+      classifySubmitBusinessResult: classifySubmitBusinessResult,
+      classifySubmitNetworkError: classifySubmitNetworkError,
+      classifyConfirmRead: classifyConfirmRead
+    };
+  }
+
+  var api = {
+    UNAUTH_ERRORS: UNAUTH_ERRORS,
+    DEFINITE_SUBMIT_REJECT_ERRORS: DEFINITE_SUBMIT_REJECT_ERRORS,
+    isUnauthorized: isUnauthorized,
+    isFiniteScoreNumber: isFiniteScoreNumber,
+    isDefiniteSubmitReject: isDefiniteSubmitReject,
+    isSubmitOutcomeUnknown: isSubmitOutcomeUnknown,
+    sessionRestoreKind: sessionRestoreKind,
+    scoresMatch: scoresMatch,
+    sameSubmitTarget: sameSubmitTarget,
+    finiteRevision: finiteRevision,
+    createGuard: createGuard
+  };
+
+  root.HKSP_JUDGE_CLIENT_GUARD = api;
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = api;
+  }
+})(typeof window !== "undefined" ? window : globalThis);
+
 
 const BACKEND_URL =
   "https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
+window.BACKEND_URL = BACKEND_URL;
 
 
 const SESSION_KEY =
@@ -2059,9 +2478,43 @@ const APP = {
     {},
 
   loginGen:
-    0
+    0,
+
+  criticalJudgeOp:
+    "",
+
+  criticalJudgeOpId:
+    0,
+
+  dashboardStatusFillPending_:
+    false,
+
+  dashboardStatusFillScheduleId_:
+    0,
+
+  timings:
+    {},
+
+  submitUiFinal:
+    "",
+
+  submitHolds:
+    {}
 
 };
+window.APP = APP;
+
+
+const JUDGE_GUARD =
+  (
+    typeof HKSP_JUDGE_CLIENT_GUARD !==
+      "undefined" &&
+    HKSP_JUDGE_CLIENT_GUARD &&
+    typeof HKSP_JUDGE_CLIENT_GUARD.createGuard ===
+      "function"
+  )
+    ? HKSP_JUDGE_CLIENT_GUARD.createGuard()
+    : null;
 
 
 document
@@ -2455,11 +2908,31 @@ async function initializeApp() {
 
 
 async function post(
-  payload
+  payload,
+  timeoutMs
 ) {
+
+  const actionName = payload && payload.action ? String(payload.action) : "";
+  const requestStartedAt = Date.now();
+  if (!APP.netTimings) APP.netTimings = { calls: [], bgDashboard: null };
+  const callRec = { action: actionName, requestStartedAt: requestStartedAt, responseAt: null, bodyAt: null, parseMs: null };
+  // never store payload / tokens
+  if (actionName === "judgeScoreDashboard") {
+    APP.netTimings.bgDashboard = {
+      requestStartedAt: requestStartedAt,
+      responseAt: null,
+      inFlight: true
+    };
+  }
 
   const controller =
     new AbortController();
+
+
+  const limit =
+    Number(
+      timeoutMs
+    );
 
 
   const timer =
@@ -2468,7 +2941,13 @@ async function post(
       () =>
         controller.abort(),
 
-      15000
+      Number.isFinite(
+        limit
+      ) &&
+      limit >
+        0
+        ? limit
+        : 15000
 
     );
 
@@ -2500,6 +2979,8 @@ async function post(
 
       );
 
+    callRec.responseAt = Date.now();
+
 
     if (
       !response.ok
@@ -2518,12 +2999,41 @@ async function post(
     const text =
       await response.text();
 
+    callRec.bodyAt = Date.now();
+
 
     try {
 
-      return JSON.parse(
+      const parsed = JSON.parse(
         text
       );
+      callRec.parseMs = Date.now() - callRec.bodyAt;
+      callRec.roundTripMs =
+        callRec.responseAt - callRec.requestStartedAt;
+      if (
+        parsed &&
+        parsed.serverTiming
+      ) {
+        callRec.serverTiming =
+          parsed.serverTiming;
+      }
+      if (APP.netTimings.calls.length < 40) APP.netTimings.calls.push(callRec);
+      if (actionName === "judgeScoreDashboard" && APP.netTimings.bgDashboard) {
+        APP.netTimings.bgDashboard.responseAt = callRec.responseAt;
+        APP.netTimings.bgDashboard.inFlight = false;
+      }
+      if (actionName === "judgeGetScore" && APP.netTimings.bgDashboard) {
+        const bg = APP.netTimings.bgDashboard;
+        callRec.overlappedBgDashboard = !!(
+          bg.requestStartedAt &&
+          (
+            bg.inFlight ||
+            (bg.responseAt && callRec.requestStartedAt < bg.responseAt)
+          ) &&
+          (callRec.responseAt || callRec.requestStartedAt) > bg.requestStartedAt
+        );
+      }
+      return parsed;
 
     }
 
@@ -2590,6 +3100,58 @@ function judgeApi(
     ...extra
 
   });
+
+}
+
+
+function judgeApiWithToken(
+  sessionToken,
+  action,
+  extra = {},
+  timeoutMs
+) {
+
+  return post({
+
+    action:
+      action,
+
+    sessionToken:
+      sessionToken,
+
+    ...extra
+
+  }, timeoutMs);
+
+}
+
+
+function syncJudgeGuardSession_() {
+
+  if (
+    !JUDGE_GUARD
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    !APP.sessionToken
+  ) {
+
+    JUDGE_GUARD.clearSession();
+
+    return;
+
+  }
+
+
+  JUDGE_GUARD.setSession(
+    APP.sessionToken,
+    currentJudgeId_()
+  );
 
 }
 
@@ -2722,6 +3284,31 @@ async function handleLogin(
       "";
 
 
+    APP.timings =
+    {
+
+      loginClickAt:
+        Date.now(),
+
+      requestStartedAt:
+        null,
+
+      responseAt:
+        null,
+
+      operableAt:
+        null,
+
+      operableMs:
+        null,
+
+      serverTiming:
+        null
+
+    };
+
+    APP.timings.requestStartedAt = Date.now();
+
     const result =
       await post({
 
@@ -2735,6 +3322,10 @@ async function handleLogin(
           password
 
       });
+
+    APP.timings.responseAt = Date.now();
+    APP.timings.serverTiming = result && result.serverTiming ? result.serverTiming : null;
+    APP.timings.dashboardServerTiming = result && result.dashboardServerTiming ? result.dashboardServerTiming : null;
 
 
     passwordInput.value =
@@ -2778,6 +3369,19 @@ async function handleLogin(
       null;
 
 
+    if (
+      result.judge
+    ) {
+
+      APP.judge =
+        result.judge;
+
+    }
+
+
+    syncJudgeGuardSession_();
+
+
     sessionStorage
       .setItem(
 
@@ -2791,24 +3395,73 @@ async function handleLogin(
     showApp();
 
 
-    const ok =
-      await restoreSession();
-
-
     if (
-      !ok
+      result.dashboard &&
+      result.dashboard.success ===
+        true
     ) {
 
-      throw new Error(
-        "登入成功，但無法取得評審資料。"
+      applyDashboardPayload_(
+        result.dashboard
+      );
+
+
+      APP.timings.operableAt =
+        Date.now();
+
+
+      APP.timings.operableMs =
+        APP.timings.operableAt -
+        APP.timings.loginClickAt;
+
+
+      toast(
+        "✅ 登入成功"
+      );
+
+
+      scheduleJudgeDashboardStatusCatchup_(
+        2000
       );
 
     }
 
+    else {
 
-    toast(
-      "✅ 登入成功"
-    );
+      const ok =
+        await restoreSession();
+
+
+      if (
+        !ok
+      ) {
+
+        throw new Error(
+          "登入成功，但無法取得評審資料。"
+        );
+
+      }
+
+
+      APP.timings.operableAt =
+        Date.now();
+
+
+      APP.timings.operableMs =
+        APP.timings.operableAt -
+        APP.timings.loginClickAt;
+
+
+      toast(
+        "✅ 登入成功"
+      );
+
+
+      scheduleJudgeDashboardStatusCatchup_(
+        2000
+      );
+
+    }
 
   }
 
@@ -2849,6 +3502,726 @@ async function handleLogin(
 }
 
 
+
+function applyDashboardPayload_(
+  dashboard
+) {
+
+  APP.dashboard =
+    dashboard;
+
+
+  try {
+
+    const stages =
+      dashboard &&
+      dashboard.stages;
+
+
+    if (
+      stages &&
+      typeof stages ===
+      "object"
+    ) {
+
+      Object.keys(
+        stages
+      )
+      .forEach(
+        function (
+          sectionId
+        ) {
+
+          const clubs =
+            stages[sectionId] &&
+            stages[sectionId].clubs;
+
+
+          if (
+            !Array.isArray(
+              clubs
+            )
+          ) {
+
+            return;
+
+          }
+
+
+          clubs.forEach(
+            rememberClubIdentity_
+          );
+
+        }
+      );
+
+    }
+
+  }
+
+  catch (
+    identityError
+  ) {
+
+  }
+
+
+  if (
+    dashboard.judge
+  ) {
+
+    APP.judge =
+      dashboard.judge;
+
+  }
+
+
+  ensureCurrentSection();
+
+  renderProfile();
+
+  renderDashboard();
+
+}
+
+
+function isScoreModalOpen_() {
+
+  const modal =
+    byId(
+      "scoreModal"
+    );
+
+
+  return Boolean(
+    modal &&
+    modal.style &&
+    modal.style.display ===
+      "flex"
+  );
+
+}
+
+
+function shouldHoldSilentDashboard_() {
+
+  if (
+    APP.criticalJudgeOp
+  ) {
+
+    return true;
+
+  }
+
+
+  if (
+    isScoreModalOpen_() &&
+    contextSubmitBlocked_(
+      APP.scoreContext
+    )
+  ) {
+
+    return true;
+
+  }
+
+
+  if (
+    isScoreModalOpen_() &&
+    APP.scoreContext &&
+    APP.scoreContext.result &&
+    APP.scoreContext.result.locked !==
+      true
+  ) {
+
+    return true;
+
+  }
+
+
+  return false;
+
+}
+
+
+function cancelScheduledJudgeDashboardStatusFill_() {
+
+  if (
+    APP.dashboardStatusFillScheduleId_
+  ) {
+
+    clearTimeout(
+      APP.dashboardStatusFillScheduleId_
+    );
+
+
+    APP.dashboardStatusFillScheduleId_ =
+      0;
+
+  }
+
+}
+
+
+function scheduleJudgeDashboardStatusCatchup_(
+  delayMs
+) {
+
+  markJudgeDashboardStatusCatchup_();
+
+
+  cancelScheduledJudgeDashboardStatusFill_();
+
+
+  const wait =
+    Number(
+      delayMs
+    );
+
+
+  APP.dashboardStatusFillScheduleId_ =
+    setTimeout(
+      function () {
+
+        APP.dashboardStatusFillScheduleId_ =
+          0;
+
+
+        flushJudgeDashboardStatusCatchup_();
+
+      },
+      Number.isFinite(
+        wait
+      ) &&
+      wait >=
+        0
+        ? wait
+        : 0
+    );
+
+}
+
+
+function beginCriticalJudgeOp_(
+  name
+) {
+
+  APP.criticalJudgeOp =
+    String(
+      name ||
+      "op"
+    );
+
+
+  APP.criticalJudgeOpId =
+    Number(
+      APP.criticalJudgeOpId ||
+      0
+    ) +
+    1;
+
+
+  if (
+    APP.criticalJudgeOp ===
+    "openScore"
+  ) {
+
+    cancelScheduledJudgeDashboardStatusFill_();
+
+
+    if (
+      !isDashboardStatusFillInFlight_()
+    ) {
+
+      markJudgeDashboardStatusCatchup_();
+
+    }
+
+  }
+
+
+  return APP.criticalJudgeOpId;
+
+}
+
+
+function endCriticalJudgeOp_(
+  name,
+  opId
+) {
+
+  const matchesId =
+    opId != null &&
+    Number(
+      opId
+    ) ===
+      Number(
+        APP.criticalJudgeOpId ||
+        0
+      );
+
+
+  const matchesName =
+    opId == null &&
+    (
+      !name
+
+      ||
+
+      APP.criticalJudgeOp ===
+        String(
+          name
+        )
+    );
+
+
+  if (
+    matchesId ||
+    matchesName
+  ) {
+
+    APP.criticalJudgeOp =
+      "";
+
+
+    flushJudgeDashboardStatusCatchup_();
+
+  }
+
+}
+
+
+
+function nextDashboardRequestId_() {
+
+  APP.dashboardRequestId =
+    Number(
+      APP.dashboardRequestId ||
+      0
+    ) +
+    1;
+
+
+  return APP.dashboardRequestId;
+
+}
+
+
+function beginDashboardRequest_() {
+
+  return {
+
+    loginGen:
+      Number(
+        APP.loginGen ||
+        0
+      ),
+
+    sessionToken:
+      String(
+        APP.sessionToken ||
+        ""
+      ),
+
+    requestId:
+      nextDashboardRequestId_()
+
+  };
+
+}
+
+
+function isLiveDashboardRequest_(
+  op
+) {
+
+  if (
+    !op
+  ) {
+
+    return false;
+
+  }
+
+
+  return Number(
+      APP.loginGen ||
+      0
+    ) ===
+      Number(
+        op.loginGen ||
+        0
+      )
+
+    &&
+
+    String(
+      APP.sessionToken ||
+      ""
+    ) ===
+      String(
+        op.sessionToken ||
+        ""
+      )
+
+    &&
+
+    Number(
+      APP.dashboardRequestId ||
+      0
+    ) ===
+      Number(
+        op.requestId ||
+        0
+      );
+
+}
+
+
+function releaseDashboardStatusFillInFlight_(
+  op
+) {
+
+  if (
+    !op
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    Number(
+      APP.dashboardStatusFillInFlightId_ ||
+      0
+    ) ===
+    Number(
+      op.requestId ||
+      0
+    )
+  ) {
+
+    APP.dashboardStatusFillInFlightId_ =
+      0;
+
+  }
+
+}
+
+
+function isDashboardStatusFillInFlight_() {
+
+  return Number(
+    APP.dashboardStatusFillInFlightId_ ||
+    0
+  ) >
+    0;
+
+}
+
+
+function cancelJudgeDashboardStatusCatchup_() {
+
+  APP.dashboardStatusFillPending_ =
+    false;
+
+
+  APP.dashboardStatusFillInFlightId_ =
+    0;
+
+
+  APP.dashboardStatusFillRetryVisible_ =
+    false;
+
+
+  nextDashboardRequestId_();
+
+}
+
+
+function invalidatePreSubmitDashboardStatus_() {
+
+  cancelScheduledJudgeDashboardStatusFill_();
+
+
+  nextDashboardRequestId_();
+
+
+  APP.dashboardStatusFillInFlightId_ =
+    0;
+
+
+  markJudgeDashboardStatusCatchup_();
+
+}
+
+
+function markJudgeDashboardStatusCatchup_() {
+
+  APP.dashboardStatusFillPending_ =
+    true;
+
+
+  if (
+    APP.dashboard
+  ) {
+
+    APP.dashboard.statusPending =
+      true;
+
+  }
+
+}
+
+
+function fillJudgeDashboardStatusInBackground_() {
+
+  if (
+    isDashboardStatusFillInFlight_()
+  ) {
+
+    markJudgeDashboardStatusCatchup_();
+
+    return;
+
+  }
+
+
+  if (
+    shouldHoldSilentDashboard_()
+  ) {
+
+    markJudgeDashboardStatusCatchup_();
+
+    return;
+
+  }
+
+
+  if (
+    !APP.sessionToken
+  ) {
+
+    return;
+
+  }
+
+
+  const op =
+    beginDashboardRequest_();
+
+
+  APP.dashboardStatusFillPending_ =
+    true;
+
+
+  APP.dashboardStatusFillInFlightId_ =
+    op.requestId;
+
+
+  judgeApi(
+    "judgeScoreDashboard"
+  )
+    .then(
+      function (
+        dashboard
+      ) {
+
+        if (
+          !isLiveDashboardRequest_(
+            op
+          )
+        ) {
+
+          releaseDashboardStatusFillInFlight_(
+            op
+          );
+
+          return;
+
+        }
+
+
+        releaseDashboardStatusFillInFlight_(
+          op
+        );
+
+
+        if (
+          isUnauthorized(
+            dashboard
+          )
+        ) {
+
+          handleUnauthorized();
+
+          return;
+
+        }
+
+
+        if (
+          shouldHoldSilentDashboard_()
+        ) {
+
+          markJudgeDashboardStatusCatchup_();
+
+          showDashboardStatusRetry_();
+
+          return;
+
+        }
+
+
+        if (
+          !dashboard ||
+          dashboard.success !==
+            true
+        ) {
+
+          markJudgeDashboardStatusCatchup_();
+
+          showDashboardStatusRetry_();
+
+          return;
+
+        }
+
+
+        applyDashboardPayload_(
+          dashboard
+        );
+
+
+        APP.dashboardStatusFillPending_ =
+          false;
+
+
+        APP.dashboardStatusRetryVisible_ =
+          false;
+
+      }
+    )
+    .catch(
+      function () {
+
+        if (
+          !isLiveDashboardRequest_(
+            op
+          )
+        ) {
+
+          releaseDashboardStatusFillInFlight_(
+            op
+          );
+
+          return;
+
+        }
+
+
+        releaseDashboardStatusFillInFlight_(
+          op
+        );
+
+
+        markJudgeDashboardStatusCatchup_();
+
+        showDashboardStatusRetry_();
+
+      }
+    );
+
+}
+
+
+function showDashboardStatusRetry_() {
+
+  APP.dashboardStatusRetryVisible_ =
+    true;
+
+
+  try {
+
+    const state =
+      byId(
+        "dashboardState"
+      );
+
+
+    if (
+      state
+    ) {
+
+      state.style.display =
+        "block";
+
+
+      state.innerHTML =
+        "⚠️ 進度尚未更新。<button type=\"button\" class=\"btn\" onclick=\"flushJudgeDashboardStatusCatchup_(true)\">重試載入進度</button>";
+
+    }
+
+  }
+
+  catch (
+    error
+  ) {
+
+  }
+
+}
+
+
+function flushJudgeDashboardStatusCatchup_(
+  force
+) {
+
+  if (
+    !APP.sessionToken
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    !force &&
+    !APP.dashboardStatusFillPending_
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    isDashboardStatusFillInFlight_()
+  ) {
+
+    markJudgeDashboardStatusCatchup_();
+
+    return;
+
+  }
+
+
+  if (
+    !force &&
+    shouldHoldSilentDashboard_()
+  ) {
+
+    return;
+
+  }
+
+
+  fillJudgeDashboardStatusInBackground_();
+
+}
+
 async function restoreSession() {
 
   try {
@@ -2856,59 +4229,6 @@ async function restoreSession() {
     setDashboardLoading(
       "正在驗證評審身分..."
     );
-
-
-    const me =
-      await judgeApi(
-        "judgeMe"
-      );
-
-
-    if (
-      !me?.success
-    ) {
-
-      return false;
-
-    }
-
-
-    APP.judge =
-
-      me.judge
-
-      ||
-
-      me.user
-
-      ||
-
-      null;
-
-
-    APP.expiresAt =
-
-      me.expiresAt
-
-      ||
-
-      me.session?.expiresAt
-
-      ||
-
-      APP.expiresAt;
-
-
-    if (
-      !APP.judge
-    ) {
-
-      return false;
-
-    }
-
-
-    renderProfile();
 
 
     const dashboard =
@@ -2945,25 +4265,18 @@ async function restoreSession() {
     }
 
 
-    APP.dashboard =
-      dashboard;
+    applyDashboardPayload_(
+      dashboard
+    );
 
 
     if (
-      dashboard.judge
+      !APP.judge
     ) {
 
-      APP.judge =
-        dashboard.judge;
+      return false;
 
     }
-
-
-    ensureCurrentSection();
-
-    renderProfile();
-
-    renderDashboard();
 
 
     return true;
@@ -3035,6 +4348,10 @@ async function refreshDashboard() {
     );
 
 
+  const op =
+    beginDashboardRequest_();
+
+
   try {
 
     APP.busy =
@@ -3054,6 +4371,17 @@ async function refreshDashboard() {
       await judgeApi(
         "judgeScoreDashboard"
       );
+
+
+    if (
+      !isLiveDashboardRequest_(
+        op
+      )
+    ) {
+
+      return;
+
+    }
 
 
     if (
@@ -3086,25 +4414,13 @@ async function refreshDashboard() {
     }
 
 
-    APP.dashboard =
-      dashboard;
+    applyDashboardPayload_(
+      dashboard
+    );
 
 
-    if (
-      dashboard.judge
-    ) {
-
-      APP.judge =
-        dashboard.judge;
-
-    }
-
-
-    ensureCurrentSection();
-
-    renderProfile();
-
-    renderDashboard();
+    APP.dashboardStatusFillPending_ =
+      false;
 
 
     toast(
@@ -3116,6 +4432,17 @@ async function refreshDashboard() {
   catch (
     error
   ) {
+
+    if (
+      !isLiveDashboardRequest_(
+        op
+      )
+    ) {
+
+      return;
+
+    }
+
 
     byId(
       "dashboardState"
@@ -3160,6 +4487,17 @@ async function refreshDashboard() {
   }
 
   finally {
+
+    if (
+      !isLiveDashboardRequest_(
+        op
+      )
+    ) {
+
+      return;
+
+    }
+
 
     APP.busy =
       false;
@@ -3803,6 +5141,29 @@ function stageTabText(
   }
 
 
+  if (
+    stage.statusPending ===
+      true
+
+    ||
+
+    (
+      APP.dashboard &&
+      APP.dashboard.statusPending ===
+        true
+    )
+
+    ||
+
+    stage.submittedCount ==
+      null
+  ) {
+
+    return "清單已可評分";
+
+  }
+
+
   const reopened =
     Number(
       stage.reopenedCount ||
@@ -4022,6 +5383,53 @@ function renderCurrentStage() {
     "block";
 
 
+  if (
+    stage.statusPending ===
+      true
+
+    ||
+
+    (
+      APP.dashboard &&
+      APP.dashboard.statusPending ===
+        true
+    )
+
+    ||
+
+    stage.submittedCount ==
+      null
+  ) {
+
+    byId(
+      "progressText"
+    )
+    .textContent =
+      "進度載入中";
+
+
+    byId(
+      "progressMeta"
+    )
+    .textContent =
+      "可先選擇社團開始評分";
+
+
+    byId(
+      "progressBar"
+    )
+    .style
+    .width =
+      "0%";
+
+
+    filterAndRenderClubs();
+
+    return;
+
+  }
+
+
   const total =
     Number(
       stage.totalClubs ||
@@ -4159,6 +5567,21 @@ function renderCurrentStage() {
 function normalizedClubUiStatus(
   club
 ) {
+
+  if (
+    club?.statusPending ===
+      true
+
+    ||
+
+    club?.status ==
+      null
+  ) {
+
+    return "loading";
+
+  }
+
 
   if (
     club?.status ===
@@ -4589,6 +6012,24 @@ function statusUi(
 
   if (
     status ===
+    "loading"
+  ) {
+
+    return {
+
+      label:
+        "⏳ 載入中",
+
+      cls:
+        "s-draft"
+
+    };
+
+  }
+
+
+  if (
+    status ===
     "submitted"
   ) {
 
@@ -4704,6 +6145,273 @@ function sameJudgeOpIdentity_(snap) {
     String(snap.sessionToken || "") === currentSessionToken_() &&
     String(snap.judgeId || "") === currentJudgeId_()
   );
+}
+
+
+function permanentClubIdHintForOpenScore_(
+  sectionId,
+  clubName
+) {
+
+  const wantedName =
+    String(
+      clubName ||
+      ""
+    )
+    .trim();
+
+
+  const wantedSection =
+    String(
+      sectionId ||
+      ""
+    )
+    .trim();
+
+
+  function matchRow(
+    row
+  ) {
+
+    if (
+      !row ||
+      !wantedName
+    ) {
+
+      return false;
+
+    }
+
+
+    const name =
+      String(
+        row.name ||
+        row.clubName ||
+        ""
+      )
+      .trim();
+
+
+    return name ===
+      wantedName;
+
+  }
+
+
+  const filtered =
+    (APP.filteredClubs || [])
+      .find(
+        matchRow
+      );
+
+
+  if (
+    filtered &&
+    filtered.permanentClubId
+  ) {
+
+    return String(
+      filtered.permanentClubId
+    )
+    .trim();
+
+  }
+
+
+  const stage =
+    APP.dashboard &&
+    APP.dashboard.stages &&
+    APP.dashboard.stages[
+      wantedSection
+    ];
+
+
+  const fromStage =
+    (
+      (
+        stage &&
+        stage.clubs
+      ) ||
+      []
+    )
+    .find(
+      matchRow
+    );
+
+
+  return String(
+    (
+      fromStage &&
+      fromStage.permanentClubId
+    ) ||
+    ""
+  )
+  .trim();
+
+}
+
+
+function markClubSubmittedLocally_(
+  sectionId,
+  clubName,
+  permanentClubId
+) {
+
+  const wantedSection =
+    String(
+      sectionId ||
+      ""
+    )
+    .trim();
+
+
+  const wantedName =
+    String(
+      clubName ||
+      ""
+    )
+    .trim();
+
+
+  const wantedPermanent =
+    String(
+      permanentClubId ||
+      ""
+    )
+    .trim();
+
+
+  function patchClub(
+    club
+  ) {
+
+    if (
+      !club
+    ) {
+
+      return false;
+
+    }
+
+
+    const name =
+      String(
+        club.name ||
+        club.clubName ||
+        ""
+      )
+      .trim();
+
+
+    const permanent =
+      String(
+        club.permanentClubId ||
+        ""
+      )
+      .trim();
+
+
+    const hit =
+
+      (
+        wantedPermanent &&
+        permanent &&
+        permanent ===
+        wantedPermanent
+      )
+
+      ||
+
+      (
+        wantedName &&
+        name ===
+        wantedName
+      );
+
+
+    if (
+      !hit
+    ) {
+
+      return false;
+
+    }
+
+
+    club.status =
+      "submitted";
+
+
+    club.statusPending =
+      false;
+
+
+    club.reopened =
+      false;
+
+
+    return true;
+
+  }
+
+
+  try {
+
+    const stage =
+      APP.dashboard &&
+      APP.dashboard.stages &&
+      APP.dashboard.stages[
+        wantedSection
+      ];
+
+
+    if (
+      stage &&
+      Array.isArray(
+        stage.clubs
+      )
+    ) {
+
+      stage.clubs
+        .forEach(
+          patchClub
+        );
+
+    }
+
+
+    (APP.filteredClubs || [])
+      .forEach(
+        patchClub
+      );
+
+
+    if (
+      typeof filterAndRenderClubs ===
+      "function"
+    ) {
+
+      filterAndRenderClubs();
+
+    }
+
+    else if (
+      typeof renderClubList ===
+      "function"
+    ) {
+
+      renderClubList();
+
+    }
+
+  }
+
+  catch (
+    patchError
+  ) {
+
+  }
+
 }
 
 
@@ -4823,6 +6531,140 @@ function localDraftPartsPinned_(judgeId, permanentClubId, sectionId, clubName) {
     sectionId: sectionId,
     clubName: clubName
   };
+}
+
+
+function contextSubmitParts_(context) {
+  if (!context) return null;
+  const pinned = context.draftKeyParts;
+  if (pinned && pinned.judgeId && pinned.permanentClubId) {
+    return {
+      activityId: pinned.activityId || judgeActivityId_(),
+      judgeId: String(pinned.judgeId).trim(),
+      permanentClubId: String(pinned.permanentClubId).trim(),
+      sectionId: String(pinned.sectionId || context.sectionId || "").trim(),
+      clubName: context.clubName || pinned.clubName || ""
+    };
+  }
+  if (!context.permanentClubId) return null;
+  return localDraftPartsPinned_(
+    currentJudgeId_(),
+    context.permanentClubId,
+    context.sectionId,
+    context.clubName
+  );
+}
+
+
+function submitScopeKey_(parts) {
+  if (!parts) return "";
+  const activityId = String(parts.activityId || "").trim();
+  const judgeId = String(parts.judgeId || "").trim();
+  const permanentClubId = String(parts.permanentClubId || "").trim();
+  const sectionId = String(parts.sectionId || "").trim();
+  if (!activityId || !judgeId || !permanentClubId || !sectionId) return "";
+  return [activityId, judgeId, permanentClubId, sectionId].join("::");
+}
+
+
+function submitHold_(key) {
+  if (!key || !APP.submitHolds) return null;
+  return APP.submitHolds[key] || null;
+}
+
+
+function contextSubmitBlocked_(context) {
+  const parts = contextSubmitParts_(context);
+  const hold = submitHold_(submitScopeKey_(parts));
+  return !!(hold && (hold.state === "unconfirmed" || hold.state === "confirming"));
+}
+
+
+function rememberSubmitHold_(parts, state, extra) {
+  const key = submitScopeKey_(parts);
+  if (!key) return null;
+  if (!APP.submitHolds || typeof APP.submitHolds !== "object") {
+    APP.submitHolds = {};
+  }
+  const prior = APP.submitHolds[key] || {};
+  APP.submitHolds[key] = Object.assign({}, prior, extra || {}, {
+    state: state,
+    activityId: parts.activityId,
+    judgeId: parts.judgeId,
+    permanentClubId: parts.permanentClubId,
+    sectionId: parts.sectionId,
+    clubName: parts.clubName || prior.clubName || ""
+  });
+  return APP.submitHolds[key];
+}
+
+
+function clearSubmitHold_(parts) {
+  const key = submitScopeKey_(parts);
+  if (APP.submitHolds && key) delete APP.submitHolds[key];
+}
+
+
+function submitSurfaceMatches_(parts) {
+  if (!parts || !submitScopeKey_(parts)) return false;
+  if (!APP.scoreContext) return false;
+  return submitScopeKey_(contextSubmitParts_(APP.scoreContext)) === submitScopeKey_(parts);
+}
+
+
+function previousRevisionForSubmit_(context) {
+  if (context && context.authorizedResult) {
+    const baseline = authorizedScoreBaseline_(context.authorizedResult);
+    if (baseline.kind === "no-record") return 0;
+    if (baseline.kind === "record") return baseline.submissionRevision;
+    return null;
+  }
+  const record = context && context.result && context.result.record;
+  if (!record || typeof record !== "object" || Array.isArray(record)) return null;
+  return revisionOrNull_(record.submissionRevision);
+}
+
+
+function heldPermanentClubId_(loaded) {
+  if (!loaded) return "";
+  return String(
+    loaded.permanentClubId ||
+    (loaded.club && loaded.club.permanentClubId) ||
+    (loaded.record && loaded.record.permanentClubId) ||
+    ""
+  ).trim();
+}
+
+
+function classifyHeldConfirm_(hold, loaded) {
+  if (!hold || !loaded || loaded.success !== true) return { kind: "unconfirmed" };
+  if (typeof HKSP_JUDGE_CLIENT_GUARD === "undefined" || !HKSP_JUDGE_CLIENT_GUARD) {
+    return { kind: "unconfirmed" };
+  }
+  if (!HKSP_JUDGE_CLIENT_GUARD.sameSubmitTarget({
+    sectionId: hold.sectionId,
+    clubName: hold.clubName
+  }, loaded)) {
+    return { kind: "unconfirmed" };
+  }
+  const loadedPermanent = heldPermanentClubId_(loaded);
+  if (hold.permanentClubId && loadedPermanent && loadedPermanent !== String(hold.permanentClubId)) {
+    return { kind: "unconfirmed" };
+  }
+  if (!loaded.record || typeof loaded.record !== "object" || Array.isArray(loaded.record)) {
+    return { kind: "unconfirmed" };
+  }
+  const record = loaded.record;
+  const locked = loaded.locked === true || record.locked === true || record.status === "submitted";
+  if (!locked) return { kind: "unconfirmed" };
+  if (!HKSP_JUDGE_CLIENT_GUARD.scoresMatch(hold.scores, record.scores)) {
+    return { kind: "unconfirmed" };
+  }
+  const actual = HKSP_JUDGE_CLIENT_GUARD.finiteRevision(record.submissionRevision);
+  const previous = HKSP_JUDGE_CLIENT_GUARD.finiteRevision(hold.previousRevision);
+  if (actual == null || previous == null) return { kind: "unconfirmed" };
+  if (actual <= previous) return { kind: "unconfirmed" };
+  return { kind: "confirmed", record: record };
 }
 
 
@@ -5099,6 +6941,54 @@ async function openScore(
   }
 
 
+  const criticalId =
+    beginCriticalJudgeOp_(
+      "openScore"
+    );
+
+
+  if (
+    !APP.timings ||
+    typeof APP.timings !==
+      "object"
+  ) {
+
+    APP.timings =
+      {};
+
+  }
+
+
+  APP.timings.openScore =
+  {
+
+    clickAt:
+      Date.now(),
+
+    requestStartedAt:
+      null,
+
+    responseAt:
+      null,
+
+    serverTiming:
+      null,
+
+    overlappedBgDashboard:
+      null,
+
+    bgDashboardInFlightAtClick:
+      isDashboardStatusFillInFlight_(),
+
+    fieldsFillableAt:
+      null,
+
+    fieldsFillableMs:
+      null
+
+  };
+
+
   const sectionId =
     decodeURIComponent(
       encodedSection
@@ -5175,10 +7065,19 @@ async function openScore(
       true;
 
 
+    byId("scoreSubmitRecheckBtn").style.display = "none";
+
+    const permanentClubIdHint =
+      permanentClubIdHintForOpenScore_(
+        sectionId,
+        clubName
+      );
+
+
     const result =
       await judgeApi(
 
-        "judgeGetScore",
+        (APP.timings.openScore.requestStartedAt = Date.now(), "judgeGetScore"),
 
         {
 
@@ -5189,7 +7088,11 @@ async function openScore(
             sectionId,
 
           clubName:
-            clubName
+            clubName,
+
+          permanentClubId:
+            permanentClubIdHint ||
+            undefined
 
         }
 
@@ -5318,9 +7221,37 @@ async function openScore(
     renderScoreModal();
 
 
+    syncSubmitHoldUi_();
+
+
     noteLocalDraftVersionGap_(
       choice
     );
+
+
+    if (
+      APP.timings &&
+      APP.timings.openScore
+    ) {
+
+      APP.timings.openScore.fieldsFillableAt =
+        Date.now();
+
+
+      APP.timings.openScore.fieldsFillableMs =
+        APP.timings.openScore.fieldsFillableAt -
+        APP.timings.openScore.clickAt;
+
+      try {
+        const lastGet = (APP.netTimings && APP.netTimings.calls || []).slice().reverse().find(function (c) { return c.action === "judgeGetScore"; });
+        if (lastGet) {
+          APP.timings.openScore.responseAt = lastGet.responseAt;
+          APP.timings.openScore.overlappedBgDashboard = !!lastGet.overlappedBgDashboard;
+        }
+        if (result && result.serverTiming) APP.timings.openScore.serverTiming = result.serverTiming;
+      } catch (timingAttachErr) {}
+
+    }
 
   }
 
@@ -5367,6 +7298,12 @@ async function openScore(
   }
 
   finally {
+
+    endCriticalJudgeOp_(
+      "openScore",
+      criticalId
+    );
+
 
     if (
       sameJudgeOpIdentity_(
@@ -6495,7 +8432,25 @@ function openSubmitConfirm() {
 
     !APP.scoreContext
 
+    ||
+
+    contextSubmitBlocked_(
+      APP.scoreContext
+    )
+
   ) {
+
+    if (
+      !APP.busy &&
+      contextSubmitBlocked_(
+        APP.scoreContext
+      )
+    ) {
+
+      syncSubmitHoldUi_();
+
+    }
+
 
     return;
 
@@ -6630,16 +8585,12 @@ function openSubmitConfirm() {
       : "⚠️ 正式送出後，此筆評分會立即鎖定，評審本人不能再修改。若真的需要修改，必須由管理員解鎖。";
 
 
-  byId(
-    "confirmSubmitBtn"
-  )
-  .textContent =
-
-    reopened
-
-      ? "確認重新送出並鎖定"
-
-      : "確認送出並鎖定";
+  const confirmButton = byId("confirmSubmitBtn");
+  confirmButton.disabled = false;
+  confirmButton.onclick = submitScore;
+  confirmButton.textContent =
+    reopened ? "確認重新送出並鎖定" : "確認送出並鎖定";
+  setConfirmStatus_("", false);
 
 
   byId(
@@ -6682,6 +8633,12 @@ async function submitScore() {
     ||
 
     !APP.scoreContext
+
+    ||
+
+    contextSubmitBlocked_(
+      APP.scoreContext
+    )
 
   ) {
 
@@ -6757,10 +8714,79 @@ async function submitScore() {
     });
 
 
+  if (
+    JUDGE_GUARD &&
+    !JUDGE_GUARD.getState().sessionToken &&
+    APP.sessionToken
+  ) {
+
+    JUDGE_GUARD.setSession(
+      APP.sessionToken,
+      currentJudgeId_()
+    );
+
+  }
+
+
+  const intent =
+
+    JUDGE_GUARD
+
+      ? JUDGE_GUARD.beginSubmitOperation({
+
+          sectionId:
+            context.sectionId,
+
+          clubName:
+            context.clubName,
+
+          scores:
+            scores,
+
+          previousRevision:
+            previousRevisionForSubmit_(
+              context
+            )
+
+        })
+
+      : {
+
+          sessionToken:
+            APP.sessionToken,
+
+          judgeId:
+            currentJudgeId_(),
+
+          sectionId:
+            context.sectionId,
+
+          clubName:
+            context.clubName,
+
+          scores:
+            scores,
+
+          previousRevision:
+            previousRevisionForSubmit_(
+              context
+            )
+
+        };
+
+
+  APP.submitOperation =
+    intent;
+
+
   try {
 
     APP.busy =
       true;
+
+
+    APP.submitUiFinal =
+      "submitting";
 
 
     button.disabled =
@@ -6772,7 +8798,9 @@ async function submitScore() {
 
 
     const result =
-      await judgeApi(
+      await judgeApiWithToken(
+
+        intent.sessionToken,
 
         "judgeSubmitScore",
 
@@ -6786,6 +8814,10 @@ async function submitScore() {
 
           clubName:
             context.clubName,
+
+          permanentClubId:
+            context.permanentClubId ||
+            undefined,
 
           scores:
             scores
@@ -6806,11 +8838,53 @@ async function submitScore() {
     }
 
 
+    const business =
+
+      JUDGE_GUARD
+
+        ? JUDGE_GUARD.classifySubmitBusinessResult(
+            result
+          )
+
+        : (
+            isUnauthorized(
+              result
+            )
+
+              ? {
+                  kind:
+                    "unauthorized"
+                }
+
+              : (
+                  result &&
+                  result.success
+
+                    ? {
+                        kind:
+                          "success",
+                        apply:
+                          true
+                      }
+
+                    : {
+                        kind:
+                          "confirming"
+                      }
+
+                )
+
+          );
+
+
     if (
-      isUnauthorized(
-        result
-      )
+      business.kind ===
+      "unauthorized"
     ) {
+
+      APP.submitUiFinal =
+        "unauthorized";
+
 
       byId(
         "confirmModal"
@@ -6825,7 +8899,9 @@ async function submitScore() {
       );
 
 
-      handleUnauthorized();
+      handleUnauthorized(
+        business.message
+      );
 
 
       return;
@@ -6834,81 +8910,62 @@ async function submitScore() {
 
 
     if (
-      !result?.success
+      business.kind ===
+        "success" &&
+      business.apply
     ) {
 
-      throw new Error(
+      finishSubmitSuccess_(
+        context,
+        result,
+        reopened,
+        opIdentity
+      );
 
-        result?.message
 
-        ||
+      return;
 
-        "正式送出失敗"
+    }
+
+
+    if (
+      business.kind ===
+      "rejected"
+    ) {
+
+      APP.submitUiFinal =
+        "rejected";
+
+
+      byId(
+        "scoreError"
+      )
+      .textContent =
+        business.message ||
+        "正式送出失敗";
+
+
+      toast(
+
+        "❌ " +
+
+        (
+          business.message ||
+          "正式送出失敗"
+        )
 
       );
 
-    }
-
-
-    byId(
-      "confirmModal"
-    )
-    .style
-    .display =
-      "none";
-
-
-    toast(
-
-      reopened
-
-        ? "✅ 評分已重新正式送出並鎖定"
-
-        : "✅ 評分已正式送出並鎖定"
-
-    );
-
-
-    try {
-
-      if (
-        opIdentity.draftParts &&
-        opIdentity.draftParts.judgeId &&
-        opIdentity.draftParts.permanentClubId &&
-        opIdentity.draftParts.sectionId
-      ) {
-
-        clearLocalDraft_(
-          opIdentity.draftParts
-        );
-
-      }
-
-    }
-
-    catch (
-      clearDraftError
-    ) {
-
-    }
-
-
-    await refreshDashboardSilently();
-
-
-    if (
-      !sameJudgeOpIdentity_(
-        opIdentity
-      )
-    ) {
 
       return;
 
     }
 
 
-    closeScoreModal(
-      true
+    await confirmSubmitAfterAbort_(
+      context,
+      reopened,
+      opIdentity
     );
 
   }
@@ -6928,6 +8985,37 @@ async function submitScore() {
     }
 
 
+    const abortKind =
+
+      JUDGE_GUARD
+
+        ? JUDGE_GUARD.classifySubmitNetworkError(
+            error
+          )
+
+        : {
+            kind:
+              "confirming"
+          };
+
+
+    if (
+      abortKind.kind ===
+      "confirming"
+    ) {
+
+      await confirmSubmitAfterAbort_(
+        context,
+        reopened,
+        opIdentity
+      );
+
+
+      return;
+
+    }
+
+
     byId(
       "confirmModal"
     )
@@ -6941,6 +9029,10 @@ async function submitScore() {
     )
     .textContent =
 
+      abortKind.message
+
+      ||
+
       error.message
 
       ||
@@ -6953,6 +9045,10 @@ async function submitScore() {
       "❌ " +
 
       (
+        abortKind.message
+
+        ||
+
         error.message
 
         ||
@@ -6967,26 +9063,232 @@ async function submitScore() {
   finally {
 
     if (
-      sameJudgeOpIdentity_(
+      !sameJudgeOpIdentity_(
         opIdentity
       )
     ) {
 
-      APP.busy =
-        false;
+      return;
+
+    }
 
 
-      button.disabled =
-        false;
+    APP.busy =
+      false;
 
 
-      button.textContent =
+    if (
 
-        reopened
+      APP.submitUiFinal ===
+        "unconfirmed"
 
-          ? "確認重新送出並鎖定"
+      ||
 
-          : "確認送出並鎖定";
+      APP.submitUiFinal ===
+        "confirming"
+
+      ||
+
+      APP.submitUiFinal ===
+        "success"
+
+      ||
+
+      APP.submitUiFinal ===
+        "unauthorized"
+
+    ) {
+
+      return;
+
+    }
+
+
+    button.disabled =
+      false;
+
+
+    button.textContent =
+
+      reopened
+
+        ? "確認重新送出並鎖定"
+
+        : "確認送出並鎖定";
+
+
+    button.onclick =
+      function () {
+
+        submitScore();
+
+      };
+
+  }
+
+}
+
+
+function syncSubmitHoldUi_() {
+  const parts = contextSubmitParts_(APP.scoreContext);
+  const hold = submitHold_(submitScopeKey_(parts));
+  if (!hold || hold.state !== "unconfirmed") return;
+  if (String(hold.judgeId || "") !== currentJudgeId_()) return;
+  const scoreSubmit = byId("submitScoreBtn");
+  if (scoreSubmit) scoreSubmit.disabled = true;
+  setConfirmStatus_(
+    hold.message || "目前只能看到資料狀態，還不能確認是本次送出。請重新整理查看，不要重複送出",
+    true
+  );
+}
+
+
+async function recheckUnconfirmedSubmit_() {
+  const parts = contextSubmitParts_(APP.scoreContext);
+  const key = submitScopeKey_(parts);
+  const hold = submitHold_(key);
+  if (!hold || hold.state !== "unconfirmed") return;
+  if (String(hold.judgeId || "") !== currentJudgeId_()) return;
+  if (APP.busy) return;
+
+  const opIdentity = captureJudgeOpIdentity_({
+    draftParts: parts,
+    recheck: true
+  });
+  const buttons = [byId("confirmSubmitBtn"), byId("scoreSubmitRecheckBtn")];
+
+  try {
+    APP.busy = true;
+    buttons.forEach(function (button) {
+      button.disabled = true;
+      button.textContent = "正在確認送出結果";
+    });
+    const loaded = await judgeApi(
+      "judgeGetScore",
+      {
+        sectionId: hold.sectionId,
+        stageKey: hold.sectionId,
+        clubName: hold.clubName,
+        permanentClubId: hold.permanentClubId || undefined
+      }
+    );
+    if (!sameJudgeOpIdentity_(opIdentity) || !submitSurfaceMatches_(parts)) {
+      return;
+    }
+    if (isUnauthorized(loaded)) {
+      handleUnauthorized(loaded && loaded.message);
+      return;
+    }
+    const kind = classifyHeldConfirm_(hold, loaded);
+    if (kind.kind === "confirmed") {
+      APP.submitOperation = {
+        sessionToken: currentSessionToken_(),
+        judgeId: currentJudgeId_(),
+        sectionId: hold.sectionId,
+        clubName: hold.clubName,
+        scores: hold.scores,
+        previousRevision: hold.previousRevision
+      };
+      finishSubmitSuccess_(
+        APP.scoreContext,
+        { record: kind.record },
+        hold.reopened === true,
+        opIdentity
+      );
+      return;
+    }
+    setConfirmStatus_(
+      "目前只能看到資料狀態，還不能確認是本次送出。請重新整理查看，不要重複送出",
+      true
+    );
+  } catch (error) {
+    if (!sameJudgeOpIdentity_(opIdentity) || !submitSurfaceMatches_(parts)) {
+      return;
+    }
+    setConfirmStatus_(
+      "目前只能看到資料狀態，還不能確認是本次送出。請重新整理查看，不要重複送出",
+      true
+    );
+  } finally {
+    if (sameJudgeOpIdentity_(opIdentity)) {
+      APP.busy = false;
+    }
+  }
+}
+
+
+function setConfirmStatus_(
+  message,
+  showRefresh
+) {
+
+  const status =
+    byId(
+      "confirmStatus"
+    );
+
+
+  if (
+    status
+  ) {
+
+    status.style.display =
+      message
+        ? "block"
+        : "none";
+
+
+    status.textContent =
+      message ||
+      "";
+
+  }
+
+
+  const button =
+    byId(
+      "confirmSubmitBtn"
+    );
+
+
+  if (
+    showRefresh &&
+    button
+  ) {
+
+    APP.submitUiFinal =
+      "unconfirmed";
+
+
+    button.disabled =
+      false;
+
+
+    button.textContent =
+      "重新整理查看";
+
+
+    button.onclick = recheckUnconfirmedSubmit_;
+
+    const scoreRecheck = byId("scoreSubmitRecheckBtn");
+    scoreRecheck.style.display = "";
+    scoreRecheck.disabled = false;
+    scoreRecheck.textContent = "重新整理查看";
+    scoreRecheck.onclick = recheckUnconfirmedSubmit_;
+
+
+    const scoreSubmit =
+      byId(
+        "submitScoreBtn"
+      );
+
+
+    if (
+      scoreSubmit
+    ) {
+
+      scoreSubmit.disabled =
+        true;
 
     }
 
@@ -6995,12 +9297,658 @@ async function submitScore() {
 }
 
 
+function finishSubmitSuccess_(
+  context,
+  result,
+  reopened,
+  opIdentity
+) {
+
+  if (
+    !sameJudgeOpIdentity_(
+      opIdentity
+    )
+  ) {
+
+    const staleHold =
+      submitHold_(
+        submitScopeKey_(
+          opIdentity &&
+          opIdentity.draftParts
+        )
+      );
+
+
+    if (
+      staleHold &&
+      staleHold.state ===
+        "confirming"
+    ) {
+
+      staleHold.state =
+        "unconfirmed";
+
+    }
+
+
+    return;
+
+  }
+
+
+  if (
+    !opIdentity.recheck &&
+    JUDGE_GUARD &&
+    APP.submitOperation &&
+    !JUDGE_GUARD.isLiveSubmitIntent(
+      APP.submitOperation
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  const parts =
+    opIdentity.draftParts;
+
+
+  if (
+    parts &&
+    !submitSurfaceMatches_(
+      parts
+    )
+  ) {
+
+    try {
+
+      clearLocalDraft_(
+        parts
+      );
+
+    }
+
+    catch (
+      quietClearError
+    ) {
+
+    }
+
+
+    clearSubmitHold_(
+      parts
+    );
+
+
+    return;
+
+  }
+
+
+  clearSubmitHold_(
+    parts
+  );
+
+
+  APP.submitUiFinal =
+    "success";
+
+
+  invalidatePreSubmitDashboardStatus_();
+
+
+  byId(
+    "confirmModal"
+  )
+  .style
+  .display =
+    "none";
+
+
+  setConfirmStatus_(
+    "",
+    false
+  );
+
+
+  toast(
+
+    reopened
+
+      ? "✅ 評分已重新正式送出並鎖定"
+
+      : "✅ 評分已正式送出並鎖定"
+
+  );
+
+
+  try {
+
+    if (
+      opIdentity.draftParts &&
+      opIdentity.draftParts.judgeId &&
+      opIdentity.draftParts.permanentClubId &&
+      opIdentity.draftParts.sectionId
+    ) {
+
+      clearLocalDraft_(
+        opIdentity.draftParts
+      );
+
+    }
+
+  }
+
+  catch (
+    clearDraftError
+  ) {
+
+  }
+
+
+  markClubSubmittedLocally_(
+    context.sectionId,
+    context.clubName,
+    context.permanentClubId
+  );
+
+
+  closeScoreModal(
+    true
+  );
+
+
+  scheduleJudgeDashboardStatusCatchup_(
+    0
+  );
+
+}
+
+
+async function confirmSubmitAfterAbort_(
+  context,
+  reopened,
+  opIdentity
+) {
+
+  const intent =
+    APP.submitOperation;
+
+
+  if (
+    !intent ||
+    !sameJudgeOpIdentity_(
+      opIdentity
+    ) ||
+    (
+      JUDGE_GUARD &&
+      !JUDGE_GUARD.isLiveSubmitIntent(
+        intent
+      )
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  const heldParts =
+    opIdentity.draftParts;
+
+
+  rememberSubmitHold_(
+    heldParts,
+    "confirming",
+    {
+
+      scores:
+        intent.scores,
+
+      previousRevision:
+        intent.previousRevision,
+
+      sectionId:
+        intent.sectionId,
+
+      clubName:
+        intent.clubName,
+
+      reopened:
+        reopened
+
+    }
+  );
+
+
+  APP.submitUiFinal =
+    "confirming";
+
+
+  setConfirmStatus_(
+    "正在確認送出結果",
+    false
+  );
+
+
+  const button =
+    byId(
+      "confirmSubmitBtn"
+    );
+
+
+  if (
+    button
+  ) {
+
+    button.disabled =
+      true;
+
+
+    button.textContent =
+      "正在確認送出結果";
+
+  }
+
+
+  let lastKind =
+    null;
+
+
+  for (
+    let attempt =
+      0;
+
+    attempt <
+    4;
+
+    attempt +=
+    1
+  ) {
+
+    if (
+      attempt >
+      0
+    ) {
+
+      await new Promise(
+        function (
+          resolve
+        ) {
+
+          setTimeout(
+            resolve,
+            2500
+          );
+
+        }
+      );
+
+    }
+
+
+    if (
+      !sameJudgeOpIdentity_(
+        opIdentity
+      ) ||
+      (
+        JUDGE_GUARD &&
+        !JUDGE_GUARD.isLiveSubmitIntent(
+          intent
+        )
+      )
+    ) {
+
+      const abandoned =
+        submitHold_(
+          submitScopeKey_(
+            heldParts
+          )
+        );
+
+
+      if (
+        abandoned &&
+        abandoned.state ===
+          "confirming"
+      ) {
+
+        abandoned.state =
+          "unconfirmed";
+
+      }
+
+
+      return;
+
+    }
+
+
+    let loaded =
+      null;
+
+
+    try {
+
+      loaded =
+        await judgeApiWithToken(
+
+          intent.sessionToken,
+
+          "judgeGetScore",
+
+          {
+
+            sectionId:
+              intent.sectionId,
+
+            stageKey:
+              intent.sectionId,
+
+            clubName:
+              intent.clubName,
+
+            permanentClubId:
+              context.permanentClubId ||
+              undefined
+
+          },
+
+          20000
+
+        );
+
+    }
+
+    catch (
+      readError
+    ) {
+
+      loaded =
+        {
+
+          success:
+            false,
+
+          message:
+            readError &&
+            readError.message
+
+        };
+
+    }
+
+
+    lastKind =
+
+      JUDGE_GUARD
+
+        ? JUDGE_GUARD.classifyConfirmRead(
+            intent,
+            loaded
+          )
+
+        : {
+            kind:
+              "unconfirmed",
+            apply:
+              false,
+            message:
+              "目前只能看到資料狀態，還不能確認是本次送出。請重新整理查看，不要重複送出"
+          };
+
+
+    if (
+      lastKind.kind ===
+      "stale"
+    ) {
+
+      const staleHold =
+        submitHold_(
+          submitScopeKey_(
+            heldParts
+          )
+        );
+
+
+      if (
+        staleHold &&
+        staleHold.state ===
+          "confirming"
+      ) {
+
+        staleHold.state =
+          "unconfirmed";
+
+      }
+
+
+      return;
+
+    }
+
+
+    if (
+      lastKind.kind ===
+      "unauthorized"
+    ) {
+
+      const dropped =
+        submitHold_(
+          submitScopeKey_(
+            heldParts
+          )
+        );
+
+
+      if (
+        dropped &&
+        dropped.state ===
+          "confirming"
+      ) {
+
+        dropped.state =
+          "unconfirmed";
+
+      }
+
+
+      APP.submitUiFinal =
+        "unauthorized";
+
+
+      handleUnauthorized(
+        lastKind.message
+      );
+
+
+      return;
+
+    }
+
+
+    if (
+      lastKind.kind ===
+        "confirmed" &&
+      lastKind.apply
+    ) {
+
+      const heldCheck =
+        classifyHeldConfirm_(
+          submitHold_(
+            submitScopeKey_(
+              heldParts
+            )
+          ),
+          loaded
+        );
+
+
+      if (
+        heldCheck.kind !==
+        "confirmed"
+      ) {
+
+        lastKind =
+          {
+            kind:
+              "unconfirmed"
+          };
+
+
+      }
+
+      else {
+
+        finishSubmitSuccess_(
+          context,
+          {
+            record:
+              heldCheck.record ||
+              lastKind.record ||
+              (
+                loaded &&
+                loaded.record
+              )
+          },
+          reopened,
+          opIdentity
+        );
+
+
+        return;
+
+      }
+
+    }
+
+
+    if (
+      lastKind.kind ===
+        "conflict" ||
+      lastKind.kind ===
+        "mismatch"
+    ) {
+
+      break;
+
+    }
+
+  }
+
+
+  if (
+    !sameJudgeOpIdentity_(
+      opIdentity
+    )
+  ) {
+
+    const abandoned =
+      submitHold_(
+        submitScopeKey_(
+          heldParts
+        )
+      );
+
+
+    if (
+      abandoned &&
+      abandoned.state ===
+        "confirming"
+    ) {
+
+      abandoned.state =
+        "unconfirmed";
+
+    }
+
+
+    return;
+
+  }
+
+
+  if (
+    !submitSurfaceMatches_(
+      heldParts
+    )
+  ) {
+
+    rememberSubmitHold_(
+      heldParts,
+      "unconfirmed",
+      {}
+    );
+
+
+    return;
+
+  }
+
+
+  rememberSubmitHold_(
+    heldParts,
+    "unconfirmed",
+    {
+
+      message:
+        (
+          lastKind &&
+          lastKind.message
+        )
+
+        ||
+
+        "目前只能看到資料狀態，還不能確認是本次送出。請重新整理查看，不要重複送出"
+
+    }
+  );
+
+
+  setConfirmStatus_(
+
+    (
+      lastKind &&
+      lastKind.message
+    )
+
+    ||
+
+    "目前只能看到資料狀態，還不能確認是本次送出。請重新整理查看，不要重複送出",
+
+    true
+
+  );
+
+
+  APP.busy =
+    false;
+
+}
+
+
 async function refreshDashboardSilently() {
+
+  const op =
+    beginDashboardRequest_();
+
 
   const dashboard =
     await judgeApi(
       "judgeScoreDashboard"
     );
+
+
+  if (
+    !isLiveDashboardRequest_(
+      op
+    )
+  ) {
+
+    return null;
+
+  }
 
 
   if (
@@ -7033,25 +9981,24 @@ async function refreshDashboardSilently() {
   }
 
 
-  APP.dashboard =
-    dashboard;
-
-
   if (
-    dashboard.judge
+    shouldHoldSilentDashboard_()
   ) {
 
-    APP.judge =
-      dashboard.judge;
+    markJudgeDashboardStatusCatchup_();
+
+    return null;
 
   }
 
 
-  ensureCurrentSection();
+  applyDashboardPayload_(
+    dashboard
+  );
 
-  renderProfile();
 
-  renderDashboard();
+  APP.dashboardStatusFillPending_ =
+    false;
 
 
   return true;
@@ -7096,6 +10043,11 @@ function closeScoreModal(
 
   APP.scoreContext =
     null;
+
+  byId("scoreSubmitRecheckBtn").style.display = "none";
+
+
+  flushJudgeDashboardStatusCatchup_();
 
 }
 
@@ -7174,6 +10126,21 @@ async function logoutJudge() {
 
 
 function clearSession() {
+
+  if (
+    JUDGE_GUARD
+  ) {
+
+    JUDGE_GUARD.clearSession();
+
+  }
+
+
+  cancelScheduledJudgeDashboardStatusFill_();
+
+
+  cancelJudgeDashboardStatusCatchup_();
+
 
   APP.sessionToken =
     null;
