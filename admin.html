@@ -9925,21 +9925,52 @@ formatDate(S.formLastSyncAt)
 );
 }
 
+function formApiCount_(value){
+return typeof value==="number" && Number.isInteger(value) && value>=0 ? value : null;
+}
+
+function formNewCountText_(value){
+const n=formApiCount_(value);
+return n==null?"待同步":(n+" 份");
+}
+
+function formClubCountText_(value){
+const n=formApiCount_(value);
+return n==null?"待同步":(n+" 個");
+}
+
 function paintFormPanelMeta_(counts, uiState, errorMessage){
 const forms=Array.isArray(S.forms)?S.forms:[];
-const done=counts && counts.done!=null
-? counts.done
+const done=counts && Object.prototype.hasOwnProperty.call(counts, "done")
+? formApiCount_(counts.done)
 : forms.filter(function(x){ return x.status==="submitted"; }).length;
 const pending=counts && counts.pending!=null
 ? counts.pending
 : forms.filter(function(x){ return x.status==="pending"; }).length;
-const duplicate=counts && counts.duplicate!=null
+const duplicateClubs=counts && Object.prototype.hasOwnProperty.call(counts, "duplicateClubs")
+? formApiCount_(counts.duplicateClubs)
+: (
+counts && counts.duplicate!=null
 ? counts.duplicate
-: forms.filter(function(x){ return x.status==="duplicate"; }).length;
+: forms.filter(function(x){ return x.status==="duplicate"; }).length
+);
+const duplicateResponses=counts && Object.prototype.hasOwnProperty.call(counts, "duplicateResponses")
+? counts.duplicateResponses
+: null;
+const received=counts && Object.prototype.hasOwnProperty.call(counts, "received") ? counts.received : null;
+const recognized=counts && Object.prototype.hasOwnProperty.call(counts, "recognized") ? counts.recognized : null;
+const unrecognized=counts && Object.prototype.hasOwnProperty.call(counts, "unrecognized") ? counts.unrecognized : null;
+const nameConflicts=counts && Object.prototype.hasOwnProperty.call(counts, "nameConflicts") ? counts.nameConflicts : null;
+const retained=counts && Object.prototype.hasOwnProperty.call(counts, "retained") ? counts.retained : null;
+const legacyTotal=counts && Object.prototype.hasOwnProperty.call(counts, "legacyTotal") ? counts.legacyTotal : null;
 const total=forms.length;
-$("statForms").textContent=`${done}/${total}`;
+const doneStat=formApiCount_(done);
+$("statForms").textContent=doneStat==null?`待同步/${total}`:`${doneStat}/${total}`;
+const legacyPart=formApiCount_(legacyTotal)!=null
+? `表單回覆總份數 ${formApiCount_(legacyTotal)}｜`
+: "";
 $("formMeta").textContent=
-`已完成 ${done}｜待填 ${pending}｜重複 ${duplicate}｜最後成功同步 ${formSyncStampText_()}`;
+`${legacyPart}收到回覆 ${formNewCountText_(received)}｜辨識成功 ${formNewCountText_(recognized)}｜無法辨識 ${formNewCountText_(unrecognized)}｜名稱衝突 ${formNewCountText_(nameConflicts)}｜保留原關聯 ${formNewCountText_(retained)}｜已完成社團 ${formClubCountText_(done)}｜待填社團 ${pending} 個｜重複社團 ${formClubCountText_(duplicateClubs)}／重複回覆 ${formNewCountText_(duplicateResponses)}｜最後成功同步 ${formSyncStampText_()}`;
 const statusEl=$("formSyncStatus");
 const btn=$("formSyncBtn");
 S.formSyncUi=uiState||S.formSyncUi||"idle";
@@ -9969,11 +10000,28 @@ S.forms=Array.isArray(r.clubs)?r.clubs:[];
 if(r.lastSyncAt) S.formLastSyncAt=r.lastSyncAt;
 if(r.lastSyncAtTaipei) S.formLastSyncAtTaipei=r.lastSyncAtTaipei;
 S.formSyncError="";
-const done=r.submittedCount ?? S.forms.filter(function(x){ return x.status==="submitted"; }).length;
+S.formSyncBreakdown={
+legacyTotal:formApiCount_(r.totalFormResponses),
+received:formApiCount_(r.receivedResponseCount),
+recognized:formApiCount_(r.recognizedResponseCount),
+unrecognized:formApiCount_(r.unrecognizedResponseCount),
+nameConflicts:formApiCount_(r.nameConflictResponseCount),
+retained:formApiCount_(r.retainedAssociationResponseCount),
+duplicateResponses:formApiCount_(r.duplicateResponseCount),
+invalidSamples:Array.isArray(r.invalidResponseSamples)?r.invalidResponseSamples:[]
+};
+const done=formApiCount_(r.submittedClubCount);
 paintFormPanelMeta_({
 done:done,
 pending:r.pendingCount??0,
-duplicate:r.duplicateCount??0
+duplicateClubs:formApiCount_(r.duplicateClubCount),
+duplicateResponses:S.formSyncBreakdown.duplicateResponses,
+legacyTotal:S.formSyncBreakdown.legacyTotal,
+received:S.formSyncBreakdown.received,
+recognized:S.formSyncBreakdown.recognized,
+unrecognized:S.formSyncBreakdown.unrecognized,
+nameConflicts:S.formSyncBreakdown.nameConflicts,
+retained:S.formSyncBreakdown.retained
 }, uiState||"complete");
 renderForms();
 }
