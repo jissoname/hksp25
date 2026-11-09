@@ -545,37 +545,85 @@ onchange="resetJudgeConfirmationPreview()"
 <option value="">請先選擇評審</option>
 </select>
 
+<select
+id="judgeExportSheetKind"
+class="field"
+onchange="resetJudgeConfirmationPreview()"
+disabled
+>
+<option value="dataReview">資料審查</option>
+<option value="fieldReview">實地審查</option>
+<option value="total">總成績</option>
+<option value="all">全部三表</option>
+</select>
+
 <button
 id="judgeExportPreviewBtn"
 class="btn"
 onclick="previewJudgeConfirmation()"
 disabled
 >
-👁️ 預覽
+👁️ 預覽（可選）
 </button>
 
 <button
 id="judgeExportPdfBtn"
 class="btn btn-primary"
-onclick="printJudgeConfirmation()"
+onclick="downloadJudgeConfirmationPdf()"
 disabled
 >
-📄 匯出 PDF
+📄 下載 PDF
 </button>
 
 </div>
 
 <div class="export-print-hint">
-按下「匯出 PDF」後，請在瀏覽器列印視窗選擇「另存為 PDF」。
+選擇評審與類別後可直接「下載 PDF」，不必先預覽。版型採 B／橫式明細（橫式 A4）。全部三表為一份 PDF（資料審查→實地審查→總成績）。
 </div>
 
 <div id="judgeExportState" class="state">
-選擇評審後按「預覽」，系統才會讀取該評審目前的個人評分資料。
+選擇評審與類別後，可直接下載 PDF；預覽僅供畫面上檢視。
 </div>
 
 <div id="judgeExportPreview" class="export-preview hidden"></div>
 
+<div class="notice" style="margin-top:18px">
+<strong>多位評審一次下載 ZIP</strong>（保留上方單位老師匯出）。每位老師各一份 PDF；全部三表仍在各老師自己的 PDF（資料審查→實地審查→總成績）。
 </div>
+
+<div class="toolbar export-toolbar" style="flex-wrap:wrap;align-items:flex-start;gap:10px">
+
+<div style="min-width:240px;flex:1 1 280px">
+<div style="display:flex;gap:8px;margin-bottom:6px">
+<button type="button" class="btn" id="judgeBatchSelectAllBtn" onclick="selectAllJudgeConfirmationBatch(true)">全選</button>
+<button type="button" class="btn" id="judgeBatchSelectNoneBtn" onclick="selectAllJudgeConfirmationBatch(false)">清除</button>
+</div>
+<div id="judgeBatchJudgeList" class="export-batch-judge-list" style="max-height:220px;overflow:auto;border:1px solid #ccc;padding:8px;background:#fafafa"></div>
+</div>
+
+<select id="judgeBatchSheetKind" class="field">
+<option value="dataReview">資料審查</option>
+<option value="fieldReview">實地審查</option>
+<option value="total">總成績</option>
+<option value="all" selected>全部三表</option>
+</select>
+
+<button id="judgeBatchZipBtn" class="btn btn-primary" type="button" onclick="downloadJudgeConfirmationPdfZip()">
+📦 下載 ZIP
+</button>
+
+<button id="judgeBatchRetryBtn" class="btn" type="button" onclick="retryFailedJudgeConfirmationPdfZip()" disabled>
+↻ 只重試失敗者
+</button>
+
+</div>
+
+<div id="judgeBatchState" class="state">
+選擇多位評審與類別後按「下載 ZIP」。產生中請勿連點；登出或換登入後舊結果不會交付。
+</div>
+
+</div>
+
 
 </section>
 
@@ -1350,6 +1398,9 @@ const DEFAULT_REQUEST_TIMEOUT_MS =
 const HEAVY_REQUEST_TIMEOUT_MS =
 180000;
 
+const BATCH_PDF_REQUEST_TIMEOUT_MS =
+600000;
+
 const HEAVY_REQUEST_ACTIONS =
 new Set([
 "adminJudgeScoreProgress",
@@ -1359,6 +1410,8 @@ new Set([
 "adminRanking",
 "adminCategoryRanking",
 "adminJudgeConfirmationExport",
+"adminJudgeConfirmationPdfExport",
+"adminJudgeConfirmationPdfBatchExport",
 "adminCategoryRankingExcelExport",
 "adminOrganizerAuditExcelExport"
 ]);
@@ -1387,6 +1440,10 @@ scoreScreenVersion:null,
 rankingScreenVersion:null,
 rankingMetrics:[],
 judgeConfirmationExport:null,
+judgeConfirmationPdfBusy:false,
+judgeConfirmationBatch:null,
+judgeConfirmExportJob:null,
+judgeConfirmExportJobSeq:0,
 clubs:[],
 studentQueryClubs:[],
 forms:[],
@@ -1566,6 +1623,12 @@ const c =
 new AbortController();
 
 const timeoutMs =
+payload &&
+payload.action ===
+"adminJudgeConfirmationPdfBatchExport"
+?
+BATCH_PDF_REQUEST_TIMEOUT_MS
+:
 HEAVY_REQUEST_ACTIONS.has(
 payload && payload.action
 )
@@ -1706,15 +1769,196 @@ S.formSyncUi="idle";
 }
 }
 
+const JUDGE_CONFIRM_PDF_BTN_LABEL_ =
+"📄 下載 PDF";
+
+function restoreJudgeConfirmPdfBtnLabel_(
+ownerJob
+){
+
+const button =
+$("judgeExportPdfBtn");
+
+if(!button){
+return;
+}
+
+/*
+ * 舊工作晚到時，不得覆蓋新工作進行中的按鈕文字。
+ */
+if(
+ownerJob &&
+S.judgeConfirmExportJob &&
+Number(S.judgeConfirmExportJob.id)!==Number(ownerJob.id) &&
+S.judgeConfirmExportJob.busy
+){
+return;
+}
+
+button.innerHTML =
+JUDGE_CONFIRM_PDF_BTN_LABEL_;
+
+}
+
+function clearJudgeConfirmationExportWork_(){
+
+S.judgeConfirmExportJob =
+null;
+
+S.judgeConfirmationPdfBusy =
+false;
+
+S.judgeConfirmationBatch =
+null;
+
+S.judgeConfirmationExport =
+null;
+
+/*
+ * 登出／換登入時 busy 已清，但單人下載可能停在「PDF 產生中…」。
+ */
+restoreJudgeConfirmPdfBtnLabel_(null);
+
+}
+
+function isJudgeConfirmationExportBusy_(){
+
+const job =
+S.judgeConfirmExportJob;
+
+return !!(
+job &&
+job.busy
+);
+
+}
+
+function judgeConfirmExportJobLive_(
+job
+){
+
+return !!(
+job &&
+S.judgeConfirmExportJob &&
+Number(S.judgeConfirmExportJob.id)===Number(job.id) &&
+Number(job.loginGen)===Number(S.loginGen||0) &&
+String(job.token||"")===String(S.token||"") &&
+job.token
+);
+
+}
+
+function beginJudgeConfirmExportJob_(
+fields
+){
+
+const id =
+(
+S.judgeConfirmExportJobSeq =
+Number(S.judgeConfirmExportJobSeq||0) + 1
+);
+
+const job =
+Object.assign(
+{
+id:id,
+busy:true,
+loginGen:Number(S.loginGen||0),
+token:String(S.token||""),
+startedAt:Date.now(),
+elapsedMs:null,
+successes:[],
+failures:[],
+trashReports:[]
+},
+fields ||
+{}
+);
+
+S.judgeConfirmExportJob =
+job;
+
+S.judgeConfirmationPdfBusy =
+job.kind === "single";
+
+if(
+job.kind === "batch"
+){
+S.judgeConfirmationBatch =
+job;
+}
+
+return job;
+
+}
+
+function syncJudgeConfirmationExportBusyUi_(){
+
+const busy =
+isJudgeConfirmationExportBusy_();
+
+const selected =
+$("judgeExportJudge") &&
+$("judgeExportJudge").value;
+
+const pdfBtn =
+$("judgeExportPdfBtn");
+
+const previewBtn =
+$("judgeExportPreviewBtn");
+
+const select =
+$("judgeExportJudge");
+
+const kindSelect =
+$("judgeExportSheetKind");
+
+if(pdfBtn){
+pdfBtn.disabled =
+!!busy || !selected;
+}
+
+if(previewBtn){
+previewBtn.disabled =
+!!busy || !selected;
+}
+
+const singleBusy =
+!!(
+busy &&
+S.judgeConfirmExportJob &&
+S.judgeConfirmExportJob.kind === "single"
+);
+
+if(select){
+select.disabled =
+singleBusy;
+}
+
+if(kindSelect){
+kindSelect.disabled =
+singleBusy || !selected;
+}
+
+setJudgeConfirmationBatchBusyUi_(busy);
+
+}
+
 function clearSession(){
 
 invalidateFormSessionOps_();
+
+clearJudgeConfirmationExportWork_();
 
 S.token=null;
 
 sessionStorage.removeItem(
 SESSION_KEY
 );
+
+try{
+syncJudgeConfirmationExportBusyUi_();
+}catch(e){}
 
 }
 
@@ -1947,6 +2191,8 @@ async function acceptAdminLogin(loginResult){
 if(typeof invalidateHandoverView==="function") invalidateHandoverView();
 
 invalidateFormSessionOps_();
+
+clearJudgeConfirmationExportWork_();
 
 S.token =
 loginResult.sessionToken;
@@ -7256,21 +7502,146 @@ current;
 
 resetJudgeConfirmationPreview();
 
+renderJudgeConfirmationBatchList();
+
 }
 
+function renderJudgeConfirmationBatchList(){
+
+const el =
+$("judgeBatchJudgeList");
+
+if(!el)return;
+
+const judges =
+(S.judges || [])
+.slice()
+.sort(
+(a,b)=>
+judgeExportDisplayName(a)
+.localeCompare(
+judgeExportDisplayName(b),
+"zh-TW"
+)
+);
+
+if(!judges.length){
+el.innerHTML =
+'<div class="muted">尚無評審名單</div>';
+return;
+}
+
+const prev =
+{};
+
+Array.from(
+el.querySelectorAll('input[type="checkbox"][data-judge-id]')
+)
+.forEach(
+function(input){
+if(input.checked){
+prev[String(input.getAttribute("data-judge-id")||"")] =
+true;
+}
+}
+);
+
+el.innerHTML =
+judges.map(
+function(judge){
+
+const id =
+judgeIdOf(judge);
+
+const active =
+judge.active !== false &&
+judge.status !== "disabled";
+
+const account =
+judge.username
+?
+`（${esc(judge.username)}）`
+:
+"";
+
+const checked =
+prev[id]
+?
+" checked"
+:
+"";
+
+return `
+<label style="display:block;margin:4px 0;cursor:pointer">
+<input type="checkbox" data-judge-id="${attr(id)}"${checked}${active?"":" disabled"}>
+${esc(judgeExportDisplayName(judge))}${account}${active?"":"－已停用"}
+</label>
+`;
+
+}
+)
+.join("");
+
+if(
+isJudgeConfirmationExportBusy_()
+){
+syncJudgeConfirmationExportBusyUi_();
+}
+
+}
+
+function selectAllJudgeConfirmationBatch(
+selected
+){
+
+const el =
+$("judgeBatchJudgeList");
+
+if(!el)return;
+
+Array.from(
+el.querySelectorAll('input[type="checkbox"][data-judge-id]:not(:disabled)')
+)
+.forEach(
+function(input){
+input.checked =
+!!selected;
+}
+);
+
+}
+
+function selectedJudgeConfirmationBatchIds_(){
+
+const el =
+$("judgeBatchJudgeList");
+
+if(!el)return [];
+
+return Array.from(
+el.querySelectorAll('input[type="checkbox"][data-judge-id]:checked')
+)
+.map(
+function(input){
+return String(input.getAttribute("data-judge-id")||"").trim();
+}
+)
+.filter(
+Boolean
+);
+
+}
 function resetJudgeConfirmationPreview(){
 
 S.judgeConfirmationExport =
 null;
 
+/*
+ * 不可清除匯出 busy，也不可在背景重繪時重新啟用
+ * 正在單人／ZIP 匯出中的按鈕。
+ */
 const selected =
 $("judgeExportJudge").value;
-
-$("judgeExportPreviewBtn").disabled =
-!selected;
-
-$("judgeExportPdfBtn").disabled =
-true;
 
 $("judgeExportPreview").classList.add(
 "hidden"
@@ -7286,17 +7657,26 @@ $("judgeExportState").classList.remove(
 $("judgeExportState").textContent =
 selected
 ?
-"已選擇評審，請按「預覽」讀取最新個人評分資料。"
+"已選擇評審，可直接下載 PDF，或按預覽於畫面上檢視。"
 :
-"選擇評審後按「預覽」，系統才會讀取該評審目前的個人評分資料。";
+"選擇評審與類別後，可直接下載 PDF。";
 
 $("judgeExportMeta").textContent =
 selected
 ?
-"尚未產生預覽"
+"可下載 PDF"
 :
 "請先選擇評審";
 
+syncJudgeConfirmationExportBusyUi_();
+
+}
+
+function judgeExportSheetKindLabel(kind){
+if(kind==="dataReview") return "資料審查";
+if(kind==="fieldReview") return "實地審查";
+if(kind==="total") return "總成績";
+return "全部三表";
 }
 
 function judgeExportScore(value){
@@ -7564,6 +7944,45 @@ return groups;
 
 }
 
+function buildJudgeConfirmationTotalsBlock(data){
+const totals =
+Array.isArray(data && data.clubTotals)
+?
+data.clubTotals
+:
+[];
+if(!totals.length){
+return '<div class="export-empty">沒有可顯示的個人合計資料。</div>';
+}
+const rows =
+totals.map(
+row=>`
+<tr>
+<td>${esc(row.clubName||"—")}</td>
+<td>${esc(row.category||"—")}</td>
+<td>${esc(row.dataReviewStatus||"—")}</td>
+<td>${esc(row.fieldReviewStatus||"—")}</td>
+<td>${row.dataReviewScore===null||row.dataReviewScore===undefined?"—":esc(judgeExportScore(row.dataReviewScore))}</td>
+<td>${row.fieldReviewScore===null||row.fieldReviewScore===undefined?"—":esc(judgeExportScore(row.fieldReviewScore))}</td>
+<td>${esc(row.personalTotalText||"尚未完成")}</td>
+</tr>
+`
+).join("");
+return `
+<div class="export-section">
+<div class="export-section-title">個人合計（資料審查＋實地審查皆正式送出後才顯示分數）</div>
+<table class="export-score-table">
+<thead>
+<tr>
+<th>社團</th><th>屬性</th><th>資料審查</th><th>實地審查</th><th>資料審查得分</th><th>實地審查得分</th><th>個人合計</th>
+</tr>
+</thead>
+<tbody>${rows}</tbody>
+</table>
+</div>
+`;
+}
+
 function buildJudgeConfirmationSheet(data){
 
 const judge =
@@ -7573,6 +7992,9 @@ data && data.judge ||
 const summary =
 data && data.summary ||
 {};
+
+const sheetKind =
+(data && data.sheetKind) || "all";
 
 const records =
 Array.isArray(
@@ -7595,7 +8017,7 @@ data.errors
 const clubs =
 groupJudgeExportRecords(records);
 
-const content =
+const sectionContent =
 clubs.length
 ?
 clubs.map(
@@ -7612,6 +8034,23 @@ ${club.records.map(buildJudgeExportSection).join("")}
 .join("")
 :
 '<div class="export-empty">這位評審目前沒有可列入確認表的評分紀錄。</div>';
+
+const content =
+sheetKind === "total"
+?
+buildJudgeConfirmationTotalsBlock(data)
+:
+(
+sheetKind === "all"
+?
+(
+sectionContent +
+'<div class="export-sheet-title" style="margin-top:24px">總成績</div>' +
+buildJudgeConfirmationTotalsBlock(data)
+)
+:
+sectionContent
+);
 
 const errorBox =
 errors.length
@@ -7630,7 +8069,7 @@ error=>
 
 return `
 <div class="export-sheet">
-<div class="export-sheet-title">評審個人評分確認表</div>
+<div class="export-sheet-title">評審個人評分確認表｜${esc(judgeExportSheetKindLabel(sheetKind))}</div>
 <div class="export-sheet-subtitle">${esc(EVENT_NAME)}</div>
 
 <div class="export-meta-grid">
@@ -7648,7 +8087,7 @@ return `
 </div>
 
 <div class="export-note">
-本表只列出上述評審本人的評分資料，不包含其他評審分數、平均成績、排名或及格判定。
+本表只列出上述評審本人的評分資料，不包含其他評審分數、平均成績、排名或及格判定。版型暫用既有欄位，待原評審確認。
 </div>
 
 ${content}
@@ -7668,14 +8107,25 @@ toast("請先選擇評審");
 return;
 }
 
+const sheetKind =
+($("judgeExportSheetKind") && $("judgeExportSheetKind").value) || "all";
+
 const button =
 $("judgeExportPreviewBtn");
 
 const select =
 $("judgeExportJudge");
 
+const kindSelect =
+$("judgeExportSheetKind");
+
 const oldText =
 button.innerHTML;
+
+const requestIdentity = {
+loginGen:Number(S.loginGen||0),
+token:String(S.token||"")
+};
 
 try{
 
@@ -7685,8 +8135,14 @@ true;
 select.disabled =
 true;
 
+if(kindSelect) kindSelect.disabled = true;
+
+if(
+!isJudgeConfirmationExportBusy_()
+){
 $("judgeExportPdfBtn").disabled =
 true;
+}
 
 button.textContent =
 "讀取中...";
@@ -7706,9 +8162,17 @@ const response =
 await api(
 "adminJudgeConfirmationExport",
 {
-judgeId
+judgeId,
+sheetKind
 }
 );
+
+if(
+Number(requestIdentity.loginGen)!==Number(S.loginGen||0) ||
+String(requestIdentity.token||"")!==String(S.token||"")
+){
+return;
+}
 
 if(
 unauthorized(response)
@@ -7740,16 +8204,13 @@ $("judgeExportState").classList.add(
 "hidden"
 );
 
-$("judgeExportPdfBtn").disabled =
-false;
-
 const judgeName =
 judgeExportDisplayName(
 response.judge
 );
 
 $("judgeExportMeta").textContent =
-`${judgeName}｜${response.summary && response.summary.recordCount || 0} 筆紀錄｜${formatDate(response.generatedAt)}`;
+`${judgeName}｜${judgeExportSheetKindLabel(sheetKind)}｜${response.summary && response.summary.recordCount || 0} 筆紀錄｜${formatDate(response.generatedAt)}`;
 
 toast(
 "✅ 評審個人評分確認表已產生"
@@ -7760,9 +8221,6 @@ catch(error){
 
 S.judgeConfirmationExport =
 null;
-
-$("judgeExportPdfBtn").disabled =
-true;
 
 $("judgeExportState").classList.remove(
 "hidden"
@@ -7777,16 +8235,1215 @@ $("judgeExportMeta").textContent =
 }
 finally{
 
-select.disabled =
-false;
-
+if(
+Number(requestIdentity.loginGen)===Number(S.loginGen||0) &&
+String(requestIdentity.token||"")===String(S.token||"")
+){
 button.innerHTML =
 oldText;
-
-button.disabled =
-!select.value;
+/*
+ * 預覽收尾不得解除正在進行的單人／ZIP 匯出鎖。
+ */
+syncJudgeConfirmationExportBusyUi_();
+}
 
 }
+
+}
+
+async function downloadJudgeConfirmationPdf(){
+
+if(
+isJudgeConfirmationExportBusy_()
+){
+return;
+}
+
+const judgeId =
+$("judgeExportJudge").value;
+
+const sheetKind =
+($("judgeExportSheetKind") && $("judgeExportSheetKind").value) || "all";
+
+if(!judgeId){
+toast("請先選擇評審");
+return;
+}
+
+if(
+!S.token
+){
+toast("請先登入");
+return;
+}
+
+const button =
+$("judgeExportPdfBtn");
+
+const frozenJudgeId =
+String(judgeId);
+
+const frozenSheetKind =
+String(sheetKind);
+
+const job =
+beginJudgeConfirmExportJob_({
+kind:"single",
+judgeId:frozenJudgeId,
+sheetKind:frozenSheetKind
+});
+
+syncJudgeConfirmationExportBusyUi_();
+
+try{
+
+if(button){
+button.textContent =
+"PDF 產生中…";
+}
+
+$("judgeExportState").classList.remove(
+"hidden"
+);
+
+$("judgeExportState").innerHTML =
+'<div class="spinner"></div>PDF 產生中…請勿重複點擊。';
+
+const response =
+await api(
+"adminJudgeConfirmationPdfExport",
+{
+judgeId:frozenJudgeId,
+sheetKind:frozenSheetKind
+}
+);
+
+if(
+!judgeConfirmExportJobLive_(job)
+){
+return;
+}
+
+if(
+unauthorized(response)
+){
+return;
+}
+
+if(
+!response ||
+!response.success
+){
+throw new Error(
+response && response.message ||
+"PDF 產生失敗"
+);
+}
+
+if(
+!response.base64 ||
+!response.fileName ||
+!response.sizeBytes
+){
+throw new Error(
+"PDF 內容不完整，已取消下載"
+);
+}
+
+/*
+ * 頁碼必須在管理員按下載當下寫入檔案內容。
+ * 後端 Sheets 匯出已含連續頁腳（pagenumbers=true）；
+ * 此處再疊「第N頁／共M頁」後才觸發瀏覽器下載，不做送審後另加工。
+ */
+const stampedBase64 =
+await stampJudgeConfirmPdfPageNumbersZh_(
+response.base64
+);
+
+if(
+!judgeConfirmExportJobLive_(job)
+){
+return;
+}
+
+downloadBase64Artifact(
+stampedBase64,
+response.mimeType || "application/pdf",
+response.fileName
+);
+
+$("judgeExportState").classList.add(
+"hidden"
+);
+
+const judgeName =
+judgeExportDisplayName(
+response.judge
+);
+
+$("judgeExportMeta").textContent =
+`${judgeName}｜${judgeExportSheetKindLabel(frozenSheetKind)}｜${esc(response.fileName)}`;
+
+toast(
+"✅ PDF 已開始下載：" + response.fileName
+);
+
+}
+catch(error){
+
+if(
+!judgeConfirmExportJobLive_(job)
+){
+return;
+}
+
+$("judgeExportState").classList.remove(
+"hidden"
+);
+
+$("judgeExportState").innerHTML =
+`⚠️ ${esc(error && error.message ? error.message : "PDF 產生失敗")}`;
+
+$("judgeExportMeta").textContent =
+"PDF 下載失敗";
+
+toast(
+"⚠️ " + (error && error.message ? error.message : "PDF 產生失敗")
+);
+
+}
+finally{
+
+/*
+ * 僅自己的工作可解鎖；舊單人 finally 不得解除新工作的鎖。
+ */
+if(
+!(
+S.judgeConfirmExportJob &&
+Number(S.judgeConfirmExportJob.id)===Number(job.id)
+)
+){
+return;
+}
+
+S.judgeConfirmExportJob.busy =
+false;
+
+S.judgeConfirmationPdfBusy =
+false;
+
+const stillSameLogin =
+Number(job.loginGen)===Number(S.loginGen||0) &&
+String(job.token||"")===String(S.token||"");
+
+S.judgeConfirmExportJob =
+null;
+
+if(stillSameLogin){
+restoreJudgeConfirmPdfBtnLabel_(job);
+syncJudgeConfirmationExportBusyUi_();
+}
+
+}
+
+}
+
+function judgeConfirmationBatchSameIdentity_(
+frozen
+){
+
+return !!(
+frozen &&
+Number(frozen.loginGen)===Number(S.loginGen||0) &&
+String(frozen.token||"")===String(S.token||"") &&
+frozen.token
+);
+
+}
+
+function persistJudgeConfirmationBatchProgress_(
+job,
+successes,
+failures,
+trashReports
+){
+
+if(
+!job ||
+!S.judgeConfirmExportJob ||
+Number(S.judgeConfirmExportJob.id)!==Number(job.id)
+){
+return;
+}
+
+job.successes =
+successes.slice();
+
+job.failures =
+failures.slice();
+
+job.trashReports =
+trashReports.slice();
+
+S.judgeConfirmationBatch =
+job;
+
+}
+
+function renderJudgeConfirmationBatchProgress_(
+job,
+successes,
+failures,
+currentJudgeId
+){
+
+const state =
+$("judgeBatchState");
+
+if(!state || !job){
+return;
+}
+
+const totalCount =
+Number(job.totalCount||0) ||
+(
+Array.isArray(job.originalJudgeIds)
+?
+job.originalJudgeIds.length
+:
+0
+) ||
+1;
+
+const doneCount =
+successes.length +
+failures.length;
+
+state.classList.remove("hidden");
+
+state.innerHTML =
+`<div class="spinner"></div>已固定名單，依序產生中…已完成 ${esc(String(doneCount))}／${esc(String(totalCount))} 位` +
+(
+currentJudgeId
+?
+`（目前：${esc(currentJudgeId)}）`
+:
+""
+) +
+(
+failures.length
+?
+`｜失敗 ${esc(String(failures.length))} 位`
+:
+""
+);
+
+}
+
+function crc32Zip_(
+bytes
+){
+
+let crc =
+0 ^ (-1);
+
+for(
+let i=0;
+i<bytes.length;
+i+=1
+){
+crc =
+(crc >>> 8) ^
+JUDGE_CONFIRM_ZIP_CRC_TABLE_[
+(crc ^ (bytes[i] & 0xff)) & 0xff
+];
+}
+
+return (crc ^ (-1)) >>> 0;
+
+}
+
+const JUDGE_CONFIRM_ZIP_CRC_TABLE_ =
+(function(){
+
+const table =
+new Uint32Array(256);
+
+for(
+let i=0;
+i<256;
+i+=1
+){
+let c=i;
+for(
+let k=0;
+k<8;
+k+=1
+){
+c =
+(c & 1)
+?
+(0xedb88320 ^ (c >>> 1))
+:
+(c >>> 1);
+}
+table[i]=c>>>0;
+}
+
+return table;
+
+})();
+
+function u16le_(
+n
+){
+
+return [
+n & 0xff,
+(n >>> 8) & 0xff
+];
+
+}
+
+function u32le_(
+n
+){
+
+return [
+n & 0xff,
+(n >>> 8) & 0xff,
+(n >>> 16) & 0xff,
+(n >>> 24) & 0xff
+];
+
+}
+
+function encodeUtf8ZipName_(
+name
+){
+
+const text =
+String(name||"file.pdf");
+
+if(
+typeof TextEncoder !==
+"undefined"
+){
+return new Uint8Array(
+new TextEncoder().encode(text)
+);
+}
+
+const out =
+[];
+
+for(
+let i=0;
+i<text.length;
+i+=1
+){
+const code =
+text.charCodeAt(i);
+if(code < 128) out.push(code);
+else out.push(63);
+}
+
+return new Uint8Array(out);
+
+}
+
+function buildZipStoreBlob_(
+files
+){
+
+/*
+ * 無第三方庫：ZIP STORE（不壓縮）。PDF 本身已壓縮。
+ */
+const localParts =
+[];
+
+const centralParts =
+[];
+
+let offset =
+0;
+
+(files||[]).forEach(
+function(file){
+
+const nameBytes =
+encodeUtf8ZipName_(file.fileName);
+
+const data =
+file.bytes instanceof Uint8Array
+?
+file.bytes
+:
+new Uint8Array(file.bytes||[]);
+
+const crc =
+crc32Zip_(data);
+
+const localHeader =
+[].concat(
+[0x50,0x4b,0x03,0x04],
+u16le_(20),
+u16le_(0x0800),
+u16le_(0),
+u16le_(0),
+u16le_(0),
+u32le_(crc),
+u32le_(data.length),
+u32le_(data.length),
+u16le_(nameBytes.length),
+u16le_(0)
+);
+
+const local =
+new Uint8Array(
+localHeader.length +
+nameBytes.length +
+data.length
+);
+
+local.set(
+localHeader,
+0
+);
+
+local.set(
+nameBytes,
+localHeader.length
+);
+
+local.set(
+data,
+localHeader.length + nameBytes.length
+);
+
+localParts.push(local);
+
+const centralHeader =
+[].concat(
+[0x50,0x4b,0x01,0x02],
+u16le_(20),
+u16le_(20),
+u16le_(0x0800),
+u16le_(0),
+u16le_(0),
+u16le_(0),
+u32le_(crc),
+u32le_(data.length),
+u32le_(data.length),
+u16le_(nameBytes.length),
+u16le_(0),
+u16le_(0),
+u16le_(0),
+u16le_(0),
+u32le_(0),
+u32le_(offset)
+);
+
+const central =
+new Uint8Array(
+centralHeader.length +
+nameBytes.length
+);
+
+central.set(
+centralHeader,
+0
+);
+
+central.set(
+nameBytes,
+centralHeader.length
+);
+
+centralParts.push(central);
+
+offset +=
+local.length;
+
+}
+);
+
+const centralSize =
+centralParts.reduce(
+function(sum,part){
+return sum + part.length;
+},
+0
+);
+
+const end =
+new Uint8Array(
+[].concat(
+[0x50,0x4b,0x05,0x06],
+u16le_(0),
+u16le_(0),
+u16le_(files.length),
+u16le_(files.length),
+u32le_(centralSize),
+u32le_(offset),
+u16le_(0)
+)
+);
+
+const total =
+offset +
+centralSize +
+end.length;
+
+const out =
+new Uint8Array(total);
+
+let pos =
+0;
+
+localParts.forEach(
+function(part){
+out.set(part,pos);
+pos += part.length;
+}
+);
+
+centralParts.forEach(
+function(part){
+out.set(part,pos);
+pos += part.length;
+}
+);
+
+out.set(end,pos);
+
+return new Blob(
+[out],
+{type:"application/zip"}
+);
+
+}
+
+function base64ToUint8Array_(
+base64
+){
+
+const bin =
+atob(String(base64||""));
+
+const out =
+new Uint8Array(bin.length);
+
+for(
+let i=0;
+i<bin.length;
+i+=1
+){
+out[i]=
+bin.charCodeAt(i) & 0xff;
+}
+
+return out;
+
+}
+
+function downloadBlobArtifact_(
+blob,
+fileName
+){
+
+const url =
+URL.createObjectURL(blob);
+
+const a =
+document.createElement("a");
+
+a.href =
+url;
+
+a.download =
+String(fileName||"download.zip");
+
+document.body.appendChild(a);
+
+a.click();
+
+setTimeout(
+function(){
+URL.revokeObjectURL(url);
+a.remove();
+},
+1500
+);
+
+}
+
+function setJudgeConfirmationBatchBusyUi_(
+busy
+){
+
+const zipBtn =
+$("judgeBatchZipBtn");
+
+const retryBtn =
+$("judgeBatchRetryBtn");
+
+const kind =
+$("judgeBatchSheetKind");
+
+const list =
+$("judgeBatchJudgeList");
+
+const selectAllBtn =
+$("judgeBatchSelectAllBtn");
+
+const selectNoneBtn =
+$("judgeBatchSelectNoneBtn");
+
+if(zipBtn) zipBtn.disabled = !!busy;
+
+if(kind) kind.disabled = !!busy;
+
+if(selectAllBtn) selectAllBtn.disabled = !!busy;
+
+if(selectNoneBtn) selectNoneBtn.disabled = !!busy;
+
+if(list){
+Array.from(
+list.querySelectorAll("input[type=checkbox][data-judge-id]")
+)
+.forEach(
+function(input){
+const label =
+input.closest("label");
+const isStopped =
+label &&
+/已停用/.test(label.textContent||"");
+input.disabled =
+!!busy || !!isStopped;
+}
+);
+}
+
+if(retryBtn){
+const batch =
+S.judgeConfirmationBatch;
+
+retryBtn.disabled =
+!!busy ||
+!(
+batch &&
+Array.isArray(batch.failures) &&
+batch.failures.length &&
+judgeConfirmationBatchSameIdentity_(batch)
+);
+}
+
+}
+
+async function runJudgeConfirmationPdfZipJob_(
+options
+){
+
+options =
+options ||
+{};
+
+const retryOnly =
+options.retryOnly === true;
+
+if(
+isJudgeConfirmationExportBusy_()
+){
+return;
+}
+
+if(
+!S.token
+){
+toast("請先登入");
+return;
+}
+
+let judgeIds =
+[];
+
+let sheetKind =
+"all";
+
+let carriedSuccesses =
+[];
+
+let totalCount =
+0;
+
+let originalJudgeIds =
+[];
+
+if(retryOnly){
+
+const batch =
+S.judgeConfirmationBatch;
+
+if(
+!batch ||
+!judgeConfirmationBatchSameIdentity_(batch)
+){
+toast("目前沒有可重試的失敗項目（或登入已變更）");
+return;
+}
+
+judgeIds =
+(batch.failures||[])
+.map(
+function(row){
+return String(row.judgeId||"").trim();
+}
+)
+.filter(Boolean);
+
+sheetKind =
+String(batch.sheetKind||"all");
+
+carriedSuccesses =
+Array.isArray(batch.successes)
+?
+batch.successes.slice()
+:
+[];
+
+originalJudgeIds =
+Array.isArray(batch.originalJudgeIds) &&
+batch.originalJudgeIds.length
+?
+batch.originalJudgeIds.slice()
+:
+(
+Array.isArray(batch.judgeIds) && batch.judgeIds.length
+?
+batch.judgeIds.slice()
+:
+carriedSuccesses.map(function(row){return row.judgeId;}).concat(judgeIds)
+);
+
+totalCount =
+Number(batch.totalCount||0) ||
+originalJudgeIds.length ||
+(carriedSuccesses.length + judgeIds.length);
+
+if(!judgeIds.length){
+toast("沒有失敗項目可重試");
+return;
+}
+
+}
+else{
+
+judgeIds =
+selectedJudgeConfirmationBatchIds_();
+
+sheetKind =
+($("judgeBatchSheetKind") && $("judgeBatchSheetKind").value) || "all";
+
+if(!judgeIds.length){
+toast("請先勾選至少一位評審");
+return;
+}
+
+originalJudgeIds =
+judgeIds.slice();
+
+totalCount =
+judgeIds.length;
+
+}
+
+const state =
+$("judgeBatchState");
+
+const job =
+beginJudgeConfirmExportJob_({
+kind:"batch",
+sheetKind:String(sheetKind),
+judgeIds:judgeIds.slice(),
+originalJudgeIds:originalJudgeIds.slice(),
+totalCount:totalCount,
+successes:carriedSuccesses.slice(),
+failures:[],
+loginGen:Number(S.loginGen||0),
+token:String(S.token||"")
+});
+
+/*
+ * 相容既有重試欄位：identity 指向同一工作（含 loginGen／token）。
+ */
+job.identity =
+job;
+
+S.judgeConfirmationBatch =
+job;
+
+syncJudgeConfirmationExportBusyUi_();
+
+if(state){
+state.classList.remove("hidden");
+state.innerHTML =
+`<div class="spinner"></div>已固定 ${esc(String(totalCount))} 位，依序產生中（已完成 ${esc(String(carriedSuccesses.length))}／${esc(String(totalCount))}）…`;
+}
+
+const successes =
+carriedSuccesses.slice();
+
+const failures =
+[];
+
+const trashReports =
+[];
+
+let stoppedForAuth =
+false;
+
+try{
+
+for(
+let i=0;
+i<judgeIds.length;
+i+=1
+){
+
+if(
+!judgeConfirmExportJobLive_(job)
+){
+if(state){
+state.innerHTML =
+"⚠️ 登入已變更，已停止交付舊批次結果。";
+}
+toast("登入已變更，舊 ZIP 結果不交付");
+stoppedForAuth =
+true;
+break;
+}
+
+const judgeId =
+judgeIds[i];
+
+renderJudgeConfirmationBatchProgress_(
+job,
+successes,
+failures,
+judgeId
+);
+
+try{
+
+const response =
+await api(
+options.useBatchEndpoint
+?
+"adminJudgeConfirmationPdfBatchExport"
+:
+"adminJudgeConfirmationPdfExport",
+options.useBatchEndpoint
+?
+{
+judgeIds:[judgeId],
+sheetKind:sheetKind
+}
+:
+{
+judgeId:judgeId,
+sheetKind:sheetKind
+}
+);
+
+if(
+!judgeConfirmExportJobLive_(job)
+){
+stoppedForAuth =
+true;
+break;
+}
+
+if(
+unauthorized(response)
+){
+stoppedForAuth =
+true;
+break;
+}
+
+const normalized =
+options.useBatchEndpoint &&
+response &&
+Array.isArray(response.results) &&
+response.results[0]
+?
+Object.assign(
+{},
+response.results[0],
+{
+success:response.results[0].success===true,
+judge:response.results[0].judge,
+base64:response.results[0].base64,
+fileName:response.results[0].fileName,
+mimeType:response.results[0].mimeType,
+sizeBytes:response.results[0].sizeBytes,
+pageCount:response.results[0].pageCount,
+tempSpreadsheetId:response.results[0].tempSpreadsheetId,
+tempTrash:response.results[0].tempTrash,
+error:response.results[0].error,
+message:response.results[0].message
+}
+)
+:
+response;
+
+if(
+normalized &&
+normalized.tempTrash
+){
+trashReports.push({
+judgeId:judgeId,
+tempSpreadsheetId:normalized.tempSpreadsheetId||null,
+tempTrash:normalized.tempTrash
+});
+}
+
+if(
+!normalized ||
+!normalized.success ||
+!normalized.base64 ||
+!normalized.fileName
+){
+throw Object.assign(
+new Error(
+(normalized && normalized.message) ||
+"PDF 產生失敗"
+),
+{
+code:(normalized && normalized.error) || "PDF_FAILED"
+}
+);
+}
+
+const stampedBase64 =
+await stampJudgeConfirmPdfPageNumbersZh_(
+normalized.base64
+);
+
+if(
+!judgeConfirmExportJobLive_(job)
+){
+stoppedForAuth =
+true;
+break;
+}
+
+successes.push({
+judgeId:judgeId,
+judge:normalized.judge||null,
+fileName:normalized.fileName,
+mimeType:normalized.mimeType || "application/pdf",
+base64:stampedBase64,
+sizeBytes:normalized.sizeBytes||null,
+pageCount:normalized.pageCount||null
+});
+
+}
+catch(itemError){
+
+if(
+!judgeConfirmExportJobLive_(job)
+){
+stoppedForAuth =
+true;
+break;
+}
+
+failures.push({
+judgeId:judgeId,
+error:(itemError && itemError.code) || "PDF_FAILED",
+message:
+(itemError && itemError.message) ||
+"PDF 產生失敗"
+});
+
+}
+
+persistJudgeConfirmationBatchProgress_(
+job,
+successes,
+failures,
+trashReports
+);
+
+renderJudgeConfirmationBatchProgress_(
+job,
+successes,
+failures,
+null
+);
+
+if(stoppedForAuth){
+break;
+}
+
+}
+
+job.elapsedMs =
+Date.now() - job.startedAt;
+
+persistJudgeConfirmationBatchProgress_(
+job,
+successes,
+failures,
+trashReports
+);
+
+if(
+stoppedForAuth ||
+!judgeConfirmExportJobLive_(job)
+){
+return;
+}
+
+if(!successes.length){
+throw new Error(
+failures.length
+?
+("全部失敗：" + failures.map(function(row){return row.judgeId;}).join("、"))
+:
+"沒有可打包的 PDF"
+);
+}
+
+const zipFiles =
+successes.map(
+function(row){
+return {
+fileName:row.fileName,
+bytes:base64ToUint8Array_(row.base64)
+};
+}
+);
+
+const zipBlob =
+buildZipStoreBlob_(zipFiles);
+
+const zipName =
+exportSafeClientFileName_(
+EVENT_NAME +
+"_評審確認表_" +
+String(sheetKind) +
+"_" +
+String(successes.length) +
+"人_" +
+new Date().toISOString().replace(/[:.]/g,"-") +
+".zip"
+);
+
+if(
+!judgeConfirmExportJobLive_(job)
+){
+return;
+}
+
+downloadBlobArtifact_(
+zipBlob,
+zipName
+);
+
+if(state){
+state.innerHTML =
+`✅ ZIP 已開始下載（成功 ${esc(String(successes.length))} 位` +
+(
+failures.length
+?
+`｜失敗 ${esc(String(failures.length))}：${esc(failures.map(function(row){return row.judgeId;}).join("、"))}`
+:
+""
+) +
+`｜耗時 ${esc(String(job.elapsedMs))} ms）`;
+}
+
+toast(
+"✅ ZIP 已開始下載：" + zipName
+);
+
+}
+catch(error){
+
+if(
+!judgeConfirmExportJobLive_(job)
+){
+return;
+}
+
+persistJudgeConfirmationBatchProgress_(
+job,
+successes,
+failures,
+trashReports
+);
+
+if(state){
+state.innerHTML =
+`⚠️ ${esc(error && error.message ? error.message : "ZIP 產生失敗")}`;
+}
+
+toast(
+"⚠️ " + (error && error.message ? error.message : "ZIP 產生失敗")
+);
+
+}
+finally{
+
+if(
+S.judgeConfirmExportJob &&
+Number(S.judgeConfirmExportJob.id)===Number(job.id)
+){
+job.busy =
+false;
+S.judgeConfirmationPdfBusy =
+false;
+
+const stillSameLogin =
+Number(job.loginGen)===Number(S.loginGen||0) &&
+String(job.token||"")===String(S.token||"");
+
+if(stillSameLogin){
+S.judgeConfirmationBatch =
+job;
+syncJudgeConfirmationExportBusyUi_();
+}
+}
+
+}
+
+}
+
+function exportSafeClientFileName_(
+name
+){
+
+return String(name||"file")
+.replace(/[\\\/:*?"<>|]+/g,"_")
+.replace(/\s+/g,"_")
+.slice(0,180);
+
+}
+
+async function downloadJudgeConfirmationPdfZip(){
+
+return runJudgeConfirmationPdfZipJob_({});
+
+}
+
+async function retryFailedJudgeConfirmationPdfZip(){
+
+return runJudgeConfirmationPdfZipJob_({
+retryOnly:true
+});
 
 }
 
