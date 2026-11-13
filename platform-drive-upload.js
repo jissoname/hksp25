@@ -664,6 +664,9 @@
     if (code === "DRIVE_UPLOAD_MODE_OFF") {
       return "系統尚未開放上傳";
     }
+    if (code === "UPLOAD_GATE_PAUSED") {
+      return "管理員已暫停上傳（可唯讀瀏覽；無法開始新上傳）";
+    }
     if (code === "DRIVE_AUTH_LEASE_MISSING") {
       return "校方 Drive 授權尚未就緒，無法上傳（不會假裝可上傳）。";
     }
@@ -899,7 +902,12 @@
     }
     if (lastListData && lastListData.driveWriteEnabled === false) {
       clearWindowWatch();
-      setUploadControlsEnabled(false, "系統尚未開放上傳");
+      var gate = lastListData.uploadGate || null;
+      var pausedByAdmin = gate && gate.envLive === true && gate.open === false;
+      setUploadControlsEnabled(
+        false,
+        pausedByAdmin ? "管理員已暫停上傳（可唯讀瀏覽）" : "系統尚未開放上傳"
+      );
       return;
     }
     var win = wins[kind] || null;

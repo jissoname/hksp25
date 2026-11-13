@@ -1054,6 +1054,9 @@ oninput="renderClouds()"
 <div id="cloudUploadMeta" class="panel-meta">
 正式｜ensure 已開放｜學生上傳關閉
 </div>
+<div id="uploadGateMeta" class="panel-meta" style="margin-top:4px">
+上傳開關：讀取中…
+</div>
 
 </div>
 
@@ -1064,6 +1067,21 @@ oninput="renderClouds()"
 </button>
 
 <div class="panel-body">
+
+<div id="uploadGateBox" class="notice" style="margin-bottom:14px">
+<div class="list-title">學生上傳開放／暫停</div>
+<div id="uploadGateStatus" class="list-sub">目前狀態：尚未讀取</div>
+<div id="uploadGateUpdated" class="list-sub">最後更新：—</div>
+<div id="uploadGateEffect" class="list-sub">環境 off 時管理開關無法開放寫入；與資料夾配對暫停互相獨立。</div>
+<div class="toolbar" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+<button class="btn btn-primary" type="button" id="uploadGateOpenBtn" onclick="setUploadGateOpen(true)">開放上傳</button>
+<button class="btn" type="button" id="uploadGatePauseBtn" onclick="setUploadGateOpen(false)">暫停上傳</button>
+<button class="btn" type="button" onclick="previewUploadGateOpen()">開放前檢查缺項</button>
+<button class="btn" type="button" onclick="loadUploadGate()">重新讀取開關</button>
+</div>
+<div id="uploadGateResult" class="list-sub" style="margin-top:8px">操作結果：—</div>
+<div id="uploadGateGaps" class="list" style="margin-top:8px"></div>
+</div>
 
 <div class="grid2">
 
@@ -14195,7 +14213,10 @@ $("featureFolderUrl").value=S.cloudUploadSettings.feature.url||"";
 $("cloudUploadMeta").textContent=
 "評選 v"+(S.cloudUploadSettings.evaluation.version||0)+
 "｜特色 v"+(S.cloudUploadSettings.feature.version||0);
-if(isFirebaseCloudMode()) HKSP_ADMIN_CLOUD.renderMakeupChoices();
+if(isFirebaseCloudMode()){
+HKSP_ADMIN_CLOUD.renderMakeupChoices();
+await loadUploadGate();
+}
 }catch(e){
 if(isGasUrlFetchQuotaError_(e&&e.message)){
 haltGasUrlFetchQuota_(e.message);
@@ -14203,6 +14224,151 @@ return;
 }
 /* 失敗不改動既有 input／S.cloudUploadSettings，避免空白覆寫正式設定 */
 $("cloudUploadMeta").textContent="讀取失敗（已保留畫面值）："+e.message;
+}
+}
+
+function renderUploadGate_(gate, resultText){
+S.uploadGate=gate||S.uploadGate||null;
+const g=S.uploadGate;
+const statusEl=$("uploadGateStatus");
+const updatedEl=$("uploadGateUpdated");
+const effectEl=$("uploadGateEffect");
+const metaEl=$("uploadGateMeta");
+const resultEl=$("uploadGateResult");
+if(!g){
+if(statusEl) statusEl.textContent="目前狀態：尚未讀取";
+if(metaEl) metaEl.textContent="上傳開關：尚未讀取";
+return;
+}
+const label=g.effectiveLabel||g.statusLabel||(g.open?"開放上傳":"暫停上傳");
+if(statusEl){
+statusEl.textContent="目前狀態："+label+
+"（管理開關="+(g.open?"開放":"暫停")+
+"；環境="+(g.envMode||"?")+
+"；可寫入="+(g.writesAllowed?"是":"否")+"）";
+}
+if(updatedEl){
+updatedEl.textContent="最後更新："+(g.updatedAt||"—")+
+"（v"+(g.version||0)+"）";
+}
+if(effectEl){
+effectEl.textContent=(g.envPriority||"")+
+" "+(g.folderOpsNote||"")+
+" "+(g.pauseEffectNote||"");
+}
+if(metaEl){
+metaEl.textContent="上傳開關："+label+"｜v"+(g.version||0)+
+(g.updatedAt?"｜"+g.updatedAt:"");
+}
+if(resultEl&&resultText!=null) resultEl.textContent="操作結果："+resultText;
+const openBtn=$("uploadGateOpenBtn");
+const pauseBtn=$("uploadGatePauseBtn");
+if(openBtn) openBtn.disabled=!!S.uploadGateBusy;
+if(pauseBtn) pauseBtn.disabled=!!S.uploadGateBusy;
+}
+
+async function loadUploadGate(){
+if(!isFirebaseCloudMode()){
+renderUploadGate_(null,"非 cloud 管理頁；請用 admin.html?cloud=1");
+return;
+}
+try{
+const r=await api("adminGetUploadGate");
+if(unauthorized(r)) return;
+if(!r||r.success!==true||!r.gate){
+throw new Error((r&&r.message)||"無法讀取上傳開關");
+}
+renderUploadGate_(r.gate,"已讀取 "+(r.serverNow||""));
+}catch(e){
+if($("uploadGateResult")) $("uploadGateResult").textContent="操作結果：讀取失敗 — "+(e.message||"");
+if($("uploadGateMeta")) $("uploadGateMeta").textContent="上傳開關：讀取失敗（已保留上次值）";
+}
+}
+
+async function previewUploadGateOpen(){
+if(!isFirebaseCloudMode()){ toast("請使用 admin.html?cloud=1"); return; }
+try{
+const r=await api("adminPreviewUploadGateOpen");
+if(unauthorized(r)) return;
+if(!r||r.success!==true){
+throw new Error((r&&r.message)||"開放前檢查失敗");
+}
+if(r.gate) renderUploadGate_(r.gate,"已完成開放前檢查");
+const box=$("uploadGateGaps");
+if(!box) return;
+const gaps=(r.readiness&&r.readiness.gaps)||[];
+if(!gaps.length){
+box.innerHTML='<div class="state">開放前檢查：未發現阻斷缺項（仍須總召決定；不代填參與）。</div>';
+return;
+}
+box.innerHTML=gaps.map(function(gap){
+const sample=(gap.sample||[]).map(function(c){
+return esc((c.clubName||"")+" "+(c.permanentClubId||""));
+}).join("、");
+return '<div class="list-row"><div><div class="list-title">'+esc(gap.code||"GAP")+'</div><div class="list-sub">'+
+esc(gap.message||"")+(sample?"｜例："+sample:"")+"</div></div></div>";
+}).join("");
+}catch(e){
+toast("⚠️ "+(e.message||"開放前檢查失敗"));
+}
+}
+
+async function setUploadGateOpen(open){
+if(!isFirebaseCloudMode()){ toast("請使用 admin.html?cloud=1"); return; }
+if(S.uploadGateBusy) return;
+const gate=S.uploadGate;
+if(!gate||!Number.isSafeInteger(Number(gate.version))){
+toast("⚠️ 請先讀取上傳開關");
+await loadUploadGate();
+return;
+}
+const wantOpen=open===true;
+if(wantOpen&&gate.envLive!==true){
+toast("❌ 環境仍為 off，管理開關不能開放寫入；未獲指示不得切 live");
+if($("uploadGateResult")) $("uploadGateResult").textContent="操作結果：已拒絕（環境 off）";
+return;
+}
+const label=wantOpen?"開放上傳":"暫停上傳";
+if(!confirm(wantOpen
+?"確定開放學生上傳？\n環境須已為 live；不會自動補參與／綁定。\n與資料夾配對暫停互相獨立。"
+:"確定暫停學生上傳？\nlist 可唯讀；prepare／新建夾拒寫。\n已發出的 Google resumable URL 無法由此立即撤銷；complete 仍會再核對閘門。")){
+return;
+}
+const clientRequestId="uploadGate_"+(wantOpen?"open":"pause")+"_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,10);
+const seq=++(S.uploadGateSeq||(S.uploadGateSeq=0));
+S.uploadGateBusy=true;
+renderUploadGate_(gate,"處理中…（"+clientRequestId+"）");
+try{
+const r=await api("adminSetUploadGate",{
+open:wantOpen,
+expectedVersion:Number(gate.version),
+clientRequestId:clientRequestId
+});
+if(seq!==S.uploadGateSeq) return;
+if(unauthorized(r)) return;
+if(!r||r.success!==true||!r.gate){
+const err=String((r&&(r.message||r.error))||"操作失敗／結果不明");
+if($("uploadGateResult")){
+$("uploadGateResult").textContent="操作結果：未確認成功 — "+err+"；識別："+clientRequestId+"（請先讀回，勿直接重送）";
+}
+toast("❌ "+label+"未確認成功，請先讀回");
+await loadUploadGate();
+return;
+}
+renderUploadGate_(r.gate,(r.unchanged?"無變更｜":"已完成｜")+label+" v"+r.gate.version+(r.auditId?"｜稽核 "+r.auditId:""));
+toast((r.gate.open?"✅ 已開放上傳":"⏸️ 已暫停上傳")+"（可寫入="+(r.gate.writesAllowed?"是":"否")+"）");
+}catch(e){
+if(seq!==S.uploadGateSeq) return;
+const msg=String((e&&e.message)||"操作失敗");
+if($("uploadGateResult")){
+$("uploadGateResult").textContent="操作結果：不明／失敗 — "+msg+"；識別："+clientRequestId+"（請先讀回查證，勿直接重送）";
+}
+toast("⚠️ "+label+"結果不明，請先讀回查證");
+}finally{
+if(seq===S.uploadGateSeq){
+S.uploadGateBusy=false;
+renderUploadGate_(S.uploadGate);
+}
 }
 }
 
