@@ -43,22 +43,71 @@
     el.textContent = String(text || "");
   }
 
+  function formatTaipeiDateTime(value) {
+    if (value == null || value === "") return "—";
+    var d = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(d.getTime())) return "—";
+    try {
+      return new Intl.DateTimeFormat("zh-TW", {
+        timeZone: "Asia/Taipei",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      }).format(d);
+    } catch (error) {
+      return "—";
+    }
+  }
+
+  function formatBytes(size) {
+    var n = Number(size);
+    if (!Number.isFinite(n) || n < 0) return "—";
+    if (n < 1024) return n + " bytes";
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KiB";
+    return (n / (1024 * 1024)).toFixed(1) + " MiB";
+  }
+
+  function filesForActiveKind(files) {
+    var kind = activeKind === "feature" ? "feature" : "evaluation";
+    return (files || []).filter(function (file) {
+      return String(file && file.uploadKind || "") === kind;
+    });
+  }
+
   function renderList(files) {
     var list = $("driveUploadList");
+    var head = $("driveRecordsHead");
     if (!list) return;
+    var kind = activeKind === "feature" ? "feature" : "evaluation";
+    var filtered = filesForActiveKind(files);
+    if (head) {
+      head.textContent =
+        kind === "feature" ? "已繳交紀錄（特色）" : "已繳交紀錄（評選）";
+    }
     list.replaceChildren();
-    (files || []).forEach(function (file) {
+    if (!filtered.length) {
+      var empty = document.createElement("li");
+      empty.textContent = "此項目目前沒有已確認的繳交紀錄。";
+      list.appendChild(empty);
+      return;
+    }
+    filtered.forEach(function (file) {
       var item = document.createElement("li");
-      var kindLabel =
-        file.uploadKind === "feature" ? "特色" :
-          file.uploadKind === "evaluation" ? "評選" : "";
-      item.textContent =
-        (kindLabel ? "[" + kindLabel + "] " : "") +
-        (file.fileName || "") +
+      var name = document.createElement("span");
+      name.className = "rec-name";
+      name.textContent = file.fileName || "（未命名）";
+      var meta = document.createElement("span");
+      meta.className = "rec-meta";
+      meta.textContent =
+        formatTaipeiDateTime(file.uploadedAt) +
         " · " +
-        (file.size || 0) +
-        " bytes · " +
-        (file.uploadedAt || "");
+        formatBytes(file.size) +
+        " · 已確認";
+      item.appendChild(name);
+      item.appendChild(meta);
       list.appendChild(item);
     });
   }
@@ -106,6 +155,7 @@
       lastListData.participation &&
       lastListData.participation.evaluation === true;
     panel.classList.toggle("hidden", !show);
+    panel.classList.toggle("is-readonly", !uploadWriteAllowed);
     if (!show) return;
     var createBtn = $("btnDriveEvalFolderCreate");
     var nameInput = $("driveEvalFolderName");
@@ -186,10 +236,8 @@
       var emptyOnlyRoot = renderEvalFolderOptions(data);
       if (data.driveWriteEnabled === false) {
         setEvalFolderStatus(
-          emptyOnlyRoot
-            ? "目前沒有子分類（根層）。系統尚未開放上傳"
-            : "已載入分類（唯讀）。系統尚未開放上傳",
-          "warn"
+          emptyOnlyRoot ? "目前沒有子分類（根層，唯讀可瀏覽）。" : "已載入分類（唯讀可瀏覽）。",
+          "ok"
         );
         setUploadControlsEnabled(false, "系統尚未開放上傳");
       } else if (emptyOnlyRoot) {
@@ -279,6 +327,9 @@
 
   function applyKindUi(kind, enterTools) {
     activeKind = kind === "feature" ? "feature" : "evaluation";
+    // Invalidate in-flight list/folder responses from the other kind.
+    listRequestSeq += 1;
+    operationSeq += 1;
     var input = $("driveFile");
     if (input) {
       input.accept = acceptForKind(activeKind);
@@ -300,8 +351,12 @@
       selectedEvalFolderId = "";
       setEvalFolderStatus("", "");
     }
+    // Re-render records for this kind immediately from last snapshot (no stale other-kind rows).
+    if (lastListData) renderList(lastListData.files || []);
+    else renderList([]);
     syncEvalFolderPanel();
     syncDropzoneCopy();
+    updateWorkspaceMeta();
     if (enterTools) setWorkspaceView("tools");
     if (lastListData) {
       applyWindowReadOnly(lastListData.uploadWindows, lastListData.participation);
@@ -616,18 +671,14 @@
     var kind = activeKind === "feature" ? "feature" : "evaluation";
     var win = wins[kind] || null;
     var deadlineText = win && win.deadlineAt
-      ? String(win.deadlineAt)
+      ? formatTaipeiDateTime(win.deadlineAt)
       : "（伺服器尚未回傳截止）";
-    var statusText = !uploadWriteAllowed
-      ? (lastListData && lastListData.driveWriteEnabled === false
-        ? "狀態：系統尚未開放上傳（唯讀）"
-        : "狀態：唯讀")
-      : "狀態：可準備上傳（仍以後端核對為準）";
+    var kindLabel = activeKind === "feature" ? "特色" : "評選";
     if (meta) {
       meta.textContent =
         "活動：" + (serverCtx.activityId || "") +
-        "　截止：" + deadlineText +
-        "　" + statusText;
+        "　目前項目：" + kindLabel +
+        "　截止：" + deadlineText;
     }
   }
 
