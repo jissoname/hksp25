@@ -18,6 +18,8 @@
   var pendingReplace = null;
   var activeKind = "evaluation";
   var lastListData = null;
+  var selectedEvalFolderId = "";
+  var evalFolderBusy = false;
   // Before first list: allow click; prepare／complete still server-gated.
   // After list: applyWindowReadOnly may force read-only.
   var uploadWriteAllowed = true;
@@ -87,6 +89,125 @@
       : "評選：僅 PDF，每檔 ≤100 MiB，可多檔。同名須確認後才取代。";
   }
 
+  function setEvalFolderStatus(text, kind) {
+    var el = $("driveEvalFolderStatus");
+    if (!el) return;
+    el.className = "msg" + (kind ? " " + kind : "");
+    el.textContent = String(text || "");
+  }
+
+  function syncEvalFolderPanel() {
+    var panel = $("driveEvalFolderPanel");
+    if (!panel) return;
+    var show = activeKind === "evaluation" &&
+      lastListData &&
+      lastListData.participation &&
+      lastListData.participation.evaluation === true;
+    panel.classList.toggle("hidden", !show);
+    if (!show) return;
+    var createBtn = $("btnDriveEvalFolderCreate");
+    var nameInput = $("driveEvalFolderName");
+    var select = $("driveEvalFolderSelect");
+    var refreshBtn = $("btnDriveEvalFolderRefresh");
+    var canWrite = uploadWriteAllowed && !evalFolderBusy;
+    if (createBtn) createBtn.disabled = !canWrite;
+    if (nameInput) nameInput.disabled = !canWrite;
+    if (select) select.disabled = evalFolderBusy;
+    if (refreshBtn) refreshBtn.disabled = evalFolderBusy;
+  }
+
+  function renderEvalFolderOptions(payload) {
+    var select = $("driveEvalFolderSelect");
+    if (!select) return;
+    var folders = (payload && payload.folders) || [];
+    var clubFolderId = (payload && payload.clubFolderId) || "";
+    var keep = selectedEvalFolderId;
+    select.replaceChildren();
+    var root = document.createElement("option");
+    root.value = "";
+    root.textContent = "社團核定資料夾（根層）";
+    select.appendChild(root);
+    folders.forEach(function (folder) {
+      var id = folder && (folder.folderId || folder.id);
+      if (!id) return;
+      if (clubFolderId && id === clubFolderId) return;
+      var opt = document.createElement("option");
+      opt.value = String(id);
+      opt.textContent = String(folder.name || id);
+      select.appendChild(opt);
+    });
+    var found = false;
+    for (var i = 0; i < select.options.length; i += 1) {
+      if (select.options[i].value === keep) {
+        found = true;
+        break;
+      }
+    }
+    selectedEvalFolderId = found ? keep : "";
+    select.value = selectedEvalFolderId;
+  }
+
+  function refreshEvalFolders(token) {
+    if (activeKind !== "evaluation") return Promise.resolve(null);
+    evalFolderBusy = true;
+    syncEvalFolderPanel();
+    setEvalFolderStatus("正在載入分類資料夾…", "warn");
+    return call("listClubEvaluationFolders", {}).then(function (result) {
+      if (token && !sameOp(token)) return null;
+      renderEvalFolderOptions(result.data || {});
+      setEvalFolderStatus("已載入分類資料夾。", "ok");
+      return result.data || {};
+    }).catch(function (error) {
+      if (token && !sameOp(token)) return null;
+      var info = errorInfo(error);
+      setEvalFolderStatus(friendlyGateMessage(info), "error");
+      return null;
+    }).then(function (data) {
+      evalFolderBusy = false;
+      syncEvalFolderPanel();
+      return data;
+    });
+  }
+
+  function createEvalFolder() {
+    var token = { gen: generation, op: operationSeq, uid: boundUid };
+    if (!uploadWriteAllowed) {
+      setEvalFolderStatus("目前為唯讀狀態，無法建立分類。", "warn");
+      return;
+    }
+    var nameInput = $("driveEvalFolderName");
+    var name = nameInput && nameInput.value ? String(nameInput.value).trim() : "";
+    if (!name) {
+      setEvalFolderStatus("請輸入分類名稱。", "warn");
+      return;
+    }
+    var parentFolderId = selectedEvalFolderId || "";
+    evalFolderBusy = true;
+    syncEvalFolderPanel();
+    setEvalFolderStatus("正在建立分類…", "warn");
+    var body = { name: name };
+    if (parentFolderId) body.parentFolderId = parentFolderId;
+    call("createClubEvaluationFolder", body).then(function (result) {
+      if (!sameOp(token)) return null;
+      var data = result.data || {};
+      if (data.folderId) selectedEvalFolderId = String(data.folderId);
+      if (nameInput) nameInput.value = "";
+      setEvalFolderStatus(
+        data.reused ? "已沿用同名分類。" : "已建立分類。",
+        "ok"
+      );
+      return refreshEvalFolders(token);
+    }).catch(function (error) {
+      if (!sameOp(token)) return;
+      var info = errorInfo(error);
+      setEvalFolderStatus(friendlyGateMessage(info), "error");
+    }).then(function () {
+      if (!sameOp(token)) return;
+      evalFolderBusy = false;
+      syncEvalFolderPanel();
+    });
+  }
+
   function applyKindUi(kind) {
     activeKind = kind === "feature" ? "feature" : "evaluation";
     var input = $("driveFile");
@@ -101,8 +222,16 @@
     if (evalBtn) evalBtn.classList.toggle("active", activeKind === "evaluation");
     if (featureBtn) featureBtn.classList.toggle("active", activeKind === "feature");
     hideReplaceConfirm();
+    if (activeKind !== "evaluation") {
+      selectedEvalFolderId = "";
+      setEvalFolderStatus("", "");
+    }
+    syncEvalFolderPanel();
     if (lastListData) {
       applyWindowReadOnly(lastListData.uploadWindows, lastListData.participation);
+    }
+    if (activeKind === "evaluation" && lastListData && boundUid) {
+      refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid });
     }
   }
 
@@ -234,6 +363,7 @@
       serverCtx.uid,
       serverCtx.activityId,
       serverCtx.permanentClubId,
+      kind === "evaluation" ? (selectedEvalFolderId || "root") : "feature",
       file.name,
       file.size,
       file.lastModified
@@ -297,6 +427,7 @@
     if (input) input.disabled = !enabled;
     if (uploadBtn) uploadBtn.disabled = !enabled;
     if (retry && !enabled) retry.classList.add("hidden");
+    syncEvalFolderPanel();
     var gate = $("driveUploadGate");
     if (!gate) return;
     if (!enabled && readOnlyReason) {
@@ -443,6 +574,7 @@
       showParticipation(data.participation);
       renderList(data.files || []);
       applyWindowReadOnly(data.uploadWindows, data.participation);
+      if (activeKind === "evaluation") refreshEvalFolders(token);
       return data;
     }).catch(function (error) {
       if (!sameOp(token) || mine !== listRequestSeq) return null;
@@ -523,7 +655,11 @@
   function prepareAndSend(token, file, attempt, signal, allowRebuild, confirmReplace) {
     if (!sameOp(token)) return Promise.resolve(null);
     var kind = activeKind;
-    return call("prepareClubDriveUpload", preparePayload(file, attempt, confirmReplace)).then(function (prepared) {
+    var payload = preparePayload(file, attempt, confirmReplace);
+    if (kind === "evaluation" && selectedEvalFolderId) {
+      payload.destinationFolderId = selectedEvalFolderId;
+    }
+    return call("prepareClubDriveUpload", payload).then(function (prepared) {
       if (!sameOp(token)) return null;
       var data = prepared.data || {};
       if (data.status === "replace_confirm_required") {
@@ -629,6 +765,9 @@
     var featureBtn = $("btnDriveKindFeature");
     var confirmBtn = $("btnDriveReplaceConfirm");
     var cancelBtn = $("btnDriveReplaceCancel");
+    var folderCreate = $("btnDriveEvalFolderCreate");
+    var folderRefresh = $("btnDriveEvalFolderRefresh");
+    var folderSelect = $("driveEvalFolderSelect");
     if (upload && !upload.dataset.bound) {
       upload.dataset.bound = "1";
       upload.addEventListener("click", uploadCurrent);
@@ -652,6 +791,22 @@
     if (cancelBtn && !cancelBtn.dataset.bound) {
       cancelBtn.dataset.bound = "1";
       cancelBtn.addEventListener("click", cancelReplaceUpload);
+    }
+    if (folderCreate && !folderCreate.dataset.bound) {
+      folderCreate.dataset.bound = "1";
+      folderCreate.addEventListener("click", createEvalFolder);
+    }
+    if (folderRefresh && !folderRefresh.dataset.bound) {
+      folderRefresh.dataset.bound = "1";
+      folderRefresh.addEventListener("click", function () {
+        refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid });
+      });
+    }
+    if (folderSelect && !folderSelect.dataset.bound) {
+      folderSelect.dataset.bound = "1";
+      folderSelect.addEventListener("change", function () {
+        selectedEvalFolderId = String(folderSelect.value || "");
+      });
     }
   }
 

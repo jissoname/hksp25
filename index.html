@@ -879,6 +879,19 @@ body.cs-open .cs-fab{display:none}
               <button type="button" id="btnDriveKindFeature">特色資料</button>
             </div>
             <p class="auth-sub" id="driveUploadKindHint">評選：僅 PDF，每檔 ≤100 MiB，可多檔。</p>
+            <div id="driveEvalFolderPanel" class="drive-eval-folders hidden" aria-label="評選分類資料夾">
+              <p class="auth-sub">評選可在核定社團資料夾內建立／選擇分類（最多兩層）；特色維持集中單層，無分類。</p>
+              <label for="driveEvalFolderSelect">上傳目的地</label>
+              <select id="driveEvalFolderSelect">
+                <option value="">社團核定資料夾（根層）</option>
+              </select>
+              <div class="links" style="margin-top:8px">
+                <input id="driveEvalFolderName" type="text" maxlength="80" placeholder="新分類名稱" aria-label="新分類名稱" style="max-width:12rem">
+                <button type="button" id="btnDriveEvalFolderCreate">建立分類</button>
+                <button type="button" id="btnDriveEvalFolderRefresh">重新整理</button>
+              </div>
+              <div id="driveEvalFolderStatus" class="msg" role="status"></div>
+            </div>
             <label for="driveFile">選擇檔案</label>
             <input id="driveFile" type="file" accept=".pdf,application/pdf">
             <button class="primary" id="btnDriveUpload" type="button">上傳到社團資料夾</button>
