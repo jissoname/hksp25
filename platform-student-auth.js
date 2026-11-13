@@ -166,6 +166,52 @@ function createRequireStudentAccess(deps) {
   var busy = false;
   var accessRequestSeq = 0;
   var accessAuthGeneration = 0;
+  /** Server-confirmed drive context; cleared on logout／換帳／資格不符. */
+  var confirmedDriveAccess = null;
+
+  function clearConfirmedDriveAccess() {
+    confirmedDriveAccess = null;
+  }
+
+  function setConfirmedDriveAccess(uid, data) {
+    confirmedDriveAccess = {
+      uid: String(uid || ""),
+      accessAuthGeneration: accessAuthGeneration,
+      activityId: (data && data.activityId) || "",
+      permanentClubId: (data && data.permanentClubId) || "",
+      clubName: (data && data.clubName) || ""
+    };
+  }
+
+  function getConfirmedDriveAccess() {
+    if (!confirmedDriveAccess) return null;
+    var user = auth.currentUser;
+    if (!user || String(user.uid) !== confirmedDriveAccess.uid) return null;
+    if (confirmedDriveAccess.accessAuthGeneration !== accessAuthGeneration) {
+      return null;
+    }
+    return {
+      uid: confirmedDriveAccess.uid,
+      accessAuthGeneration: confirmedDriveAccess.accessAuthGeneration,
+      activityId: confirmedDriveAccess.activityId,
+      permanentClubId: confirmedDriveAccess.permanentClubId,
+      clubName: confirmedDriveAccess.clubName
+    };
+  }
+
+  function notifyDriveUpload(data) {
+    var user = auth.currentUser;
+    if (!user || !data) {
+      clearConfirmedDriveAccess();
+      return;
+    }
+    setConfirmedDriveAccess(user.uid, data);
+    var payload = getConfirmedDriveAccess();
+    if (!payload) return;
+    if (window.HKSP_DRIVE_UPLOAD && typeof window.HKSP_DRIVE_UPLOAD.onAccess === "function") {
+      window.HKSP_DRIVE_UPLOAD.onAccess(payload);
+    }
+  }
   var studentAccessFence = createStudentAccessFence();
   var requireStudentAccess = null;
 
@@ -315,6 +361,7 @@ function createRequireStudentAccess(deps) {
         bar.classList.remove("hidden");
       }
       if (data.status === "disabled") {
+        clearConfirmedDriveAccess();
         setShell("auth");
         showTab("login");
         if (bar) {
@@ -327,6 +374,7 @@ function createRequireStudentAccess(deps) {
         });
       }
       if (data.mustChangePassword) {
+        clearConfirmedDriveAccess();
         setShell("change");
         if (bar) {
           bar.className = "msg warn";
@@ -336,6 +384,7 @@ function createRequireStudentAccess(deps) {
         return data;
       }
       if (!data.access || !data.access.allowed) {
+        clearConfirmedDriveAccess();
         setShell("auth");
         showTab("login");
         var msg =
@@ -369,6 +418,11 @@ function createRequireStudentAccess(deps) {
           "\n帳號狀態：" +
           (data.status || "（未知）");
       }
+      notifyDriveUpload({
+        activityId: data.activityId || "",
+        permanentClubId: data.permanentClubId || "",
+        clubName: data.clubName || ""
+      });
       return data;
     });
   }
@@ -670,6 +724,10 @@ function createRequireStudentAccess(deps) {
     accessAuthGeneration += 1;
     accessRequestSeq += 1;
     studentAccessFence.bumpAuthGeneration();
+    clearConfirmedDriveAccess();
+    if (window.HKSP_DRIVE_UPLOAD && typeof window.HKSP_DRIVE_UPLOAD.onSignedOut === "function") {
+      window.HKSP_DRIVE_UPLOAD.onSignedOut();
+    }
     return auth.signOut().then(function () {
       setShell("auth");
       showTab("login");
@@ -684,7 +742,11 @@ function createRequireStudentAccess(deps) {
   auth.onAuthStateChanged(function (user) {
     accessAuthGeneration += 1;
     studentAccessFence.bumpAuthGeneration();
+    clearConfirmedDriveAccess();
     if (!user) {
+      if (window.HKSP_DRIVE_UPLOAD && typeof window.HKSP_DRIVE_UPLOAD.onSignedOut === "function") {
+        window.HKSP_DRIVE_UPLOAD.onSignedOut();
+      }
       setShell("auth");
       return;
     }
@@ -702,7 +764,9 @@ function createRequireStudentAccess(deps) {
     },
     refreshAccess: refreshAccess,
     getAuth: function () { return auth; },
-    requireStudentAccess: requireStudentAccess
+    requireStudentAccess: requireStudentAccess,
+    getAccessAuthGeneration: function () { return accessAuthGeneration; },
+    getConfirmedDriveAccess: getConfirmedDriveAccess
   };
 
   loadClubs();

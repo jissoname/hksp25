@@ -584,6 +584,14 @@ body.cs-open{overflow-x:hidden;overflow-y:auto}
 }
 .auth-card h2{margin:0;font-size:1.3rem;color:var(--hk-navy);font-weight:800}
 .auth-card .auth-sub{margin:6px 0 14px;color:var(--hk-muted);font-size:.92rem;line-height:1.55}
+.drive-upload{margin:16px 0 12px;padding:14px 12px;border:1px solid rgba(30,58,95,.12);border-radius:14px;background:rgba(248,251,253,.9)}
+.drive-upload h3{margin:0 0 8px;font-size:1rem;color:var(--hk-navy)}
+.drive-kind-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px}
+.drive-kind-row button{border:1px solid var(--hk-line,#d5e0ec);background:#f8fafc;border-radius:999px;padding:8px 12px;cursor:pointer;font:inherit;color:var(--hk-muted)}
+.drive-kind-row button.active{background:var(--hk-accent,#2f6ea3);border-color:var(--hk-accent,#2f6ea3);color:#fff}
+.drive-list{margin:10px 0 0;padding-left:1.1em;color:var(--hk-muted);font-size:.9rem;line-height:1.55}
+.drive-replace{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff7e8;border:1px solid rgba(138,90,0,.2)}
+.drive-replace .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
 .auth-card label{display:block;margin:10px 0 6px;font-size:.88rem;font-weight:600;color:#3f5366}
 .auth-card input,.auth-card select{
   width:100%;max-width:100%;padding:12px 14px;border:1px solid var(--hk-line);border-radius:12px;
@@ -861,6 +869,31 @@ body.cs-open .cs-fab{display:none}
       <section id="homeShell" class="hidden">
         <div class="msg ok" id="homeStatus">登入成功</div>
         <div class="identity" id="homeIdentity"></div>
+        <section id="clubDriveUpload" class="drive-upload" aria-label="社團資料上傳">
+          <h3>社團資料上傳</h3>
+          <p class="auth-sub" id="driveUploadContext">登入後會顯示伺服器確認的活動與社團。</p>
+          <div id="driveUploadGate" class="msg warn hidden" role="status"></div>
+          <div id="driveUploadTools" class="hidden">
+            <div class="drive-kind-row" role="group" aria-label="上傳項目">
+              <button type="button" id="btnDriveKindEvaluation">評選資料</button>
+              <button type="button" id="btnDriveKindFeature">特色資料</button>
+            </div>
+            <p class="auth-sub" id="driveUploadKindHint">評選：僅 PDF，每檔 ≤100 MiB，可多檔。</p>
+            <label for="driveFile">選擇檔案</label>
+            <input id="driveFile" type="file" accept=".pdf,application/pdf">
+            <button class="primary" id="btnDriveUpload" type="button">上傳到社團資料夾</button>
+            <button type="button" id="btnDriveRetry" class="hidden" style="margin-top:8px;border:0;background:transparent;color:#2f6ea3;cursor:pointer;font:inherit">重試這次上傳</button>
+            <div id="driveReplaceConfirm" class="drive-replace hidden">
+              <div id="driveReplaceDetail"></div>
+              <div class="links">
+                <button type="button" class="primary" id="btnDriveReplaceConfirm">確認取代</button>
+                <button type="button" id="btnDriveReplaceCancel">取消，保留原檔</button>
+              </div>
+            </div>
+          </div>
+          <div id="driveUploadStatus" class="msg" role="status"></div>
+          <ul id="driveUploadList" class="drive-list"></ul>
+        </section>
         <button class="primary" id="btnLogout" type="button">登出</button>
       </section>
 
@@ -988,6 +1021,7 @@ body.cs-open .cs-fab{display:none}
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
 <script src="./platform-student-auth.js"></script>
+<script src="./platform-drive-upload.js"></script>
 <script src="./platform-home.js"></script>
 
 <script>
