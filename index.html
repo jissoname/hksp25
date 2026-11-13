@@ -589,9 +589,82 @@ body.cs-open{overflow-x:hidden;overflow-y:auto}
 .drive-kind-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px}
 .drive-kind-row button{border:1px solid var(--hk-line,#d5e0ec);background:#f8fafc;border-radius:999px;padding:8px 12px;cursor:pointer;font:inherit;color:var(--hk-muted)}
 .drive-kind-row button.active{background:var(--hk-accent,#2f6ea3);border-color:var(--hk-accent,#2f6ea3);color:#fff}
-.drive-list{margin:10px 0 0;padding-left:1.1em;color:var(--hk-muted);font-size:.9rem;line-height:1.55}
+.drive-list{margin:10px 0 0;padding:0;list-style:none;color:var(--hk-muted);font-size:.9rem;line-height:1.55}
+.drive-list li{padding:10px 12px;border:1px solid #e6edf5;border-radius:12px;background:#fff;margin:0 0 8px}
 .drive-replace{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff7e8;border:1px solid rgba(138,90,0,.2)}
 .drive-replace .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+/* Full upload workspace (post-login) */
+.drive-workspace{
+  display:none;width:min(1100px,calc(100% - 32px));margin:18px auto 28px;padding:0 0 8px
+}
+body.drive-ws-open .drive-workspace{display:block}
+body.drive-ws-open .hero,
+body.drive-ws-open .feature-row,
+body.drive-ws-open .news-band{display:none}
+.drive-ws-top{
+  display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;
+  padding:16px 18px;border-radius:18px;background:var(--hk-card);border:1px solid rgba(30,58,95,.1);
+  box-shadow:var(--hk-shadow);margin-bottom:16px
+}
+.drive-ws-top .ws-actions{display:flex;flex-wrap:wrap;gap:8px}
+.drive-ws-top .ws-actions button{
+  border:1px solid var(--hk-line);background:#fff;border-radius:12px;padding:10px 14px;cursor:pointer;font:inherit;font-weight:600;color:var(--hk-navy)
+}
+.drive-ws-top .ws-actions button.primary{border:0;background:var(--hk-navy);color:#fff}
+.drive-ws-club{font-size:1.15rem;font-weight:800;color:var(--hk-navy);margin:0 0 4px}
+.drive-ws-meta{color:var(--hk-muted);font-size:.92rem;line-height:1.5}
+.drive-kind-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 16px}
+.drive-kind-card{
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;
+  border:1px solid rgba(30,58,95,.12);background:linear-gradient(165deg,#fff 0%,#f3f7fb 100%);
+  border-radius:20px;padding:22px 20px;cursor:pointer;font:inherit;min-height:140px;
+  box-shadow:0 10px 28px rgba(30,58,95,.08);transition:transform .15s ease,box-shadow .15s ease
+}
+.drive-kind-card:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(30,58,95,.12)}
+.drive-kind-card .k-title{font-size:1.2rem;font-weight:800;color:var(--hk-navy)}
+.drive-kind-card .k-sub{color:var(--hk-muted);font-size:.92rem;line-height:1.5}
+.drive-kind-card.hidden,
+.drive-workspace .hidden{display:none!important}
+.drive-ws-panel{
+  display:grid;grid-template-columns:minmax(200px,240px) minmax(0,1fr);gap:16px;
+  padding:16px;border-radius:18px;background:var(--hk-card);border:1px solid rgba(30,58,95,.1)
+}
+.drive-ws-panel.feature-mode{grid-template-columns:1fr}
+.drive-folder-nav{border-right:1px solid #e6edf5;padding-right:12px;min-width:0}
+.drive-folder-nav h4{margin:0 0 10px;font-size:.95rem;color:var(--hk-navy)}
+.drive-folder-nav .folder-list{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;padding:0;list-style:none}
+.drive-folder-nav .folder-list button{
+  width:100%;text-align:left;border:1px solid transparent;background:#f7fafc;border-radius:10px;
+  padding:10px 12px;cursor:pointer;font:inherit;color:var(--hk-navy)
+}
+.drive-folder-nav .folder-list button.active{border-color:var(--hk-accent);background:#eaf3fb;font-weight:700}
+.drive-folder-mobile{display:none;margin:0 0 12px}
+.drive-dropzone{
+  border:2px dashed #9db4cc;border-radius:18px;background:#f8fbfe;padding:28px 18px;text-align:center;
+  color:var(--hk-muted);cursor:pointer;transition:border-color .15s ease,background .15s ease
+}
+.drive-dropzone.dragover{border-color:var(--hk-accent);background:#eef6fc;color:var(--hk-navy)}
+.drive-dropzone.disabled{opacity:.55;cursor:not-allowed}
+.drive-dropzone .dz-title{font-size:1.05rem;font-weight:800;color:var(--hk-navy);margin:0 0 6px}
+.drive-queue{margin-top:14px}
+.drive-queue-item{
+  display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;
+  padding:12px;border:1px solid #e6edf5;border-radius:12px;background:#fff;margin:0 0 8px
+}
+.drive-queue-item .q-name{font-weight:700;color:var(--hk-navy);word-break:break-word}
+.drive-queue-item .q-meta{font-size:.85rem;color:var(--hk-muted)}
+.drive-progress{
+  height:8px;border-radius:999px;background:#e6edf5;overflow:hidden;margin-top:8px
+}
+.drive-progress > span{display:block;height:100%;width:0;background:var(--hk-accent);transition:width .2s ease}
+.drive-ws-gate{margin:0 0 12px}
+@media(max-width:860px){
+  .drive-kind-picker{grid-template-columns:1fr}
+  .drive-ws-panel{grid-template-columns:1fr}
+  .drive-folder-nav{border-right:0;padding-right:0;border-bottom:1px solid #e6edf5;padding-bottom:12px}
+  .drive-folder-nav .folder-list{display:none}
+  .drive-folder-mobile{display:block}
+}
 .auth-card label{display:block;margin:10px 0 6px;font-size:.88rem;font-weight:600;color:#3f5366}
 .auth-card input,.auth-card select{
   width:100%;max-width:100%;padding:12px 14px;border:1px solid var(--hk-line);border-radius:12px;
@@ -869,32 +942,71 @@ body.cs-open .cs-fab{display:none}
       <section id="homeShell" class="hidden">
         <div class="msg ok" id="homeStatus">登入成功</div>
         <div class="identity" id="homeIdentity"></div>
-        <section id="clubDriveUpload" class="drive-upload" aria-label="社團資料上傳">
-          <h3>社團資料上傳</h3>
-          <p class="auth-sub" id="driveUploadContext">登入後會顯示伺服器確認的活動與社團。</p>
-          <div id="driveUploadGate" class="msg warn hidden" role="status"></div>
-          <div id="driveUploadTools" class="hidden">
-            <div class="drive-kind-row" role="group" aria-label="上傳項目">
-              <button type="button" id="btnDriveKindEvaluation">評選資料</button>
-              <button type="button" id="btnDriveKindFeature">特色資料</button>
-            </div>
-            <p class="auth-sub" id="driveUploadKindHint">評選：僅 PDF，每檔 ≤100 MiB，可多檔。</p>
-            <div id="driveEvalFolderPanel" class="drive-eval-folders hidden" aria-label="評選分類資料夾">
-              <p class="auth-sub">評選可在核定社團資料夾內建立／選擇分類（最多兩層）；特色維持集中單層，無分類。</p>
-              <label for="driveEvalFolderSelect">上傳目的地</label>
-              <select id="driveEvalFolderSelect">
-                <option value="">社團核定資料夾（根層）</option>
-              </select>
-              <div class="links" style="margin-top:8px">
-                <input id="driveEvalFolderName" type="text" maxlength="80" placeholder="新分類名稱" aria-label="新分類名稱" style="max-width:12rem">
-                <button type="button" id="btnDriveEvalFolderCreate">建立分類</button>
-                <button type="button" id="btnDriveEvalFolderRefresh">重新整理</button>
-              </div>
-              <div id="driveEvalFolderStatus" class="msg" role="status"></div>
-            </div>
-            <label for="driveFile">選擇檔案</label>
-            <input id="driveFile" type="file" accept=".pdf,application/pdf">
-            <button class="primary" id="btnDriveUpload" type="button">上傳到社團資料夾</button>
+        <p class="auth-sub" id="driveUploadContext">登入後會開啟社團資料上傳工作區。</p>
+        <button class="primary" id="btnOpenDriveWorkspace" type="button">開啟上傳工作區</button>
+        <button class="primary" id="btnLogout" type="button" style="margin-top:10px;background:transparent;color:var(--hk-navy);border:1px solid var(--hk-line)">登出</button>
+      </section>
+
+      <div id="status" class="msg" role="status"></div>
+      <p class="auth-sub" id="envMeta" style="margin-bottom:0"></p>
+    </aside>
+  </section>
+
+  <section id="driveWorkspace" class="drive-workspace" aria-label="社團資料上傳工作區">
+    <div class="drive-ws-top">
+      <div>
+        <p class="drive-ws-club" id="driveWsClubTitle">社團資料上傳</p>
+        <p class="drive-ws-meta" id="driveWsMeta">登入後會顯示伺服器確認的活動、社團與截止。</p>
+      </div>
+      <div class="ws-actions">
+        <button type="button" id="btnDriveBackHome">返回首頁</button>
+        <button type="button" class="primary" id="btnLogoutWorkspace">登出</button>
+      </div>
+    </div>
+    <div id="driveUploadGate" class="msg warn hidden drive-ws-gate" role="status"></div>
+    <div id="driveKindPicker" class="drive-kind-picker" role="group" aria-label="選擇上傳項目">
+      <button type="button" class="drive-kind-card" id="btnDriveKindEvaluation">
+        <span class="k-title">評選資料</span>
+        <span class="k-sub">可多份 PDF；可在核定社團資料夾內建立／選擇分類後上傳。</span>
+      </button>
+      <button type="button" class="drive-kind-card" id="btnDriveKindFeature">
+        <span class="k-title">特色資料</span>
+        <span class="k-sub">每社一檔；PDF／PPT／PPTX／MP4。集中單層，無分類。</span>
+      </button>
+    </div>
+    <div id="driveUploadTools" class="hidden">
+      <div class="links" style="margin:0 0 12px">
+        <button type="button" id="btnDriveBackToKinds" style="border:0;background:transparent;color:#2f6ea3;cursor:pointer;font:inherit;font-weight:600">← 返回項目選擇</button>
+      </div>
+      <p class="auth-sub" id="driveUploadKindHint" style="margin-top:0">評選：僅 PDF，每檔 ≤100 MiB，可多檔。</p>
+      <div id="driveWsPanel" class="drive-ws-panel">
+        <aside id="driveEvalFolderPanel" class="drive-folder-nav hidden" aria-label="評選分類資料夾">
+          <h4>分類資料夾</h4>
+          <div class="drive-folder-mobile">
+            <label for="driveEvalFolderSelect">選擇分類</label>
+            <select id="driveEvalFolderSelect">
+              <option value="">社團核定資料夾（根層）</option>
+            </select>
+          </div>
+          <ul class="folder-list" id="driveEvalFolderList" aria-label="分類清單"></ul>
+          <div class="links" style="flex-direction:column;align-items:stretch;gap:8px">
+            <input id="driveEvalFolderName" type="text" maxlength="80" placeholder="新分類名稱" aria-label="新分類名稱">
+            <button type="button" id="btnDriveEvalFolderCreate">建立分類</button>
+            <button type="button" id="btnDriveEvalFolderRefresh">重新整理分類</button>
+          </div>
+          <div id="driveEvalFolderStatus" class="msg" role="status"></div>
+        </aside>
+        <div class="drive-ws-main">
+          <div id="driveDropzone" class="drive-dropzone" tabindex="0" role="button" aria-label="拖曳或點選上傳檔案">
+            <p class="dz-title" id="driveDropzoneTitle">拖曳檔案到此，或點選選擇</p>
+            <p id="driveDropzoneSub">評選僅 PDF；可一次加入多份後依序上傳。</p>
+            <input id="driveFile" type="file" accept=".pdf,application/pdf" multiple hidden>
+          </div>
+          <div class="drive-queue" aria-label="上傳佇列">
+            <div id="driveUploadStatus" class="msg" role="status"></div>
+            <div class="drive-progress hidden" id="driveTransferProgress" aria-hidden="true"><span id="driveTransferBar"></span></div>
+            <ul id="driveUploadQueue" class="drive-list" aria-label="待傳檔案"></ul>
+            <button class="primary" id="btnDriveUpload" type="button" style="width:auto;min-width:10rem;margin-top:8px">開始上傳</button>
             <button type="button" id="btnDriveRetry" class="hidden" style="margin-top:8px;border:0;background:transparent;color:#2f6ea3;cursor:pointer;font:inherit">重試這次上傳</button>
             <div id="driveReplaceConfirm" class="drive-replace hidden">
               <div id="driveReplaceDetail"></div>
@@ -903,16 +1015,12 @@ body.cs-open .cs-fab{display:none}
                 <button type="button" id="btnDriveReplaceCancel">取消，保留原檔</button>
               </div>
             </div>
+            <h4 style="margin:16px 0 8px;font-size:.95rem;color:var(--hk-navy)">已繳交紀錄</h4>
+            <ul id="driveUploadList" class="drive-list"></ul>
           </div>
-          <div id="driveUploadStatus" class="msg" role="status"></div>
-          <ul id="driveUploadList" class="drive-list"></ul>
-        </section>
-        <button class="primary" id="btnLogout" type="button">登出</button>
-      </section>
-
-      <div id="status" class="msg" role="status"></div>
-      <p class="auth-sub" id="envMeta" style="margin-bottom:0"></p>
-    </aside>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section class="feature-row" id="event" aria-label="活動資訊與相關表單">

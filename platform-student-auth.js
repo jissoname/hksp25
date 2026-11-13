@@ -257,6 +257,11 @@ function createRequireStudentAccess(deps) {
     }
   }
 
+  function setDriveWorkspaceOpen(open) {
+    if (open) document.body.classList.add("drive-ws-open");
+    else document.body.classList.remove("drive-ws-open");
+  }
+
   function setShell(mode) {
     var authShell = $("authShell");
     var change = $("changePasswordShell");
@@ -264,6 +269,8 @@ function createRequireStudentAccess(deps) {
     if (authShell) authShell.classList.toggle("hidden", mode !== "auth");
     if (change) change.classList.toggle("hidden", mode !== "change");
     if (home) home.classList.toggle("hidden", mode !== "home");
+    // Login success → full upload workspace; change-password / auth stay on card.
+    setDriveWorkspaceOpen(mode === "home");
   }
 
   function call(name, data) {
@@ -738,6 +745,18 @@ function createRequireStudentAccess(deps) {
   }
   bind("btnLogout", "click", doLogout);
   bind("btnLogoutFromChange", "click", doLogout);
+  bind("btnLogoutWorkspace", "click", doLogout);
+  bind("btnOpenDriveWorkspace", "click", function () {
+    setDriveWorkspaceOpen(true);
+    if (window.HKSP_DRIVE_UPLOAD && typeof window.HKSP_DRIVE_UPLOAD.focusWorkspace === "function") {
+      window.HKSP_DRIVE_UPLOAD.focusWorkspace();
+    }
+  });
+  bind("btnDriveBackHome", "click", function () {
+    setDriveWorkspaceOpen(false);
+    var card = $("authCard");
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
 
   auth.onAuthStateChanged(function (user) {
     accessAuthGeneration += 1;

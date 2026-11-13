@@ -20,6 +20,8 @@
   var lastListData = null;
   var selectedEvalFolderId = "";
   var evalFolderBusy = false;
+  var uploadQueue = [];
+  var workspaceView = "picker"; // picker | tools
   // Before first list: allow click; prepare／complete still server-gated.
   // After list: applyWindowReadOnly may force read-only.
   var uploadWriteAllowed = true;
@@ -118,33 +120,54 @@
 
   function renderEvalFolderOptions(payload) {
     var select = $("driveEvalFolderSelect");
-    if (!select) return;
+    var list = $("driveEvalFolderList");
     var folders = (payload && payload.folders) || [];
     var clubFolderId = (payload && payload.clubFolderId) || "";
     var keep = selectedEvalFolderId;
-    select.replaceChildren();
-    var root = document.createElement("option");
-    root.value = "";
-    root.textContent = "社團核定資料夾（根層）";
-    select.appendChild(root);
+    var entries = [{ id: "", name: "社團核定資料夾（根層）" }];
     folders.forEach(function (folder) {
       var id = folder && (folder.folderId || folder.id);
       if (!id) return;
       if (clubFolderId && id === clubFolderId) return;
-      var opt = document.createElement("option");
-      opt.value = String(id);
-      opt.textContent = String(folder.name || id);
-      select.appendChild(opt);
+      entries.push({ id: String(id), name: String(folder.name || id) });
     });
     var found = false;
-    for (var i = 0; i < select.options.length; i += 1) {
-      if (select.options[i].value === keep) {
-        found = true;
-        break;
-      }
-    }
+    entries.forEach(function (entry) {
+      if (entry.id === keep) found = true;
+    });
     selectedEvalFolderId = found ? keep : "";
-    select.value = selectedEvalFolderId;
+    if (select) {
+      select.replaceChildren();
+      entries.forEach(function (entry) {
+        var opt = document.createElement("option");
+        opt.value = entry.id;
+        opt.textContent = entry.name;
+        select.appendChild(opt);
+      });
+      select.value = selectedEvalFolderId;
+    }
+    if (list) {
+      list.replaceChildren();
+      entries.forEach(function (entry) {
+        var li = document.createElement("li");
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = entry.name;
+        btn.dataset.folderId = entry.id;
+        if (entry.id === selectedEvalFolderId) btn.classList.add("active");
+        btn.addEventListener("click", function () {
+          selectedEvalFolderId = entry.id;
+          if (select) select.value = entry.id;
+          renderEvalFolderOptions({
+            folders: folders,
+            clubFolderId: clubFolderId
+          });
+        });
+        li.appendChild(btn);
+        list.appendChild(li);
+      });
+    }
+    return entries.length <= 1;
   }
 
   function refreshEvalFolders(token) {
@@ -159,10 +182,18 @@
         lastListData.driveWriteEnabled = false;
         lastListData.driveUploadMode = data.driveUploadMode || "off";
       }
-      renderEvalFolderOptions(data);
+      if (lastListData) lastListData._evalFolders = data;
+      var emptyOnlyRoot = renderEvalFolderOptions(data);
       if (data.driveWriteEnabled === false) {
-        setEvalFolderStatus("已載入分類（唯讀）。系統尚未開放上傳", "warn");
+        setEvalFolderStatus(
+          emptyOnlyRoot
+            ? "目前沒有子分類（根層）。系統尚未開放上傳"
+            : "已載入分類（唯讀）。系統尚未開放上傳",
+          "warn"
+        );
         setUploadControlsEnabled(false, "系統尚未開放上傳");
+      } else if (emptyOnlyRoot) {
+        setEvalFolderStatus("目前沒有子分類，可使用根層或建立新分類。", "ok");
       } else {
         setEvalFolderStatus("已載入分類資料夾。", "ok");
       }
@@ -170,7 +201,9 @@
     }).catch(function (error) {
       if (token && !sameOp(token)) return null;
       var info = errorInfo(error);
-      setEvalFolderStatus(friendlyGateMessage(info), "error");
+      var list = $("driveEvalFolderList");
+      if (list) list.replaceChildren();
+      setEvalFolderStatus("分類讀取失敗：" + friendlyGateMessage(info), "error");
       return null;
     }).then(function (data) {
       evalFolderBusy = false;
@@ -218,15 +251,46 @@
     });
   }
 
-  function applyKindUi(kind) {
+  function setWorkspaceView(view) {
+    workspaceView = view === "tools" ? "tools" : "picker";
+    var picker = $("driveKindPicker");
+    var tools = $("driveUploadTools");
+    if (picker) picker.classList.toggle("hidden", workspaceView !== "picker");
+    if (tools) tools.classList.toggle("hidden", workspaceView !== "tools");
+  }
+
+  function syncDropzoneCopy() {
+    var title = $("driveDropzoneTitle");
+    var sub = $("driveDropzoneSub");
+    var input = $("driveFile");
+    if (input) {
+      input.accept = acceptForKind(activeKind);
+      input.multiple = activeKind === "evaluation";
+    }
+    if (title) {
+      title.textContent = uploadWriteAllowed
+        ? "拖曳檔案到此，或點選選擇"
+        : "目前為唯讀（不可選檔上傳）";
+    }
+    if (sub) sub.textContent = hintForKind(activeKind);
+    var zone = $("driveDropzone");
+    if (zone) zone.classList.toggle("disabled", !uploadWriteAllowed);
+  }
+
+  function applyKindUi(kind, enterTools) {
     activeKind = kind === "feature" ? "feature" : "evaluation";
     var input = $("driveFile");
     if (input) {
       input.accept = acceptForKind(activeKind);
+      input.multiple = activeKind === "evaluation";
       input.value = "";
     }
+    uploadQueue = [];
+    renderQueue();
     var hint = $("driveUploadKindHint");
     if (hint) hint.textContent = hintForKind(activeKind);
+    var panel = $("driveWsPanel");
+    if (panel) panel.classList.toggle("feature-mode", activeKind === "feature");
     var evalBtn = $("btnDriveKindEvaluation");
     var featureBtn = $("btnDriveKindFeature");
     if (evalBtn) evalBtn.classList.toggle("active", activeKind === "evaluation");
@@ -237,18 +301,21 @@
       setEvalFolderStatus("", "");
     }
     syncEvalFolderPanel();
+    syncDropzoneCopy();
+    if (enterTools) setWorkspaceView("tools");
     if (lastListData) {
       applyWindowReadOnly(lastListData.uploadWindows, lastListData.participation);
     }
-    if (activeKind === "evaluation" && lastListData && boundUid) {
+    if (activeKind === "evaluation" && lastListData && boundUid && workspaceView === "tools") {
       refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid });
     }
   }
 
   function showParticipation(participation) {
-    var panel = $("clubDriveUpload");
+    var panel = $("driveWorkspace");
     var gate = $("driveUploadGate");
     var tools = $("driveUploadTools");
+    var picker = $("driveKindPicker");
     var evalBtn = $("btnDriveKindEvaluation");
     var featureBtn = $("btnDriveKindFeature");
     if (!panel) return;
@@ -261,6 +328,7 @@
         gate.textContent = "尚未設定此社團的評選／特色參與項目，無法上傳。";
       }
       if (tools) tools.classList.add("hidden");
+      if (picker) picker.classList.add("hidden");
       return;
     }
     if (!evalOk && !featureOk) {
@@ -269,17 +337,17 @@
         gate.textContent = "此社團目前未開放評選或特色上傳入口。";
       }
       if (tools) tools.classList.add("hidden");
+      if (picker) picker.classList.add("hidden");
       return;
     }
-    if (gate) {
-      gate.classList.add("hidden");
-      gate.textContent = "";
-    }
-    if (tools) tools.classList.remove("hidden");
     if (evalBtn) evalBtn.classList.toggle("hidden", !evalOk);
     if (featureBtn) featureBtn.classList.toggle("hidden", !featureOk);
-    if (evalOk) applyKindUi("evaluation");
-    else applyKindUi("feature");
+    if (evalOk && featureOk) {
+      setWorkspaceView("picker");
+      return;
+    }
+    if (evalOk) applyKindUi("evaluation", true);
+    else applyKindUi("feature", true);
   }
 
   function hideReplaceConfirm() {
@@ -311,12 +379,16 @@
   function clearSurface() {
     var input = $("driveFile");
     if (input) input.value = "";
+    uploadQueue = [];
+    renderQueue();
     var list = $("driveUploadList");
     if (list) list.replaceChildren();
     setStatus("", "");
+    setTransferProgress(null);
     var retry = $("btnDriveRetry");
     if (retry) retry.classList.add("hidden");
     hideReplaceConfirm();
+    setWorkspaceView("picker");
     var ctx = $("driveUploadContext");
     if (ctx) ctx.textContent = "登入後會顯示伺服器確認的活動與社團。";
     var gate = $("driveUploadGate");
@@ -444,6 +516,8 @@
     if (uploadBtn) uploadBtn.disabled = !enabled;
     if (retry && !enabled) retry.classList.add("hidden");
     syncEvalFolderPanel();
+    syncDropzoneCopy();
+    updateWorkspaceMeta();
     var gate = $("driveUploadGate");
     if (!gate) return;
     if (!enabled && readOnlyReason) {
@@ -453,6 +527,108 @@
     }
     gate.classList.add("hidden");
     gate.textContent = "";
+  }
+
+  function setTransferProgress(pct) {
+    var wrap = $("driveTransferProgress");
+    var bar = $("driveTransferBar");
+    if (!wrap || !bar) return;
+    if (pct == null || !Number.isFinite(Number(pct))) {
+      wrap.classList.add("hidden");
+      bar.style.width = "0%";
+      return;
+    }
+    wrap.classList.remove("hidden");
+    bar.style.width = Math.max(0, Math.min(100, Number(pct))) + "%";
+  }
+
+  function renderQueue() {
+    var list = $("driveUploadQueue");
+    if (!list) return;
+    list.replaceChildren();
+    uploadQueue.forEach(function (item, index) {
+      var li = document.createElement("li");
+      li.className = "drive-queue-item";
+      var left = document.createElement("div");
+      var name = document.createElement("div");
+      name.className = "q-name";
+      name.textContent = item.file && item.file.name ? item.file.name : "（未命名）";
+      var meta = document.createElement("div");
+      meta.className = "q-meta";
+      meta.textContent =
+        (item.file && item.file.size != null ? item.file.size + " bytes" : "") +
+        (item.state ? " · " + item.state : "");
+      left.appendChild(name);
+      left.appendChild(meta);
+      var remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "移除";
+      remove.disabled = busy || !uploadWriteAllowed;
+      remove.addEventListener("click", function () {
+        if (busy) return;
+        uploadQueue.splice(index, 1);
+        renderQueue();
+      });
+      li.appendChild(left);
+      li.appendChild(remove);
+      list.appendChild(li);
+    });
+  }
+
+  function addFilesFromList(fileList) {
+    if (!uploadWriteAllowed) {
+      setStatus("系統尚未開放上傳", "warn");
+      return;
+    }
+    var files = Array.prototype.slice.call(fileList || []);
+    if (!files.length) return;
+    if (activeKind === "feature") {
+      uploadQueue = [{ file: files[0], state: "等待上傳" }];
+    } else {
+      files.forEach(function (file) {
+        if (!file) return;
+        uploadQueue.push({ file: file, state: "等待上傳" });
+      });
+    }
+    renderQueue();
+    setStatus(
+      activeKind === "feature"
+        ? "已選取 1 個檔案，按「開始上傳」送出。"
+        : "已加入 " + files.length + " 個檔案至佇列。",
+      "ok"
+    );
+  }
+
+  function updateWorkspaceMeta() {
+    var title = $("driveWsClubTitle");
+    var meta = $("driveWsMeta");
+    if (!serverCtx) {
+      if (title) title.textContent = "社團資料上傳";
+      if (meta) meta.textContent = "登入後會顯示伺服器確認的活動、社團與截止。";
+      return;
+    }
+    if (title) {
+      title.textContent =
+        (serverCtx.clubName || "社團") +
+        "（" + (serverCtx.permanentClubId || "") + "）";
+    }
+    var wins = (lastListData && lastListData.uploadWindows) || {};
+    var kind = activeKind === "feature" ? "feature" : "evaluation";
+    var win = wins[kind] || null;
+    var deadlineText = win && win.deadlineAt
+      ? String(win.deadlineAt)
+      : "（伺服器尚未回傳截止）";
+    var statusText = !uploadWriteAllowed
+      ? (lastListData && lastListData.driveWriteEnabled === false
+        ? "狀態：系統尚未開放上傳（唯讀）"
+        : "狀態：唯讀")
+      : "狀態：可準備上傳（仍以後端核對為準）";
+    if (meta) {
+      meta.textContent =
+        "活動：" + (serverCtx.activityId || "") +
+        "　截止：" + deadlineText +
+        "　" + statusText;
+    }
   }
 
   function clearWindowWatch() {
@@ -570,11 +746,13 @@
 
   function showContext(data) {
     var ctx = $("driveUploadContext");
-    if (!ctx || !data) return;
-    ctx.textContent =
-      "活動：" + (data.activityId || "") +
-      "　社團：" + (data.clubName || "") +
-      "（" + (data.permanentClubId || "") + "）";
+    if (ctx && data) {
+      ctx.textContent =
+        "活動：" + (data.activityId || "") +
+        "　社團：" + (data.clubName || "") +
+        "（" + (data.permanentClubId || "") + "）";
+    }
+    updateWorkspaceMeta();
   }
 
   function refresh(token) {
@@ -693,18 +871,20 @@
       }
       if (!data.uploadUrl) throw new Error("伺服器沒有提供上傳位址。");
       setStatus(
-        "正在把檔案直接送到社團資料夾…" +
+        "傳輸中：正在把檔案直接送到社團資料夾…" +
           (data.fileName ? "（Drive 檔名：" + data.fileName + "）" : ""),
         "warn"
       );
+      setTransferProgress(5);
       return transfer(data.uploadUrl, file, signal).then(function (outcome) {
         if (!sameOp(token)) return null;
         if (outcome === "expired") {
           if (!allowRebuild) throw new Error("上傳工作階段已逾期。請再用同一個識別重試。");
           return prepareAndSend(token, file, attempt, signal, false, true);
         }
+        setTransferProgress(100);
         // Bytes may be on Drive; completion is only after completeClubDriveUpload succeeds.
-        setStatus("檔案位元組已送達，正在向伺服器確認完成（尚未宣告成功）…", "warn");
+        setStatus("傳輸 100% 不算完成：正在向伺服器確認繳交…", "warn");
         return call("completeClubDriveUpload", { clientAttemptId: attempt });
       });
     });
@@ -714,7 +894,7 @@
     var token = { gen: generation, op: operationSeq, uid: boundUid };
     if (busy) return;
     if (!uploadWriteAllowed) {
-      setStatus("目前為唯讀狀態，無法上傳（截止與資格以伺服器核對為準）。", "warn");
+      setStatus("系統尚未開放上傳", "warn");
       return;
     }
     if (!serverCtx || serverCtx.generation !== token.gen || serverCtx.uid !== token.uid ||
@@ -722,11 +902,11 @@
       setStatus("尚未取得伺服器確認的活動與社團。", "warn");
       return;
     }
-    var input = $("driveFile");
-    var file = (pendingReplace && pendingReplace.file) ||
-      (input && input.files && input.files[0]);
+    var file = pendingReplace && pendingReplace.file
+      ? pendingReplace.file
+      : (uploadQueue[0] && uploadQueue[0].file);
     if (!file) {
-      setStatus("請先選擇檔案。", "warn");
+      setStatus("請先選擇或拖曳檔案。", "warn");
       return;
     }
     var kind = activeKind;
@@ -736,25 +916,43 @@
       return;
     }
     busy = true;
+    if (uploadQueue[0]) uploadQueue[0].state = "上傳中";
+    renderQueue();
     var button = $("btnDriveUpload");
     if (button) button.disabled = true;
     abortController = typeof AbortController === "function" ? new AbortController() : null;
     var signal = abortController ? abortController.signal : undefined;
-    setStatus("正在向伺服器核對資格、截止與目的地…", "warn");
+    setStatus("等候伺服器：正在核對資格、截止與目的地…", "warn");
+    setTransferProgress(0);
     prepareAndSend(token, file, attempt, signal, true, !!confirmReplace).then(function (done) {
-      if (done && done.waitingReplaceConfirm) return;
+      if (done && done.waitingReplaceConfirm) {
+        busy = false;
+        if ($("btnDriveUpload")) $("btnDriveUpload").disabled = !uploadWriteAllowed;
+        return { stoppedForConfirm: true };
+      }
+      if (uploadQueue.length && uploadQueue[0].file === file) {
+        uploadQueue.shift();
+        renderQueue();
+      }
       finishUpload(token, file, kind, done);
+      setTransferProgress(null);
+      return { continueQueue: uploadQueue.length > 0 };
     }).catch(function (error) {
-      if (!sameOp(token)) return;
-      if (error && error.name === "AbortError") return;
+      if (!sameOp(token)) return null;
+      if (error && error.name === "AbortError") return null;
+      if (uploadQueue[0]) uploadQueue[0].state = "失敗（原檔保留）";
+      renderQueue();
       var info = errorInfo(error);
-      setStatus(friendlyGateMessage(info), "error");
+      setStatus("失敗：" + friendlyGateMessage(info), "error");
+      setTransferProgress(null);
       var retry = $("btnDriveRetry");
       if (retry) retry.classList.remove("hidden");
-    }).then(function () {
+      return null;
+    }).then(function (outcome) {
       if (!sameOp(token)) return;
       busy = false;
-      if ($("btnDriveUpload")) $("btnDriveUpload").disabled = false;
+      if ($("btnDriveUpload")) $("btnDriveUpload").disabled = !uploadWriteAllowed;
+      if (outcome && outcome.continueQueue) runUpload(false);
     });
   }
 
@@ -784,11 +982,14 @@
     var retry = $("btnDriveRetry");
     var evalBtn = $("btnDriveKindEvaluation");
     var featureBtn = $("btnDriveKindFeature");
+    var backKinds = $("btnDriveBackToKinds");
     var confirmBtn = $("btnDriveReplaceConfirm");
     var cancelBtn = $("btnDriveReplaceCancel");
     var folderCreate = $("btnDriveEvalFolderCreate");
     var folderRefresh = $("btnDriveEvalFolderRefresh");
     var folderSelect = $("driveEvalFolderSelect");
+    var dropzone = $("driveDropzone");
+    var fileInput = $("driveFile");
     if (upload && !upload.dataset.bound) {
       upload.dataset.bound = "1";
       upload.addEventListener("click", uploadCurrent);
@@ -799,11 +1000,20 @@
     }
     if (evalBtn && !evalBtn.dataset.bound) {
       evalBtn.dataset.bound = "1";
-      evalBtn.addEventListener("click", function () { applyKindUi("evaluation"); });
+      evalBtn.addEventListener("click", function () { applyKindUi("evaluation", true); });
     }
     if (featureBtn && !featureBtn.dataset.bound) {
       featureBtn.dataset.bound = "1";
-      featureBtn.addEventListener("click", function () { applyKindUi("feature"); });
+      featureBtn.addEventListener("click", function () { applyKindUi("feature", true); });
+    }
+    if (backKinds && !backKinds.dataset.bound) {
+      backKinds.dataset.bound = "1";
+      backKinds.addEventListener("click", function () {
+        hideReplaceConfirm();
+        uploadQueue = [];
+        renderQueue();
+        setWorkspaceView("picker");
+      });
     }
     if (confirmBtn && !confirmBtn.dataset.bound) {
       confirmBtn.dataset.bound = "1";
@@ -827,6 +1037,52 @@
       folderSelect.dataset.bound = "1";
       folderSelect.addEventListener("change", function () {
         selectedEvalFolderId = String(folderSelect.value || "");
+        if (lastListData) {
+          renderEvalFolderOptions({
+            folders: (lastListData._evalFolders && lastListData._evalFolders.folders) || [],
+            clubFolderId: (lastListData._evalFolders && lastListData._evalFolders.clubFolderId) || ""
+          });
+        }
+      });
+    }
+    if (dropzone && !dropzone.dataset.bound) {
+      dropzone.dataset.bound = "1";
+      dropzone.addEventListener("click", function () {
+        if (!uploadWriteAllowed) {
+          setStatus("系統尚未開放上傳", "warn");
+          return;
+        }
+        if (fileInput) fileInput.click();
+      });
+      dropzone.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          dropzone.click();
+        }
+      });
+      ["dragenter", "dragover"].forEach(function (type) {
+        dropzone.addEventListener(type, function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (uploadWriteAllowed) dropzone.classList.add("dragover");
+        });
+      });
+      ["dragleave", "drop"].forEach(function (type) {
+        dropzone.addEventListener(type, function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          dropzone.classList.remove("dragover");
+        });
+      });
+      dropzone.addEventListener("drop", function (event) {
+        addFilesFromList(event.dataTransfer && event.dataTransfer.files);
+      });
+    }
+    if (fileInput && !fileInput.dataset.bound) {
+      fileInput.dataset.bound = "1";
+      fileInput.addEventListener("change", function () {
+        addFilesFromList(fileInput.files);
+        fileInput.value = "";
       });
     }
   }
@@ -924,7 +1180,12 @@
     onSignedOut: function () {
       beginGeneration("");
     },
-    syncFromPlatformAuth: syncFromPlatformAuth
+    syncFromPlatformAuth: syncFromPlatformAuth,
+    focusWorkspace: function () {
+      var ws = $("driveWorkspace");
+      if (ws) ws.scrollIntoView({ behavior: "smooth", block: "start" });
+      updateWorkspaceMeta();
+    }
   };
 
   // If Auth already confirmed before this script ran (and Auth listener is async),
