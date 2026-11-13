@@ -154,9 +154,19 @@
     setEvalFolderStatus("正在載入分類資料夾…", "warn");
     return call("listClubEvaluationFolders", {}).then(function (result) {
       if (token && !sameOp(token)) return null;
-      renderEvalFolderOptions(result.data || {});
-      setEvalFolderStatus("已載入分類資料夾。", "ok");
-      return result.data || {};
+      var data = result.data || {};
+      if (lastListData && data.driveWriteEnabled === false) {
+        lastListData.driveWriteEnabled = false;
+        lastListData.driveUploadMode = data.driveUploadMode || "off";
+      }
+      renderEvalFolderOptions(data);
+      if (data.driveWriteEnabled === false) {
+        setEvalFolderStatus("已載入分類（唯讀）。系統尚未開放上傳", "warn");
+        setUploadControlsEnabled(false, "系統尚未開放上傳");
+      } else {
+        setEvalFolderStatus("已載入分類資料夾。", "ok");
+      }
+      return data;
     }).catch(function (error) {
       if (token && !sameOp(token)) return null;
       var info = errorInfo(error);
@@ -398,8 +408,14 @@
     if (code === "DRIVE_AUTH_LEASE_EXPIRED" || /授權使用期限已到期/.test(info.message || "")) {
       return "校方授權使用期限已到期，目前無法代傳。";
     }
-    if (code === "DRIVE_AUTH_LEASE_MISSING" || code === "DRIVE_WRITE_NOT_CONFIGURED") {
+    if (code === "DRIVE_UPLOAD_MODE_OFF") {
+      return "系統尚未開放上傳";
+    }
+    if (code === "DRIVE_AUTH_LEASE_MISSING") {
       return "校方 Drive 授權尚未就緒，無法上傳（不會假裝可上傳）。";
+    }
+    if (code === "DRIVE_WRITE_NOT_CONFIGURED") {
+      return "系統尚未開放上傳";
     }
     if (code === "CLOUD_NOT_CONFIGURED") {
       return "管理員尚未綁定對應雲端資料夾，無法上傳。";
@@ -526,6 +542,11 @@
     if (!allowed) {
       clearWindowWatch();
       setUploadControlsEnabled(false, "此社團未開放目前選取的上傳項目。");
+      return;
+    }
+    if (lastListData && lastListData.driveWriteEnabled === false) {
+      clearWindowWatch();
+      setUploadControlsEnabled(false, "系統尚未開放上傳");
       return;
     }
     var win = wins[kind] || null;
