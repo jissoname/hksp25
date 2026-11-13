@@ -684,7 +684,7 @@ onclick="openClubModal()"
 <div class="panel-body">
 
 <div class="notice warnbox">
-依伺服器目前活動，或明確指定的歷史活動，加上永久 Club_ID 查詢已註冊學生。先選社團屬性再選社團。缺生日時可「補登生日」（僅寫入後端加密庫，不可覆寫已保存生日）；補登後再「重設密碼」為 YYYYMMDD（只顯示一次），之後重設不必再輸入生日。學生下次登入必須改密。Auth 密碼變更會影響該 UID 在所有活動的登入憑證，但不會改動各活動 membership、seat 或歷史資料。停用帳號重設後仍維持停用。不可讀取生日／密碼／權杖。
+依伺服器目前活動，或明確指定的歷史活動查詢學生。社團篩選與活動範圍分開：可查全部社團、指定屬性的全部社團，或單一社團。結果依社團分組；未註冊也列出；停用社團會標示。解除綁定會釋放名額且帳號維持可用（可重新選社）；改綁保留 UID／學號／密碼。不可讀取生日／密碼／權杖。不搬移既有雲端檔案。
 </div>
 
 <div class="notice" id="activityHandoverBox">
@@ -704,6 +704,25 @@ onclick="openClubModal()"
 
 <div class="toolbar club-student-toolbar">
 <label class="club-student-field">
+<span class="mini-label">活動範圍</span>
+<select id="clubStudentActivityScope" class="field" onchange="onClubStudentActivityScopeChange()">
+<option value="current">目前活動</option>
+<option value="history">歷史活動</option>
+</select>
+</label>
+<label class="club-student-field" id="clubStudentHistoryWrap" style="display:none">
+<span class="mini-label">歷史活動</span>
+<input class="field" id="clubStudentHistoryActivityId" placeholder="例如 115-1-club-evaluation" oninput="updateClubStudentSelectionMeta()">
+</label>
+<label class="club-student-field">
+<span class="mini-label">社團篩選</span>
+<select id="clubStudentClubScope" class="field" onchange="onClubStudentClubScopeChange()">
+<option value="single">指定單一社團</option>
+<option value="category">指定屬性的全部社團</option>
+<option value="all">全部社團</option>
+</select>
+</label>
+<label class="club-student-field">
 <span class="mini-label">社團屬性</span>
 <select id="clubStudentCategory" class="field" onchange="onClubStudentCategoryChange()">
 <option value="">請選擇社團屬性</option>
@@ -716,25 +735,18 @@ onclick="openClubModal()"
 </select>
 </label>
 <input type="hidden" id="clubStudentActivityId" value="">
-<label class="club-student-field">
-<span class="mini-label">查詢範圍</span>
-<select id="clubStudentActivityScope" class="field" onchange="onClubStudentActivityScopeChange()">
-<option value="current">目前活動</option>
-<option value="history">歷史活動</option>
-</select>
-</label>
-<label class="club-student-field" id="clubStudentHistoryWrap" style="display:none">
-<span class="mini-label">歷史活動</span>
-<input class="field" id="clubStudentHistoryActivityId" placeholder="例如 115-1-club-evaluation" oninput="updateClubStudentSelectionMeta()">
-</label>
 <p class="list-sub" id="clubStudentCurrentActivity">尚未取得伺服器目前活動。</p>
 <button class="btn hidden" type="button" id="clubStudentActivityRetryBtn" onclick="loadServerStudentActivity()">重試讀取目前活動</button>
 <button class="btn btn-primary" type="button" id="clubStudentQueryBtn" onclick="loadClubStudents()" disabled>查詢學生</button>
 </div>
 <div id="clubStudentSelectionMeta" class="list-sub" style="margin:-4px 0 10px"></div>
 
-<div id="clubStudentState" class="state">請先選擇社團屬性與社團後查詢。</div>
+<div id="clubStudentState" class="state">請先選擇社團篩選條件後查詢。</div>
 <div id="clubStudentList" class="list"></div>
+<div class="row-actions" style="margin-top:8px">
+<button class="btn hidden" type="button" id="clubStudentLoadMoreBtn" onclick="loadMoreClubStudents()">載入更多社團</button>
+</div>
+<p class="list-sub" id="clubStudentPageMeta"></p>
 
 <div id="clubStudentTempBox" class="notice okbox hidden" style="margin-top:12px">
 <div style="font-weight:900;margin-bottom:6px">一次性臨時密碼（只顯示一次）</div>
@@ -10155,6 +10167,9 @@ let clubStudentQuerySeq=0;
 let clubStudentResetSeq=0;
 let clubStudentPanelLocked=false;
 let clubStudentEnrollTarget=null;
+let clubStudentPendingMutations={};
+let clubStudentLoadMoreBusy=false;
+let clubStudentLoadMoreRequestId=0;
 
 function maskStudentIdDisplay(id){
 const s=String(id||"");
@@ -10188,10 +10203,92 @@ clubStudentEnrollTarget=null;
 function clearClubStudentResults(){
 const state=$("clubStudentState");
 const list=$("clubStudentList");
-if(state) state.textContent="請先選擇社團屬性與社團後查詢。";
+if(state) state.textContent="請先選擇社團篩選條件後查詢。";
 if(list) list.innerHTML="";
+clubStudentListAccum={
+querySeq:0,
+token:"",
+activityId:"",
+activityScope:"",
+clubScope:"",
+category:"",
+permanentClubId:"",
+nextPageToken:null,
+groups:[],
+fingerprint:""
+};
+setClubStudentLoadMoreVisible(false,"");
 hideClubStudentTemp();
 clearClubStudentEnrollForm();
+}
+
+function renderClubStudentGroups(groups,r,selectedSnapshot,clubScope){
+const list=$("clubStudentList");
+const state=$("clubStudentState");
+if(!list||!state) return;
+const totalStudents=groups.reduce(function(sum,g){ return sum+Number(g.registeredCount||0); },0);
+const totalClubs=r&&r.totalClubs!=null?r.totalClubs:groups.length;
+$("clubStudentMeta").textContent=
+clubScope==="single"
+?`${selectedSnapshot.name}｜${selectedSnapshot.category||""}｜${selectedSnapshot.permanentClubId||(groups[0]&&groups[0].permanentClubId)||""}｜${totalStudents} 位｜活動 ${selectedSnapshot.activityId}`
+:`${selectedSnapshot.name}｜已載入 ${groups.length}／${totalClubs}｜註冊 ${totalStudents}｜活動 ${selectedSnapshot.activityId}`;
+if(!groups.length){
+state.textContent="沒有符合條件的社團。";
+}else if(clubScope==="single"){
+state.textContent=
+totalStudents
+?`共 ${totalStudents} 位已註冊學生（後端已驗證總管理員授權）`
+:"此社團在本活動尚無註冊學生。";
+}else{
+state.textContent=`已載入 ${groups.length}／${totalClubs} 個社團、${totalStudents} 位已註冊（後端已驗證總管理員授權）`;
+}
+list.innerHTML=groups.map(function(group){
+const rowActivityId=String(group.activityId||selectedSnapshot.activityId);
+const rowClubId=String(group.permanentClubId||"").trim().toUpperCase();
+const rowSeatVersion=group.seatVersion!=null?Number(group.seatVersion):null;
+const disabledMark=group.clubDisabled||group.active===false
+?'<span class="chip">停用社團</span>':"";
+const head=
+`<div class="list-row" style="background:#f7f7f7">
+<div>
+<div class="list-title">${esc(group.clubName||rowClubId)} ${disabledMark}</div>
+<div class="list-sub">Club_ID ${esc(rowClubId)}｜屬性 ${esc(group.category||"-")}｜註冊 ${Number(group.registeredCount||0)}｜名額 ${esc(group.seatStatus||"open")}｜seatVersion ${rowSeatVersion!=null?rowSeatVersion:"-"}</div>
+</div>
+</div>`;
+const students=Array.isArray(group.students)?group.students:[];
+if(!students.length){
+return head+'<div class="state" style="margin:0 0 10px 12px">此社團尚未註冊學生。</div>';
+}
+const studentHtml=students.map(function(stu){
+const sid=maskStudentIdDisplay(stu.studentId);
+const st=esc(stu.status||"-");
+const mcp=stu.mustChangePassword?"須改密":"已可正式使用";
+const mem=esc(stu.membershipStatus||"-");
+const primary=stu.isPrimary?'<span class="chip">主要名額</span>':"";
+const stuActivityId=String(stu.activityId||rowActivityId);
+const stuClubId=String(stu.permanentClubId||rowClubId).trim().toUpperCase();
+const stuSeatVersion=stu.seatVersion!=null?Number(stu.seatVersion):(rowSeatVersion);
+const unknown=stu.authUnknown?`<div class="list-sub">${esc(stu.authNotice||"先前的密碼更新結果還不能確定，暫時不能再改密碼。")}</div>`:"";
+const recoverBtn=stu.authUnknown?`<button class="btn" data-cs-mutate type="button" onclick='recoverClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.authHolderOpId||""))},${JSON.stringify(Number(stu.authSecurityGeneration))})'>檢查密碼鎖定</button>`:"";
+const unbindBtn=stu.isPrimary?`<button class="btn" data-cs-mutate type="button" onclick='unbindClubStudent(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))},${JSON.stringify(stuSeatVersion)},${JSON.stringify(String(group.clubName||stuClubId))})'>解除綁定</button>`:"";
+const rebindBtn=stu.isPrimary?`<button class="btn" data-cs-mutate type="button" onclick='rebindClubStudent(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))},${JSON.stringify(stuSeatVersion)},${JSON.stringify(String(group.clubName||stuClubId))})'>改綁社團</button>`:"";
+return `<div class="list-row">
+<div>
+<div class="list-title">${sid} ${primary}</div>
+<div class="list-sub">UID：${esc(String(stu.uid||"").slice(0,12))}…｜帳號 ${st}｜${mcp}｜membership ${mem}</div>
+${unknown}
+</div>
+<div class="row-actions">
+<button class="btn" data-cs-mutate type="button" onclick='openClubStudentEnrollBirth(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))})'>補登生日</button>
+${recoverBtn}
+<button class="btn btn-danger" data-cs-mutate type="button" onclick='resetClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))})'>重設密碼</button>
+${unbindBtn}
+${rebindBtn}
+</div>
+</div>`;
+}).join("");
+return head+studentHtml;
+}).join("")||'<div class="state">無資料</div>';
 }
 
 function setClubStudentResetButtonsDisabled(disabled){
@@ -10206,9 +10303,10 @@ if(enrollSubmit) enrollSubmit.disabled=!!disabled;
 
 function setClubStudentPanelLocked(locked){
 clubStudentPanelLocked=!!locked;
-["clubStudentCategory","clubStudentClub","clubStudentQueryBtn"].forEach(function(id){
+["clubStudentCategory","clubStudentClub","clubStudentClubScope","clubStudentQueryBtn","clubStudentActivityScope"].forEach(function(id){
 const el=$(id);
 if(!el) return;
+if(!el.dataset) el.dataset={};
 if(locked){
 if(el.dataset.csLockPrev==null){
 el.dataset.csLockPrev=el.disabled?"1":"0";
@@ -10218,8 +10316,12 @@ el.disabled=true;
 const prev=el.dataset.csLockPrev==="1";
 delete el.dataset.csLockPrev;
 if(id==="clubStudentClub"){
+const scope=clubStudentClubScope();
 const cat=$("clubStudentCategory");
-el.disabled=!(cat&&cat.value)||prev;
+el.disabled=scope!=="single"||!(cat&&cat.value)||prev;
+}else if(id==="clubStudentCategory"){
+const scope=clubStudentClubScope();
+el.disabled=(scope==="all")||prev;
 }else{
 el.disabled=prev;
 }
@@ -10237,17 +10339,332 @@ let serverActivityAttemptKey="";
 function invalidateClubStudentOps(reason){
 clubStudentQuerySeq+=1;
 clubStudentResetSeq+=1;
+clubStudentLoadMoreBusy=false;
+clubStudentLoadMoreRequestId+=1;
 setClubStudentPanelLocked(false);
 hideClubStudentTemp();
 clearClubStudentEnrollForm();
 if(reason==="logout"||reason==="activity"){
 clearClubStudentResults();
+clubStudentPendingMutations={};
 }
 }
 
 function clubStudentActivityScope(){
 const el=$("clubStudentActivityScope");
 return el&&el.value==="history"?"history":"current";
+}
+
+function clubStudentClubScope(){
+const el=$("clubStudentClubScope");
+const v=el?String(el.value||"single").trim().toLowerCase():"single";
+return v==="all"||v==="category"||v==="single"?v:"single";
+}
+
+function onClubStudentClubScopeChange(){
+if(clubStudentPanelLocked) return;
+clubStudentQuerySeq+=1;
+clubStudentLoadMoreBusy=false;
+clubStudentLoadMoreRequestId+=1;
+const scope=clubStudentClubScope();
+const catEl=$("clubStudentCategory");
+const clubEl=$("clubStudentClub");
+if(catEl) catEl.disabled=scope==="all";
+if(clubEl){
+if(scope!=="single"){
+clubEl.disabled=true;
+clubEl.value="";
+}else if(catEl&&catEl.value){
+clubEl.disabled=false;
+}
+}
+clearClubStudentResults();
+clearClubStudentEnrollForm();
+setClubStudentLoadMoreVisible(false,"");
+updateClubStudentSelectionMeta();
+syncClubStudentQueryButton();
+$("clubStudentMeta").textContent="僅總管理員；後端重新驗證授權";
+}
+
+function newClubStudentClientRequestId(prefix){
+const base=String(prefix||"op");
+try{
+if(window.crypto&&typeof window.crypto.randomUUID==="function"){
+return base+"_"+window.crypto.randomUUID().replace(/-/g,"").slice(0,20);
+}
+}catch(_e){ /* ignore */ }
+return base+"_"+Date.now()+"_"+Math.random().toString(16).slice(2,10);
+}
+
+let clubStudentListAccum={
+querySeq:0,
+token:"",
+activityId:"",
+activityScope:"",
+clubScope:"",
+category:"",
+nextPageToken:null,
+groups:[]
+};
+
+function clubStudentQueryFingerprint(parts){
+return [
+String(parts.activityId||""),
+String(parts.activityScope||""),
+String(parts.clubScope||""),
+String(parts.category||""),
+String(parts.permanentClubId||""),
+String(parts.token||"")
+].join("|");
+}
+
+function setClubStudentLoadMoreVisible(visible,metaText){
+const btn=$("clubStudentLoadMoreBtn");
+const meta=$("clubStudentPageMeta");
+if(btn){
+if(visible) btn.classList.remove("hidden");
+else btn.classList.add("hidden");
+btn.disabled=!!clubStudentPanelLocked||!visible;
+}
+if(meta) meta.textContent=metaText||"";
+}
+
+function clubStudentMutationKey(kind,op){
+if(kind==="unbind"){
+return ["unbind",op.activityId,op.permanentClubId,op.uid].join("|");
+}
+return ["rebind",op.activityId,op.fromPermanentClubId,op.uid].join("|");
+}
+
+function getClubStudentPendingMutation(kind,op){
+return clubStudentPendingMutations[clubStudentMutationKey(kind,op)]||null;
+}
+
+function markClubStudentMutation(kind,op,status,note){
+const key=clubStudentMutationKey(kind,op);
+clubStudentPendingMutations[key]={
+kind:kind,
+status:status,
+clientRequestId:op.clientRequestId,
+activityId:op.activityId,
+permanentClubId:op.permanentClubId||op.fromPermanentClubId||"",
+toPermanentClubId:op.toPermanentClubId||"",
+uid:op.uid,
+studentId:op.studentId||"",
+seatVersion:op.seatVersion,
+note:note||"",
+at:Date.now()
+};
+}
+
+function clearClubStudentMutation(kind,op){
+delete clubStudentPendingMutations[clubStudentMutationKey(kind,op)];
+}
+
+function unclearMutationMessage(op,detail){
+return (detail||"結果不明")+
+"。請求可能已送達伺服器，請先查證後再操作，勿重送。" +
+" 識別："+op.clientRequestId+
+"；目標活動 "+op.activityId+
+"；UID "+String(op.uid||"").slice(0,12)+"…";
+}
+
+function acceptUnbindSuccess(op,r){
+const idHint="識別："+op.clientRequestId;
+if(r==null){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"逾時或斷線，無回應")};
+}
+if(!r||typeof r!=="object"||Array.isArray(r)){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"回應不是物件")};
+}
+if(r.success!==true){
+const clearFail=r.success===false&&(r.error||r.message);
+return {
+ok:false,
+unclear:!clearFail,
+message:clearFail
+?((r.message||r.error||"解除綁定被拒絕")+"；"+idHint)
+:unclearMutationMessage(op,"回應缺少 success===true")
+};
+}
+const required=["activityId","permanentClubId","unboundUid","studentId","expectedSeatVersion","seatVersionAtUnbind"];
+for(let i=0;i<required.length;i+=1){
+const k=required[i];
+if(r[k]==null||r[k]===""){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"缺少必要欄位 "+k)};
+}
+}
+if(r.accountDisabled!==false){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"accountDisabled 必須為 false")};
+}
+if(String(r.activityId)!==op.activityId){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"回應活動不符")};
+}
+if(String(r.permanentClubId).toUpperCase()!==op.permanentClubId){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"回應社團不符")};
+}
+if(String(r.unboundUid)!==op.uid){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"回應 UID 不符")};
+}
+if(String(r.studentId)!==String(op.studentId||"")){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"回應學號不符或缺漏")};
+}
+const exp=Number(r.expectedSeatVersion);
+const at=Number(r.seatVersionAtUnbind);
+if(!Number.isFinite(exp)||!Number.isFinite(at)){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"版本欄位無法核對")};
+}
+if(exp!==at||exp!==op.seatVersion||at!==op.seatVersion){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"expected／actual 版本不一致或與原操作不符")};
+}
+return {ok:true,unclear:false};
+}
+
+function acceptRebindSuccess(op,r,toPermanentClubId){
+const idHint="識別："+op.clientRequestId;
+if(r==null){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"逾時或斷線，無回應")};
+}
+if(!r||typeof r!=="object"||Array.isArray(r)){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"回應不是物件")};
+}
+if(r.success!==true){
+const clearFail=r.success===false&&(r.error||r.message);
+return {
+ok:false,
+unclear:!clearFail,
+message:clearFail
+?((r.message||r.error||"改綁被拒絕")+"；"+idHint)
+:unclearMutationMessage(op,"回應缺少 success===true")
+};
+}
+const required=["activityId","fromPermanentClubId","toPermanentClubId","uid","studentId","expectedFromSeatVersion","fromSeatVersionAtRebind"];
+for(let i=0;i<required.length;i+=1){
+const k=required[i];
+if(r[k]==null||r[k]===""){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"缺少必要欄位 "+k)};
+}
+}
+if(String(r.activityId)!==op.activityId){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"回應活動不符")};
+}
+if(String(r.fromPermanentClubId).toUpperCase()!==op.fromPermanentClubId){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"回應原社團不符")};
+}
+if(String(r.toPermanentClubId).toUpperCase()!==String(toPermanentClubId||"").toUpperCase()){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"回應目標社團不符")};
+}
+if(String(r.uid)!==op.uid){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"回應 UID 不符")};
+}
+if(String(r.studentId)!==String(op.studentId||"")){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"回應學號不符或缺漏")};
+}
+const exp=Number(r.expectedFromSeatVersion);
+const at=Number(r.fromSeatVersionAtRebind);
+if(!Number.isFinite(exp)||!Number.isFinite(at)){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"版本欄位無法核對")};
+}
+if(exp!==at||exp!==op.seatVersion||at!==op.seatVersion){
+return {ok:false,unclear:true,message:unclearMutationMessage(op,"expected／actual 版本不一致或與原操作不符")};
+}
+return {ok:true,unclear:false};
+}
+
+function mergeClubStudentGroups(existing,incoming){
+const out=Array.isArray(existing)?existing.slice():[];
+const seen=new Set(out.map(function(g){ return String(g.permanentClubId||"").toUpperCase(); }));
+(incoming||[]).forEach(function(g){
+const id=String(g.permanentClubId||"").toUpperCase();
+if(!id||seen.has(id)) return;
+seen.add(id);
+out.push(g);
+});
+return out;
+}
+
+async function verifyClubStudentPendingMutation(kind,opOrPending){
+const pending=opOrPending&&opOrPending.clientRequestId&&opOrPending.status
+?opOrPending
+:getClubStudentPendingMutation(kind,opOrPending);
+if(!pending){
+toast("沒有待查證的操作");
+return null;
+}
+const clubId=String(pending.permanentClubId||"").trim().toUpperCase();
+try{
+const r=await api("adminListClubStudents",{
+activityId:pending.activityId,
+activityScope:"current",
+permanentClubId:clubId,
+clubScope:"single",
+pageSize:1
+});
+if(!r||r.success!==true){
+toast("查證查詢失敗；請稍後再試。識別："+pending.clientRequestId);
+return null;
+}
+const group=Array.isArray(r.clubs)&&r.clubs[0]?r.clubs[0]:null;
+const seatStatus=r.seatStatus||(group&&group.seatStatus)||null;
+const primaryUid=r.primaryUid||(group&&group.primaryUid)||null;
+const seatEmpty=seatStatus==="empty"||!primaryUid;
+const sameUid=String(primaryUid||"")===String(pending.uid||"");
+let summary="";
+if(kind==="unbind"){
+if(seatEmpty||!sameUid){
+summary="查證：原座位已非該 UID（可能已解除）。識別："+pending.clientRequestId;
+}else{
+summary="查證：原座位仍為該 UID（可能尚未生效或未送達）。識別："+pending.clientRequestId;
+}
+}else{
+const toId=String(pending.toPermanentClubId||"").trim().toUpperCase();
+if(toId){
+const toR=await api("adminListClubStudents",{
+activityId:pending.activityId,
+activityScope:"current",
+permanentClubId:toId,
+clubScope:"single",
+pageSize:1
+});
+const toGroup=toR&&Array.isArray(toR.clubs)&&toR.clubs[0]?toR.clubs[0]:null;
+const toUid=toR&&(toR.primaryUid||(toGroup&&toGroup.primaryUid))||null;
+if(String(toUid||"")===String(pending.uid||"")){
+summary="查證：目標社已是該 UID（可能已改綁成功）。識別："+pending.clientRequestId;
+}else if(sameUid){
+summary="查證：原社仍為該 UID、目標社尚未是該 UID（可能未生效）。識別："+pending.clientRequestId;
+}else{
+summary="查證：原社已非該 UID，但目標社也不是（狀態矛盾，請人工核對）。識別："+pending.clientRequestId;
+}
+}else{
+summary="查證完成。識別："+pending.clientRequestId+"；座位="+String(seatStatus||"?");
+}
+}
+toast(summary);
+return {pending:pending,seatStatus:seatStatus,primaryUid:primaryUid,seatEmpty:seatEmpty,sameUid:sameUid,summary:summary,raw:r};
+}catch(e){
+toast("查證查詢異常："+(e.message||"")+"；識別："+pending.clientRequestId);
+return null;
+}
+}
+
+async function resolveClubStudentPendingOrAbort(kind,opSeed){
+const pending=getClubStudentPendingMutation(kind,opSeed);
+if(!pending) return {proceed:true,clientRequestId:null};
+if(pending.status!=="pending_verify"&&pending.status!=="in_flight") return {proceed:true,clientRequestId:null};
+const verified=await verifyClubStudentPendingMutation(kind,pending);
+const lines=[
+"同一目標尚有未釐清操作，不得產生新識別重送。",
+"原識別："+pending.clientRequestId,
+verified&&verified.summary?verified.summary:"（查證未完成）",
+"",
+"確定＝清除待查後允許重新操作（仍請先確認結果）",
+"取消＝保留待查、中止本次"
+].join("\n");
+if(!confirm(lines)){
+return {proceed:false,clientRequestId:pending.clientRequestId};
+}
+clearClubStudentMutation(kind,pending);
+return {proceed:true,clientRequestId:null};
 }
 
 function clubStudentActivityId(){
@@ -10336,20 +10753,31 @@ function updateClubStudentSelectionMeta(){
 const meta=$("clubStudentSelectionMeta");
 if(!meta) return;
 const activityLabel=queriedClubStudentActivityLabel();
+const scope=clubStudentClubScope();
 const club=selectedClubStudent();
 const catEl=$("clubStudentCategory");
 const cat=catEl?String(catEl.value||""):"";
+if(scope==="all"){
+meta.textContent=activityLabel+"｜社團篩選：全部社團";
+return;
+}
+if(scope==="category"){
+meta.textContent=cat
+?(activityLabel+"｜社團篩選：屬性 "+cat+" 全部社團")
+:(activityLabel+"｜社團篩選：依屬性｜尚未選擇屬性");
+return;
+}
 if(!cat){
-meta.textContent=activityLabel+"｜尚未選擇社團屬性";
+meta.textContent=activityLabel+"｜社團篩選：單一社團｜尚未選擇屬性";
 return;
 }
 if(!club){
-meta.textContent=activityLabel+"｜屬性 "+cat+"｜尚未選擇社團";
+meta.textContent=activityLabel+"｜社團篩選：單一社團｜屬性 "+cat+"｜尚未選擇社團";
 return;
 }
 meta.textContent=
 activityLabel+
-"｜屬性 "+club.category+
+"｜社團篩選：單一社團｜屬性 "+club.category+
 "｜"+club.name+
 "｜永久 Club_ID "+(club.permanentClubId||"（缺）");
 }
@@ -10407,9 +10835,14 @@ if(clubStudentPanelLocked) return;
 clubStudentQuerySeq+=1;
 const catEl=$("clubStudentCategory");
 populateClubStudentClubOptions(catEl?catEl.value:"", "");
+if(clubStudentClubScope()!=="single"){
+const clubEl=$("clubStudentClub");
+if(clubEl){ clubEl.disabled=true; clubEl.value=""; }
+}
 clearClubStudentResults();
 clearClubStudentEnrollForm();
 updateClubStudentSelectionMeta();
+syncClubStudentQueryButton();
 $("clubStudentMeta").textContent="僅總管理員；後端重新驗證授權";
 }
 
@@ -10419,6 +10852,7 @@ clubStudentQuerySeq+=1;
 clearClubStudentResults();
 clearClubStudentEnrollForm();
 updateClubStudentSelectionMeta();
+syncClubStudentQueryButton();
 $("clubStudentMeta").textContent="僅總管理員；後端重新驗證授權";
 }
 
@@ -10700,7 +11134,17 @@ if(typeof updateClubStudentSelectionMeta==="function") updateClubStudentSelectio
 function syncClubStudentQueryButton(){
 const query=$("clubStudentQueryBtn");
 if(!query) return;
-query.disabled=!!(clubStudentPanelLocked||serverActivityReading||!clubStudentServerActivityId);
+const scope=clubStudentClubScope();
+const cat=String(($("clubStudentCategory")||{}).value||"");
+const club=selectedClubStudent();
+let ready=false;
+if(scope==="all") ready=true;
+else if(scope==="category") ready=!!cat;
+else ready=!!(cat&&club&&club.permanentClubId);
+const activityReady=clubStudentActivityScope()==="history"
+?!!clubStudentActivityId()
+:!!clubStudentServerActivityId;
+query.disabled=!!(clubStudentPanelLocked||serverActivityReading||!activityReady||!ready);
 }
 
 function setServerActivityRetryVisible(visible){
@@ -10882,21 +11326,35 @@ toast("操作進行中，請稍候");
 return;
 }
 const preserveTemp=!!opts.preserveTemp;
-const forcedId=String(opts.permanentClubId||"").trim().toUpperCase();
-const activityId=opts.activityId||clubStudentActivityId();
+const appendEarly=!!opts.append;
+let forcedId=String(opts.permanentClubId||"").trim().toUpperCase();
+let activityId=opts.activityId||clubStudentActivityId();
+let clubScope=forcedId?"single":clubStudentClubScope();
 let permanentClubId="";
 let category="";
 let name="";
-if(forcedId){
+if(appendEarly){
+activityId=clubStudentListAccum.activityId||activityId;
+clubScope=clubStudentListAccum.clubScope||clubScope;
+permanentClubId=clubStudentListAccum.permanentClubId||"";
+category=clubStudentListAccum.category||"";
+name=clubStudentListAccum.name||name;
+forcedId=clubScope==="single"?permanentClubId:"";
+}else if(forcedId){
 permanentClubId=forcedId;
 const found=clubsForStudentQuery().find(function(c){ return c.permanentClubId===forcedId; });
 category=opts.category||(found&&found.category)||"";
 name=opts.clubName||(found&&found.name)||forcedId;
-}else{
+}else if(clubScope==="single"){
 const club=selectedClubStudent();
 permanentClubId=club?club.permanentClubId:"";
 category=club?club.category:"";
 name=club?club.name:"";
+}else if(clubScope==="category"){
+category=String(($("clubStudentCategory")||{}).value||"");
+name="屬性 "+category;
+}else{
+name="全部社團";
 }
 const state=$("clubStudentState");
 const list=$("clubStudentList");
@@ -10915,68 +11373,198 @@ if(!preserveTemp){
 hideClubStudentTemp();
 clearClubStudentEnrollForm();
 }
-if(!permanentClubId){
+if(clubScope==="single"&&!permanentClubId){
 state.textContent="請先選擇社團屬性與具永久 Club_ID 的社團。";
 list.innerHTML="";
 return;
 }
-const reqSeq=++clubStudentQuerySeq;
+if(clubScope==="category"&&!category){
+state.textContent="請先選擇社團屬性。";
+list.innerHTML="";
+return;
+}
+const append=!!opts.append;
+const reqSeq=append?clubStudentListAccum.querySeq:(++clubStudentQuerySeq);
+if(!append) clubStudentQuerySeq=reqSeq;
+const activityScope=append?clubStudentListAccum.activityScope:clubStudentActivityScope();
 const selectedSnapshot={
 activityId,
-permanentClubId,
-category,
-name
+permanentClubId:append?clubStudentListAccum.permanentClubId:permanentClubId,
+category:append?clubStudentListAccum.category:category,
+name:append?(clubStudentListAccum.name||name):name,
+clubScope:append?clubStudentListAccum.clubScope:clubScope,
+activityScope
 };
 const tokenAtStart=clubStudentSessionToken();
+const fingerprint=clubStudentQueryFingerprint({
+activityId:selectedSnapshot.activityId,
+activityScope:selectedSnapshot.activityScope,
+clubScope:selectedSnapshot.clubScope,
+category:selectedSnapshot.category,
+permanentClubId:selectedSnapshot.permanentClubId,
+token:tokenAtStart
+});
+if(append){
+if(fingerprint!==clubStudentListAccum.fingerprint||tokenAtStart!==clubStudentListAccum.token){
+toast("查詢範圍或登入已變更，請重新查詢（不混入舊分頁）");
+setClubStudentLoadMoreVisible(false,"");
+return;
+}
+if(opts.expectedPageToken&&String(opts.pageToken||"")!==String(opts.expectedPageToken)){
+toast("分頁游標不符，已中止此次載入");
+return;
+}
+if(opts.loadMoreRequestId!=null&&opts.loadMoreRequestId!==clubStudentLoadMoreRequestId){
+return;
+}
+state.textContent="載入更多社團…";
+}else{
+clubStudentLoadMoreBusy=false;
+clubStudentLoadMoreRequestId+=1;
 state.innerHTML='<div class="spinner"></div>查詢中…';
 list.innerHTML="";
+setClubStudentLoadMoreVisible(false,"");
+}
 updateClubStudentSelectionMeta();
 try{
 const r=await api("adminListClubStudents",{
-activityId,
-activityScope:clubStudentActivityScope(),
-permanentClubId
+activityId:selectedSnapshot.activityId,
+activityScope:selectedSnapshot.activityScope,
+permanentClubId:selectedSnapshot.clubScope==="single"?selectedSnapshot.permanentClubId:"",
+clubScope:selectedSnapshot.clubScope,
+category:selectedSnapshot.clubScope==="category"?selectedSnapshot.category:"",
+pageSize:selectedSnapshot.clubScope==="single"?1:20,
+pageToken:opts.pageToken||""
 });
-if(reqSeq!==clubStudentQuerySeq) return;
+if(!append&&reqSeq!==clubStudentQuerySeq) return;
+if(append&&(reqSeq!==clubStudentListAccum.querySeq||fingerprint!==clubStudentListAccum.fingerprint)) return;
+if(append&&opts.loadMoreRequestId!=null&&opts.loadMoreRequestId!==clubStudentLoadMoreRequestId) return;
+if(append&&opts.expectedPageToken&&String(clubStudentListAccum.inFlightPageToken||opts.expectedPageToken)!==String(opts.expectedPageToken)) return;
 if(opts.forResetSeq!=null&&opts.forResetSeq!==clubStudentResetSeq) return;
 if(clubStudentSessionToken()!==tokenAtStart) return;
 if(unauthorized(r)) return;
-if(!r || r.success===false){
+if(!r || r.success!==true){
 throw new Error((r&&(r.message||r.error))||"查詢失敗");
 }
-$("clubStudentMeta").textContent=
-`${selectedSnapshot.name}｜${selectedSnapshot.category}｜${selectedSnapshot.permanentClubId}｜${(r.students||[]).length} 位｜活動 ${r.activityId||activityId}`;
-state.textContent=
-(r.students&&r.students.length)
-?`共 ${(r.students).length} 位已註冊學生（後端已驗證總管理員授權）`
-:"此社團在本活動尚無註冊學生。";
-list.innerHTML=(r.students||[]).map(function(stu){
-const sid=maskStudentIdDisplay(stu.studentId);
-const st=esc(stu.status||"-");
-const mcp=stu.mustChangePassword?"須改密":"已可正式使用";
-const mem=esc(stu.membershipStatus||"-");
-const primary=stu.isPrimary?'<span class="chip">主要名額</span>':"";
-const unknown=stu.authUnknown?`<div class="list-sub">${esc(stu.authNotice||"先前的密碼更新結果還不能確定，暫時不能再改密碼。")}</div>`:"";
-const recoverBtn=stu.authUnknown?`<button class="btn" data-cs-mutate type="button" onclick='recoverClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)},${JSON.stringify(String(stu.authHolderOpId||""))},${JSON.stringify(Number(stu.authSecurityGeneration))})'>檢查密碼鎖定</button>`:"";
-return `<div class="list-row">
-<div>
-<div class="list-title">${sid} ${primary}</div>
-<div class="list-sub">UID：${esc(String(stu.uid||"").slice(0,12))}…｜帳號 ${st}｜${mcp}｜membership ${mem}</div>
-${unknown}
-</div>
-<div class="row-actions">
-<button class="btn" data-cs-mutate type="button" onclick='openClubStudentEnrollBirth(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)},${JSON.stringify(String(stu.studentId||""))})'>補登生日</button>
-${recoverBtn}
-<button class="btn btn-danger" data-cs-mutate type="button" onclick='resetClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(selectedSnapshot.activityId)},${JSON.stringify(selectedSnapshot.permanentClubId)},${JSON.stringify(String(stu.studentId||""))})'>重設密碼</button>
-</div>
-</div>`;
-}).join("")||'<div class="state">無資料</div>';
+const pageGroups=Array.isArray(r.clubs)&&r.clubs.length
+?r.clubs
+:(selectedSnapshot.clubScope==="single"?[{
+activityId:r.activityId||selectedSnapshot.activityId,
+permanentClubId:r.permanentClubId||selectedSnapshot.permanentClubId,
+clubName:r.clubName||selectedSnapshot.name,
+category:selectedSnapshot.category,
+active:true,
+clubDisabled:false,
+seatStatus:r.seatStatus||null,
+primaryUid:r.primaryUid||null,
+seatVersion:r.seatVersion!=null?Number(r.seatVersion):null,
+registeredCount:(r.students||[]).length,
+students:r.students||[]
+}]:[]);
+if(append){
+clubStudentListAccum.groups=mergeClubStudentGroups(clubStudentListAccum.groups,pageGroups);
+clubStudentListAccum.inFlightPageToken=null;
+}else{
+clubStudentListAccum={
+querySeq:reqSeq,
+token:tokenAtStart,
+activityId:selectedSnapshot.activityId,
+activityScope:selectedSnapshot.activityScope,
+clubScope:selectedSnapshot.clubScope,
+category:selectedSnapshot.category,
+permanentClubId:selectedSnapshot.permanentClubId,
+nextPageToken:r.nextPageToken||null,
+groups:pageGroups.slice(),
+fingerprint:fingerprint,
+name:selectedSnapshot.name,
+totalClubs:r.totalClubs,
+inFlightPageToken:null
+};
+}
+clubStudentListAccum.nextPageToken=r.nextPageToken||null;
+clubStudentListAccum.totalClubs=r.totalClubs;
+renderClubStudentGroups(
+clubStudentListAccum.groups,
+{ totalClubs: clubStudentListAccum.totalClubs },
+selectedSnapshot,
+selectedSnapshot.clubScope
+);
+const hasMore=!!clubStudentListAccum.nextPageToken&&selectedSnapshot.clubScope!=="single";
+setClubStudentLoadMoreVisible(
+hasMore,
+hasMore
+?("尚有未載入社團；點「載入更多」繼續（已載入 "+clubStudentListAccum.groups.length+"／"+(clubStudentListAccum.totalClubs!=null?clubStudentListAccum.totalClubs:"?")+"）")
+:(selectedSnapshot.clubScope==="single"?"":("已載完全部 "+clubStudentListAccum.groups.length+" 個社團"))
+);
 if(clubStudentPanelLocked) setClubStudentResetButtonsDisabled(true);
 }catch(e){
-if(reqSeq!==clubStudentQuerySeq) return;
+if(!append&&reqSeq!==clubStudentQuerySeq) return;
+if(append&&reqSeq!==clubStudentListAccum.querySeq) return;
+if(append&&opts.loadMoreRequestId!=null&&opts.loadMoreRequestId!==clubStudentLoadMoreRequestId) return;
 if(opts.forResetSeq!=null&&opts.forResetSeq!==clubStudentResetSeq) return;
 if(clubStudentSessionToken()!==tokenAtStart) return;
-state.innerHTML=`⚠️ ${esc(e.message||"查詢失敗")}`;
+if(!append){
+list.innerHTML="";
+clubStudentListAccum.groups=[];
+setClubStudentLoadMoreVisible(false,"");
+}else{
+clubStudentListAccum.inFlightPageToken=null;
+const hasMore=!!clubStudentListAccum.nextPageToken&&selectedSnapshot.clubScope!=="single";
+setClubStudentLoadMoreVisible(
+hasMore,
+hasMore
+?("載入更多失敗，可重試（已載入 "+clubStudentListAccum.groups.length+"／"+(clubStudentListAccum.totalClubs!=null?clubStudentListAccum.totalClubs:"?")+"）")
+:"載入更多失敗"
+);
+}
+state.innerHTML=`⚠️ ${esc(e.message||"查詢失敗")}（載入失敗，不可當成零筆）`;
+}
+}
+
+async function loadMoreClubStudents(){
+if(clubStudentPanelLocked){
+toast("操作進行中，請稍候");
+return;
+}
+if(clubStudentLoadMoreBusy){
+toast("載入中，請稍候");
+return;
+}
+const accum=clubStudentListAccum;
+if(!accum||!accum.nextPageToken){
+toast("沒有下一頁");
+return;
+}
+const pageToken=String(accum.nextPageToken);
+const requestId=++clubStudentLoadMoreRequestId;
+clubStudentLoadMoreBusy=true;
+accum.inFlightPageToken=pageToken;
+const btn=$("clubStudentLoadMoreBtn");
+if(btn) btn.disabled=true;
+setClubStudentLoadMoreVisible(true,"載入中…");
+try{
+await loadClubStudents({
+append:true,
+pageToken:pageToken,
+expectedPageToken:pageToken,
+loadMoreRequestId:requestId,
+activityId:accum.activityId,
+permanentClubId:accum.clubScope==="single"?accum.permanentClubId:"",
+category:accum.category,
+clubName:accum.name,
+allowDuringReset:false
+});
+}finally{
+if(requestId===clubStudentLoadMoreRequestId){
+clubStudentLoadMoreBusy=false;
+const hasMore=!!clubStudentListAccum.nextPageToken&&clubStudentListAccum.clubScope!=="single";
+setClubStudentLoadMoreVisible(
+hasMore,
+hasMore
+?("尚有未載入社團；點「載入更多」繼續（已載入 "+clubStudentListAccum.groups.length+"／"+(clubStudentListAccum.totalClubs!=null?clubStudentListAccum.totalClubs:"?")+"）")
+:(clubStudentListAccum.clubScope==="single"?"":("已載完全部 "+clubStudentListAccum.groups.length+" 個社團"))
+);
+}
 }
 }
 
@@ -11101,9 +11689,261 @@ setClubStudentPanelLocked(false);
 const cat=$("clubStudentCategory");
 const clubSel=$("clubStudentClub");
 if(clubSel&&cat){
-clubSel.disabled=!cat.value;
+clubSel.disabled=clubStudentClubScope()!=="single"||!cat.value;
 }
 }
+}
+}
+
+async function unbindClubStudent(uid,activityId,permanentClubId,studentId,seatVersion,clubName){
+if(clubStudentPanelLocked){
+toast("操作進行中，請稍候");
+return;
+}
+const tokenAtStart=clubStudentSessionToken();
+if(!tokenAtStart){
+toast("請重新登入後再解除綁定");
+return;
+}
+const opSeed={
+uid:String(uid||""),
+activityId:String(activityId||""),
+permanentClubId:String(permanentClubId||"").trim().toUpperCase()
+};
+const gate=await resolveClubStudentPendingOrAbort("unbind",opSeed);
+if(!gate.proceed) return;
+const op={
+resetSeq:++clubStudentResetSeq,
+uid:opSeed.uid,
+activityId:opSeed.activityId,
+permanentClubId:opSeed.permanentClubId,
+studentId:String(studentId||""),
+seatVersion:Number(seatVersion),
+clubName:String(clubName||permanentClubId||""),
+token:tokenAtStart,
+clientRequestId:newClubStudentClientRequestId("unbind")
+};
+if(!op.uid||!op.permanentClubId||!op.activityId||!Number.isFinite(op.seatVersion)){
+toast("缺少列上的活動／Club_ID／UID／seatVersion，已拒絕（未使用下拉預設值）");
+return;
+}
+if(!op.studentId){
+toast("缺少列上學號，已拒絕（不得在缺學號時判成功）");
+return;
+}
+const reason=prompt(
+"解除綁定確認\n\n"+
+"學生學號（遮蔽）："+maskStudentIdDisplay(op.studentId)+"\n"+
+"原社團："+op.clubName+"（"+op.permanentClubId+"）\n"+
+"活動："+op.activityId+"\n"+
+"影響：釋放原社團名額；帳號維持可用，原學號可沿用原帳號重新選社團；不停用帳號；不搬移雲端檔案。\n\n"+
+"請輸入原因後按確定：",
+""
+);
+if(reason==null) return;
+const trimmed=String(reason||"").trim();
+if(!trimmed){
+toast("須填寫解除綁定原因");
+return;
+}
+if(!confirm(
+"再次確認解除綁定？\n\n"+
+"學生："+maskStudentIdDisplay(op.studentId)+"\n"+
+"原社團："+op.clubName+"（"+op.permanentClubId+"）\n"+
+"原因："+trimmed
+)) return;
+
+setClubStudentPanelLocked(true);
+let acceptedOk=false;
+let unclearAfter=false;
+markClubStudentMutation("unbind",op,"in_flight");
+try{
+const r=await api("adminUnbindClubStudent",{
+activityId:op.activityId,
+permanentClubId:op.permanentClubId,
+expectedPrimaryUid:op.uid,
+expectedSeatVersion:op.seatVersion,
+clientRequestId:op.clientRequestId,
+reason:trimmed
+});
+if(!clubStudentOpStillValid(op)) return;
+if(unauthorized(r)){
+invalidateClubStudentOps("logout");
+return;
+}
+const verdict=acceptUnbindSuccess(op,r);
+if(!verdict.ok){
+if(verdict.unclear){
+unclearAfter=true;
+markClubStudentMutation("unbind",op,"pending_verify",verdict.message);
+}else{
+clearClubStudentMutation("unbind",op);
+}
+throw new Error(verdict.message+(verdict.unclear?"（勿盲目重送）":""));
+}
+clearClubStudentMutation("unbind",op);
+acceptedOk=true;
+toast(r.idempotent?"解除綁定已先前完成（防重送）":"已解除綁定；名額已釋放，帳號可重新選社");
+await loadClubStudents({
+allowDuringReset:true,
+activityId:op.activityId,
+permanentClubId:op.permanentClubId,
+clubName:op.clubName,
+forResetSeq:op.resetSeq
+});
+}catch(e){
+if(!clubStudentOpStillValid(op)) return;
+if(acceptedOk){
+clearClubStudentMutation("unbind",op);
+toast("解除綁定已確認成功；名單刷新未完成，請重新查詢核對。識別："+op.clientRequestId);
+}else if(unclearAfter||(getClubStudentPendingMutation("unbind",op)||{}).status==="in_flight"){
+markClubStudentMutation("unbind",op,"pending_verify",e&&e.message);
+toast(e.message||unclearMutationMessage(op,"逾時、斷線或結果不明"));
+}else if((getClubStudentPendingMutation("unbind",op)||{}).status==="pending_verify"){
+toast(e.message||unclearMutationMessage(op,"結果不明"));
+}else{
+clearClubStudentMutation("unbind",op);
+toast((e.message||"解除綁定失敗")+"；本次請求被拒絕，原綁定應仍保留");
+}
+}finally{
+if(op.resetSeq===clubStudentResetSeq) setClubStudentPanelLocked(false);
+}
+}
+
+async function rebindClubStudent(uid,activityId,fromPermanentClubId,studentId,seatVersion,fromClubName){
+if(clubStudentPanelLocked){
+toast("操作進行中，請稍候");
+return;
+}
+const tokenAtStart=clubStudentSessionToken();
+if(!tokenAtStart){
+toast("請重新登入後再改綁");
+return;
+}
+const opSeed={
+uid:String(uid||""),
+activityId:String(activityId||""),
+fromPermanentClubId:String(fromPermanentClubId||"").trim().toUpperCase()
+};
+const gate=await resolveClubStudentPendingOrAbort("rebind",opSeed);
+if(!gate.proceed) return;
+const op={
+resetSeq:++clubStudentResetSeq,
+uid:opSeed.uid,
+activityId:opSeed.activityId,
+fromPermanentClubId:opSeed.fromPermanentClubId,
+studentId:String(studentId||""),
+seatVersion:Number(seatVersion),
+fromClubName:String(fromClubName||fromPermanentClubId||""),
+token:tokenAtStart,
+clientRequestId:newClubStudentClientRequestId("rebind")
+};
+if(!op.uid||!op.fromPermanentClubId||!op.activityId||!Number.isFinite(op.seatVersion)){
+toast("缺少列上的活動／Club_ID／UID／seatVersion，已拒絕");
+return;
+}
+if(!op.studentId){
+toast("缺少列上學號，已拒絕（不得在缺學號時判成功）");
+return;
+}
+const targetRaw=prompt(
+"改綁社團\n\n"+
+"學生："+maskStudentIdDisplay(op.studentId)+"\n"+
+"原社團："+op.fromClubName+"（"+op.fromPermanentClubId+"）\n"+
+"活動："+op.activityId+"\n"+
+"影響：保留 UID／學號／密碼；撤除原社權限；取得目標社資格；目標名額須空；不搬移檔案。\n\n"+
+"請輸入目標永久 Club_ID（例如 D020）：",
+""
+);
+if(targetRaw==null) return;
+const toPermanentClubId=String(targetRaw||"").trim().toUpperCase();
+if(!/^D\d{3,}$/.test(toPermanentClubId)){
+toast("目標 Club_ID 格式無效");
+return;
+}
+if(toPermanentClubId===op.fromPermanentClubId){
+toast("目標社團不可與原社團相同");
+return;
+}
+op.toPermanentClubId=toPermanentClubId;
+const targetMeta=clubsForStudentQuery().find(function(c){ return c.permanentClubId===toPermanentClubId; });
+const toClubName=targetMeta?targetMeta.name:toPermanentClubId;
+const reason=prompt(
+"請填寫改綁原因：\n\n"+
+"學生："+maskStudentIdDisplay(op.studentId)+"\n"+
+"原社團："+op.fromClubName+"（"+op.fromPermanentClubId+"）\n"+
+"目標社團："+toClubName+"（"+toPermanentClubId+"）",
+""
+);
+if(reason==null) return;
+const trimmed=String(reason||"").trim();
+if(!trimmed){
+toast("須填寫改綁原因");
+return;
+}
+if(!confirm(
+"再次確認改綁？\n\n"+
+"學生："+maskStudentIdDisplay(op.studentId)+"\n"+
+"原社團："+op.fromClubName+"（"+op.fromPermanentClubId+"）\n"+
+"目標社團："+toClubName+"（"+toPermanentClubId+"）\n"+
+"原因："+trimmed
+)) return;
+
+setClubStudentPanelLocked(true);
+let acceptedOk=false;
+let unclearAfter=false;
+markClubStudentMutation("rebind",op,"in_flight");
+try{
+const r=await api("adminRebindClubStudent",{
+activityId:op.activityId,
+fromPermanentClubId:op.fromPermanentClubId,
+toPermanentClubId:toPermanentClubId,
+expectedPrimaryUid:op.uid,
+expectedFromSeatVersion:op.seatVersion,
+clientRequestId:op.clientRequestId,
+reason:trimmed
+});
+if(!clubStudentOpStillValid(op)) return;
+if(unauthorized(r)){
+invalidateClubStudentOps("logout");
+return;
+}
+const verdict=acceptRebindSuccess(op,r,toPermanentClubId);
+if(!verdict.ok){
+if(verdict.unclear){
+unclearAfter=true;
+markClubStudentMutation("rebind",op,"pending_verify",verdict.message);
+}else{
+clearClubStudentMutation("rebind",op);
+}
+throw new Error(verdict.message+(verdict.unclear?"（勿盲目重送）":""));
+}
+clearClubStudentMutation("rebind",op);
+acceptedOk=true;
+toast(r.idempotent?"改綁已先前完成（防重送）":"已改綁至 "+toPermanentClubId);
+await loadClubStudents({
+allowDuringReset:true,
+activityId:op.activityId,
+permanentClubId:toPermanentClubId,
+clubName:toClubName,
+forResetSeq:op.resetSeq
+});
+}catch(e){
+if(!clubStudentOpStillValid(op)) return;
+if(acceptedOk){
+clearClubStudentMutation("rebind",op);
+toast("改綁已確認成功；名單刷新未完成，請重新查詢核對。識別："+op.clientRequestId);
+}else if(unclearAfter||(getClubStudentPendingMutation("rebind",op)||{}).status==="in_flight"){
+markClubStudentMutation("rebind",op,"pending_verify",e&&e.message);
+toast(e.message||unclearMutationMessage(op,"逾時、斷線或結果不明"));
+}else if((getClubStudentPendingMutation("rebind",op)||{}).status==="pending_verify"){
+toast(e.message||unclearMutationMessage(op,"結果不明"));
+}else{
+clearClubStudentMutation("rebind",op);
+toast((e.message||"改綁失敗")+"；本次請求被拒絕，原綁定應仍保留");
+}
+}finally{
+if(op.resetSeq===clubStudentResetSeq) setClubStudentPanelLocked(false);
 }
 }
 
