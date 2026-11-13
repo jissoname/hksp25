@@ -1040,7 +1040,7 @@ oninput="renderClouds()"
 </div>
 
 <div id="cloudUploadMeta" class="panel-meta">
-候選｜資料夾配對暫停｜學生上傳關閉
+正式｜ensure 已開放｜學生上傳關閉
 </div>
 
 </div>
@@ -1176,7 +1176,7 @@ onclick="loadClubCloudRows()"
 <div id="pairPreviewBox" class="list" style="margin-top:12px">
 
 <div class="state">
-資料夾建立、預覽配對、搬移與共享仍暫停；此區不提供可用操作。評選資料夾請沿用既有「社團專屬雲端」手動連結；特色目的地用上方共用資料夾欄位。
+評選資料夾：單社 ensure／重試已開放（不批次建夾、不搬刪、不改共享）。預覽配對仍暫停。學生上傳維持關閉。特色目的地用上方共用資料夾欄位。
 </div>
 
 </div>
@@ -1184,7 +1184,7 @@ onclick="loadClubCloudRows()"
 <div id="clubCloudRowsBox" class="list" style="margin-top:12px">
 
 <div class="state">
-社團參與項目與評選資料夾狀態載入後顯示於此。
+尚未載入社團雲端狀態
 </div>
 
 </div>
@@ -1330,6 +1330,9 @@ class="field"
 id="clubParticipation"
 class="field"
 >
+<option value="">
+（沿用既有／請選擇）
+</option>
 <option value="evaluation">
 評選
 </option>
@@ -11350,15 +11353,7 @@ c
 "新增社團";
 
 $("clubParticipation").value=
-(c&&(c.cloudParticipation||c.participation))||
-(
-S.cloudClubRowsById&&
-c&&
-c.permanentClubId&&
-S.cloudClubRowsById[c.permanentClubId]&&
-S.cloudClubRowsById[c.permanentClubId].participation
-)||
-"evaluation";
+clubCloudParticipationForEdit_(c);
 
 $("clubError").textContent=
 "";
@@ -11367,6 +11362,30 @@ openModal(
 "clubModal"
 );
 
+}
+
+function clubCloudRowForEdit_(club){
+const id=clubPermanentId_(club);
+if(id&&S.cloudClubRowsById&&S.cloudClubRowsById[id]){
+return S.cloudClubRowsById[id];
+}
+const name=String((club&&club.name)||"").trim();
+const category=String((club&&club.category)||"").trim();
+if(!name||!Array.isArray(S.cloudClubRows)) return null;
+const hits=S.cloudClubRows.filter(function(row){
+return row&&
+String(row.clubName||"").trim()===name&&
+String(row.category||"").trim()===category;
+});
+return hits.length===1?hits[0]:null;
+}
+
+function clubCloudParticipationForEdit_(club){
+const direct=(club&&(club.cloudParticipation||club.participation))||"";
+if(direct) return String(direct);
+const row=clubCloudRowForEdit_(club);
+if(row&&row.participation) return String(row.participation);
+return "";
 }
 
 function clubPermanentId_(club){
@@ -11620,6 +11639,15 @@ rememberClubSaveConfirmed_(oldName, clubName, category, saved);
 }
 }
 if(saved && saved.permanentClubId){
+if(!participation){
+if(!oldName){
+throw new Error("請選擇參與項目（雲端上傳）");
+}
+/*
+ * 編輯既有社團且未載入到既有參與時，不寫入預設「評選」，避免覆寫原資格。
+ */
+}
+else{
 const part=await api("adminSetClubCloudParticipation",{
 permanentClubId:saved.permanentClubId,
 participation
@@ -11634,6 +11662,7 @@ throw new Error(part.message||"社團已存，但參與項目儲存失敗");
 saved.cloudParticipation=participation;
 if(part.folderEnsure){
 participationFolderEnsure=part.folderEnsure;
+}
 }
 }
 let folderEnsureResult=null;
@@ -13213,28 +13242,46 @@ await loadCloudUploadSettings();
 }
 
 async function loadClubCloudRows(){
+if($("clubCloudRowsBox")){
+$("clubCloudRowsBox").innerHTML='<div class="state">載入中…</div>';
+}
 try{
-const clubs=(S.clubs||[]).map(function(c){
+/*
+ * 管理清單 flatten 常無 Club_ID；改傳學生查詢名單（正式 records）或空陣列，
+ * 由 GAS 讀正式 Firestore clubs records，避免 legacy 無 ID 被當成成功零筆。
+ */
+const fromQuery=(S.studentQueryClubs||[]).map(function(c){
 return {
-permanentClubId:c.permanentClubId,
-clubName:c.name,
-name:c.name,
-category:c.category
+permanentClubId:c.permanentClubId||c.clubId||"",
+clubName:c.name||c.clubName||"",
+name:c.name||c.clubName||"",
+category:c.category||"",
+active:c.active!==false
 };
-}).filter(function(c){ return !!c.permanentClubId; });
+}).filter(function(c){ return /^D[0-9]{3,}$/.test(String(c.permanentClubId||"").trim().toUpperCase()); });
+const clubs=fromQuery.length?fromQuery:[];
 const r=await api("adminListClubCloudRows",{clubs:clubs});
 if(unauthorized(r)) return;
 if(!r||r.success===false){
-throw new Error((r&&r.message)||"無法讀取社團雲端狀態");
+throw new Error((r&&(r.message||r.error))||"無法讀取社團雲端狀態");
 }
-S.cloudClubRows=Array.isArray(r.clubs)?r.clubs:[];
+if(!Array.isArray(r.clubs)){
+throw new Error("雲端狀態資料契約錯誤：缺少 clubs 陣列");
+}
+S.cloudClubRows=r.clubs;
 S.cloudClubRowsById={};
 S.cloudClubRows.forEach(function(row){
 if(!row||!row.permanentClubId) return;
 S.cloudClubRowsById[row.permanentClubId]=row;
 });
 (S.clubs||[]).forEach(function(club){
-const row=club&&club.permanentClubId&&S.cloudClubRowsById[club.permanentClubId];
+let row=club&&club.permanentClubId&&S.cloudClubRowsById[club.permanentClubId];
+if(!row){
+row=clubCloudRowForEdit_(club);
+if(row&&row.permanentClubId&&!club.permanentClubId){
+club.permanentClubId=row.permanentClubId;
+}
+}
 if(!row) return;
 club.cloudParticipation=row.participation||null;
 club.participationLabel=row.participationLabel||"未設定";
@@ -13252,11 +13299,16 @@ const err=row.folderEnsureError
 return `<div class="list-row"><div><div class="list-title">${esc(row.clubName||row.permanentClubId)}（${esc(row.permanentClubId)}）</div><div class="list-sub">參與：${esc(row.participationLabel||"未設定")}｜評選資料夾：${esc(folderLabel)}${err}</div></div>${retry}</div>`;
 });
 if($("clubCloudRowsBox")){
-$("clubCloudRowsBox").innerHTML=lines.join("")||'<div class="state">尚無社團雲端狀態</div>';
+if(!lines.length){
+$("clubCloudRowsBox").innerHTML='<div class="state">真正零筆：正式社團目錄目前沒有可列出的 Club_ID</div>';
+}
+else{
+$("clubCloudRowsBox").innerHTML=lines.join("");
+}
 }
 }catch(e){
 if($("clubCloudRowsBox")){
-$("clubCloudRowsBox").innerHTML=`<div class="state">⚠️ ${esc(e.message)}</div>`;
+$("clubCloudRowsBox").innerHTML=`<div class="state">⚠️ 讀取失敗：${esc(e.message)}</div>`;
 }
 }
 }
