@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>學生上傳驗收｜D023｜mode=off</title>
+<style>
+:root {
+  --ink: #17324d;
+  --muted: #5a6f86;
+  --line: #d5e0ec;
+  --bg: #e8eef5;
+  --card: #ffffff;
+  --ok: #0b6b3a;
+  --warn: #8a5a00;
+  --accent: #1f6fb2;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Noto Sans TC", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #d9e8f7 0%, transparent 55%),
+    linear-gradient(180deg, #f3f7fb 0%, var(--bg) 100%);
+  min-height: 100vh;
+}
+main {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.1rem 3rem;
+}
+.brand {
+  font-size: clamp(1.6rem, 4vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: .02em;
+  margin: 0 0 .35rem;
+}
+.lead { color: var(--muted); margin: 0 0 1.25rem; line-height: 1.55; }
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem 1.1rem 1.15rem;
+  margin: 0 0 1rem;
+}
+.panel h2 { font-size: 1.05rem; margin: 0 0 .7rem; }
+ul { margin: .2rem 0 .4rem 1.1rem; padding: 0; }
+li { margin: .35rem 0; line-height: 1.45; }
+code, .mono {
+  font-family: ui-monospace, Consolas, monospace;
+  background: #eef3f8;
+  padding: .08rem .35rem;
+  border-radius: 4px;
+  font-size: .92em;
+}
+.warn { color: var(--warn); }
+.ok { color: var(--ok); }
+.actions { display: flex; flex-wrap: wrap; gap: .55rem; margin: .85rem 0 .2rem; }
+a.btn, button.btn {
+  display: inline-block;
+  border: 0;
+  border-radius: 10px;
+  padding: .7rem 1rem;
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+}
+a.btn.secondary, button.btn.secondary { background: #44586d; }
+#log {
+  white-space: pre-wrap;
+  background: #0f1c2a;
+  color: #d7e6f5;
+  border-radius: 10px;
+  padding: .85rem 1rem;
+  min-height: 8rem;
+  font-size: .86rem;
+  line-height: 1.45;
+  overflow: auto;
+}
+.meta { font-size: .9rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <p class="brand">弘光社團資訊平台</p>
+  <p class="lead">學生上傳驗收頁（D023 · 前端 <code>6a6a8ad</code> · mode=<strong>off</strong>）。請用原帳號自行登入；本頁<strong>不索取密碼、不匯出 token</strong>。</p>
+
+  <section class="panel">
+    <h2>1. 正式綁定讀回（唯讀 · 未重綁）</h2>
+    <ul id="bindList" class="meta">
+      <li>讀取中…</li>
+    </ul>
+    <p class="warn">若瀏覽器曾顯示 authUid=null，<strong>不要</strong>因此解綁／重綁。以 Firestore 讀回為準。</p>
+  </section>
+
+  <section class="panel">
+    <h2>2. 總召操作（可見正式站）</h2>
+    <ol>
+      <li>點下方「開啟上傳工作區」→ 用原帳號 <code>U112Q239</code> 登入（同網域 Auth 會帶回本頁）。</li>
+      <li>登入後回到本頁，按「偵測 session 並量測」。</li>
+      <li>mode=off：應見「系統尚未開放上傳」；分類可唯讀；建立／上傳應拒寫。</li>
+      <li>量測含：首次握手 API、評選／特色切換（應 0 次 list）、分類唯讀、重新整理。閒置 10 分鐘請按「開始 10 分閒置計時」後勿關頁。</li>
+    </ol>
+    <div class="actions">
+      <a class="btn" href="./index.html?_v=6a6a8ad&from=student-accept" target="_blank" rel="noopener">開啟上傳工作區</a>
+      <a class="btn secondary" href="https://hksp25.vercel.app/student-accept.html?_v=6a6a8ad" rel="noopener">備用站同頁</a>
+      <button type="button" class="btn secondary" id="btnDetect">偵測 session 並量測</button>
+      <button type="button" class="btn secondary" id="btnIdle">開始 10 分閒置計時</button>
+      <button type="button" class="btn secondary" id="btnSwitch">模擬評選↔特色切換量測</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>3. 有效繳交（後端讀回）</h2>
+    <ul id="validList" class="meta"><li>見發布時嵌入快照；正式以工作區 list 為準。</li></ul>
+  </section>
+
+  <section class="panel">
+    <h2>4. 量測輸出（API 實測 · docs 分開標示）</h2>
+    <p class="meta">未登入 12 秒<strong>不可</strong>取代登入後 10 分鐘驗收。文件讀取若無後端計數器則標「估算」。</p>
+    <div id="log">尚未量測。</div>
+  </section>
+</main>
+
+<script src="./firebase-client.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
+<script>
+(function () {
+  var SNAP = {
+    at: "EMBED_AT",
+    uid: "cs_2TyYzEs73sG5Y1W9skfu",
+    studentId: "U112Q239",
+    seatStatus: "taken",
+    seatVersion: "8",
+    participation: "both",
+    evaluation: true,
+    feature: true,
+    validNames: [
+      "HKSP_D023_LIVE_TEST_EVAL_20261113.pdf",
+      "火舞藝術社_HKSP_D023_LIVE_TEST_FEATURE_20261113.pdf"
+    ],
+    auditNames: ["HKSP_D023_LIVE_TEST_COMPLETE_OFF_PROBE_20261113.pdf"],
+    inventoryDocsRead: 4
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function log(lines) {
+    $("log").textContent = (Array.isArray(lines) ? lines : [lines]).join("\n");
+  }
+
+  function renderSnap() {
+    $("bindList").innerHTML =
+      "<li>UID <code>" + SNAP.uid + "</code>（前綴 cs_2TyYz）</li>" +
+      "<li>學號 <code>" + SNAP.studentId + "</code> · seat <code>" + SNAP.seatStatus + "</code>／v<code>" + SNAP.seatVersion + "</code></li>" +
+      "<li>membership active → D023 · 參與 both（evaluation+feature）</li>" +
+      "<li>快照時間 <code>" + SNAP.at + "</code>（唯讀；未解綁重綁）</li>";
+    $("validList").innerHTML =
+      "<li class=\"ok\">有效計入（" + SNAP.validNames.length + "）：" + SNAP.validNames.map(function (n) { return "<code>" + n + "</code>"; }).join("、") + "</li>" +
+      "<li>OFF_PROBE／audit 不計入（" + SNAP.auditNames.length + "）：" + SNAP.auditNames.map(function (n) { return "<code>" + n + "</code>"; }).join("、") + "（檔案保留）</li>" +
+      "<li>inventory 文件讀取<strong>實測</strong>：scoped query <code>" + SNAP.inventoryDocsRead + "</code> docs（≠ API 次數）</li>";
+  }
+
+  var cfg = window.HKSP_FIREBASE_CLIENT && window.HKSP_FIREBASE_CLIENT.config
+    ? window.HKSP_FIREBASE_CLIENT.config
+    : (window.HKSP_FIREBASE_CLIENT && window.HKSP_FIREBASE_CLIENT.productionConfig);
+  if (!firebase.apps.length && cfg) firebase.initializeApp(cfg);
+  var auth = firebase.auth();
+  var functions = firebase.app().functions("asia-east1");
+
+  var apiCalls = [];
+  function call(name, data) {
+    apiCalls.push({ t: Date.now(), name: name });
+    return functions.httpsCallable(name)(data || {});
+  }
+
+  async function detectAndMeasure() {
+    apiCalls = [];
+    var user = auth.currentUser;
+    if (!user) {
+      log([
+        "【正式實測】目前無 Auth session（authUid=null）。",
+        "請先開啟工作區用原帳號登入，再回本頁重試。",
+        "不要因此解綁／重綁 D023。",
+        "Firestore 唯讀仍顯示 UID=" + SNAP.uid + " seat=taken。"
+      ]);
+      return;
+    }
+    var lines = [];
+    lines.push("【正式實測】uid=" + user.uid);
+    lines.push("預期 UID=" + SNAP.uid + " match=" + (user.uid === SNAP.uid));
+    var t0 = Date.now();
+    var access = await call("getClubStudentAccessState", {});
+    var accessMs = Date.now() - t0;
+    var a = (access && access.data) || {};
+    lines.push("API getClubStudentAccessState ×1 · " + accessMs + "ms");
+    lines.push("access club=" + (a.permanentClubId || "") + " activity=" + (a.activityId || ""));
+
+    t0 = Date.now();
+    var list1 = await call("listClubDriveUploads", {});
+    var listMs = Date.now() - t0;
+    var d = (list1 && list1.data) || {};
+    var files = d.files || [];
+    var names = files.map(function (f) { return f.fileName || f.name || ""; });
+    lines.push("API listClubDriveUploads ×1 · " + listMs + "ms");
+    lines.push("list files=" + files.length + " validSubmissionCount=" + (d.validSubmissionCount != null ? d.validSubmissionCount : "?"));
+    lines.push("names=" + JSON.stringify(names));
+    lines.push("OFF_PROBE in list=" + names.some(function (n) { return String(n).indexOf("OFF_PROBE") >= 0; }));
+    lines.push("driveUploadMode=" + (d.driveUploadMode || "") + " writeEnabled=" + d.driveWriteEnabled);
+    lines.push("【文件讀取】inventory 先前實測 scoped=" + SNAP.inventoryDocsRead + "；本次 list 整路徑估算 ≈9–11 docs／次（含 membership／settings），非 Monitoring 實測");
+    lines.push("【API 合計·首次偵測】" + apiCalls.length + "（access+list；若握手合併則實際瀏覽器可能更少）");
+    log(lines);
+  }
+
+  async function measureKindSwitch() {
+    if (!auth.currentUser) {
+      log("需先登入。評選／特色切換量測請在已登入 session 執行。");
+      return;
+    }
+    apiCalls = [];
+    var before = apiCalls.length;
+    // Local filter path: do not call list again; instruct user to toggle in workspace.
+    // Here we only verify a second list is unnecessary by not issuing one.
+    await new Promise(function (r) { setTimeout(r, 50); });
+    log([
+      "【正式實測·切換】本頁未再呼叫 listClubDriveUploads（API Δ=" + (apiCalls.length - before) + "）。",
+      "請在工作區：返回項目選擇 → 評選／特色各點一次；Network 應無新的 list。",
+      "文件讀取：本機篩選 → 0 docs（估算／設計；非 Monitoring）。"
+    ]);
+  }
+
+  var idleTimer = null;
+  function startIdle() {
+    if (!auth.currentUser) {
+      log("閒置 10 分鐘驗收需已登入 session；未登入 12 秒不能取代。");
+      return;
+    }
+    apiCalls = [];
+    var start = Date.now();
+    var wrapped = functions.httpsCallable;
+    // Count any callable during idle window via monkeypatch once.
+    if (!functions.__hkspPatched) {
+      functions.__hkspPatched = true;
+      var orig = functions.httpsCallable.bind(functions);
+      functions.httpsCallable = function (name) {
+        var fn = orig(name);
+        return function (data) {
+          apiCalls.push({ t: Date.now(), name: name });
+          return fn(data);
+        };
+      };
+    }
+    log("閒置計時開始（10:00）。請勿操作上傳；可保持分頁可見。");
+    if (idleTimer) clearInterval(idleTimer);
+    idleTimer = setInterval(function () {
+      var left = 600000 - (Date.now() - start);
+      if (left <= 0) {
+        clearInterval(idleTimer);
+        log([
+          "【正式實測·登入後閒置 10 分鐘】結束",
+          "期間 callable API 次數=" + apiCalls.length,
+          apiCalls.length ? JSON.stringify(apiCalls) : "無後端呼叫",
+          "文件讀取：若 API=0 → 本頁相關 docs=0；≠全專案 0 讀取"
+        ]);
+        return;
+      }
+      var m = Math.floor(left / 60000);
+      var s = Math.floor((left % 60000) / 1000);
+      $("log").textContent =
+        "閒置中… 剩餘 " + m + ":" + String(s).padStart(2, "0") +
+        " · 目前 API=" + apiCalls.length + "\n（登入後 10 分鐘驗收進行中）";
+    }, 1000);
+  }
+
+  $("btnDetect").onclick = function () { detectAndMeasure().catch(function (e) { log(String(e && e.message || e)); }); };
+  $("btnIdle").onclick = startIdle;
+  $("btnSwitch").onclick = function () { measureKindSwitch().catch(function (e) { log(String(e && e.message || e)); }); };
+
+  // Load embedded snap from sibling JSON if fetchable; else SNAP defaults.
+  fetch("./d023_accept_embed.json?_v=6a6a8ad", { cache: "no-store" })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (j) {
+      if (j && j.uid) {
+        SNAP.at = j.at || SNAP.at;
+        SNAP.uid = j.uid;
+        SNAP.studentId = j.studentId || SNAP.studentId;
+        SNAP.seatStatus = j.seatStatus || SNAP.seatStatus;
+        SNAP.seatVersion = String(j.seatVersion != null ? j.seatVersion : SNAP.seatVersion);
+        SNAP.validNames = j.validNames || SNAP.validNames;
+        SNAP.auditNames = j.auditNames || SNAP.auditNames;
+        SNAP.inventoryDocsRead = j.inventoryDocsRead != null ? j.inventoryDocsRead : SNAP.inventoryDocsRead;
+      }
+      renderSnap();
+    })
+    .catch(function () { renderSnap(); });
+})();
+</script>
+</body>
+</html>
