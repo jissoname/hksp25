@@ -14335,7 +14335,8 @@ if(!confirm(wantOpen
 return;
 }
 const clientRequestId="uploadGate_"+(wantOpen?"open":"pause")+"_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,10);
-const seq=++(S.uploadGateSeq||(S.uploadGateSeq=0));
+S.uploadGateSeq=(S.uploadGateSeq||0)+1;
+const seq=S.uploadGateSeq;
 S.uploadGateBusy=true;
 renderUploadGate_(gate,"處理中…（"+clientRequestId+"）");
 try{
