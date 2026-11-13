@@ -29,6 +29,9 @@
   var windowWatchTimer = null;
   var listRefreshInflight = null;
   var evalFoldersInflight = null;
+  /** Short-lived folder list cache (uid+gen+activity+club+parent). Cleared on logout/gen. */
+  var evalFoldersCache = null;
+  var EVAL_FOLDERS_TTL_MS = 60 * 1000;
 
   function $(id) {
     return document.getElementById(id);
@@ -275,26 +278,38 @@
     return entries.length <= 1;
   }
 
-  function evalFoldersCacheValid(cache) {
+  function evalFoldersCacheKey(parentId) {
+    if (!boundUid || !serverCtx) return "";
+    return [
+      String(boundUid),
+      String(generation),
+      String(serverCtx.activityId || ""),
+      String(serverCtx.permanentClubId || ""),
+      String(parentId || "")
+    ].join("|");
+  }
+
+  function evalFoldersCacheValid(cache, parentId) {
     if (!cache || !boundUid || !serverCtx) return false;
-    if (String(cache._cacheUid || "") !== String(boundUid)) return false;
-    if (Number(cache._cacheGen) !== Number(generation)) return false;
-    if (String(cache._cacheActivity || "") !== String(serverCtx.activityId || "")) {
-      return false;
-    }
-    if (String(cache._cacheClub || "") !== String(serverCtx.permanentClubId || "")) {
-      return false;
-    }
+    if (String(cache._cacheKey || "") !== evalFoldersCacheKey(parentId)) return false;
+    if (cache._cacheAtMs == null) return false;
+    if (Date.now() - Number(cache._cacheAtMs) > EVAL_FOLDERS_TTL_MS) return false;
     return true;
   }
 
-  function stampEvalFoldersCache(data) {
+  function stampEvalFoldersCache(data, parentId) {
     return Object.assign({}, data || {}, {
-      _cacheUid: boundUid,
-      _cacheGen: generation,
-      _cacheActivity: serverCtx && serverCtx.activityId ? serverCtx.activityId : "",
-      _cacheClub: serverCtx && serverCtx.permanentClubId ? serverCtx.permanentClubId : ""
+      _cacheKey: evalFoldersCacheKey(parentId),
+      _cacheAtMs: Date.now(),
+      _cacheParent: String(parentId || "")
     });
+  }
+
+  function rememberEvalFolders(data, parentId) {
+    var stamped = stampEvalFoldersCache(data, parentId);
+    evalFoldersCache = stamped;
+    if (lastListData) lastListData._evalFolders = stamped;
+    return stamped;
   }
 
   function applyEvalFoldersData(data) {
@@ -303,7 +318,7 @@
       lastListData.driveWriteEnabled = false;
       lastListData.driveUploadMode = data.driveUploadMode || "off";
     }
-    if (lastListData) lastListData._evalFolders = stampEvalFoldersCache(data);
+    rememberEvalFolders(data, "");
     var emptyOnlyRoot = renderEvalFolderOptions(data);
     if (data.driveWriteEnabled === false) {
       setEvalFolderStatus(
@@ -321,26 +336,33 @@
 
   function refreshEvalFolders(token, force) {
     if (activeKind !== "evaluation") return Promise.resolve(null);
-    if (
-      !force &&
-      lastListData &&
-      lastListData._evalFolders &&
-      evalFoldersCacheValid(lastListData._evalFolders)
-    ) {
-      applyEvalFoldersData(lastListData._evalFolders);
-      return Promise.resolve(lastListData._evalFolders);
+    // List is club-root categories; selectedEvalFolderId is upload target only, not list parent.
+    var parentId = "";
+    var cacheCandidate = evalFoldersCache || (lastListData && lastListData._evalFolders) || null;
+    // Fence by login generation + club scope, not upload operationSeq
+    // (kind switch bumps operationSeq and must not discard a good folder cache).
+    if (!force && evalFoldersCacheValid(cacheCandidate, parentId)) {
+      applyEvalFoldersData(cacheCandidate);
+      return Promise.resolve(cacheCandidate);
     }
-    if (evalFoldersInflight && evalFoldersInflight.uid === boundUid && !force) {
+    var inflightKey = evalFoldersCacheKey(parentId);
+    if (
+      evalFoldersInflight &&
+      !force &&
+      evalFoldersInflight.key === inflightKey
+    ) {
       return evalFoldersInflight.promise;
     }
     evalFolderBusy = true;
     syncEvalFolderPanel();
     setEvalFolderStatus("正在載入分類資料夾…", "warn");
     var pending = call("listClubEvaluationFolders", {}).then(function (result) {
-      if (token && !sameOp(token)) return null;
+      if (token && Number(token.gen) !== Number(generation)) return null;
+      if (token && String(token.uid || "") !== String(boundUid || "")) return null;
       return applyEvalFoldersData(result.data || {});
     }).catch(function (error) {
-      if (token && !sameOp(token)) return null;
+      if (token && Number(token.gen) !== Number(generation)) return null;
+      if (token && String(token.uid || "") !== String(boundUid || "")) return null;
       var info = errorInfo(error);
       var list = $("driveEvalFolderList");
       if (list) list.replaceChildren();
@@ -355,7 +377,7 @@
         evalFoldersInflight = null;
       }
     });
-    evalFoldersInflight = { uid: boundUid, promise: pending };
+    evalFoldersInflight = { key: inflightKey, promise: pending };
     return pending;
   }
 
@@ -382,6 +404,8 @@
       var data = result.data || {};
       if (data.folderId) selectedEvalFolderId = String(data.folderId);
       if (nameInput) nameInput.value = "";
+      evalFoldersCache = null;
+      if (lastListData) lastListData._evalFolders = null;
       setEvalFolderStatus(
         data.reused ? "已沿用同名分類。" : "已建立分類。",
         "ok"
@@ -562,6 +586,8 @@
     busy = false;
     serverCtx = null;
     lastListData = null;
+    evalFoldersCache = null;
+    evalFoldersInflight = null;
     listedAtLocalMs = 0;
     uploadWriteAllowed = true;
     clearWindowWatch();
@@ -929,8 +955,11 @@
         clubName: data.clubName || ""
       };
       lastListData = data;
-      if (prevFolders && evalFoldersCacheValid(prevFolders)) {
+      if (prevFolders && evalFoldersCacheValid(prevFolders, "")) {
         lastListData._evalFolders = prevFolders;
+        evalFoldersCache = prevFolders;
+      } else if (evalFoldersCache && evalFoldersCacheValid(evalFoldersCache, "")) {
+        lastListData._evalFolders = evalFoldersCache;
       }
       listedAtLocalMs = Date.now();
       showContext(data);
