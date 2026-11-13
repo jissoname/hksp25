@@ -1,19 +1,5 @@
 {
-  "at": "2026-11-13T21:04:07.424Z",
-  "uid": "cs_2TyYzEs73sG5Y1W9skfu",
-  "studentId": "U112Q239",
-  "seatStatus": "taken",
-  "seatVersion": "8",
-  "participation": "both",
-  "evaluation": true,
-  "feature": true,
-  "validNames": [
-    "HKSP_D023_LIVE_TEST_EVAL_20261113.pdf",
-    "火舞藝術社_HKSP_D023_LIVE_TEST_FEATURE_20261113.pdf"
-  ],
-  "auditNames": [
-    "HKSP_D023_LIVE_TEST_COMPLETE_OFF_PROBE_20261113.pdf"
-  ],
-  "inventoryDocsRead": 4,
-  "noRebind": true
+  "note": "Public placeholder. No student identifiers. Private D023 evidence stays in internal results only.",
+  "mode": "off",
+  "measure": "Use index.html?hkspMeasure=1 workspace Network/CDP; do not infer zero traffic from student-accept.html."
 }
