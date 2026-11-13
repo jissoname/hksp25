@@ -1188,7 +1188,7 @@ onclick="loadClubCloudRows()"
 <div id="pairPreviewBox" class="list" style="margin-top:12px">
 
 <div class="state" id="pairPreviewState">
-評選資料夾：單社 ensure／重試已開放（不批次建夾、不搬刪、不改共享）。預覽配對仍暫停（未完成）。學生上傳維持關閉。特色目的地用上方共用資料夾欄位；下方為評選根資料夾（配對用）。
+FOLDER_OPS_PAUSED 維持：預覽／確認／ensure 經 Firebase portal（?cloud=1）仍擋。可唯讀列出 cloudLinks／雲端列／上傳設定；單社手動連結可用。不重建夾、不覆蓋手動連結、不搬刪或改共享。解暫停條件見 FOLDER_OPS_PAUSED_MATRIX。第 11 項未標完成。
 </div>
 
 <label class="label">評選活動根資料夾（配對預覽用，非特色共用夾）</label>
@@ -14393,13 +14393,17 @@ return;
 }
 if(r&&r.success===true){
 S.pairPreviewMatched=Array.isArray(r.matched)?r.matched.slice():[];
+S.pairPreviewFingerprint=r.previewFingerprint||"";
 toast("⚠️ 預覽回傳成功，但功能仍待解暫停核准；不得批次確認既有 66 社");
 if($("pairPreviewState")){
 $("pairPreviewState").innerHTML=
-'<div class="state">預覽 matched='+S.pairPreviewMatched.length+
-'｜missing='+((r.missing&&r.missing.length)||0)+
-'｜conflicts='+((r.conflicts&&r.conflicts.length)||0)+
-'（未標完成；確認僅允許 ≤5 筆 bindings）</div>';
+'<div class="state">預覽 既有綁定='+((r.alreadyBound&&r.alreadyBound.length)||0)+
+'｜可配對='+S.pairPreviewMatched.length+
+'｜找不到='+((r.missing&&r.missing.length)||0)+
+'｜同名衝突='+((r.conflicts&&r.conflicts.length)||0)+
+'｜無權限='+((r.unreadables&&r.unreadables.length)||0)+
+'｜非資料夾='+((r.notFolders&&r.notFolders.length)||0)+
+'（衝突不得任選；確認≤5 且須帶 previewFingerprint；未解暫停）</div>';
 }
 return;
 }
@@ -14421,7 +14425,8 @@ toast("⚠️ 單次確認上限 5 筆，拒絕批次重配 66");
 return;
 }
 const r=await api("adminConfirmEvaluationFolderPairs",{
-bindings:bindings
+bindings:bindings,
+previewFingerprint:S.pairPreviewFingerprint||""
 });
 if(unauthorized(r)) return;
 if(r&&r.error==="FOLDER_OPS_PAUSED"){
