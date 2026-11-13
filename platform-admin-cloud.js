@@ -96,8 +96,40 @@
       if (!result || result.success !== true) throw new Error(result && result.message || "儲存失敗，請重新讀取確認。");
       root.closeModal("clubModal");
       root.toast("社團雲端設定已儲存");
-      await root.loadClubs();
-      await root.loadClouds();
+      // Narrow local patch only — do not reload all panels / full club directory.
+      var participation = String($("clubParticipation").value || "");
+      var url = String($("clubEvaluationFolderUrl").value || "").trim();
+      var id = String(target.permanentClubId || "").trim().toUpperCase();
+      if (id && state.cloudClubRowsById && state.cloudClubRowsById[id]) {
+        var row = state.cloudClubRowsById[id];
+        var nextPart = participation;
+        var parsed = nextPart === "both" || nextPart === "兩項皆參加"
+          ? { evaluation: true, feature: true, participation: "both" }
+          : nextPart === "feature" || nextPart === "特色"
+            ? { evaluation: false, feature: true, participation: "feature" }
+            : nextPart === "evaluation" || nextPart === "評選"
+              ? { evaluation: true, feature: false, participation: "evaluation" }
+              : null;
+        if (parsed) {
+          row.participation = parsed.participation;
+          row.evaluation = parsed.evaluation;
+          row.feature = parsed.feature;
+          row.participationLabel = parsed.evaluation && parsed.feature
+            ? "兩項皆參加"
+            : parsed.feature ? "特色" : "評選";
+          row.participationVersion = Number(target.participationVersion || 0) + 1;
+        }
+        if (url !== String(target.evaluationFolderUrl || "")) {
+          row.evaluationFolderUrl = url;
+          row.evaluationFolderConfigured = !!url;
+          row.linkVersion = Number(target.linkVersion || 0) + 1;
+        }
+        editSnapshot = Object.assign({}, row);
+      }
+      if (typeof root.renderClouds === "function") root.renderClouds();
+      if (typeof root.HKSP_ADMIN_CLOUD.renderMakeupChoices === "function") {
+        root.HKSP_ADMIN_CLOUD.renderMakeupChoices();
+      }
     } catch (error) {
       if (sequence === state.clubSaveSeq && token === String(state.token || "") && editSnapshot === target) {
         $("clubError").textContent = error.message;

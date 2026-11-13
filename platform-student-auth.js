@@ -273,8 +273,59 @@ function createRequireStudentAccess(deps) {
     setDriveWorkspaceOpen(mode === "home");
   }
 
-  function call(name, data) {
+  var TRANSIENT_RETRY_MAX = 2;
+  var TRANSIENT_RETRY_BASE_MS = 400;
+  var WRITE_CALLS = {
+    registerClubStudent: true,
+    changeClubStudentPassword: true,
+    bindClubStudentMembership: true
+  };
+
+  function errorCode(error) {
+    return String(
+      (error && (error.code || (error.details && error.details.code))) || ""
+    ).toLowerCase();
+  }
+
+  function isPermissionOrAuthError(error) {
+    var code = errorCode(error);
+    var msg = String((error && error.message) || "");
+    return /unauthenticated|permission-denied|auth|forbidden|not.?allowed|未登入|權限|資格/i.test(
+      code + " " + msg
+    );
+  }
+
+  function isTransientError(error) {
+    if (isPermissionOrAuthError(error)) return false;
+    var code = errorCode(error);
+    var msg = String((error && error.message) || "");
+    return /unavailable|deadline-exceeded|resource-exhausted|internal|failed.?to.?fetch|network|timeout|逾時|暫時/i.test(
+      code + " " + msg
+    );
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
+
+  function callOnce(name, data) {
     return functions.httpsCallable(name)(data || {});
+  }
+
+  /** Reads: limited backoff. Writes / auth gates: no blind retry. */
+  function call(name, data) {
+    if (WRITE_CALLS[name]) return callOnce(name, data);
+    var attempt = 0;
+    function run() {
+      return callOnce(name, data).catch(function (error) {
+        if (attempt >= TRANSIENT_RETRY_MAX || !isTransientError(error)) throw error;
+        attempt += 1;
+        return sleep(TRANSIENT_RETRY_BASE_MS * attempt).then(run);
+      });
+    }
+    return run();
   }
 
   requireStudentAccess = createRequireStudentAccess({
@@ -349,12 +400,10 @@ function createRequireStudentAccess(deps) {
     return false;
   }
 
-  function refreshAccess() {
-    var user = auth.currentUser;
-    if (!user) {
-      setShell("auth");
-      return Promise.resolve(null);
-    }
+  var accessRefreshInflight = null;
+  var lastAuthUid = "";
+
+  function runAccessRefresh(user) {
     var seq = (accessRequestSeq += 1);
     var gen = accessAuthGeneration;
     var expectedUid = user.uid;
@@ -432,6 +481,25 @@ function createRequireStudentAccess(deps) {
       });
       return data;
     });
+  }
+
+  function refreshAccess() {
+    var user = auth.currentUser;
+    if (!user) {
+      setShell("auth");
+      return Promise.resolve(null);
+    }
+    lastAuthUid = user.uid;
+    if (accessRefreshInflight && accessRefreshInflight.uid === user.uid) {
+      return accessRefreshInflight.promise;
+    }
+    var pending = runAccessRefresh(user).finally(function () {
+      if (accessRefreshInflight && accessRefreshInflight.promise === pending) {
+        accessRefreshInflight = null;
+      }
+    });
+    accessRefreshInflight = { uid: user.uid, promise: pending };
+    return pending;
   }
 
   function errorCode(error) {
@@ -759,16 +827,31 @@ function createRequireStudentAccess(deps) {
   });
 
   auth.onAuthStateChanged(function (user) {
-    accessAuthGeneration += 1;
-    studentAccessFence.bumpAuthGeneration();
-    clearConfirmedDriveAccess();
     if (!user) {
+      lastAuthUid = "";
+      accessRefreshInflight = null;
+      accessAuthGeneration += 1;
+      accessRequestSeq += 1;
+      studentAccessFence.bumpAuthGeneration();
+      clearConfirmedDriveAccess();
       if (window.HKSP_DRIVE_UPLOAD && typeof window.HKSP_DRIVE_UPLOAD.onSignedOut === "function") {
         window.HKSP_DRIVE_UPLOAD.onSignedOut();
       }
       setShell("auth");
       return;
     }
+    var sameUid = lastAuthUid && lastAuthUid === user.uid;
+    lastAuthUid = user.uid;
+    // Same uid with an in-flight refresh (login button + auth listener): join, do not bump.
+    if (sameUid && accessRefreshInflight && accessRefreshInflight.uid === user.uid) {
+      accessRefreshInflight.promise.catch(function (error) {
+        setStatus(safeError(error), "error");
+      });
+      return;
+    }
+    accessAuthGeneration += 1;
+    studentAccessFence.bumpAuthGeneration();
+    clearConfirmedDriveAccess();
     refreshAccess().catch(function (error) {
       setStatus(safeError(error), "error");
     });

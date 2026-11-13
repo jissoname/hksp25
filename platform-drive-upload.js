@@ -27,13 +27,66 @@
   var uploadWriteAllowed = true;
   var listedAtLocalMs = 0;
   var windowWatchTimer = null;
+  var listRefreshInflight = null;
+  var evalFoldersInflight = null;
 
   function $(id) {
     return document.getElementById(id);
   }
 
-  function call(name, data) {
+  var TRANSIENT_RETRY_MAX = 2;
+  var TRANSIENT_RETRY_BASE_MS = 400;
+  var WRITE_CALLS = {
+    prepareClubDriveUpload: true,
+    completeClubDriveUpload: true,
+    createClubEvaluationFolder: true
+  };
+
+  function errorCode(error) {
+    return String(
+      (error && (error.code || (error.details && error.details.code))) || ""
+    ).toLowerCase();
+  }
+
+  function isPermissionOrAuthError(error) {
+    var code = errorCode(error);
+    var msg = String((error && error.message) || "");
+    return /unauthenticated|permission-denied|auth|forbidden|not.?allowed|未登入|權限|資格|mode.?off|尚未開放/i.test(
+      code + " " + msg
+    );
+  }
+
+  function isTransientError(error) {
+    if (isPermissionOrAuthError(error)) return false;
+    var code = errorCode(error);
+    var msg = String((error && error.message) || "");
+    return /unavailable|deadline-exceeded|resource-exhausted|internal|failed.?to.?fetch|network|timeout|逾時|暫時/i.test(
+      code + " " + msg
+    );
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
+
+  function callOnce(name, data) {
     return firebase.app().functions("asia-east1").httpsCallable(name)(data || {});
+  }
+
+  /** Reads: limited backoff. Writes: never auto-retry (permission / unclear outcome). */
+  function call(name, data) {
+    if (WRITE_CALLS[name]) return callOnce(name, data);
+    var attempt = 0;
+    function run() {
+      return callOnce(name, data).catch(function (error) {
+        if (attempt >= TRANSIENT_RETRY_MAX || !isTransientError(error)) throw error;
+        attempt += 1;
+        return sleep(TRANSIENT_RETRY_BASE_MS * attempt).then(run);
+      });
+    }
+    return run();
   }
 
   function setStatus(text, kind) {
@@ -73,7 +126,9 @@
   function filesForActiveKind(files) {
     var kind = activeKind === "feature" ? "feature" : "evaluation";
     return (files || []).filter(function (file) {
-      return String(file && file.uploadKind || "") === kind;
+      // Legacy rows without uploadKind count as evaluation (not feature).
+      var fileKind = String((file && file.uploadKind) || "").trim() || "evaluation";
+      return fileKind === kind;
     });
   }
 
@@ -220,32 +275,70 @@
     return entries.length <= 1;
   }
 
-  function refreshEvalFolders(token) {
+  function evalFoldersCacheValid(cache) {
+    if (!cache || !boundUid || !serverCtx) return false;
+    if (String(cache._cacheUid || "") !== String(boundUid)) return false;
+    if (Number(cache._cacheGen) !== Number(generation)) return false;
+    if (String(cache._cacheActivity || "") !== String(serverCtx.activityId || "")) {
+      return false;
+    }
+    if (String(cache._cacheClub || "") !== String(serverCtx.permanentClubId || "")) {
+      return false;
+    }
+    return true;
+  }
+
+  function stampEvalFoldersCache(data) {
+    return Object.assign({}, data || {}, {
+      _cacheUid: boundUid,
+      _cacheGen: generation,
+      _cacheActivity: serverCtx && serverCtx.activityId ? serverCtx.activityId : "",
+      _cacheClub: serverCtx && serverCtx.permanentClubId ? serverCtx.permanentClubId : ""
+    });
+  }
+
+  function applyEvalFoldersData(data) {
+    if (!data) return null;
+    if (lastListData && data.driveWriteEnabled === false) {
+      lastListData.driveWriteEnabled = false;
+      lastListData.driveUploadMode = data.driveUploadMode || "off";
+    }
+    if (lastListData) lastListData._evalFolders = stampEvalFoldersCache(data);
+    var emptyOnlyRoot = renderEvalFolderOptions(data);
+    if (data.driveWriteEnabled === false) {
+      setEvalFolderStatus(
+        emptyOnlyRoot ? "目前沒有子分類（根層，唯讀可瀏覽）。" : "已載入分類（唯讀可瀏覽）。",
+        "ok"
+      );
+      setUploadControlsEnabled(false, "系統尚未開放上傳");
+    } else if (emptyOnlyRoot) {
+      setEvalFolderStatus("目前沒有子分類，可使用根層或建立新分類。", "ok");
+    } else {
+      setEvalFolderStatus("已載入分類資料夾。", "ok");
+    }
+    return data;
+  }
+
+  function refreshEvalFolders(token, force) {
     if (activeKind !== "evaluation") return Promise.resolve(null);
+    if (
+      !force &&
+      lastListData &&
+      lastListData._evalFolders &&
+      evalFoldersCacheValid(lastListData._evalFolders)
+    ) {
+      applyEvalFoldersData(lastListData._evalFolders);
+      return Promise.resolve(lastListData._evalFolders);
+    }
+    if (evalFoldersInflight && evalFoldersInflight.uid === boundUid && !force) {
+      return evalFoldersInflight.promise;
+    }
     evalFolderBusy = true;
     syncEvalFolderPanel();
     setEvalFolderStatus("正在載入分類資料夾…", "warn");
-    return call("listClubEvaluationFolders", {}).then(function (result) {
+    var pending = call("listClubEvaluationFolders", {}).then(function (result) {
       if (token && !sameOp(token)) return null;
-      var data = result.data || {};
-      if (lastListData && data.driveWriteEnabled === false) {
-        lastListData.driveWriteEnabled = false;
-        lastListData.driveUploadMode = data.driveUploadMode || "off";
-      }
-      if (lastListData) lastListData._evalFolders = data;
-      var emptyOnlyRoot = renderEvalFolderOptions(data);
-      if (data.driveWriteEnabled === false) {
-        setEvalFolderStatus(
-          emptyOnlyRoot ? "目前沒有子分類（根層，唯讀可瀏覽）。" : "已載入分類（唯讀可瀏覽）。",
-          "ok"
-        );
-        setUploadControlsEnabled(false, "系統尚未開放上傳");
-      } else if (emptyOnlyRoot) {
-        setEvalFolderStatus("目前沒有子分類，可使用根層或建立新分類。", "ok");
-      } else {
-        setEvalFolderStatus("已載入分類資料夾。", "ok");
-      }
-      return data;
+      return applyEvalFoldersData(result.data || {});
     }).catch(function (error) {
       if (token && !sameOp(token)) return null;
       var info = errorInfo(error);
@@ -257,7 +350,13 @@
       evalFolderBusy = false;
       syncEvalFolderPanel();
       return data;
+    }).finally(function () {
+      if (evalFoldersInflight && evalFoldersInflight.promise === pending) {
+        evalFoldersInflight = null;
+      }
     });
+    evalFoldersInflight = { uid: boundUid, promise: pending };
+    return pending;
   }
 
   function createEvalFolder() {
@@ -287,11 +386,12 @@
         data.reused ? "已沿用同名分類。" : "已建立分類。",
         "ok"
       );
-      return refreshEvalFolders(token);
+      return refreshEvalFolders(token, true);
     }).catch(function (error) {
       if (!sameOp(token)) return;
       var info = errorInfo(error);
       setEvalFolderStatus(friendlyGateMessage(info), "error");
+      // Permission / mode-off: do not blind-retry create.
     }).then(function () {
       if (!sameOp(token)) return;
       evalFolderBusy = false;
@@ -327,8 +427,7 @@
 
   function applyKindUi(kind, enterTools) {
     activeKind = kind === "feature" ? "feature" : "evaluation";
-    // Invalidate in-flight list/folder responses from the other kind.
-    listRequestSeq += 1;
+    // Invalidate in-flight ops from the other kind; keep lastListData for local filter.
     operationSeq += 1;
     var input = $("driveFile");
     if (input) {
@@ -351,7 +450,7 @@
       selectedEvalFolderId = "";
       setEvalFolderStatus("", "");
     }
-    // Re-render records for this kind immediately from last snapshot (no stale other-kind rows).
+    // Re-render records for this kind immediately from last snapshot (no network).
     if (lastListData) renderList(lastListData.files || []);
     else renderList([]);
     syncEvalFolderPanel();
@@ -362,7 +461,8 @@
       applyWindowReadOnly(lastListData.uploadWindows, lastListData.participation);
     }
     if (activeKind === "evaluation" && lastListData && boundUid && workspaceView === "tools") {
-      refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid });
+      // Reuse stamped folder cache; network only on miss / manual refresh / create.
+      refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, false);
     }
   }
 
@@ -807,8 +907,18 @@
   }
 
   function refresh(token) {
+    if (
+      listRefreshInflight &&
+      listRefreshInflight.uid === token.uid &&
+      listRefreshInflight.gen === token.gen
+    ) {
+      return listRefreshInflight.promise;
+    }
     var mine = ++listRequestSeq;
-    return call("listClubDriveUploads", {}).then(function (result) {
+    var prevFolders = lastListData && lastListData._evalFolders
+      ? lastListData._evalFolders
+      : null;
+    var pending = call("listClubDriveUploads", {}).then(function (result) {
       if (!sameOp(token) || mine !== listRequestSeq) return null;
       var data = result.data || {};
       serverCtx = {
@@ -819,19 +929,31 @@
         clubName: data.clubName || ""
       };
       lastListData = data;
+      if (prevFolders && evalFoldersCacheValid(prevFolders)) {
+        lastListData._evalFolders = prevFolders;
+      }
       listedAtLocalMs = Date.now();
       showContext(data);
       showParticipation(data.participation);
       renderList(data.files || []);
       applyWindowReadOnly(data.uploadWindows, data.participation);
-      if (activeKind === "evaluation") refreshEvalFolders(token);
+      if (activeKind === "evaluation" && workspaceView === "tools") {
+        refreshEvalFolders(token, false);
+      }
       return data;
     }).catch(function (error) {
       if (!sameOp(token) || mine !== listRequestSeq) return null;
       var info = errorInfo(error);
       setStatus(friendlyGateMessage(info), "error");
+      // Auth / permission failures: no automatic resend.
       return null;
+    }).finally(function () {
+      if (listRefreshInflight && listRefreshInflight.promise === pending) {
+        listRefreshInflight = null;
+      }
     });
+    listRefreshInflight = { uid: token.uid, gen: token.gen, promise: pending };
+    return pending;
   }
 
   function receivedBytes(response, size) {
@@ -957,6 +1079,13 @@
       ? pendingReplace.file
       : (uploadQueue[0] && uploadQueue[0].file);
     if (!file) {
+      var inputEl = $("driveFile");
+      if (inputEl && inputEl.files && inputEl.files.length) {
+        addFilesFromList(inputEl.files);
+        file = uploadQueue[0] && uploadQueue[0].file;
+      }
+    }
+    if (!file) {
       setStatus("請先選擇或拖曳檔案。", "warn");
       return;
     }
@@ -1081,7 +1210,7 @@
     if (folderRefresh && !folderRefresh.dataset.bound) {
       folderRefresh.dataset.bound = "1";
       folderRefresh.addEventListener("click", function () {
-        refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid });
+        refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, true);
       });
     }
     if (folderSelect && !folderSelect.dataset.bound) {

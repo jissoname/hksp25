@@ -12376,9 +12376,17 @@ if(prevLabel!=null) saveBtn.textContent=prevLabel;
 }
 }
 
-async function refreshClubListsAfterSave_(saveSeq, tokenAtStart){
+async function refreshClubListsAfterSave_(saveSeq, tokenAtStart, opts){
+opts=opts||{};
 if(saveSeq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
 return {ok:false, stale:true};
+}
+/*
+ * Local list already patched for this club: skip full clubs/clouds/forms reload.
+ * Manual「重新整理」still uses refreshAllData / loadClubs.
+ */
+if(opts.listPatched===true){
+return {ok:true, stale:false, skippedFullReload:true};
 }
 const loadId=beginClubListLoad_();
 try{
@@ -12629,7 +12637,7 @@ toast("⚠️ 社團已存，評選資料夾"+stepLabel+"：請於雲端狀態�
  * 本地已依 Club_ID 更新後仍背景重讀；較早發出的名單請求受 clubListSeq 擋下，
  * 不可把舊屬性列蓋回或與新列並存。
  */
-refreshClubListsAfterSave_(seq, tokenAtStart).then(function(result){
+refreshClubListsAfterSave_(seq, tokenAtStart, {listPatched:listPatched}).then(function(result){
 if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")) return;
 if(result && result.stale) return;
 if(!result || result.ok!==true){
