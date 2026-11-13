@@ -12115,13 +12115,14 @@ if(String(confirmed.category||"")!==String(category||"")) return null;
 return confirmed;
 }
 
-function markClubSaveUnconfirmed_(oldName, clubName, category){
+function markClubSaveUnconfirmed_(oldName, clubName, category, clientRequestId){
 S.clubSaveConfirmed=null;
 S.clubSaveUnconfirmed={
 fingerprint:clubSaveFingerprint_(oldName, clubName, category),
 oldName:String(oldName||""),
 clubName:String(clubName||""),
-category:String(category||"")
+category:String(category||""),
+clientRequestId:clientRequestId?String(clientRequestId):undefined
 };
 }
 
@@ -12209,7 +12210,6 @@ encoded ||
 ""
 );
 
-if(isFirebaseCloudMode() && !old){toast("請先選擇既有社團，再編輯雲端設定。");return;}
 clearClubSavePartialState_();
 
 const c =
@@ -12691,6 +12691,8 @@ finishClubSaveControls_(seq, saveBtn, prevLabel);
 async function deleteClub(
 encoded
 ){
+
+if(isFirebaseCloudMode()) return HKSP_ADMIN_CLOUD.deleteClub(encoded);
 
 const name =
 decodeURIComponent(
@@ -14351,12 +14353,22 @@ if(unauthorized(r)) return;
 if(r&&r.success===true&&r.step==="done"){
 toast("✅ 評選資料夾已建立／綁定");
 }
+else if(r&&(r.error==="FOLDER_OPS_PAUSED"||/FOLDER_OPS_PAUSED|暫停|待獨立驗收/.test(String((r&&r.message)||"")))){
+toast("⚠️ 社團已存在；雲端仍待建立／待綁定（暫停政策中，可稍後單獨重試，不會回滾社團）");
+}
 else{
 toast("⚠️ "+((r&&(r.message||r.reason))||"仍未完成，請依狀態再試"));
 }
 await loadClubCloudRows();
 }catch(e){
-toast("⚠️ "+(e&&e.message?e.message:"重試失敗"));
+const msg=String((e&&e.message)||"重試失敗");
+if(/FOLDER_OPS_PAUSED|暫停|待獨立驗收/.test(msg)){
+toast("⚠️ 社團已存在；雲端仍待建立／待綁定（暫停政策中，可稍後單獨重試，不會回滾社團）");
+if(typeof loadClubCloudRows==="function") await loadClubCloudRows();
+}
+else{
+toast("⚠️ "+msg);
+}
 }
 }
 
