@@ -1017,6 +1017,7 @@ body.cs-open .cs-fab{display:none}
 
 <script src="./cs-local-fixture.js"></script>
 <script src="./firebase-client.js"></script>
+<script src="./platform-cloud-api.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
@@ -1451,13 +1452,13 @@ async function callPublicBackend(
     extraData={}
 ){
 
-    return postBackend({
-
-        action,
-
-        ...extraData
-
-    });
+    if (window.HKSP_CS_LOCAL && HKSP_CS_LOCAL.isLocalPreview()) {
+        return postBackend({ action, ...extraData });
+    }
+    if (!window.HKSP_CLOUD_API) {
+        throw new Error("Firebase 首頁資料入口尚未載入，請重新整理。");
+    }
+    return HKSP_CLOUD_API.publicRequest({ action, ...extraData });
 
 }
 

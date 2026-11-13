@@ -1369,6 +1369,10 @@ class="field"
 </option>
 </select>
 
+<div id="clubCloudFolderField" hidden>
+<label class="label" for="clubEvaluationFolderUrl">評選 Drive 主資料夾連結</label>
+<input id="clubEvaluationFolderUrl" class="field" type="url" placeholder="貼上該社團資料夾的 Google Drive 連結">
+</div>
 <div id="clubError" class="error"></div>
 
 <div class="modal-actions">
@@ -1592,13 +1596,20 @@ onclick="closeModal('aggregationDetailModal')"
 
 <div id="toast" class="toast"></div>
 
+<script src="./firebase-client.js"></script>
+<script src="./platform-cloud-api.js"></script>
+<script src="./platform-admin-cloud.js"></script>
 <script>
+
+function isFirebaseCloudMode(){
+return !!(window.HKSP_ADMIN_CLOUD && HKSP_ADMIN_CLOUD.enabled());
+}
 
 const BACKEND_URL =
 "https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
 
 const SESSION_KEY =
-"HKSP_ADMIN_SESSION";
+isFirebaseCloudMode() ? "HKSP_CLOUD_ADMIN_SESSION" : "HKSP_ADMIN_SESSION";
 
 const EVENT_NAME =
 "115學年度第一學期全校學生社團評選暨觀摩活動";
@@ -1832,6 +1843,10 @@ setTimeout(
 }
 
 async function post(payload){
+
+if(isFirebaseCloudMode()){
+return HKSP_ADMIN_CLOUD.request(payload);
+}
 
 const c =
 new AbortController();
@@ -2430,7 +2445,7 @@ markAdminBoot_("operable");
 
 if(typeof clearServerActivityForNewLogin==="function") clearServerActivityForNewLogin();
 
-startBackgroundFormsAfterLogin_();
+if(!isFirebaseCloudMode()) startBackgroundFormsAfterLogin_();
 
 toast(
 "✅ 登入成功"
@@ -2444,6 +2459,22 @@ skipForms:true
 
 async function refreshAllData(opts){
 
+if(isFirebaseCloudMode()){
+const token=String(S.token||"");
+if(!token) return;
+await Promise.allSettled([
+loadClubs(),loadEvent(),loadCloudUploadSettings(),loadServerStudentActivity(opts||{})
+]);
+if(token!==String(S.token||"")) return;
+S.clouds=(S.cloudClubRows||[]).filter(function(row){return row.active!==false;}).map(function(row){
+return {permanentClubId:row.permanentClubId,club:row.clubName,category:row.category,
+configured:row.evaluationFolderConfigured,url:row.evaluationFolderUrl,version:row.linkVersion};
+});
+renderClouds();
+$("cloudMeta").textContent="已設定 "+S.clouds.filter(function(row){return row.configured;}).length+" / "+S.clouds.length;
+$("lastRefresh").textContent="最後同步："+new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(new Date());
+return;
+}
 opts=opts||{};
 if(!S.token)return;
 
@@ -12172,6 +12203,7 @@ encoded ||
 ""
 );
 
+if(isFirebaseCloudMode() && !old){toast("請先選擇既有社團，再編輯雲端設定。");return;}
 clearClubSavePartialState_();
 
 const c =
@@ -12215,6 +12247,8 @@ clubCloudParticipationForEdit_(c);
 
 $("clubError").textContent=
 "";
+
+if(isFirebaseCloudMode()) HKSP_ADMIN_CLOUD.prepareClubEdit(c,clubCloudRowForEdit_(c));
 
 openModal(
 "clubModal"
@@ -12367,6 +12401,7 @@ return {ok:false, stale:false, error:e};
 }
 
 async function saveClub(){
+if(isFirebaseCloudMode()) return HKSP_ADMIN_CLOUD.saveClub();
 if(S.clubSaveBusy) return;
 const seq=++S.clubSaveSeq;
 const tokenAtStart=String(S.token||"");
@@ -14070,6 +14105,7 @@ function toTaiwanLocalInputValue(iso){
 if(!iso) return "";
 const d=new Date(iso);
 if(Number.isNaN(d.getTime())) return "";
+if(isFirebaseCloudMode()) d.setTime(d.getTime()-60000);
 const parts=new Intl.DateTimeFormat("en-CA",{
 timeZone:"Asia/Taipei",
 year:"numeric",month:"2-digit",day:"2-digit",
@@ -14087,7 +14123,8 @@ const text=String(value||"").trim();
 if(!text) return null;
 const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(text);
 if(!m) throw new Error("時間格式不正確（請用台灣時間）");
-return m[1]+"-"+m[2]+"-"+m[3]+"T"+m[4]+":"+m[5]+":00+08:00";
+const iso=m[1]+"-"+m[2]+"-"+m[3]+"T"+m[4]+":"+m[5]+":00+08:00";
+return isFirebaseCloudMode()?new Date(Date.parse(iso)+60000).toISOString():iso;
 }
 
 function parseClubIdList(text){
@@ -14122,6 +14159,7 @@ $("featureFolderUrl").value=S.cloudUploadSettings.feature.url||"";
 $("cloudUploadMeta").textContent=
 "評選 v"+(S.cloudUploadSettings.evaluation.version||0)+
 "｜特色 v"+(S.cloudUploadSettings.feature.version||0);
+if(isFirebaseCloudMode()) HKSP_ADMIN_CLOUD.renderMakeupChoices();
 }catch(e){
 if(isGasUrlFetchQuotaError_(e&&e.message)){
 haltGasUrlFetchQuota_(e.message);
@@ -14211,6 +14249,7 @@ if(!Array.isArray(r.clubs)){
 throw new Error("雲端狀態資料契約錯誤：缺少 clubs 陣列");
 }
 S.cloudClubRows=r.clubs;
+if(isFirebaseCloudMode()) HKSP_ADMIN_CLOUD.renderMakeupChoices();
 S.cloudClubRowsById={};
 S.cloudClubRows.forEach(function(row){
 if(!row||!row.permanentClubId) return;
