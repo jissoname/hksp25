@@ -1029,6 +1029,170 @@ oninput="renderClouds()"
 
 </section>
 
+<section class="panel closed">
+
+<button class="panel-head" onclick="togglePanel(this)">
+
+<div>
+
+<div class="panel-title">
+📁 評選／特色上傳設定
+</div>
+
+<div id="cloudUploadMeta" class="panel-meta">
+候選｜資料夾配對暫停｜學生上傳關閉
+</div>
+
+</div>
+
+<span class="chev">
+▼
+</span>
+
+</button>
+
+<div class="panel-body">
+
+<div class="grid2">
+
+<div>
+
+<label class="label">
+評選正式截止
+</label>
+
+<input
+id="evalUploadDeadline"
+class="field"
+type="datetime-local"
+>
+
+<label class="label">
+評選補交截止
+</label>
+
+<input
+id="evalMakeupDeadline"
+class="field"
+type="datetime-local"
+>
+
+<label class="label">
+評選補交社團（永久 Club_ID，逗號分隔）
+</label>
+
+<input
+id="evalMakeupClubs"
+class="field"
+placeholder="例如 D023,D001"
+>
+
+<button
+class="btn btn-primary"
+type="button"
+onclick="saveEvalUploadSettings()"
+>
+儲存評選上傳設定
+</button>
+
+</div>
+
+<div>
+
+<label class="label">
+特色正式截止
+</label>
+
+<input
+id="featureUploadDeadline"
+class="field"
+type="datetime-local"
+>
+
+<label class="label">
+特色補交截止
+</label>
+
+<input
+id="featureMakeupDeadline"
+class="field"
+type="datetime-local"
+>
+
+<label class="label">
+特色補交社團（永久 Club_ID，逗號分隔）
+</label>
+
+<input
+id="featureMakeupClubs"
+class="field"
+placeholder="例如 D023"
+>
+
+<label class="label">
+特色共用 Drive 資料夾
+</label>
+
+<input
+id="featureFolderUrl"
+class="field"
+placeholder="https://drive.google.com/drive/folders/..."
+>
+
+<button
+class="btn btn-primary"
+type="button"
+onclick="saveFeatureUploadSettings()"
+>
+儲存特色上傳設定
+</button>
+
+</div>
+
+</div>
+
+<hr style="border:0;border-top:1px solid #d5e0ec;margin:18px 0">
+
+<div class="toolbar" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+
+<button
+class="btn"
+type="button"
+onclick="loadCloudUploadSettings()"
+>
+重新載入設定
+</button>
+
+<button
+class="btn"
+type="button"
+onclick="loadClubCloudRows()"
+>
+重新載入社團雲端狀態
+</button>
+
+</div>
+
+<div id="pairPreviewBox" class="list" style="margin-top:12px">
+
+<div class="state">
+資料夾建立、預覽配對、搬移與共享仍暫停；此區不提供可用操作。評選資料夾請沿用既有「社團專屬雲端」手動連結；特色目的地用上方共用資料夾欄位。
+</div>
+
+</div>
+
+<div id="clubCloudRowsBox" class="list" style="margin-top:12px">
+
+<div class="state">
+社團參與項目與評選資料夾狀態載入後顯示於此。
+</div>
+
+</div>
+
+</div>
+
+</section>
+
 </main>
 
 </div>
@@ -1157,6 +1321,25 @@ class="field"
 id="clubCategory"
 class="field"
 ></select>
+
+<label class="label">
+參與項目（雲端上傳）
+</label>
+
+<select
+id="clubParticipation"
+class="field"
+>
+<option value="evaluation">
+評選
+</option>
+<option value="feature">
+特色
+</option>
+<option value="both">
+兩項皆參加
+</option>
+</select>
 
 <div id="clubError" class="error"></div>
 
@@ -1467,6 +1650,8 @@ eventScreenVersion:null,
 busy:false,
 clubSaveSeq:0,
 clubSaveBusy:false,
+clubSaveConfirmed:null,
+clubSaveUnconfirmed:null,
 clubListSeq:0,
 judgeListSeq:0
 };
@@ -2283,7 +2468,10 @@ startAdminChangeFeed_();
 
 Promise.allSettled([
 loadBindings(),
-loadClouds()
+loadClouds(),
+typeof loadCloudUploadSettings==="function"
+? loadCloudUploadSettings()
+: Promise.resolve()
 ]).catch(function(){});
 
 Promise.resolve()
@@ -9929,6 +10117,11 @@ r.studentQueryClubs
 :
 S.clubs.slice();
 
+if(typeof loadClubCloudRows==="function"){
+await loadClubCloudRows();
+if(!clubListLoadLive_(loadId)) return false;
+}
+
 $("statClubs").textContent =
 S.clubs.length;
 
@@ -10977,6 +11170,137 @@ onclick="deleteClub('${encodeURIComponent(c.name)}')"
 
 }
 
+function clearClubSavePartialState_(){
+S.clubSaveConfirmed=null;
+S.clubSaveUnconfirmed=null;
+}
+
+function clubSaveFingerprint_(oldName, clubName, category){
+return [String(oldName||""), String(clubName||""), String(category||"")].join("\u0001");
+}
+
+function rememberClubSaveConfirmed_(oldName, clubName, category, saved){
+const permanentClubId=clubPermanentId_(saved)||String((saved&&saved.permanentClubId)||"").trim().toUpperCase();
+if(!permanentClubId) return;
+S.clubSaveUnconfirmed=null;
+S.clubSaveConfirmed={
+fingerprint:clubSaveFingerprint_(oldName, clubName, category),
+oldName:String(oldName||""),
+clubName:String(clubName||""),
+category:String(category||""),
+permanentClubId:permanentClubId,
+legacyClubId:String((saved&&saved.legacyClubId)||"").trim(),
+club:Object.assign({}, saved||{}, {
+permanentClubId:permanentClubId,
+name:clubName,
+category:category
+})
+};
+const oldNameEl=$("clubOldName");
+if(oldNameEl){
+/*
+ * 改名成功後表單仍可能留著舊名；後續若需更新社團，
+ * 必須以已確認的新名稱為基準，不可再帶原舊名重送。
+ */
+oldNameEl.value=clubName;
+}
+}
+
+function clubSaveConfirmedReusable_(oldName, clubName, category){
+const confirmed=S.clubSaveConfirmed;
+if(!confirmed || !confirmed.permanentClubId) return null;
+if(String(confirmed.clubName||"")!==String(clubName||"")) return null;
+if(String(confirmed.category||"")!==String(category||"")) return null;
+/*
+ * 名稱／屬性未變即可沿用已確認身分；oldName 可能已在成功後改寫為新名。
+ */
+return confirmed;
+}
+
+function markClubSaveUnconfirmed_(oldName, clubName, category){
+S.clubSaveConfirmed=null;
+S.clubSaveUnconfirmed={
+fingerprint:clubSaveFingerprint_(oldName, clubName, category),
+oldName:String(oldName||""),
+clubName:String(clubName||""),
+category:String(category||"")
+};
+}
+
+function findClubSaveMatchInList_(clubName, category){
+const rows=Array.isArray(S.clubs)?S.clubs:[];
+const name=String(clubName||"");
+const cat=String(category||"");
+return rows.find(function(row){
+return String(row&&row.name||"")===name && String(row&&row.category||"")===cat && !!clubPermanentId_(row);
+})||null;
+}
+
+async function clubSaveVerifyExistingBeforeResend_(oldName, clubName, category, seq, tokenAtStart){
+const pending=S.clubSaveUnconfirmed;
+if(!pending){
+return {status:"none"};
+}
+/*
+ * 未確認工作必須先釐清；查證一律以原 pending 身分為準，
+ * 不可因目前表單 fingerprint 不同而跳過、直接重送新增／更新。
+ */
+const probeOldName=String(pending.oldName||"");
+const probeClubName=String(pending.clubName||"");
+const probeCategory=String(pending.category||"");
+const formChanged=
+clubSaveFingerprint_(oldName, clubName, category)!==pending.fingerprint;
+let found=findClubSaveMatchInList_(probeClubName, probeCategory);
+if(!found){
+let loadOk=false;
+try{
+const loadId=beginClubListLoad_();
+const loadResult=await loadClubs(loadId);
+loadOk=loadResult!==false;
+}
+catch(_e){
+loadOk=false;
+}
+if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
+return {status:"stale"};
+}
+if(!loadOk){
+return {
+status:"verify_failed",
+formChanged:formChanged,
+message:"儲存結果未確認，清單核對失敗；請重新載入後再存，不要再次新增或更新。"
+};
+}
+found=findClubSaveMatchInList_(probeClubName, probeCategory);
+}
+if(!found){
+/*
+ * 清單已成功核對且查無原工作 → 釐清為未建立，可清未確認狀態。
+ */
+S.clubSaveUnconfirmed=null;
+return {
+status:"absent",
+formChanged:formChanged,
+pending:{
+oldName:probeOldName,
+clubName:probeClubName,
+category:probeCategory
+}
+};
+}
+const saved=Object.assign({}, found, {
+permanentClubId:clubPermanentId_(found),
+name:probeClubName,
+category:probeCategory
+});
+rememberClubSaveConfirmed_(probeOldName, probeClubName, probeCategory, saved);
+return {
+status:"found",
+formChanged:formChanged,
+club:saved
+};
+}
+
 function openClubModal(
 encoded=""
 ){
@@ -10986,6 +11310,8 @@ decodeURIComponent(
 encoded ||
 ""
 );
+
+clearClubSavePartialState_();
 
 const c =
 S.clubs.find(
@@ -11022,6 +11348,17 @@ c
 "編輯社團"
 :
 "新增社團";
+
+$("clubParticipation").value=
+(c&&(c.cloudParticipation||c.participation))||
+(
+S.cloudClubRowsById&&
+c&&
+c.permanentClubId&&
+S.cloudClubRowsById[c.permanentClubId]&&
+S.cloudClubRowsById[c.permanentClubId].participation
+)||
+"evaluation";
 
 $("clubError").textContent=
 "";
@@ -11159,6 +11496,7 @@ const tokenAtStart=String(S.token||"");
 const oldName=$("clubOldName").value;
 const clubName=$("clubName").value.trim();
 const category=$("clubCategory").value;
+const participation=$("clubParticipation").value;
 const saveBtn=$("clubSaveBtn");
 const prevLabel=saveBtn?String(saveBtn.textContent||"儲存"):"儲存";
 const listEl=$("clubList");
@@ -11171,7 +11509,89 @@ saveBtn.disabled=true;
 saveBtn.textContent="儲存中…";
 }
 let confirmedSuccess=false;
+let saved=null;
+let skippedClubMutation=false;
+let clubMutationFolderEnsure=null;
+let participationFolderEnsure=null;
 try{
+const reusable=clubSaveConfirmedReusable_(oldName, clubName, category);
+if(reusable){
+confirmedSuccess=true;
+skippedClubMutation=true;
+saved=Object.assign({}, reusable.club||{}, {
+permanentClubId:reusable.permanentClubId,
+legacyClubId:reusable.legacyClubId||"",
+name:clubName,
+category:category
+});
+}
+else{
+const verified=await clubSaveVerifyExistingBeforeResend_(
+oldName,
+clubName,
+category,
+seq,
+tokenAtStart
+);
+const verifyStatus=verified&&verified.status?verified.status:"none";
+if(verifyStatus==="stale"){
+return;
+}
+if(verifyStatus==="verify_failed"){
+/*
+ * 核對失敗／false／逾時：保留原未確認工作，禁止新增／更新 POST。
+ */
+throw new Error(
+(verified&&verified.message)||
+"儲存結果未確認，清單核對失敗；請重新載入後再存，不要再次新增或更新。"
+);
+}
+if(verifyStatus==="found" && verified.club && clubPermanentId_(verified.club)){
+confirmedSuccess=true;
+const confirmedClub=verified.club;
+if(!verified.formChanged){
+skippedClubMutation=true;
+saved=Object.assign({}, confirmedClub, {
+permanentClubId:clubPermanentId_(confirmedClub),
+name:clubName,
+category:category
+});
+}
+else{
+/*
+ * 原未確認工作已釐清為存在；表單已改則依目前輸入做更新（以已確認名稱為舊名）。
+ */
+const updateFrom=String(confirmedClub.name||confirmedClub.clubName||"");
+const r=await api("adminUpdateClub",{
+oldName:updateFrom,
+clubName:clubName,
+category:category
+});
+if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
+return;
+}
+if(unauthorized(r)) return;
+if(!r || r.success!==true){
+const failMsg=String((r&&r.message)||"儲存失敗");
+if(/逾時|Failed to fetch|網路|NetworkError|unconfirmed|未確認/i.test(failMsg)){
+markClubSaveUnconfirmed_(updateFrom, clubName, category);
+}
+throw new Error(failMsg);
+}
+confirmedSuccess=true;
+saved=Object.assign({}, r.club||{}, {
+permanentClubId:clubPermanentId_(r.club)||String(r.permanentClubId||confirmedClub.permanentClubId||"").trim().toUpperCase(),
+legacyClubId:String((r.club&&r.club.legacyClubId)||r.legacyClubId||"").trim(),
+name:clubName,
+category:category
+});
+rememberClubSaveConfirmed_(updateFrom, clubName, category, saved);
+}
+}
+else{
+/*
+ * status none／absent：無未確認工作，或已確認查無，才允許新增／更新。
+ */
 const r=oldName
 ? await api("adminUpdateClub",{oldName,clubName,category})
 : await api("adminAddClub",{clubName,category});
@@ -11180,17 +11600,70 @@ return;
 }
 if(unauthorized(r)) return;
 if(!r || r.success!==true){
-throw new Error((r&&r.message)||"儲存失敗");
+const failMsg=String((r&&r.message)||"儲存失敗");
+if(/逾時|Failed to fetch|網路|NetworkError|unconfirmed|未確認/i.test(failMsg)){
+markClubSaveUnconfirmed_(oldName, clubName, category);
+}
+throw new Error(failMsg);
 }
 confirmedSuccess=true;
-const saved=Object.assign({}, r.club||{}, {
+saved=Object.assign({}, r.club||{}, {
 permanentClubId:clubPermanentId_(r.club)||String(r.permanentClubId||"").trim().toUpperCase(),
-legacyClubId:String((r.club&&r.club.legacyClubId)||r.legacyClubId||"").trim()
+legacyClubId:String((r.club&&r.club.legacyClubId)||r.legacyClubId||"").trim(),
+name:clubName,
+category:category
 });
+if(r.folderEnsure){
+clubMutationFolderEnsure=r.folderEnsure;
+}
+rememberClubSaveConfirmed_(oldName, clubName, category, saved);
+}
+}
+if(saved && saved.permanentClubId){
+const part=await api("adminSetClubCloudParticipation",{
+permanentClubId:saved.permanentClubId,
+participation
+});
+if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
+return;
+}
+if(unauthorized(part)) return;
+if(part&&part.success===false){
+throw new Error(part.message||"社團已存，但參與項目儲存失敗");
+}
+saved.cloudParticipation=participation;
+if(part.folderEnsure){
+participationFolderEnsure=part.folderEnsure;
+}
+}
+let folderEnsureResult=null;
+const wasAdd=!oldName && !skippedClubMutation;
+/*
+ * 建夾待辦與 ensure 由後端在新增成功／參與成功路徑執行；
+ * 前端只讀回應、不另發第二次 ensure（關頁／參與失敗不丟待辦）。
+ * 改名／改屬性不搬夾；特色沿用共用夾。
+ */
+if(saved && oldName && !wasAdd){
+folderEnsureResult={
+skipped:true,
+renamePolicy:{
+autoMove:false,
+autoDelete:false,
+note:"社團改名／改屬性不自動搬夾或刪夾；請另案確認後處理。"
+}
+};
+}
+else if(wasAdd){
+folderEnsureResult=participationFolderEnsure||clubMutationFolderEnsure||null;
+}
+clearClubSavePartialState_();
 let patched=null;
 let listPatched=false;
-if(clubSaveCanPatchLocally_(oldName, saved)){
-patched=applySavedClubToList_(oldName, clubName, category, saved);
+const patchOldName=skippedClubMutation
+? (saved && saved.name) || clubName
+: oldName;
+if(clubSaveCanPatchLocally_(patchOldName, saved)){
+patched=applySavedClubToList_(patchOldName, clubName, category, saved);
 listPatched=true;
 $("statClubs").textContent=S.clubs.length;
 $("clubMeta").textContent=`${S.clubs.length} 個社團`;
@@ -11217,6 +11690,19 @@ toast("✅ 社團資料已儲存");
 else{
 toast("✅ 社團資料已儲存");
 }
+if(folderEnsureResult && folderEnsureResult.skipped && folderEnsureResult.renamePolicy){
+toast("ℹ️ "+folderEnsureResult.renamePolicy.note);
+}
+else if(folderEnsureResult && folderEnsureResult.success===true && folderEnsureResult.step==="done"){
+toast("✅ 評選資料夾已建立／綁定");
+}
+else if(folderEnsureResult && folderEnsureResult.success===false){
+const stepLabel=
+folderEnsureResult.step==="need_create"?"待建立":
+folderEnsureResult.step==="need_bind"?"待綁定":
+folderEnsureResult.step==="conflict"?"待核對（衝突）":"待核對";
+toast("⚠️ 社團已存，評選資料夾"+stepLabel+"：請於雲端狀態重試");
+}
 /*
  * 本地已依 Club_ID 更新後仍背景重讀；較早發出的名單請求受 clubListSeq 擋下，
  * 不可把舊屬性列蓋回或與新列並存。
@@ -11236,17 +11722,32 @@ if(seq!==S.clubSaveSeq || tokenAtStart!==String(S.token||"")){
 return;
 }
 const message=String(e&&e.message||"");
-if(/逾時|Failed to fetch|網路|NetworkError|unconfirmed|未確認/i.test(message)){
-$("clubError").textContent="儲存結果未確認，請先核對清單";
+const uncertain=/逾時|Failed to fetch|網路|NetworkError|unconfirmed|未確認|核對失敗/i.test(message);
+if(uncertain && !confirmedSuccess && !S.clubSaveUnconfirmed){
+markClubSaveUnconfirmed_(oldName, clubName, category);
+}
+if(uncertain){
+$("clubError").textContent=
+confirmedSuccess
+? "社團已存，但參與項目提交未確認；請重試參與項目或重新載入後再存。"
+: (message&&/核對失敗/.test(message)
+? message
+: "儲存結果未確認，請先核對清單");
+}
+else if(confirmedSuccess){
+$("clubError").textContent=
+message||"社團已存，但參與項目儲存失敗";
 }
 else{
 $("clubError").textContent=message||"儲存失敗";
 }
 }
 finally{
-if(!confirmedSuccess){
+/*
+ * 社團成功但參與失敗／未確認時，confirmedSuccess 可能已是 true；
+ * 仍必須恢復按鈕，讓管理員可重試（不可卡在「儲存中…」）。
+ */
 finishClubSaveControls_(seq, saveBtn, prevLabel);
-}
 }
 
 }
@@ -12597,6 +13098,200 @@ closeModal(id);
 }
 )
 );
+
+/* ============================================================
+   CLOUD UPLOAD SETTINGS (GAS session; folders paused)
+   ============================================================ */
+
+S.cloudUploadSettings=S.cloudUploadSettings||{evaluation:{version:0},feature:{version:0}};
+S.cloudClubRows=S.cloudClubRows||[];
+S.cloudClubRowsById=S.cloudClubRowsById||{};
+
+function toTaiwanLocalInputValue(iso){
+if(!iso) return "";
+const d=new Date(iso);
+if(Number.isNaN(d.getTime())) return "";
+const parts=new Intl.DateTimeFormat("en-CA",{
+timeZone:"Asia/Taipei",
+year:"numeric",month:"2-digit",day:"2-digit",
+hour:"2-digit",minute:"2-digit",hour12:false
+}).formatToParts(d);
+const get=function(type){
+const hit=parts.find(function(p){ return p.type===type; });
+return hit?hit.value:"";
+};
+return get("year")+"-"+get("month")+"-"+get("day")+"T"+get("hour")+":"+get("minute");
+}
+
+function taiwanLocalInputToIso(value){
+const text=String(value||"").trim();
+if(!text) return null;
+const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(text);
+if(!m) throw new Error("時間格式不正確（請用台灣時間）");
+return m[1]+"-"+m[2]+"-"+m[3]+"T"+m[4]+":"+m[5]+":00+08:00";
+}
+
+function parseClubIdList(text){
+return String(text||"").split(/[,，\s]+/).map(function(x){ return x.trim().toUpperCase(); }).filter(Boolean);
+}
+
+async function loadCloudUploadSettings(){
+try{
+const r=await api("adminGetCloudUploadSettings");
+if(unauthorized(r)) return;
+if(!r||r.success===false){
+throw new Error((r&&r.message)||"無法讀取上傳設定");
+}
+S.cloudUploadSettings={
+evaluation:r.evaluation||{version:0},
+feature:r.feature||{version:0}
+};
+$("evalUploadDeadline").value=toTaiwanLocalInputValue(S.cloudUploadSettings.evaluation.deadlineAt);
+$("evalMakeupDeadline").value=toTaiwanLocalInputValue(S.cloudUploadSettings.evaluation.makeupDeadlineAt);
+$("evalMakeupClubs").value=(S.cloudUploadSettings.evaluation.makeupClubIds||[]).join(",");
+$("featureUploadDeadline").value=toTaiwanLocalInputValue(S.cloudUploadSettings.feature.deadlineAt);
+$("featureMakeupDeadline").value=toTaiwanLocalInputValue(S.cloudUploadSettings.feature.makeupDeadlineAt);
+$("featureMakeupClubs").value=(S.cloudUploadSettings.feature.makeupClubIds||[]).join(",");
+$("featureFolderUrl").value=S.cloudUploadSettings.feature.url||"";
+$("cloudUploadMeta").textContent=
+"評選 v"+(S.cloudUploadSettings.evaluation.version||0)+
+"｜特色 v"+(S.cloudUploadSettings.feature.version||0);
+}catch(e){
+$("cloudUploadMeta").textContent="讀取失敗："+e.message;
+}
+}
+
+async function saveEvalUploadSettings(){
+let deadlineAt=null;
+let makeupDeadlineAt=null;
+try{
+deadlineAt=taiwanLocalInputToIso($("evalUploadDeadline").value);
+makeupDeadlineAt=taiwanLocalInputToIso($("evalMakeupDeadline").value);
+}catch(e){
+toast("❌ "+e.message);
+return;
+}
+const r=await api("adminSaveEvaluationUploadSettings",{
+deadlineAt:deadlineAt,
+makeupDeadlineAt:makeupDeadlineAt,
+makeupClubIds:parseClubIdList($("evalMakeupClubs").value),
+expectedVersion:(S.cloudUploadSettings.evaluation&&S.cloudUploadSettings.evaluation.version)||0
+});
+if(unauthorized(r)) return;
+if(!r||!r.success){
+toast("❌ "+((r&&r.message)||"儲存評選設定失敗"));
+return;
+}
+toast("✅ 評選上傳設定已儲存");
+await loadCloudUploadSettings();
+}
+
+async function saveFeatureUploadSettings(){
+let deadlineAt=null;
+let makeupDeadlineAt=null;
+try{
+deadlineAt=taiwanLocalInputToIso($("featureUploadDeadline").value);
+makeupDeadlineAt=taiwanLocalInputToIso($("featureMakeupDeadline").value);
+}catch(e){
+toast("❌ "+e.message);
+return;
+}
+const r=await api("adminSaveFeatureUploadSettings",{
+deadlineAt:deadlineAt,
+makeupDeadlineAt:makeupDeadlineAt,
+makeupClubIds:parseClubIdList($("featureMakeupClubs").value),
+url:$("featureFolderUrl").value.trim(),
+expectedVersion:(S.cloudUploadSettings.feature&&S.cloudUploadSettings.feature.version)||0
+});
+if(unauthorized(r)) return;
+if(!r||!r.success){
+toast("❌ "+((r&&r.message)||"儲存特色設定失敗"));
+return;
+}
+toast("✅ 特色上傳設定已儲存");
+await loadCloudUploadSettings();
+}
+
+async function loadClubCloudRows(){
+try{
+const clubs=(S.clubs||[]).map(function(c){
+return {
+permanentClubId:c.permanentClubId,
+clubName:c.name,
+name:c.name,
+category:c.category
+};
+}).filter(function(c){ return !!c.permanentClubId; });
+const r=await api("adminListClubCloudRows",{clubs:clubs});
+if(unauthorized(r)) return;
+if(!r||r.success===false){
+throw new Error((r&&r.message)||"無法讀取社團雲端狀態");
+}
+S.cloudClubRows=Array.isArray(r.clubs)?r.clubs:[];
+S.cloudClubRowsById={};
+S.cloudClubRows.forEach(function(row){
+if(!row||!row.permanentClubId) return;
+S.cloudClubRowsById[row.permanentClubId]=row;
+});
+(S.clubs||[]).forEach(function(club){
+const row=club&&club.permanentClubId&&S.cloudClubRowsById[club.permanentClubId];
+if(!row) return;
+club.cloudParticipation=row.participation||null;
+club.participationLabel=row.participationLabel||"未設定";
+club.evaluationFolderConfigured=!!row.evaluationFolderConfigured;
+});
+const lines=S.cloudClubRows.map(function(row){
+const folderLabel=row.folderEnsureLabel||
+(row.evaluationFolderConfigured?"已綁定":"待建立");
+const retry=row.canRetryFolderEnsure
+? `<button type="button" class="btn" onclick="retryClubFolderEnsure('${attr(row.permanentClubId)}')">重試建夾／綁定</button>`
+: "";
+const err=row.folderEnsureError
+? `｜${esc(row.folderEnsureError)}`
+: "";
+return `<div class="list-row"><div><div class="list-title">${esc(row.clubName||row.permanentClubId)}（${esc(row.permanentClubId)}）</div><div class="list-sub">參與：${esc(row.participationLabel||"未設定")}｜評選資料夾：${esc(folderLabel)}${err}</div></div>${retry}</div>`;
+});
+if($("clubCloudRowsBox")){
+$("clubCloudRowsBox").innerHTML=lines.join("")||'<div class="state">尚無社團雲端狀態</div>';
+}
+}catch(e){
+if($("clubCloudRowsBox")){
+$("clubCloudRowsBox").innerHTML=`<div class="state">⚠️ ${esc(e.message)}</div>`;
+}
+}
+}
+
+async function retryClubFolderEnsure(permanentClubId){
+const id=String(permanentClubId||"").trim().toUpperCase();
+const row=(S.cloudClubRowsById&&S.cloudClubRowsById[id])||null;
+const club=(S.clubs||[]).find(function(c){
+return clubPermanentId_(c)===id;
+});
+const clubName=String((row&&row.clubName)||(club&&club.name)||"").trim();
+const category=String((row&&row.category)||(club&&club.category)||"").trim();
+if(!id||!clubName||!category){
+toast("⚠️ 缺少 Club_ID／名稱／屬性，無法重試");
+return;
+}
+try{
+toast("資料夾確保處理中…");
+const r=await api("adminEnsureClubEvaluationFolder",{
+permanentClubId:id,
+clubName:clubName,
+category:category
+});
+if(unauthorized(r)) return;
+if(r&&r.success===true&&r.step==="done"){
+toast("✅ 評選資料夾已建立／綁定");
+}
+else{
+toast("⚠️ "+((r&&(r.message||r.reason))||"仍未完成，請依狀態再試"));
+}
+await loadClubCloudRows();
+}catch(e){
+toast("⚠️ "+(e&&e.message?e.message:"重試失敗"));
+}
+}
 
 document.addEventListener(
 "keydown",
