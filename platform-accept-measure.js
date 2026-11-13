@@ -1,171 +1,299 @@
 /**
- * Workspace-only accept measure (?hkspMeasure=1 on index.html).
- * Classifies callable / portal / static / preflight. No passwords, no token export.
- * Does not alter upload behavior or mode.
+ * Workspace accept measure (?hkspMeasure=1). mode-agnostic; does not change upload.
+ * Safe log only: t, method, pathWithoutQuery, whitelisted action/name.
+ * Never stores body, Authorization, passwords, tokens, or full query URLs.
+ * SDK callable counts and Network fetch/XHR counts are separate (never summed).
  */
 (function (root) {
   "use strict";
-  var q = typeof location !== "undefined" ? String(location.search || "") : "";
-  if (q.indexOf("hkspMeasure=1") < 0) return;
 
-  var state = {
-    startedAt: Date.now(),
-    events: [],
-    idle: null
+  var ACTION_ALLOW = {
+    getClubData: true,
+    getEventConfig: true,
+    getClubStudentAccessState: true,
+    listClubDriveUploads: true,
+    listClubEvaluationFolders: true,
+    listActiveClubsForRegistration: true,
+    getClubStudentForgotPasswordContact: true,
+    prepareClubDriveUpload: true,
+    completeClubDriveUpload: true,
+    createClubEvaluationFolder: true
   };
 
-  function classify(url, method, bodyHint) {
-    var u = String(url || "");
-    var hint = String(bodyHint || "");
-    if (/cloudfunctions\.net|cloudfunctions\.googleapis|run\.app/i.test(u)) {
-      if (/hkspPublicPortal|hkspCloudAdminPortal/i.test(u) || /portal/i.test(hint)) {
-        return "portal";
+  function pathOnly(url) {
+    var s = String(url || "");
+    try {
+      if (/^https?:\/\//i.test(s)) {
+        var u = new URL(s);
+        return u.origin + u.pathname;
       }
-      return "callable";
+    } catch (_e) {}
+    var q = s.indexOf("?");
+    var h = s.indexOf("#");
+    var cut = s.length;
+    if (q >= 0) cut = Math.min(cut, q);
+    if (h >= 0) cut = Math.min(cut, h);
+    return s.slice(0, cut);
+  }
+
+  function whitelistAction(raw) {
+    var a = String(raw || "").trim();
+    if (!a) return null;
+    if (ACTION_ALLOW[a]) return a;
+    return null;
+  }
+
+  function actionFromBodyString(body) {
+    if (typeof body !== "string" || !body) return null;
+    // Parse only to extract allowlisted action; never retain body.
+    try {
+      var j = JSON.parse(body);
+      if (j && typeof j.action === "string") return whitelistAction(j.action);
+      if (j && j.data && typeof j.data.action === "string") return whitelistAction(j.data.action);
+    } catch (_e) {}
+    return null;
+  }
+
+  function classifyNetwork(path, method) {
+    var m = String(method || "GET").toUpperCase();
+    if (m === "OPTIONS") return "preflight";
+    var p = String(path || "");
+    if (/hkspPublicPortal|hkspCloudAdminPortal/i.test(p)) return "portal";
+    if (/cloudfunctions\.net|run\.app/i.test(p) && /\/(listClub|prepareClub|completeClub|createClub|getClub)/i.test(p)) {
+      return "callable_http";
     }
-    if (/identitytoolkit|securetoken|googleapis\.com\/identity/i.test(u)) return "auth";
-    if (/firestore\.googleapis|firebaselogging|firebaseio|firebasestorage/i.test(u)) {
-      return "firebase_other";
-    }
-    if (method === "OPTIONS") return "preflight";
-    if (/\.(js|css|png|jpg|svg|ico|woff2?)(\?|$)/i.test(u)) return "static";
-    if (/vercel|gstatic|fonts\.google/i.test(u)) return "static";
+    if (/cloudfunctions\.net|run\.app/i.test(p)) return "backend_http";
+    if (/identitytoolkit|securetoken/i.test(p)) return "auth";
+    if (/\.(js|css|png|jpg|svg|ico|woff2?)$/i.test(p)) return "static";
+    if (/gstatic|fonts\.google|vercel/i.test(p)) return "static";
     return "other";
   }
 
-  function push(kind, url, method, detail) {
-    state.events.push({
-      t: Date.now() - state.startedAt,
-      kind: kind,
-      method: method || "",
-      url: String(url || "").slice(0, 220),
-      detail: detail || null
-    });
+  function safeNetworkEvent(url, method, action) {
+    var path = pathOnly(url);
+    var kind = classifyNetwork(path, method);
+    return {
+      source: "network",
+      t: 0,
+      method: String(method || "GET").toUpperCase(),
+      path: path,
+      action: action || null,
+      kind: kind
+    };
   }
 
-  function wrapFetch() {
-    if (typeof root.fetch !== "function" || root.fetch.__hkspMeasure) return;
-    var orig = root.fetch.bind(root);
-    function wrapped(input, init) {
-      var url = typeof input === "string" ? input : (input && input.url) || "";
-      var method = (init && init.method) || (input && input.method) || "GET";
-      var bodyHint = "";
-      try {
-        if (init && typeof init.body === "string") bodyHint = init.body.slice(0, 120);
-      } catch (_e) {}
-      push(classify(url, method, bodyHint), url, method, bodyHint || null);
-      return orig(input, init);
+  function safeSdkEvent(name) {
+    return {
+      source: "sdk",
+      t: 0,
+      method: "CALLABLE",
+      path: null,
+      action: whitelistAction(name),
+      kind: "sdk_callable"
+    };
+  }
+
+  function buildMeasure(options) {
+    var opts = options || {};
+    var state = {
+      startedAt: Date.now(),
+      network: [],
+      sdk: [],
+      idle: null
+    };
+
+    function stamp(ev) {
+      ev.t = Date.now() - state.startedAt;
+      return ev;
     }
-    wrapped.__hkspMeasure = true;
-    root.fetch = wrapped;
+
+    function pushNetwork(url, method, bodyForActionOnly) {
+      var methodU = String(method || "GET").toUpperCase();
+      if (methodU === "OPTIONS") {
+        state.network.push(stamp(safeNetworkEvent(url, methodU, null)));
+        return;
+      }
+      var action = actionFromBodyString(bodyForActionOnly);
+      // bodyForActionOnly discarded after action extract — never stored.
+      state.network.push(stamp(safeNetworkEvent(url, methodU, action)));
+    }
+
+    function pushSdk(name) {
+      state.sdk.push(stamp(safeSdkEvent(name)));
+    }
+
+    function countBy(list, keyFn) {
+      var out = {};
+      list.forEach(function (e) {
+        var k = keyFn(e);
+        out[k] = (out[k] || 0) + 1;
+      });
+      return out;
+    }
+
+    function summary() {
+      var netNoPreflight = state.network.filter(function (e) { return e.kind !== "preflight"; });
+      var netBusiness = netNoPreflight.filter(function (e) {
+        return e.kind === "portal" || e.kind === "callable_http" || e.kind === "backend_http";
+      });
+      return {
+        elapsedMs: Date.now() - state.startedAt,
+        network: {
+          total: state.network.length,
+          excludingPreflight: netNoPreflight.length,
+          preflight: state.network.length - netNoPreflight.length,
+          business: netBusiness.length,
+          byKind: countBy(state.network, function (e) { return e.kind; }),
+          events: state.network.slice()
+        },
+        sdk: {
+          total: state.sdk.length,
+          byAction: countBy(state.sdk, function (e) { return e.action || "unknown"; }),
+          events: state.sdk.slice()
+        },
+        note: "network and sdk counted separately — do not add. No bodies/tokens/query strings stored."
+      };
+    }
+
+    function startIdle(ms) {
+      state.idle = {
+        startAt: Date.now(),
+        windowMs: ms || 600000,
+        networkMark: state.network.length,
+        sdkMark: state.sdk.length
+      };
+      return { windowMs: state.idle.windowMs };
+    }
+
+    function idleReport() {
+      if (!state.idle) return null;
+      var net = state.network.slice(state.idle.networkMark).filter(function (e) {
+        return e.kind !== "preflight";
+      });
+      var sdk = state.sdk.slice(state.idle.sdkMark);
+      var netBiz = net.filter(function (e) {
+        return e.kind === "portal" || e.kind === "callable_http" || e.kind === "backend_http";
+      });
+      return {
+        windowMs: state.idle.windowMs,
+        elapsedMs: Date.now() - state.idle.startAt,
+        networkBusiness: netBiz.length,
+        networkEvents: netBiz,
+        sdkTotal: sdk.length,
+        sdkEvents: sdk,
+        note: "Idle on workspace tab. network vs sdk separate."
+      };
+    }
+
+    return {
+      pushNetwork: pushNetwork,
+      pushSdk: pushSdk,
+      summary: summary,
+      startIdle: startIdle,
+      idleReport: idleReport,
+      reset: function () {
+        state.network = [];
+        state.sdk = [];
+        state.startedAt = Date.now();
+        state.idle = null;
+      },
+      _state: state
+    };
   }
 
-  function wrapXhr() {
-    if (!root.XMLHttpRequest || XMLHttpRequest.prototype.__hkspMeasure) return;
-    var open = XMLHttpRequest.prototype.open;
-    var send = XMLHttpRequest.prototype.send;
-    XMLHttpRequest.prototype.open = function (method, url) {
-      this.__hkspM = { method: method, url: url };
-      return open.apply(this, arguments);
-    };
-    XMLHttpRequest.prototype.send = function () {
-      var m = this.__hkspM || {};
-      push(classify(m.url, m.method, ""), m.url, m.method, null);
-      return send.apply(this, arguments);
-    };
-    XMLHttpRequest.prototype.__hkspMeasure = true;
-  }
+  function installBrowserHooks(api) {
+    if (typeof root.fetch === "function" && !root.fetch.__hkspMeasureSafe) {
+      var origFetch = root.fetch.bind(root);
+      root.fetch = function (input, init) {
+        var url = typeof input === "string" ? input : (input && input.url) || "";
+        var method = (init && init.method) || (input && input.method) || "GET";
+        var bodyStr = null;
+        try {
+          if (init && typeof init.body === "string") bodyStr = init.body;
+        } catch (_e) {}
+        api.pushNetwork(url, method, bodyStr);
+        bodyStr = null;
+        return origFetch(input, init);
+      };
+      root.fetch.__hkspMeasureSafe = true;
+    }
 
-  function wrapCallable() {
-    function patch() {
+    if (root.XMLHttpRequest && !XMLHttpRequest.prototype.__hkspMeasureSafe) {
+      var open = XMLHttpRequest.prototype.open;
+      var send = XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.open = function (method, url) {
+        this.__hkspSafe = { method: method, url: url };
+        return open.apply(this, arguments);
+      };
+      XMLHttpRequest.prototype.send = function (body) {
+        var m = this.__hkspSafe || {};
+        var bodyStr = typeof body === "string" ? body : null;
+        api.pushNetwork(m.url, m.method, bodyStr);
+        bodyStr = null;
+        return send.apply(this, arguments);
+      };
+      XMLHttpRequest.prototype.__hkspMeasureSafe = true;
+    }
+
+    function patchCallable() {
       try {
         if (!root.firebase || !firebase.app) return false;
         var fns = firebase.app().functions("asia-east1");
-        if (!fns || fns.__hkspMeasure) return !!fns;
+        if (!fns || fns.__hkspMeasureSafe) return !!fns;
         var orig = fns.httpsCallable.bind(fns);
         fns.httpsCallable = function (name) {
           var fn = orig(name);
           return function (data) {
-            push("callable", name, "CALLABLE", null);
+            api.pushSdk(name);
             return fn(data);
           };
         };
-        fns.__hkspMeasure = true;
+        fns.__hkspMeasureSafe = true;
         return true;
       } catch (_e) {
         return false;
       }
     }
-    if (!patch()) {
+    if (!patchCallable()) {
       var n = 0;
       var timer = setInterval(function () {
         n += 1;
-        if (patch() || n > 40) clearInterval(timer);
+        if (patchCallable() || n > 40) clearInterval(timer);
       }, 250);
     }
   }
 
-  function summary() {
-    var counts = {};
-    state.events.forEach(function (e) {
-      counts[e.kind] = (counts[e.kind] || 0) + 1;
-    });
-    var business = state.events.filter(function (e) {
-      return e.kind === "callable" || e.kind === "portal";
-    });
-    return {
-      elapsedMs: Date.now() - state.startedAt,
-      counts: counts,
-      businessCount: business.length,
-      business: business.slice(),
-      allCount: state.events.length,
-      note: "Workspace Network measure. static/preflight excluded from businessCount. Firestore docs: separate measured vs estimate."
-    };
-  }
-
-  function startIdle(ms) {
-    var windowMs = ms || 600000;
-    state.idle = {
-      startAt: Date.now(),
-      windowMs: windowMs,
-      markIndex: state.events.length
-    };
-    return state.idle;
-  }
-
-  function idleReport() {
-    if (!state.idle) return null;
-    var slice = state.events.slice(state.idle.markIndex);
-    var business = slice.filter(function (e) {
-      return e.kind === "callable" || e.kind === "portal";
-    });
-    return {
-      windowMs: state.idle.windowMs,
-      elapsedMs: Date.now() - state.idle.startAt,
-      businessCount: business.length,
-      business: business,
-      staticOrOther: slice.length - business.length,
-      note: "Idle window on index.html workspace tab only."
-    };
-  }
-
-  wrapFetch();
-  wrapXhr();
-  wrapCallable();
-
-  root.__HKSP_MEASURE = {
-    summary: summary,
-    startIdle: startIdle,
-    idleReport: idleReport,
-    events: function () { return state.events.slice(); },
-    reset: function () {
-      state.events = [];
-      state.startedAt = Date.now();
-      state.idle = null;
-    }
+  var apiExports = {
+    ACTION_ALLOW: ACTION_ALLOW,
+    pathOnly: pathOnly,
+    whitelistAction: whitelistAction,
+    actionFromBodyString: actionFromBodyString,
+    classifyNetwork: classifyNetwork,
+    safeNetworkEvent: safeNetworkEvent,
+    safeSdkEvent: safeSdkEvent,
+    buildMeasure: buildMeasure
   };
 
-  try {
-    console.info("[HKSP measure] active on workspace. Use __HKSP_MEASURE.summary()");
-  } catch (_e) {}
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = apiExports;
+  }
+
+  var q = typeof location !== "undefined" ? String(location.search || "") : "";
+  if (typeof location !== "undefined" && q.indexOf("hkspMeasure=1") >= 0) {
+    var runtime = buildMeasure();
+    installBrowserHooks(runtime);
+    root.__HKSP_MEASURE = {
+      summary: runtime.summary,
+      startIdle: runtime.startIdle,
+      idleReport: runtime.idleReport,
+      reset: runtime.reset,
+      // No events() dumping raw — use summary() only.
+      version: "safe-1"
+    };
+    try {
+      console.info("[HKSP measure safe-1] network/sdk separate; no bodies stored");
+    } catch (_e) {}
+  }
+
+  root.HKSP_ACCEPT_MEASURE = apiExports;
 })(typeof window !== "undefined" ? window : globalThis);
