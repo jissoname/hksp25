@@ -2445,7 +2445,12 @@ markAdminBoot_("operable");
 
 if(typeof clearServerActivityForNewLogin==="function") clearServerActivityForNewLogin();
 
-if(!isFirebaseCloudMode()) startBackgroundFormsAfterLogin_();
+if(isFirebaseCloudMode()){
+// 雲端模式：只開 stamp 唯讀輪詢（portal adminGetFormSyncStamp）；清單／同步尚未遷移。
+scheduleFormSyncWatch_();
+}else{
+startBackgroundFormsAfterLogin_();
+}
 
 toast(
 "✅ 登入成功"
@@ -13276,9 +13281,10 @@ scheduleFormSyncWatch_();
 });
 }
 if(typeof document!=="undefined" && document.hidden) return;
+const intervalMs=isFirebaseCloudMode()?30000:3000;
 S.formSyncWatchTimer=setInterval(function(){
 maybeReloadFormsIfSyncAdvanced_();
-}, 3000);
+}, intervalMs);
 }
 
 async function maybeReloadFormsIfSyncAdvanced_(){
@@ -13314,6 +13320,12 @@ const next=stamp.lastSyncAt?String(stamp.lastSyncAt):"";
 const prev=S.formLastSyncAt?String(S.formLastSyncAt):"";
 if(!next) return;
 if(prev && !(next>prev)) return;
+if(isFirebaseCloudMode()){
+// 雲端模式尚未遷移 list／sync：只記住 stamp，保留上次成功清單，不把失敗畫成 0。
+S.formLastSyncAt=next;
+markAdminBoot_("formsStampOnly", { lastSyncAt: next, via: "cloudStamp" });
+return;
+}
 const r=await api("adminListFormSubmissions");
 if(!formWatchLive_(id)) return;
 if(!r || r.success!==true) return;
