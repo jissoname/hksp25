@@ -10,7 +10,8 @@
   }
   var READ_ACTIONS = new Set([
     "getClubData", "getEventConfig", "adminListClubs", "adminListCloudLinks",
-    "adminListClubCloudRows", "adminGetCloudUploadSettings", "adminReadActivityHandover"
+    "adminListClubCloudRows", "adminGetCloudUploadSettings", "adminReadActivityHandover",
+    "adminListFormSubmissions", "adminGetFormSyncStamp", "adminCheckFormSubmissions"
   ]);
 
   function endpoint(admin) {

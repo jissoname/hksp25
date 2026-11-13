@@ -2446,8 +2446,8 @@ markAdminBoot_("operable");
 if(typeof clearServerActivityForNewLogin==="function") clearServerActivityForNewLogin();
 
 if(isFirebaseCloudMode()){
-// 雲端模式：只開 stamp 唯讀輪詢（portal adminGetFormSyncStamp）；清單／同步尚未遷移。
-scheduleFormSyncWatch_();
+// 雲端模式：不設常駐 stamp 輪詢；表單於 refresh／面板開啟／手動／同步後載入。
+S.formSyncWatchDisabled=true;
 }else{
 startBackgroundFormsAfterLogin_();
 }
@@ -2457,7 +2457,7 @@ toast(
 );
 
 refreshAllData({
-skipForms:true
+skipForms:!isFirebaseCloudMode()
 }).catch(function(){});
 
 }
@@ -2467,9 +2467,10 @@ async function refreshAllData(opts){
 if(isFirebaseCloudMode()){
 const token=String(S.token||"");
 if(!token) return;
+const skipForms=!!(opts&&opts.skipForms);
 await Promise.allSettled([
 loadClubs(),loadEvent(),loadCloudUploadSettings(),loadServerStudentActivity(opts||{})
-]);
+].concat(skipForms?[]:[loadForms({source:"cloudRefresh"})]));
 if(token!==String(S.token||"")) return;
 S.clouds=(S.cloudClubRows||[]).filter(function(row){return row.active!==false;}).map(function(row){
 return {permanentClubId:row.permanentClubId,club:row.clubName,category:row.category,
@@ -13166,9 +13167,11 @@ async function loadForms(opts){
 opts=opts||{};
 const id=opts.opId||formOpIdentity_();
 if(!formOpLive_(id)) return false;
+if(S.formListInflight) return S.formListInflight;
 const previousUi=S.formSyncUi;
 paintFormPanelMeta_(null, "reading");
 
+const pending= (async function(){
 try{
 
 const r =
@@ -13214,6 +13217,13 @@ if(!formOpLive_(id)) return false;
 paintFormsLoadFailed_(e&&e.message||"無法取得表單進度");
 return false;
 
+}
+})();
+S.formListInflight=pending;
+try{
+return await pending;
+}finally{
+if(S.formListInflight===pending) S.formListInflight=null;
 }
 
 }
@@ -13270,6 +13280,8 @@ function scheduleFormSyncWatch_(){
 if(!S.token) return;
 if(S.formSyncQuotaBlocked) return;
 if(S.formSyncWatchTimer) return;
+// 雲端模式：禁止整頁常駐 stamp 輪詢；僅面板開啟／手動刷新／同步後更新。
+if(isFirebaseCloudMode() || S.formSyncWatchDisabled) return;
 if(!S.formSyncWatchVisibilityBound && typeof document!=="undefined"){
 S.formSyncWatchVisibilityBound=true;
 document.addEventListener("visibilitychange", function(){
@@ -13281,10 +13293,9 @@ scheduleFormSyncWatch_();
 });
 }
 if(typeof document!=="undefined" && document.hidden) return;
-const intervalMs=isFirebaseCloudMode()?30000:3000;
 S.formSyncWatchTimer=setInterval(function(){
 maybeReloadFormsIfSyncAdvanced_();
-}, intervalMs);
+}, 3000);
 }
 
 async function maybeReloadFormsIfSyncAdvanced_(){
@@ -13320,15 +13331,15 @@ const next=stamp.lastSyncAt?String(stamp.lastSyncAt):"";
 const prev=S.formLastSyncAt?String(S.formLastSyncAt):"";
 if(!next) return;
 if(prev && !(next>prev)) return;
-if(isFirebaseCloudMode()){
-// 雲端模式尚未遷移 list／sync：只記住 stamp，保留上次成功清單，不把失敗畫成 0。
-S.formLastSyncAt=next;
-markAdminBoot_("formsStampOnly", { lastSyncAt: next, via: "cloudStamp" });
-return;
-}
 const r=await api("adminListFormSubmissions");
 if(!formWatchLive_(id)) return;
-if(!r || r.success!==true) return;
+if(!r || r.success!==true){
+// 失敗保留上次成功清單，不當成零筆。
+if(S.formLastSuccessCounts){
+paintFormPanelMeta_(S.formLastSuccessCounts, "failed", (r&&r.message)||"未取得表單進度");
+}
+return;
+}
 if(unauthorized(r)) return;
 applyFormListSuccess_(r, "idle");
 markAdminBoot_("formsLiveApplied", {
@@ -13336,6 +13347,9 @@ lastSyncAt:S.formLastSyncAt||null,
 via:"stampThenList"
 });
 }catch(error){
+if(S.formLastSuccessCounts){
+paintFormPanelMeta_(S.formLastSuccessCounts, "failed", (error&&error.message)||"未取得表單進度");
+}
 }finally{
 if(Number(S.formSyncWatchBusyRequestId)===Number(requestId)){
 S.formSyncWatchBusy=false;
