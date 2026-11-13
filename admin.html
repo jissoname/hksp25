@@ -1187,8 +1187,21 @@ onclick="loadClubCloudRows()"
 
 <div id="pairPreviewBox" class="list" style="margin-top:12px">
 
-<div class="state">
-評選資料夾：單社 ensure／重試已開放（不批次建夾、不搬刪、不改共享）。預覽配對仍暫停。學生上傳維持關閉。特色目的地用上方共用資料夾欄位。
+<div class="state" id="pairPreviewState">
+評選資料夾：單社 ensure／重試已開放（不批次建夾、不搬刪、不改共享）。預覽配對仍暫停（未完成）。學生上傳維持關閉。特色目的地用上方共用資料夾欄位；下方為評選根資料夾（配對用）。
+</div>
+
+<label class="label">評選活動根資料夾（配對預覽用，非特色共用夾）</label>
+<input
+id="evalRootFolderUrl"
+class="field"
+placeholder="https://drive.google.com/drive/folders/..."
+value="https://drive.google.com/drive/folders/1kp_2gbJxFi9nsoYZzya9Ms43hr6JtIga"
+>
+
+<div class="btn-row" style="margin-top:8px">
+<button class="btn" type="button" onclick="previewEvalFolderPairs()">預覽配對（仍暫停／未完成）</button>
+<button class="btn" type="button" onclick="confirmMatchedEvalFolderPairs()">確認配對（仍暫停／未完成）</button>
 </div>
 
 </div>
@@ -1658,6 +1671,7 @@ formSyncWatchBusy:false,
 formSyncWatchBusyRequestId:0,
 formSyncWatchRequestSeq:0,
 formSyncWatchVisibilityBound:false,
+formSyncQuotaBlocked:false,
 bindings:[],
 clouds:[],
 eventConfig:null,
@@ -2349,7 +2363,11 @@ list.innerHTML='<div class="state">載入中…</div>';
 
 function paintFormsLoadFailed_(message){
 S.formSyncError=String(message||"無法取得表單進度");
-paintFormPanelMeta_(null, "failed", S.formSyncError);
+if(isGasUrlFetchQuotaError_(S.formSyncError)){
+haltGasUrlFetchQuota_(S.formSyncError);
+return;
+}
+paintFormPanelMeta_(S.formLastSuccessCounts||null, "failed", S.formSyncError);
 const list=$("formList");
 if(list && (!Array.isArray(S.forms) || !S.forms.length)){
 list.innerHTML=
@@ -12956,51 +12974,87 @@ function formApiCount_(value){
 return typeof value==="number" && Number.isInteger(value) && value>=0 ? value : null;
 }
 
-function formNewCountText_(value){
+function formNewCountText_(value, emptyLabel){
 const n=formApiCount_(value);
-return n==null?"待同步":(n+" 份");
+return n==null?(emptyLabel||"待同步"):(n+" 份");
 }
 
-function formClubCountText_(value){
+function formClubCountText_(value, emptyLabel){
 const n=formApiCount_(value);
-return n==null?"待同步":(n+" 個");
+return n==null?(emptyLabel||"待同步"):(n+" 個");
+}
+
+function isGasUrlFetchQuotaError_(payload){
+if(!payload) return false;
+if(typeof payload==="string"){
+return /GAS_URLFETCH_QUOTA|單日呼叫下列服務的次數過多[\s\S]*urlfetch|Firestore HTTP 0:[\s\S]*urlfetch/i.test(payload);
+}
+const code=String(payload.error||payload.code||"");
+const msg=String(payload.message||payload.msg||"");
+if(code==="GAS_URLFETCH_QUOTA"||payload.quotaKind==="urlfetch") return true;
+return isGasUrlFetchQuotaError_(msg);
+}
+
+function haltGasUrlFetchQuota_(message){
+S.formSyncQuotaBlocked=true;
+stopFormSyncWatch_({clearBusy:true});
+S.formCatchUpBusy=false;
+const text=String(message||"Apps Script UrlFetch 今日額度已用尽（非 Firestore HTTP 0／429）。");
+S.formSyncError=text;
+paintFormPanelMeta_(S.formLastSuccessCounts||null, "quota", text);
+const list=$("formList");
+if(list && !(Array.isArray(S.forms)&&S.forms.length)){
+list.innerHTML=`<div class="state">⚠️ ${esc(text)}<div style="margin-top:8px"><button class="btn" type="button" onclick="resumeAfterUrlFetchQuota_()">額度恢復後手動重試</button></div></div>`;
+}
+const meta=$("cloudUploadMeta");
+if(meta){
+meta.textContent="UrlFetch 額度已用尽｜保留畫面欄位，不覆寫正式設定｜"+text;
+}
+toast("⏸️ UrlFetch 日額度已滿；已停止自動輪詢／重試");
+}
+
+function resumeAfterUrlFetchQuota_(){
+S.formSyncQuotaBlocked=false;
+S.formSyncError="";
+paintFormsLoading_();
+retryLoadForms_();
+syncForms({resumeQuota:true}).catch(function(){});
 }
 
 function paintFormPanelMeta_(counts, uiState, errorMessage){
 const forms=Array.isArray(S.forms)?S.forms:[];
-const done=counts && Object.prototype.hasOwnProperty.call(counts, "done")
-? formApiCount_(counts.done)
-: forms.filter(function(x){ return x.status==="submitted"; }).length;
-const pending=counts && counts.pending!=null
-? counts.pending
-: forms.filter(function(x){ return x.status==="pending"; }).length;
-const duplicateClubs=counts && Object.prototype.hasOwnProperty.call(counts, "duplicateClubs")
-? formApiCount_(counts.duplicateClubs)
-: (
-counts && counts.duplicate!=null
-? counts.duplicate
-: forms.filter(function(x){ return x.status==="duplicate"; }).length
-);
-const duplicateResponses=counts && Object.prototype.hasOwnProperty.call(counts, "duplicateResponses")
-? counts.duplicateResponses
-: null;
-const received=counts && Object.prototype.hasOwnProperty.call(counts, "received") ? counts.received : null;
-const recognized=counts && Object.prototype.hasOwnProperty.call(counts, "recognized") ? counts.recognized : null;
-const unrecognized=counts && Object.prototype.hasOwnProperty.call(counts, "unrecognized") ? counts.unrecognized : null;
-const nameConflicts=counts && Object.prototype.hasOwnProperty.call(counts, "nameConflicts") ? counts.nameConflicts : null;
-const retained=counts && Object.prototype.hasOwnProperty.call(counts, "retained") ? counts.retained : null;
-const legacyTotal=counts && Object.prototype.hasOwnProperty.call(counts, "legacyTotal") ? counts.legacyTotal : null;
+S.formSyncUi=uiState||S.formSyncUi||"idle";
+const failedUi=S.formSyncUi==="failed"||S.formSyncUi==="quota";
+const last=S.formLastSuccessCounts||null;
+const src=counts||(failedUi?last:null);
+const miss=failedUi?"未取得":"待同步";
+const pick=function(key, fallback){
+if(src && Object.prototype.hasOwnProperty.call(src, key)) return src[key];
+return failedUi?null:fallback;
+};
+const done=formApiCount_(pick("done", forms.filter(function(x){ return x.status==="submitted"; }).length));
+const pendingRaw=pick("pending", forms.filter(function(x){ return x.status==="pending"; }).length);
+const pending=pendingRaw==null?null:pendingRaw;
+const duplicateClubs=formApiCount_(pick("duplicateClubs",
+forms.filter(function(x){ return x.status==="duplicate"; }).length
+));
+const duplicateResponses=pick("duplicateResponses", null);
+const received=pick("received", null);
+const recognized=pick("recognized", null);
+const unrecognized=pick("unrecognized", null);
+const nameConflicts=pick("nameConflicts", null);
+const retained=pick("retained", null);
+const legacyTotal=pick("legacyTotal", null);
 const total=forms.length;
-const doneStat=formApiCount_(done);
-$("statForms").textContent=doneStat==null?`待同步/${total}`:`${doneStat}/${total}`;
+$("statForms").textContent=done==null?(failedUi?(`未取得/${total||"—"}`):`待同步/${total}`):`${done}/${total}`;
 const legacyPart=formApiCount_(legacyTotal)!=null
 ? `表單回覆總份數 ${formApiCount_(legacyTotal)}｜`
-: "";
+: (failedUi && !last ? "表單回覆總份數 未取得｜" : "");
+const pendingText=pending==null?miss:(pending+" 個");
 $("formMeta").textContent=
-`${legacyPart}收到回覆 ${formNewCountText_(received)}｜辨識成功 ${formNewCountText_(recognized)}｜無法辨識 ${formNewCountText_(unrecognized)}｜名稱衝突 ${formNewCountText_(nameConflicts)}｜保留原關聯 ${formNewCountText_(retained)}｜已完成社團 ${formClubCountText_(done)}｜待填社團 ${pending} 個｜重複社團 ${formClubCountText_(duplicateClubs)}／重複回覆 ${formNewCountText_(duplicateResponses)}｜最後成功同步 ${formSyncStampText_()}`;
+`${legacyPart}收到回覆 ${formNewCountText_(received, miss)}｜辨識成功 ${formNewCountText_(recognized, miss)}｜無法辨識 ${formNewCountText_(unrecognized, miss)}｜名稱衝突 ${formNewCountText_(nameConflicts, miss)}｜保留原關聯 ${formNewCountText_(retained, miss)}｜已完成社團 ${formClubCountText_(done, miss)}｜待填社團 ${pendingText}｜重複社團 ${formClubCountText_(duplicateClubs, miss)}／重複回覆 ${formNewCountText_(duplicateResponses, miss)}｜最後成功同步 ${formSyncStampText_()}`;
 const statusEl=$("formSyncStatus");
 const btn=$("formSyncBtn");
-S.formSyncUi=uiState||S.formSyncUi||"idle";
 if(statusEl){
 if(S.formSyncUi==="syncing"){
 statusEl.textContent="正在同步表單回覆…";
@@ -13010,15 +13064,19 @@ statusEl.textContent="正在讀取最新表單進度…";
 statusEl.textContent="背景檢查是否需補同步…｜畫面已顯示上次成功資料 "+formSyncStampText_();
 }else if(S.formSyncUi==="complete"){
 statusEl.textContent="同步完成（後端已確認且畫面已套用）｜最後成功同步 "+formSyncStampText_();
+}else if(S.formSyncUi==="quota"){
+statusEl.textContent="UrlFetch 日額度已滿（非 Firestore HTTP 0／429）："+(errorMessage||S.formSyncError||"")+"｜已停自動輪詢｜仍保留上次成功資料 "+formSyncStampText_();
 }else if(S.formSyncUi==="failed"){
-statusEl.textContent="同步失敗："+(errorMessage||S.formSyncError||"請重試")+"｜仍顯示原進度與原同步時間 "+formSyncStampText_();
+statusEl.textContent="讀取失敗："+(errorMessage||S.formSyncError||"請重試")+"｜計數顯示未取得／上次成功｜"+formSyncStampText_();
 }else{
 statusEl.textContent="最後成功同步 "+formSyncStampText_()+"｜登入／開頁先讀最新結果；有待同步時背景補同步；送出觸發／兩小時排程／手動同步為備援";
 }
 }
 if(btn){
 btn.disabled=S.formSyncUi==="syncing"||S.formSyncUi==="reading"||S.formSyncUi==="checking";
-btn.textContent=S.formSyncUi==="failed"?"🔄 重試同步":"🔄 立即同步";
+btn.textContent=S.formSyncUi==="quota"
+?"額度恢復後重試"
+:(S.formSyncUi==="failed"?"🔄 重試同步":"🔄 立即同步");
 }
 }
 
@@ -13027,6 +13085,7 @@ S.forms=Array.isArray(r.clubs)?r.clubs:[];
 if(r.lastSyncAt) S.formLastSyncAt=r.lastSyncAt;
 if(r.lastSyncAtTaipei) S.formLastSyncAtTaipei=r.lastSyncAtTaipei;
 S.formSyncError="";
+S.formSyncQuotaBlocked=false;
 S.formSyncBreakdown={
 legacyTotal:formApiCount_(r.totalFormResponses),
 received:formApiCount_(r.receivedResponseCount),
@@ -13038,9 +13097,9 @@ duplicateResponses:formApiCount_(r.duplicateResponseCount),
 invalidSamples:Array.isArray(r.invalidResponseSamples)?r.invalidResponseSamples:[]
 };
 const done=formApiCount_(r.submittedClubCount);
-paintFormPanelMeta_({
+const successCounts={
 done:done,
-pending:r.pendingCount??0,
+pending:formApiCount_(r.pendingCount),
 duplicateClubs:formApiCount_(r.duplicateClubCount),
 duplicateResponses:S.formSyncBreakdown.duplicateResponses,
 legacyTotal:S.formSyncBreakdown.legacyTotal,
@@ -13049,7 +13108,9 @@ recognized:S.formSyncBreakdown.recognized,
 unrecognized:S.formSyncBreakdown.unrecognized,
 nameConflicts:S.formSyncBreakdown.nameConflicts,
 retained:S.formSyncBreakdown.retained
-}, uiState||"complete");
+};
+S.formLastSuccessCounts=successCounts;
+paintFormPanelMeta_(successCounts, uiState||"complete");
 renderForms();
 }
 
@@ -13159,6 +13220,7 @@ S.formSyncWatchBusyRequestId=0;
 
 function scheduleFormSyncWatch_(){
 if(!S.token) return;
+if(S.formSyncQuotaBlocked) return;
 if(S.formSyncWatchTimer) return;
 if(!S.formSyncWatchVisibilityBound && typeof document!=="undefined"){
 S.formSyncWatchVisibilityBound=true;
@@ -13178,9 +13240,13 @@ maybeReloadFormsIfSyncAdvanced_();
 
 async function maybeReloadFormsIfSyncAdvanced_(){
 if(!S.token) return;
+if(S.formSyncQuotaBlocked){
+stopFormSyncWatch_({clearBusy:true});
+return;
+}
 if(S.formSyncWatchBusy) return;
 if(S.formCatchUpBusy) return;
-if(S.formSyncUi==="syncing"||S.formSyncUi==="reading"||S.formSyncUi==="checking") return;
+if(S.formSyncUi==="syncing"||S.formSyncUi==="reading"||S.formSyncUi==="checking"||S.formSyncUi==="quota") return;
 if(typeof document!=="undefined" && document.hidden){
 stopFormSyncWatch_();
 return;
@@ -13195,6 +13261,10 @@ const stamp=await api("adminGetFormSyncStamp");
 if(!formWatchLive_(id)) return;
 if(!stamp || stamp.success!==true){
 if(stamp && unauthorized(stamp)) return;
+if(stamp && isGasUrlFetchQuotaError_(stamp)){
+haltGasUrlFetchQuota_((stamp&&stamp.message)||"UrlFetch 額度已用尽");
+return;
+}
 return;
 }
 const next=stamp.lastSyncAt?String(stamp.lastSyncAt):"";
@@ -13388,6 +13458,14 @@ opts=opts||{};
 const background=opts.background===true;
 const id=opts.opId||formOpIdentity_();
 if(!formOpLive_(id)) return false;
+if(S.formSyncQuotaBlocked){
+if(opts.resumeQuota===true){
+S.formSyncQuotaBlocked=false;
+}else{
+haltGasUrlFetchQuota_(S.formSyncError||"UrlFetch 額度已用尽；請按「額度恢復後重試」");
+return false;
+}
+}
 if(opts.catchUpSeq!=null && opts.catchUpSeq!==S.formCatchUpSeq) return false;
 /*
  * 未傳 force → 不帶 force 欄位（完整同步）。
@@ -13415,6 +13493,13 @@ paintFormPanelMeta_(null, "failed", "未授權");
 return false;
 }
 if(!r.success){
+if(isGasUrlFetchQuotaError_(r)){
+S.forms=previousForms.length?previousForms:S.forms;
+S.formLastSyncAt=previousAt;
+S.formLastSyncAtTaipei=previousTaipei;
+haltGasUrlFetchQuota_((r&&r.message)||"UrlFetch 額度已用尽");
+return false;
+}
 throw new Error(r.message || "同步失敗");
 }
 if(r.lastSyncAt) S.formLastSyncAt=r.lastSyncAt;
@@ -13426,12 +13511,13 @@ if(!applied){
 S.forms=previousForms.length?previousForms:S.forms;
 S.formLastSyncAt=previousAt;
 S.formLastSyncAtTaipei=previousTaipei;
+if(S.formSyncQuotaBlocked) return false;
 S.formSyncError=S.formSyncError||"同步後讀取失敗";
-paintFormPanelMeta_(null, "failed", S.formSyncError);
+paintFormPanelMeta_(S.formLastSuccessCounts||null, "failed", S.formSyncError);
 if(!background) toast("❌ "+S.formSyncError);
 return false;
 }
-paintFormPanelMeta_(null, "complete");
+paintFormPanelMeta_(S.formLastSuccessCounts||null, "complete");
 if(!background){
 toast(r.syncResult && r.syncResult.skipped ? "✅ 表單已是最新（略過重掃）" : "✅ Google Form 已同步");
 }
@@ -13442,7 +13528,11 @@ S.forms=previousForms;
 S.formLastSyncAt=previousAt;
 S.formLastSyncAtTaipei=previousTaipei;
 S.formSyncError=String(e&&e.message||"同步失敗");
-paintFormPanelMeta_(null, "failed", S.formSyncError);
+if(isGasUrlFetchQuotaError_(S.formSyncError)){
+haltGasUrlFetchQuota_(S.formSyncError);
+return false;
+}
+paintFormPanelMeta_(S.formLastSuccessCounts||null, "failed", S.formSyncError);
 if(!background) toast("❌ "+S.formSyncError);
 return false;
 }
@@ -14009,11 +14099,18 @@ try{
 const r=await api("adminGetCloudUploadSettings");
 if(unauthorized(r)) return;
 if(!r||r.success===false){
+if(isGasUrlFetchQuotaError_(r)){
+haltGasUrlFetchQuota_((r&&r.message)||"UrlFetch 額度已用尽");
+return;
+}
 throw new Error((r&&r.message)||"無法讀取上傳設定");
 }
+if(!r.evaluation||!r.feature){
+throw new Error("上傳設定回應不完整，拒絕用空白預設覆寫畫面");
+}
 S.cloudUploadSettings={
-evaluation:r.evaluation||{version:0},
-feature:r.feature||{version:0}
+evaluation:r.evaluation,
+feature:r.feature
 };
 $("evalUploadDeadline").value=toTaiwanLocalInputValue(S.cloudUploadSettings.evaluation.deadlineAt);
 $("evalMakeupDeadline").value=toTaiwanLocalInputValue(S.cloudUploadSettings.evaluation.makeupDeadlineAt);
@@ -14026,7 +14123,12 @@ $("cloudUploadMeta").textContent=
 "評選 v"+(S.cloudUploadSettings.evaluation.version||0)+
 "｜特色 v"+(S.cloudUploadSettings.feature.version||0);
 }catch(e){
-$("cloudUploadMeta").textContent="讀取失敗："+e.message;
+if(isGasUrlFetchQuotaError_(e&&e.message)){
+haltGasUrlFetchQuota_(e.message);
+return;
+}
+/* 失敗不改動既有 input／S.cloudUploadSettings，避免空白覆寫正式設定 */
+$("cloudUploadMeta").textContent="讀取失敗（已保留畫面值）："+e.message;
 }
 }
 
@@ -14182,6 +14284,114 @@ toast("⚠️ "+((r&&(r.message||r.reason))||"仍未完成，請依狀態再試"
 await loadClubCloudRows();
 }catch(e){
 toast("⚠️ "+(e&&e.message?e.message:"重試失敗"));
+}
+}
+
+/**
+ * 配對預覽／確認接線候選：GAS session API。
+ * FOLDER_OPS_PAUSED＝暫停守衛通過，功能仍未完成；不得批次確認 66 社。
+ * 確認契約為 bindings（非 matched）。
+ */
+S.pairPreviewMatched=S.pairPreviewMatched||[];
+
+function pairPreviewClubsPayload_(){
+const fromQuery=(S.studentQueryClubs||[]).map(function(c){
+return {
+permanentClubId:c.permanentClubId||c.clubId||"",
+clubName:c.name||c.clubName||"",
+name:c.name||c.clubName||"",
+category:c.category||""
+};
+}).filter(function(c){ return /^D[0-9]{3,}$/.test(String(c.permanentClubId||"").trim().toUpperCase()); });
+return fromQuery.length?fromQuery:(S.clubs||[]).map(function(c){
+return {
+permanentClubId:clubPermanentId_(c),
+clubName:c.name||"",
+name:c.name||"",
+category:c.category||""
+};
+}).filter(function(c){ return !!c.permanentClubId; });
+}
+
+function pairEvalRootFolderUrl_(){
+const el=$("evalRootFolderUrl");
+return String((el&&el.value)||"").trim();
+}
+
+function renderPairOpsPaused_(r,actionLabel){
+const box=$("pairPreviewState");
+const msg=(r&&(r.message||r.error))||"資料夾預覽配對仍暫停";
+if(box){
+box.innerHTML=`<div class="state">⏸️ ${esc(actionLabel)}：${esc(msg)}（FOLDER_OPS_PAUSED＝守衛通過，功能未完成；不建夾、不搬檔、不改 cloudLinks）</div>`;
+}
+toast("⏸️ "+actionLabel+"仍暫停／未完成（FOLDER_OPS_PAUSED）");
+}
+
+async function previewEvalFolderPairs(){
+try{
+const rootFolderUrl=pairEvalRootFolderUrl_();
+if(!rootFolderUrl){
+toast("⚠️ 請填評選活動根資料夾網址（非特色共用夾）");
+return;
+}
+const r=await api("adminPreviewEvaluationFolderPairs",{
+rootFolderUrl:rootFolderUrl,
+clubs:pairPreviewClubsPayload_()
+});
+if(unauthorized(r)) return;
+if(r&&r.error==="FOLDER_OPS_PAUSED"){
+S.pairPreviewMatched=[];
+renderPairOpsPaused_(r,"預覽配對");
+return;
+}
+if(r&&r.success===true){
+S.pairPreviewMatched=Array.isArray(r.matched)?r.matched.slice():[];
+toast("⚠️ 預覽回傳成功，但功能仍待解暫停核准；不得批次確認既有 66 社");
+if($("pairPreviewState")){
+$("pairPreviewState").innerHTML=
+'<div class="state">預覽 matched='+S.pairPreviewMatched.length+
+'｜missing='+((r.missing&&r.missing.length)||0)+
+'｜conflicts='+((r.conflicts&&r.conflicts.length)||0)+
+'（未標完成；確認僅允許 ≤5 筆 bindings）</div>';
+}
+return;
+}
+toast("⚠️ "+((r&&(r.message||r.error))||"預覽失敗"));
+}catch(e){
+toast("⚠️ "+(e&&e.message?e.message:"預覽失敗"));
+}
+}
+
+async function confirmMatchedEvalFolderPairs(){
+try{
+const bindings=Array.isArray(S.pairPreviewMatched)?S.pairPreviewMatched.slice(0,5):[];
+if(!bindings.length){
+toast("⚠️ 沒有可確認的 bindings（暫停期預覽不會產生 matched；解暫停後須先預覽）");
+return;
+}
+if(bindings.length>5){
+toast("⚠️ 單次確認上限 5 筆，拒絕批次重配 66");
+return;
+}
+const r=await api("adminConfirmEvaluationFolderPairs",{
+bindings:bindings
+});
+if(unauthorized(r)) return;
+if(r&&r.error==="FOLDER_OPS_PAUSED"){
+renderPairOpsPaused_(r,"確認配對");
+return;
+}
+if(r&&r.error==="BINDINGS_BATCH_FORBIDDEN"){
+toast("⚠️ "+((r&&r.message)||"拒絕批次確認"));
+return;
+}
+if(r&&r.success===true){
+toast("❌ 確認配對在暫停方針下不應成功；請立即回報並勿重跑");
+return;
+}
+toast("⚠️ "+((r&&(r.message||r.error))||"確認配對失敗"));
+}catch(e){
+toast("⚠️ "+(e&&e.message?e.message:"確認配對失敗"));
 }
 }
 
