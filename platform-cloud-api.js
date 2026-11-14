@@ -8,10 +8,31 @@
     adminReadEpoch += 1;
     inFlightReads.clear();
   }
+  /*
+   * Truly read-only portal actions only (verified against cloudPortal dispatch).
+   * Missing entries are treated as writes → invalidateAdminReads → RESPONSE_STALE
+   * for in-flight parallel reads (e.g. adminGetUploadGate during refreshAllData).
+   * Do NOT add mutations: adminSet*, adminSave*, adminAdd/Update/Delete*,
+   * adminUnbind/Rebind*, adminSync*, adminConfirm*, adminEnsure*, adminExecute*,
+   * adminLogin/adminLogout.
+   */
   var READ_ACTIONS = new Set([
-    "getClubData", "getEventConfig", "adminListClubs", "adminListCloudLinks",
-    "adminListClubCloudRows", "adminGetCloudUploadSettings", "adminReadActivityHandover",
-    "adminListFormSubmissions", "adminGetFormSyncStamp", "adminCheckFormSubmissions"
+    "getClubData",
+    "getEventConfig",
+    "adminListClubs",
+    "adminListCloudLinks",
+    "adminListClubCloudRows",
+    "adminGetCloudUploadSettings",
+    "adminGetUploadGate",
+    "adminPreviewUploadGateOpen",
+    "adminReadActivityHandover",
+    "adminPreviewActivityHandover",
+    "adminListClubStudents",
+    "adminListFormSubmissions",
+    "adminGetFormSyncStamp",
+    "adminCheckFormSubmissions",
+    "adminPreviewEvaluationFolderPairs",
+    "adminPreviewWrongRegistrationReset"
   ]);
 
   function endpoint(admin) {

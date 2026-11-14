@@ -1708,6 +1708,9 @@ clouds:[],
 eventConfig:null,
 eventScreenVersion:null,
 eventConfigStatus:"idle",
+eventLoadSeq:0,
+clubsStatus:"idle",
+clubsLoadError:"",
 busy:false,
 clubSaveSeq:0,
 clubSaveBusy:false,
@@ -2202,6 +2205,23 @@ clearJudgeConfirmationExportWork_();
 
 S.token=null;
 
+/* 跨 session 不得保留或套用舊帳號私人快照 */
+S.eventConfig=null;
+S.eventScreenVersion=null;
+S.eventConfigStatus="idle";
+S.eventLoadSeq=Number(S.eventLoadSeq||0)+1;
+S.clubs=[];
+S.studentQueryClubs=[];
+S.clubsStatus="idle";
+S.clubsLoadError="";
+S.clouds=[];
+S.cloudClubRows=[];
+S.cloudClubRowsById={};
+S.cloudClubRowsStatus="idle";
+S.cloudClubRowsError="";
+S.cloudUploadSettings=null;
+S.uploadGate=null;
+
 sessionStorage.removeItem(
 SESSION_KEY
 );
@@ -2493,12 +2513,7 @@ await Promise.allSettled([
 loadClubs(),loadEvent(),loadCloudUploadSettings(),loadServerStudentActivity(opts||{})
 ].concat(skipForms?[]:[loadForms({source:"cloudRefresh"})]));
 if(token!==String(S.token||"")) return;
-S.clouds=(S.cloudClubRows||[]).filter(function(row){return row.active!==false;}).map(function(row){
-return {permanentClubId:row.permanentClubId,club:row.clubName,category:row.category,
-configured:row.evaluationFolderConfigured,url:row.evaluationFolderUrl,version:row.linkVersion};
-});
-renderClouds();
-$("cloudMeta").textContent="已設定 "+S.clouds.filter(function(row){return row.configured;}).length+" / "+S.clouds.length;
+paintCloudPanelFromRows_();
 $("lastRefresh").textContent="最後同步："+new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(new Date());
 return;
 }
@@ -10189,14 +10204,11 @@ r.message ||
 
 if(!clubListLoadLive_(loadId)) return false;
 
-S.clubs =
-Array.isArray(
-r.clubs
-)
-?
-r.clubs
-:
-[];
+if(!Array.isArray(r.clubs)){
+throw new Error("社團名單契約錯誤：缺少 clubs 陣列");
+}
+
+S.clubs = r.clubs;
 
 // 學生查詢專用名單（含停用）；缺欄位時退回管理清單以免舊後端破版
 S.studentQueryClubs =
@@ -10208,6 +10220,9 @@ r.studentQueryClubs
 :
 S.clubs.slice();
 
+S.clubsStatus="ok";
+S.clubsLoadError="";
+
 if(typeof loadClubCloudRows==="function"){
 await loadClubCloudRows();
 if(!clubListLoadLive_(loadId)) return false;
@@ -10216,8 +10231,9 @@ if(!clubListLoadLive_(loadId)) return false;
 $("statClubs").textContent =
 S.clubs.length;
 
+const inactiveCount=(S.studentQueryClubs||[]).filter(function(c){ return c&&c.active===false; }).length;
 $("clubMeta").textContent =
-`${S.clubs.length} 個社團`;
+S.clubs.length+" 個啟用社團"+(inactiveCount?("｜含停用合計 "+(S.studentQueryClubs||[]).length):"");
 
 renderClubs();
 initClubStudentSelectors();
@@ -10228,10 +10244,29 @@ catch(e){
 
 if(!clubListLoadLive_(loadId)) return false;
 
+S.clubsStatus="error";
+S.clubsLoadError=String((e&&e.message)||"讀取失敗");
+const keep=Array.isArray(S.clubs)&&S.clubs.length>0;
+if(keep){
+$("clubMeta").textContent=S.clubs.length+" 個啟用社團｜讀取失敗，已保留上次名單";
+renderClubs();
+initClubStudentSelectors();
+const list=$("clubList");
+if(list){
+const banner=document.createElement("div");
+banner.className="state";
+banner.textContent="⚠️ 名單更新失敗（已保留上次成功資料，非空清單）："+S.clubsLoadError;
+list.insertBefore(banner, list.firstChild);
+}
+}
+else{
+$("statClubs").textContent="—";
+$("clubMeta").textContent="未取得";
 $("clubList").innerHTML=
 `<div class="state">
-⚠️ ${esc(e.message)}
+⚠️ 未取得社團名單：${esc(S.clubsLoadError)}
 </div>`;
+}
 return false;
 
 }
@@ -12948,7 +12983,8 @@ if(el) el.value=isoToLocal(config[k]);
 }
 
 async function loadEvent(){
-const hadSnapshot=!!(S.eventConfig&&S.eventConfig.dataDeadline);
+const loadSeq=(S.eventLoadSeq=Number(S.eventLoadSeq||0)+1);
+const tokenAtStart=String(S.token||"");
 try{
 /*
  * 必須帶 sessionToken（api），不可裸 post getEventConfig。
@@ -12956,6 +12992,7 @@ try{
  * 易被誤顯示成「登入已失效」，但其實其他雲端功能 session 仍有效。
  */
 const r=await api("getEventConfig");
+if(loadSeq!==S.eventLoadSeq||tokenAtStart!==String(S.token||"")) return;
 if(unauthorized(r)) return;
 if(!r||r.success===false){
 const code=String((r&&r.error)||"");
@@ -12970,6 +13007,7 @@ throw new Error((r&&r.message)||"無法取得活動時程");
 if(!r.config){
 throw new Error("活動時程回應缺少 config");
 }
+if(loadSeq!==S.eventLoadSeq||tokenAtStart!==String(S.token||"")) return;
 rememberScreenVersion("eventScreenVersion", r);
 S.eventConfig=r.config;
 S.eventConfigStatus="ok";
@@ -12981,9 +13019,12 @@ $("eventError").textContent="";
 setEventSaveEnabled_(true);
 }
 catch(e){
+if(loadSeq!==S.eventLoadSeq||tokenAtStart!==String(S.token||"")) return;
+/* 以失敗當下是否仍有成功快照為準，不用請求開始時的 hadSnapshot */
+const keep=!!(S.eventConfig&&S.eventConfig.dataDeadline);
 S.eventConfigStatus="error";
 const msg=String((e&&e.message)||"未取得活動時程");
-if(hadSnapshot){
+if(keep){
 $("eventError").textContent="讀取失敗（已保留上次成功快照，未清空欄位）："+msg;
 $("eventMeta").textContent="讀取失敗｜已保留畫面值";
 setEventSaveEnabled_(false);
@@ -13936,6 +13977,55 @@ $("cloudList").innerHTML=
 
 }
 
+function paintCloudPanelFromRows_(){
+const meta=$("cloudMeta");
+const list=$("cloudList");
+const tokenOk=!!String(S.token||"");
+if(!tokenOk){
+S.clouds=[];
+if(meta) meta.textContent="未登入";
+if(list) list.innerHTML="";
+return;
+}
+if(S.cloudClubRowsStatus==="ok"&&Array.isArray(S.cloudClubRows)){
+const allCount=S.cloudClubRows.length;
+const activeRows=S.cloudClubRows.filter(function(row){ return row&&row.active!==false; });
+S.clouds=activeRows.map(function(row){
+return {
+permanentClubId:row.permanentClubId,
+club:row.clubName,
+category:row.category,
+configured:row.evaluationFolderConfigured,
+url:row.evaluationFolderUrl,
+version:row.linkVersion
+};
+});
+renderClouds();
+const configured=S.clouds.filter(function(row){ return row.configured; }).length;
+if(meta){
+meta.textContent=
+"已設定 "+configured+" / "+S.clouds.length+
+"（啟用社團）｜含停用合計 "+allCount+
+(allCount===0?"｜真正零筆":"");
+}
+return;
+}
+if(Array.isArray(S.clouds)&&S.clouds.length>0){
+renderClouds();
+if(meta){
+meta.textContent=
+"更新失敗｜已保留上次成功快照 "+S.clouds.length+" 社（啟用）"+
+(S.cloudClubRowsError?("："+S.cloudClubRowsError):"");
+}
+return;
+}
+S.clouds=[];
+if(meta) meta.textContent="未取得社團雲端資料";
+if(list){
+list.innerHTML='<div class="state">未取得社團雲端資料（不是已設定 0／0）</div>';
+}
+}
+
 function renderClouds(){
 
 const q =
@@ -14505,8 +14595,13 @@ await loadCloudUploadSettings();
 }
 
 async function loadClubCloudRows(){
+const loadSeq=(S.cloudClubRowsLoadSeq=Number(S.cloudClubRowsLoadSeq||0)+1);
+const tokenAtStart=String(S.token||"");
+const hadRows=Array.isArray(S.cloudClubRows)&&S.cloudClubRows.length>0;
 if($("clubCloudRowsBox")){
-$("clubCloudRowsBox").innerHTML='<div class="state">載入中…</div>';
+$("clubCloudRowsBox").innerHTML=hadRows
+?('<div class="state">更新中…（已保留上次 '+S.cloudClubRows.length+' 筆）</div>')
+:'<div class="state">載入中…</div>';
 }
 S.cloudClubRowsStatus="loading";
 S.cloudClubRowsError="";
@@ -14526,9 +14621,11 @@ active:c.active!==false
 }).filter(function(c){ return /^D[0-9]{3,}$/.test(String(c.permanentClubId||"").trim().toUpperCase()); });
 const clubs=fromQuery.length?fromQuery:[];
 const r=await api("adminListClubCloudRows",{clubs:clubs});
+if(loadSeq!==S.cloudClubRowsLoadSeq||tokenAtStart!==String(S.token||"")) return;
 if(unauthorized(r)){
 S.cloudClubRowsStatus="error";
 S.cloudClubRowsError="未授權";
+paintCloudPanelFromRows_();
 return;
 }
 if(!r||r.success===false){
@@ -14547,6 +14644,7 @@ const knownClubCount=Math.max(
 if(r.clubs.length===0&&knownClubCount>0){
 throw new Error("雲端狀態回傳零筆，但管理名單仍有社團；不當成真正零綁定");
 }
+if(loadSeq!==S.cloudClubRowsLoadSeq||tokenAtStart!==String(S.token||"")) return;
 S.cloudClubRows=r.clubs;
 if(isFirebaseCloudMode()) HKSP_ADMIN_CLOUD.renderMakeupChoices();
 S.cloudClubRowsById={};
@@ -14592,7 +14690,9 @@ else{
 $("clubCloudRowsBox").innerHTML=lines.join("");
 }
 }
+paintCloudPanelFromRows_();
 }catch(e){
+if(loadSeq!==S.cloudClubRowsLoadSeq||tokenAtStart!==String(S.token||"")) return;
 S.cloudClubRowsStatus="error";
 S.cloudClubRowsError=String((e&&e.message)||"讀取失敗");
 if($("clubCloudRowsBox")){
@@ -14601,6 +14701,7 @@ const kept=Array.isArray(S.cloudClubRows)&&S.cloudClubRows.length
 : "（尚無成功快照；不可把空白當成未綁定）";
 $("clubCloudRowsBox").innerHTML=`<div class="state">⚠️ 讀取失敗：${esc(S.cloudClubRowsError)}${esc(kept)}</div>`;
 }
+paintCloudPanelFromRows_();
 }
 }
 
