@@ -12218,7 +12218,7 @@ club:saved
 };
 }
 
-function openClubModal(
+async function openClubModal(
 encoded=""
 ){
 
@@ -12266,13 +12266,23 @@ c
 :
 "新增社團";
 
-$("clubParticipation").value=
-clubCloudParticipationForEdit_(c);
-
 $("clubError").textContent=
 "";
 
-if(isFirebaseCloudMode()) HKSP_ADMIN_CLOUD.prepareClubEdit(c,clubCloudRowForEdit_(c));
+if(isFirebaseCloudMode()){
+if(S.cloudClubRowsStatus!=="ok"){
+await loadClubCloudRows();
+}
+let cloudRow=clubCloudRowForEdit_(c);
+if(c&&!cloudRow&&S.cloudClubRowsStatus==="ok"){
+await loadClubCloudRows();
+cloudRow=clubCloudRowForEdit_(c);
+}
+$("clubParticipation").value=clubCloudParticipationForEdit_(c);
+HKSP_ADMIN_CLOUD.prepareClubEdit(c,cloudRow);
+}else{
+$("clubParticipation").value=clubCloudParticipationForEdit_(c);
+}
 
 openModal(
 "clubModal"
@@ -12282,12 +12292,13 @@ openModal(
 
 function clubCloudRowForEdit_(club){
 const id=clubPermanentId_(club);
-if(id&&S.cloudClubRowsById&&S.cloudClubRowsById[id]){
-return S.cloudClubRowsById[id];
+if(id&&S.cloudClubRowsById){
+const byId=S.cloudClubRowsById[id]||S.cloudClubRowsById[String(id).toUpperCase()];
+if(byId) return byId;
 }
-const name=String((club&&club.name)||"").trim();
+const name=String((club&&(club.name||club.clubName))||"").trim();
 const category=String((club&&club.category)||"").trim();
-if(!name||!Array.isArray(S.cloudClubRows)) return null;
+if(!name||!Array.isArray(S.cloudClubRows)||!S.cloudClubRows.length) return null;
 const hits=S.cloudClubRows.filter(function(row){
 return row&&
 String(row.clubName||"").trim()===name&&
@@ -14154,6 +14165,8 @@ closeModal(id);
 S.cloudUploadSettings=S.cloudUploadSettings||{evaluation:{version:0},feature:{version:0}};
 S.cloudClubRows=S.cloudClubRows||[];
 S.cloudClubRowsById=S.cloudClubRowsById||{};
+S.cloudClubRowsStatus=S.cloudClubRowsStatus||"idle";
+S.cloudClubRowsError=S.cloudClubRowsError||"";
 
 function toTaiwanLocalInputValue(iso){
 if(!iso) return "";
@@ -14428,10 +14441,12 @@ async function loadClubCloudRows(){
 if($("clubCloudRowsBox")){
 $("clubCloudRowsBox").innerHTML='<div class="state">載入中…</div>';
 }
+S.cloudClubRowsStatus="loading";
+S.cloudClubRowsError="";
 try{
 /*
  * 管理清單 flatten 常無 Club_ID；改傳學生查詢名單（正式 records）或空陣列，
- * 由 GAS 讀正式 Firestore clubs records，避免 legacy 無 ID 被當成成功零筆。
+ * 由 GAS／portal 讀正式 Firestore clubs records，避免 legacy 無 ID 被當成成功零筆。
  */
 const fromQuery=(S.studentQueryClubs||[]).map(function(c){
 return {
@@ -14444,33 +14459,53 @@ active:c.active!==false
 }).filter(function(c){ return /^D[0-9]{3,}$/.test(String(c.permanentClubId||"").trim().toUpperCase()); });
 const clubs=fromQuery.length?fromQuery:[];
 const r=await api("adminListClubCloudRows",{clubs:clubs});
-if(unauthorized(r)) return;
+if(unauthorized(r)){
+S.cloudClubRowsStatus="error";
+S.cloudClubRowsError="未授權";
+return;
+}
 if(!r||r.success===false){
 throw new Error((r&&(r.message||r.error))||"無法讀取社團雲端狀態");
 }
 if(!Array.isArray(r.clubs)){
 throw new Error("雲端狀態資料契約錯誤：缺少 clubs 陣列");
 }
+/*
+ * 清單失敗／契約異常不得當成零筆成功；已知有社團時空陣列視為載入失敗，保留上次成功快照。
+ */
+const knownClubCount=Math.max(
+(S.clubs||[]).length,
+(S.studentQueryClubs||[]).filter(function(c){ return c&&c.active!==false; }).length
+);
+if(r.clubs.length===0&&knownClubCount>0){
+throw new Error("雲端狀態回傳零筆，但管理名單仍有社團；不當成真正零綁定");
+}
 S.cloudClubRows=r.clubs;
 if(isFirebaseCloudMode()) HKSP_ADMIN_CLOUD.renderMakeupChoices();
 S.cloudClubRowsById={};
 S.cloudClubRows.forEach(function(row){
 if(!row||!row.permanentClubId) return;
-S.cloudClubRowsById[row.permanentClubId]=row;
+const id=String(row.permanentClubId).trim().toUpperCase();
+row.permanentClubId=id;
+S.cloudClubRowsById[id]=row;
 });
 (S.clubs||[]).forEach(function(club){
-let row=club&&club.permanentClubId&&S.cloudClubRowsById[club.permanentClubId];
+const clubId=clubPermanentId_(club);
+let row=clubId&&S.cloudClubRowsById[clubId];
 if(!row){
 row=clubCloudRowForEdit_(club);
-if(row&&row.permanentClubId&&!club.permanentClubId){
-club.permanentClubId=row.permanentClubId;
 }
+if(row&&row.permanentClubId){
+club.permanentClubId=String(row.permanentClubId).trim().toUpperCase();
 }
 if(!row) return;
 club.cloudParticipation=row.participation||null;
 club.participationLabel=row.participationLabel||"未設定";
 club.evaluationFolderConfigured=!!row.evaluationFolderConfigured;
+club.evaluationFolderUrl=row.evaluationFolderUrl||"";
 });
+S.cloudClubRowsStatus="ok";
+S.cloudClubRowsError="";
 const lines=S.cloudClubRows.map(function(row){
 const folderLabel=row.folderEnsureLabel||
 (row.evaluationFolderConfigured?"已綁定":"待建立");
@@ -14491,8 +14526,13 @@ $("clubCloudRowsBox").innerHTML=lines.join("");
 }
 }
 }catch(e){
+S.cloudClubRowsStatus="error";
+S.cloudClubRowsError=String((e&&e.message)||"讀取失敗");
 if($("clubCloudRowsBox")){
-$("clubCloudRowsBox").innerHTML=`<div class="state">⚠️ 讀取失敗：${esc(e.message)}</div>`;
+const kept=Array.isArray(S.cloudClubRows)&&S.cloudClubRows.length
+? "（已保留上次成功快照 "+S.cloudClubRows.length+" 筆，空白不代表未綁定）"
+: "（尚無成功快照；不可把空白當成未綁定）";
+$("clubCloudRowsBox").innerHTML=`<div class="state">⚠️ 讀取失敗：${esc(S.cloudClubRowsError)}${esc(kept)}</div>`;
 }
 }
 }

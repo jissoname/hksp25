@@ -75,28 +75,45 @@
     if (!enabled()) return;
     var nameEl = $("clubName");
     var categoryEl = $("clubCategory");
+    var urlEl = $("clubEvaluationFolderUrl");
+    var partEl = $("clubParticipation");
     if (nameEl) nameEl.readOnly = false;
     if (categoryEl) categoryEl.disabled = false;
     var clubName = club ? String(club.name || club.clubName || "") : "";
     if (club && nameEl && !String(nameEl.value || "").trim()) {
       nameEl.value = clubName || String((row && row.clubName) || "");
     }
+    var cloudReady = !!(row && row.permanentClubId);
     editSnapshot = {
       club: club
         ? Object.assign({}, club, {
-            permanentClubId: club.permanentClubId || (row && row.permanentClubId) || "",
+            permanentClubId: String(club.permanentClubId || (row && row.permanentClubId) || "").trim().toUpperCase(),
             name: clubName || String((row && row.clubName) || ""),
             category: club.category || (row && row.category) || "",
             version: club.version != null ? club.version : (row && row.version),
             sortOrder: club.sortOrder
           })
         : null,
-      cloud: row ? Object.assign({}, row) : null
+      cloud: cloudReady ? Object.assign({}, row) : null,
+      cloudReady: cloudReady
     };
-    $("clubEvaluationFolderUrl").value = row && row.evaluationFolderUrl || "";
+    if (urlEl) {
+      urlEl.value = cloudReady ? String(row.evaluationFolderUrl || "") : "";
+      urlEl.readOnly = !!(club && !cloudReady);
+    }
+    if (partEl) {
+      if (cloudReady) {
+        partEl.value = row.participation ? String(row.participation) : String(partEl.value || "");
+      }
+      partEl.disabled = !!(club && !cloudReady);
+    }
     $("clubSaveBtn").disabled = false;
-    if (club && !row) {
-      $("clubError").textContent = "尚未載入雲端狀態；仍可改名／改屬性，參與與資料夾請先讀取後再存。";
+    if (club && !cloudReady) {
+      var loadState = String((root.S && root.S.cloudClubRowsStatus) || "");
+      $("clubError").textContent = loadState === "error"
+        ? ("雲端狀態讀取失敗，不能把空白當成未綁定。可改名／改屬性；參與與資料夾請先「重新載入社團雲端狀態」再存。" +
+          (root.S.cloudClubRowsError ? "（" + root.S.cloudClubRowsError + "）" : ""))
+        : "尚未確認雲端狀態快照；可改名／改屬性，但禁止送出參與／資料夾變更。請先重新載入雲端狀態。";
     } else {
       $("clubError").textContent = "";
     }
@@ -332,8 +349,15 @@
       var originalCategory = String((club && club.category) ||
         (targetSnapshot && targetSnapshot.cloud && targetSnapshot.cloud.category) || "");
       var nameChanged = clubName !== originalName || category !== originalCategory;
+      var cloudReady = !!(targetSnapshot && targetSnapshot.cloudReady && targetSnapshot.cloud);
       var originalUrl = String((targetSnapshot && targetSnapshot.cloud && targetSnapshot.cloud.evaluationFolderUrl) || "");
-      var cloudTouched = !!participation || url !== originalUrl;
+      var originalPart = String((targetSnapshot && targetSnapshot.cloud && targetSnapshot.cloud.participation) || "");
+      var cloudTouched = false;
+      if (cloudReady) {
+        cloudTouched = (participation && participation !== originalPart) || url !== originalUrl;
+      } else if (participation || url) {
+        throw new Error("雲端狀態尚未確認，禁止送出參與／資料夾變更；請先重新載入雲端狀態。若只改名稱／屬性，請清空參與與連結欄位後再存。");
+      }
 
       if (!nameChanged && !cloudTouched) {
         throw new Error("沒有可儲存的變更。");
@@ -372,17 +396,18 @@
       }
 
       if (cloudTouched) {
-        var cloudRow = (targetSnapshot && targetSnapshot.cloud) ||
-          (state.cloudClubRowsById && state.cloudClubRowsById[permanentClubId]) ||
-          null;
+        if (!cloudReady || !targetSnapshot.cloud) {
+          throw new Error("雲端狀態尚未確認，拒絕以空白連結覆寫既有綁定。");
+        }
+        var cloudRow = targetSnapshot.cloud;
         var cloudResult = await root.api("adminSaveClubCloudConfiguration", {
           permanentClubId: permanentClubId,
           participation: participation,
           url: url,
-          expectedParticipationVersion: cloudRow && Number.isSafeInteger(Number(cloudRow.participationVersion))
+          expectedParticipationVersion: Number.isSafeInteger(Number(cloudRow.participationVersion))
             ? Number(cloudRow.participationVersion)
             : 0,
-          expectedLinkVersion: cloudRow && Number.isSafeInteger(Number(cloudRow.linkVersion))
+          expectedLinkVersion: Number.isSafeInteger(Number(cloudRow.linkVersion))
             ? Number(cloudRow.linkVersion)
             : 0
         });
