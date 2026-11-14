@@ -13210,34 +13210,44 @@ syncForms({resumeQuota:true}).catch(function(){});
 }
 
 function paintFormPanelMeta_(counts, uiState, errorMessage){
+/*
+ * 標題統計只吃成功快照（counts 或上次成功），不用篩選列／回覆份數冒充已完成社團。
+ * 有快照但欄位為 null →「未提供」；失敗 →「未取得」；尚無快照 →「待同步」。
+ */
 const forms=Array.isArray(S.forms)?S.forms:[];
 S.formSyncUi=uiState||S.formSyncUi||"idle";
 const failedUi=S.formSyncUi==="failed"||S.formSyncUi==="quota";
+const readingUi=S.formSyncUi==="reading"||S.formSyncUi==="syncing"||S.formSyncUi==="checking";
 const last=S.formLastSuccessCounts||null;
-const src=counts||(failedUi?last:null);
-const miss=failedUi?"未取得":"待同步";
-const pick=function(key, fallback){
+const src=counts||last||null;
+const hasSnapshot=!!(
+src&&(
+src.legacyTotal!=null||src.pending!=null||src.done!=null||
+src.received!=null||src.recognized!=null||src.unrecognized!=null||
+S.formLastSyncAt||S.formLastSyncAtTaipei
+)
+);
+const miss=failedUi?"未取得":(hasSnapshot?"未提供":"待同步");
+const pick=function(key){
 if(src && Object.prototype.hasOwnProperty.call(src, key)) return src[key];
-return failedUi?null:fallback;
+return null;
 };
-const done=formApiCount_(pick("done", forms.filter(function(x){ return x.status==="submitted"; }).length));
-const pendingRaw=pick("pending", forms.filter(function(x){ return x.status==="pending"; }).length);
-const pending=pendingRaw==null?null:pendingRaw;
-const duplicateClubs=formApiCount_(pick("duplicateClubs",
-forms.filter(function(x){ return x.status==="duplicate"; }).length
-));
-const duplicateResponses=pick("duplicateResponses", null);
-const received=pick("received", null);
-const recognized=pick("recognized", null);
-const unrecognized=pick("unrecognized", null);
-const nameConflicts=pick("nameConflicts", null);
-const retained=pick("retained", null);
-const legacyTotal=pick("legacyTotal", null);
+const done=formApiCount_(pick("done"));
+const pendingRaw=pick("pending");
+const pending=pendingRaw==null?null:formApiCount_(pendingRaw);
+const duplicateClubs=formApiCount_(pick("duplicateClubs"));
+const duplicateResponses=pick("duplicateResponses");
+const received=pick("received");
+const recognized=pick("recognized");
+const unrecognized=pick("unrecognized");
+const nameConflicts=pick("nameConflicts");
+const retained=pick("retained");
+const legacyTotal=pick("legacyTotal");
 const total=forms.length;
-$("statForms").textContent=done==null?(failedUi?(`未取得/${total||"—"}`):`待同步/${total}`):`${done}/${total}`;
+$("statForms").textContent=done==null?`${miss}/${total||"—"}`:`${done}/${total}`;
 const legacyPart=formApiCount_(legacyTotal)!=null
 ? `表單回覆總份數 ${formApiCount_(legacyTotal)}｜`
-: (failedUi && !last ? "表單回覆總份數 未取得｜" : "");
+: (hasSnapshot||failedUi||readingUi?`表單回覆總份數 ${miss}｜`:"");
 const pendingText=pending==null?miss:(pending+" 個");
 $("formMeta").textContent=
 `${legacyPart}收到回覆 ${formNewCountText_(received, miss)}｜辨識成功 ${formNewCountText_(recognized, miss)}｜無法辨識 ${formNewCountText_(unrecognized, miss)}｜名稱衝突 ${formNewCountText_(nameConflicts, miss)}｜保留原關聯 ${formNewCountText_(retained, miss)}｜已完成社團 ${formClubCountText_(done, miss)}｜待填社團 ${pendingText}｜重複社團 ${formClubCountText_(duplicateClubs, miss)}／重複回覆 ${formNewCountText_(duplicateResponses, miss)}｜最後成功同步 ${formSyncStampText_()}`;
@@ -13274,21 +13284,40 @@ if(r.lastSyncAt) S.formLastSyncAt=r.lastSyncAt;
 if(r.lastSyncAtTaipei) S.formLastSyncAtTaipei=r.lastSyncAtTaipei;
 S.formSyncError="";
 S.formSyncQuotaBlocked=false;
+/*
+ * 契約對照（list／sync）：
+ * - 已完成社團 ← submittedClubCount 或 submittedCount（不是 totalFormResponses）
+ * - 重複社團 ← duplicateClubCount 或 duplicateCount
+ * - 收到回覆 ← receivedResponseCount 或 totalFormResponses
+ * - 辨識成功 ← recognizedResponseCount 或 totalValidResponses
+ * 缺欄 → null（標題顯示「未提供」），不填假 0。
+ */
+const legacyTotal=formApiCount_(r.totalFormResponses);
+const received=formApiCount_(
+r.receivedResponseCount!=null?r.receivedResponseCount:r.totalFormResponses
+);
+const recognized=formApiCount_(
+r.recognizedResponseCount!=null?r.recognizedResponseCount:r.totalValidResponses
+);
 S.formSyncBreakdown={
-legacyTotal:formApiCount_(r.totalFormResponses),
-received:formApiCount_(r.receivedResponseCount),
-recognized:formApiCount_(r.recognizedResponseCount),
+legacyTotal:legacyTotal,
+received:received,
+recognized:recognized,
 unrecognized:formApiCount_(r.unrecognizedResponseCount),
 nameConflicts:formApiCount_(r.nameConflictResponseCount),
 retained:formApiCount_(r.retainedAssociationResponseCount),
 duplicateResponses:formApiCount_(r.duplicateResponseCount),
 invalidSamples:Array.isArray(r.invalidResponseSamples)?r.invalidResponseSamples:[]
 };
-const done=formApiCount_(r.submittedClubCount);
+const done=formApiCount_(
+r.submittedClubCount!=null?r.submittedClubCount:r.submittedCount
+);
 const successCounts={
 done:done,
 pending:formApiCount_(r.pendingCount),
-duplicateClubs:formApiCount_(r.duplicateClubCount),
+duplicateClubs:formApiCount_(
+r.duplicateClubCount!=null?r.duplicateClubCount:r.duplicateCount
+),
 duplicateResponses:S.formSyncBreakdown.duplicateResponses,
 legacyTotal:S.formSyncBreakdown.legacyTotal,
 received:S.formSyncBreakdown.received,
