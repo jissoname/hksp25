@@ -14748,11 +14748,12 @@ toast("⚠️ "+msg);
 }
 
 /**
- * 配對預覽／確認接線候選：GAS session API。
- * FOLDER_OPS_PAUSED＝暫停守衛通過，功能仍未完成；不得批次確認 66 社。
- * 確認契約為 bindings（非 matched）。
+ * 配對預覽／確認接線候選。
+ * FOLDER_OPS_PAUSED＝正式 portal 仍早退；候選六桶／fingerprint／確認契約已備。
+ * 確認契約為 bindings（非 matched）；單次≤5；衝突不得任選。
  */
 S.pairPreviewMatched=S.pairPreviewMatched||[];
+S.pairPreviewLast=S.pairPreviewLast||null;
 
 function pairPreviewClubsPayload_(){
 const fromQuery=(S.studentQueryClubs||[]).map(function(c){
@@ -14787,6 +14788,57 @@ box.innerHTML=`<div class="state">⏸️ ${esc(actionLabel)}：${esc(msg)}（FOL
 toast("⏸️ "+actionLabel+"仍暫停／未完成（FOLDER_OPS_PAUSED）");
 }
 
+function pairBucketRowsHtml_(title,rows,detailFn){
+const list=Array.isArray(rows)?rows:[];
+if(!list.length){
+return `<div class="list-row"><div class="list-sub">${esc(title)}：0</div></div>`;
+}
+const body=list.map(function(row){
+return `<div class="list-row"><div><div class="list-title">${esc(title)}</div><div class="list-sub">${esc(detailFn(row))}</div></div></div>`;
+}).join("");
+return body;
+}
+
+function renderPairPreviewBuckets_(r){
+const box=$("pairPreviewState");
+if(!box) return;
+const already=Array.isArray(r.alreadyBound)?r.alreadyBound:[];
+const matched=Array.isArray(r.matched)?r.matched:[];
+const missing=Array.isArray(r.missing)?r.missing:[];
+const conflicts=Array.isArray(r.conflicts)?r.conflicts:[];
+const unreadables=Array.isArray(r.unreadables)?r.unreadables:[];
+const notFolders=Array.isArray(r.notFolders)?r.notFolders:[];
+const summary=
+'<div class="state">預覽六桶摘要｜既有綁定='+already.length+
+'｜可配對='+matched.length+
+'｜找不到='+missing.length+
+'｜同名衝突='+conflicts.length+
+'｜無權限='+unreadables.length+
+'｜非資料夾='+notFolders.length+
+'｜fingerprint='+esc(r.previewFingerprint||"—")+
+'（衝突不得任選；確認≤5；預覽不得寫入）</div>';
+box.innerHTML=summary+
+pairBucketRowsHtml_("既有綁定",already,function(row){
+return (row.permanentClubId||"?")+"｜"+(row.clubName||"")+"｜folder="+(row.folderId||"—");
+})+
+pairBucketRowsHtml_("可配對",matched,function(row){
+return (row.permanentClubId||"?")+"｜"+(row.clubName||"")+"｜folder="+(row.folderId||"—");
+})+
+pairBucketRowsHtml_("找不到",missing,function(row){
+return (row.permanentClubId||"?")+"｜"+(row.reason||"missing");
+})+
+pairBucketRowsHtml_("同名衝突（不得任選）",conflicts,function(row){
+const n=Array.isArray(row.candidates)?row.candidates.length:0;
+return (row.permanentClubId||"?")+"｜"+(row.reason||"conflict")+"｜candidates="+n;
+})+
+pairBucketRowsHtml_("無權限／不可讀",unreadables,function(row){
+return (row.permanentClubId||row.folderId||"?")+"｜"+(row.reason||"unreadable");
+})+
+pairBucketRowsHtml_("非資料夾",notFolders,function(row){
+return (row.permanentClubId||row.folderId||"?")+"｜"+(row.mimeType||"not-folder");
+});
+}
+
 async function previewEvalFolderPairs(){
 try{
 const rootFolderUrl=pairEvalRootFolderUrl_();
@@ -14801,23 +14853,17 @@ clubs:pairPreviewClubsPayload_()
 if(unauthorized(r)) return;
 if(r&&r.error==="FOLDER_OPS_PAUSED"){
 S.pairPreviewMatched=[];
+S.pairPreviewLast=null;
+S.pairPreviewFingerprint="";
 renderPairOpsPaused_(r,"預覽配對");
 return;
 }
 if(r&&r.success===true){
 S.pairPreviewMatched=Array.isArray(r.matched)?r.matched.slice():[];
 S.pairPreviewFingerprint=r.previewFingerprint||"";
-toast("⚠️ 預覽回傳成功，但功能仍待解暫停核准；不得批次確認既有 66 社");
-if($("pairPreviewState")){
-$("pairPreviewState").innerHTML=
-'<div class="state">預覽 既有綁定='+((r.alreadyBound&&r.alreadyBound.length)||0)+
-'｜可配對='+S.pairPreviewMatched.length+
-'｜找不到='+((r.missing&&r.missing.length)||0)+
-'｜同名衝突='+((r.conflicts&&r.conflicts.length)||0)+
-'｜無權限='+((r.unreadables&&r.unreadables.length)||0)+
-'｜非資料夾='+((r.notFolders&&r.notFolders.length)||0)+
-'（衝突不得任選；確認≤5 且須帶 previewFingerprint；未解暫停）</div>';
-}
+S.pairPreviewLast=r;
+renderPairPreviewBuckets_(r);
+toast("預覽完成（六桶已列出）。正式確認仍待解暫停核准；不得批次重配 66 社");
 return;
 }
 toast("⚠️ "+((r&&(r.message||r.error))||"預覽失敗"));
@@ -14833,9 +14879,12 @@ if(!bindings.length){
 toast("⚠️ 沒有可確認的 bindings（暫停期預覽不會產生 matched；解暫停後須先預覽）");
 return;
 }
-if(bindings.length>5){
-toast("⚠️ 單次確認上限 5 筆，拒絕批次重配 66");
-return;
+if(S.pairPreviewMatched.length>5){
+toast("⚠️ 可配對超過 5 筆；本輪只送前 5 筆。既有 66 社禁止一次重配");
+}
+const conflicted=(S.pairPreviewLast&&Array.isArray(S.pairPreviewLast.conflicts))?S.pairPreviewLast.conflicts:[];
+if(conflicted.length){
+toast("⚠️ 預覽含同名衝突，確認不得任選衝突社；請改用逐社手動連結");
 }
 const r=await api("adminConfirmEvaluationFolderPairs",{
 bindings:bindings,
@@ -14850,13 +14899,30 @@ if(r&&r.error==="BINDINGS_BATCH_FORBIDDEN"){
 toast("⚠️ "+((r&&r.message)||"拒絕批次確認"));
 return;
 }
+if(r&&(r.error==="PREVIEW_STALE"||r.error==="LINK_CHANGED_SINCE_PREVIEW"||r.error==="LINK_VERSION_CONFLICT")){
+toast("⚠️ "+((r&&r.message)||r.error)+"；請重新預覽後再確認，勿重送舊 fingerprint");
+S.pairPreviewMatched=[];
+S.pairPreviewFingerprint="";
+return;
+}
+if(r&&(r.error==="PAIR_CONFLICT_UNRESOLVED"||r.error==="FOLDER_UNREADABLE"||r.error==="CLOUD_LINK_NOT_FOLDER")){
+toast("⚠️ "+((r&&r.message)||r.error));
+return;
+}
 if(r&&r.success===true){
 toast("❌ 確認配對在暫停方針下不應成功；請立即回報並勿重跑");
 return;
 }
 toast("⚠️ "+((r&&(r.message||r.error))||"確認配對失敗"));
 }catch(e){
-toast("⚠️ "+(e&&e.message?e.message:"確認配對失敗"));
+const msg=String((e&&e.message)||"確認配對失敗");
+if(/PREVIEW_STALE|LINK_CHANGED|VERSION_CONFLICT|過期|重新預覽/.test(msg)){
+toast("⚠️ "+msg+"；請重新預覽後再確認");
+S.pairPreviewMatched=[];
+S.pairPreviewFingerprint="";
+return;
+}
+toast("⚠️ "+msg);
 }
 }
 
