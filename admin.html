@@ -10743,6 +10743,49 @@ clearClubStudentMutation(kind,pending);
 return {proceed:true,clientRequestId:null};
 }
 
+/** 操作前重讀座位版本；不得沿用列表按鈕上的舊 seatVersion。 */
+async function fetchFreshClubStudentSeatForMutate(activityId,permanentClubId,uid,studentId){
+const clubId=String(permanentClubId||"").trim().toUpperCase();
+const expectUid=String(uid||"");
+const expectSid=String(studentId||"");
+if(!activityId||!clubId||!expectUid){
+return {ok:false,message:"缺少活動／Club_ID／UID，無法重讀座位"};
+}
+const r=await api("adminListClubStudents",{
+activityId:activityId,
+activityScope:"current",
+permanentClubId:clubId,
+clubScope:"single",
+pageSize:1
+});
+if(!r||r.success!==true){
+return {ok:false,message:(r&&(r.message||r.error))||"重讀座位失敗"};
+}
+const group=Array.isArray(r.clubs)&&r.clubs[0]?r.clubs[0]:null;
+const seatVersion=r.seatVersion!=null?Number(r.seatVersion):(group&&group.seatVersion!=null?Number(group.seatVersion):NaN);
+const primaryUid=String(r.primaryUid||(group&&group.primaryUid)||"");
+const students=Array.isArray(r.students)?r.students:(group&&Array.isArray(group.students)?group.students:[]);
+const row=students.find(function(s){ return String(s&&s.uid||"")===expectUid; })||null;
+if(!row){
+return {ok:false,message:"重讀後找不到該 UID（名單已變），已中止"};
+}
+if(expectSid&&String(row.studentId||"")!==expectSid){
+return {ok:false,message:"重讀後學號不符，已中止"};
+}
+if(primaryUid&&primaryUid!==expectUid){
+return {ok:false,message:"重讀後主要帳號已非該 UID，已中止"};
+}
+if(!Number.isFinite(seatVersion)){
+return {ok:false,message:"重讀後缺少 seatVersion，已中止"};
+}
+return {
+ok:true,
+seatVersion:seatVersion,
+studentId:String(row.studentId||expectSid),
+clubName:String((group&&group.clubName)||r.clubName||clubId)
+};
+}
+
 function clubStudentActivityId(){
 if(clubStudentActivityScope()==="history"){
 return String(($("clubStudentHistoryActivityId")||{}).value||"").trim();
@@ -11788,14 +11831,33 @@ permanentClubId:String(permanentClubId||"").trim().toUpperCase()
 };
 const gate=await resolveClubStudentPendingOrAbort("unbind",opSeed);
 if(!gate.proceed) return;
+let fresh;
+try{
+fresh=await fetchFreshClubStudentSeatForMutate(
+opSeed.activityId,
+opSeed.permanentClubId,
+opSeed.uid,
+String(studentId||"")
+);
+}catch(e){
+toast("重讀座位失敗："+(e&&e.message||"網路異常")+"；已中止（未送解除綁定）");
+return;
+}
+if(!fresh||!fresh.ok){
+toast((fresh&&fresh.message)||"重讀座位失敗；已中止");
+return;
+}
+if(Number.isFinite(Number(seatVersion))&&Number(seatVersion)!==fresh.seatVersion){
+toast("座位版本已更新（"+Number(seatVersion)+"→"+fresh.seatVersion+"），改用最新版本繼續");
+}
 const op={
 resetSeq:++clubStudentResetSeq,
 uid:opSeed.uid,
 activityId:opSeed.activityId,
 permanentClubId:opSeed.permanentClubId,
-studentId:String(studentId||""),
-seatVersion:Number(seatVersion),
-clubName:String(clubName||permanentClubId||""),
+studentId:String(fresh.studentId||studentId||""),
+seatVersion:Number(fresh.seatVersion),
+clubName:String(fresh.clubName||clubName||permanentClubId||""),
 token:tokenAtStart,
 clientRequestId:newClubStudentClientRequestId("unbind")
 };
@@ -11903,14 +11965,33 @@ fromPermanentClubId:String(fromPermanentClubId||"").trim().toUpperCase()
 };
 const gate=await resolveClubStudentPendingOrAbort("rebind",opSeed);
 if(!gate.proceed) return;
+let freshRebind;
+try{
+freshRebind=await fetchFreshClubStudentSeatForMutate(
+opSeed.activityId,
+opSeed.fromPermanentClubId,
+opSeed.uid,
+String(studentId||"")
+);
+}catch(e){
+toast("重讀座位失敗："+(e&&e.message||"網路異常")+"；已中止（未送改綁）");
+return;
+}
+if(!freshRebind||!freshRebind.ok){
+toast((freshRebind&&freshRebind.message)||"重讀座位失敗；已中止");
+return;
+}
+if(Number.isFinite(Number(seatVersion))&&Number(seatVersion)!==freshRebind.seatVersion){
+toast("座位版本已更新（"+Number(seatVersion)+"→"+freshRebind.seatVersion+"），改用最新版本繼續");
+}
 const op={
 resetSeq:++clubStudentResetSeq,
 uid:opSeed.uid,
 activityId:opSeed.activityId,
 fromPermanentClubId:opSeed.fromPermanentClubId,
-studentId:String(studentId||""),
-seatVersion:Number(seatVersion),
-fromClubName:String(fromClubName||fromPermanentClubId||""),
+studentId:String(freshRebind.studentId||studentId||""),
+seatVersion:Number(freshRebind.seatVersion),
+fromClubName:String(freshRebind.clubName||fromClubName||fromPermanentClubId||""),
 token:tokenAtStart,
 clientRequestId:newClubStudentClientRequestId("rebind")
 };
