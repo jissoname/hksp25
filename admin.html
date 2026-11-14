@@ -852,7 +852,9 @@ type="datetime-local"
 <div class="toolbar" style="margin-top:12px">
 
 <button
+id="saveEventBtn"
 class="btn btn-primary"
+type="button"
 onclick="saveEventConfig()"
 >
 💾 儲存時程
@@ -1705,6 +1707,7 @@ bindings:[],
 clouds:[],
 eventConfig:null,
 eventScreenVersion:null,
+eventConfigStatus:"idle",
 busy:false,
 clubSaveSeq:0,
 clubSaveBusy:false,
@@ -12845,164 +12848,147 @@ return v
 
 }
 
-async function loadEvent(){
-
-try{
-
-const r =
-await post({
-action:"getEventConfig"
-});
-
-if(
-!r.success ||
-!r.config
-){
-
-throw new Error(
-r.message ||
-"無法取得活動時程"
-);
-
+function setEventSaveEnabled_(enabled){
+const btn=$("saveEventBtn");
+if(btn) btn.disabled=!enabled;
 }
 
-rememberScreenVersion(
-"eventScreenVersion",
-r
-);
-
-S.eventConfig=
-r.config;
-
+function paintEventFieldsFromConfig_(config){
+if(!config) return;
 [
 "dataDeadline",
 "formDeadline",
 "eventStart",
 "eventEnd"
-]
-.forEach(
-k=>
-$(k).value=
-isoToLocal(
-r.config[k]
-)
-);
+].forEach(function(k){
+const el=$(k);
+if(el) el.value=isoToLocal(config[k]);
+});
+}
 
-$("eventMeta").textContent=
-r.config.updatedAt
-?
-"最後更新 "+
-formatDate(
-r.config.updatedAt
-)
-:
-"使用目前設定";
-
+async function loadEvent(){
+const hadSnapshot=!!(S.eventConfig&&S.eventConfig.dataDeadline);
+try{
+/*
+ * 必須帶 sessionToken（api），不可裸 post getEventConfig。
+ * cloud portal 管理入口會先 requireAdmin；缺 token 會回 ADMIN_UNAUTHORIZED，
+ * 易被誤顯示成「登入已失效」，但其實其他雲端功能 session 仍有效。
+ */
+const r=await api("getEventConfig");
+if(unauthorized(r)) return;
+if(!r||r.success===false){
+const code=String((r&&r.error)||"");
+if(code==="EVENT_CONFIG_MISSING"||code==="EVENT_CONFIG_INVALID"){
+throw new Error((r&&r.message)||"活動時程尚未就緒或格式無法核對");
+}
+if(code==="ACTION_NOT_MIGRATED"||code==="ACTION_NOT_ALLOWED"){
+throw new Error((r&&r.message)||"活動時程讀取尚未接入 Firebase portal");
+}
+throw new Error((r&&r.message)||"無法取得活動時程");
+}
+if(!r.config){
+throw new Error("活動時程回應缺少 config");
+}
+rememberScreenVersion("eventScreenVersion", r);
+S.eventConfig=r.config;
+S.eventConfigStatus="ok";
+paintEventFieldsFromConfig_(r.config);
+$("eventMeta").textContent=r.config.updatedAt
+? "最後更新 "+formatDate(r.config.updatedAt)
+: "使用目前設定";
+$("eventError").textContent="";
+setEventSaveEnabled_(true);
 }
 catch(e){
-
-$("eventError").textContent=
-e.message;
-
+S.eventConfigStatus="error";
+const msg=String((e&&e.message)||"未取得活動時程");
+if(hadSnapshot){
+$("eventError").textContent="讀取失敗（已保留上次成功快照，未清空欄位）："+msg;
+$("eventMeta").textContent="讀取失敗｜已保留畫面值";
+setEventSaveEnabled_(false);
 }
-
+else{
+[
+"dataDeadline",
+"formDeadline",
+"eventStart",
+"eventEnd"
+].forEach(function(k){
+const el=$(k);
+if(el) el.value="";
+});
+$("eventError").textContent="未取得活動時程："+msg;
+$("eventMeta").textContent="未取得";
+setEventSaveEnabled_(false);
+}
+}
 }
 
 async function saveEventConfig(){
-
-const dataDeadline =
-localToTaipei(
-$("dataDeadline").value
-);
-
-const formDeadline =
-localToTaipei(
-$("formDeadline").value
-);
-
-const eventStart =
-localToTaipei(
-$("eventStart").value
-);
-
-const eventEnd =
-localToTaipei(
-$("eventEnd").value
-);
-
+if(S.eventConfigStatus!=="ok"||!S.eventConfig){
+$("eventError").textContent="尚未成功載入活動時程，禁用儲存；請先重新讀取，勿提交空白值。";
+setEventSaveEnabled_(false);
+return;
+}
+if(!S.eventScreenVersion||S.eventScreenVersion.source!=="firestore"||!S.eventScreenVersion.updateTime){
+$("eventError").textContent="缺少時程版本，請重新讀取後再儲存。";
+return;
+}
+const dataDeadline=localToTaipei($("dataDeadline").value);
+const formDeadline=localToTaipei($("formDeadline").value);
+const eventStart=localToTaipei($("eventStart").value);
+const eventEnd=localToTaipei($("eventEnd").value);
+const fields={dataDeadline:dataDeadline,formDeadline:formDeadline,eventStart:eventStart,eventEnd:eventEnd};
+for(const key of Object.keys(fields)){
+const value=fields[key];
+if(!value||!Number.isFinite(Date.parse(value))){
+$("eventError").textContent="請以台灣時間填寫完整的活動時程欄位（含分）。";
+return;
+}
+}
+if(Date.parse(eventEnd)<=Date.parse(eventStart)){
+$("eventError").textContent="活動結束時間須晚於開始時間。";
+return;
+}
+const saveBtn=$("saveEventBtn");
+const prevLabel=saveBtn?String(saveBtn.textContent||""):"";
 try{
-
-$("eventError").textContent=
-"";
-
-const r =
-await api(
-"adminSaveEventConfig",
-{
-dataDeadline,
-formDeadline,
-eventStart,
-eventEnd,
-...settingsVersionPayload(
-S.eventScreenVersion
-)
+$("eventError").textContent="";
+if(saveBtn){
+saveBtn.disabled=true;
+saveBtn.textContent="儲存中…";
 }
-);
-
-if(
-unauthorized(r)
-)
+const r=await api("adminSaveEventConfig",{
+dataDeadline:dataDeadline,
+formDeadline:formDeadline,
+eventStart:eventStart,
+eventEnd:eventEnd,
+...settingsVersionPayload(S.eventScreenVersion)
+});
+if(unauthorized(r)) return;
+if(settingsConflict(r)){
+toast("活動時程已有其他修改，畫面內容已保留。請重新讀取後再儲存。");
 return;
-
-if(
-settingsConflict(r)
-){
-
-toast(
-"活動時程已有其他修改，畫面內容已保留。請重新讀取後再儲存。"
-);
-
-return;
-
 }
-
-if(
-!r.success
-){
-
-throw new Error(
-r.message ||
-"儲存失敗"
-);
-
+if(!r||r.success!==true||!r.config){
+throw new Error((r&&r.message)||"儲存失敗");
 }
-
-rememberScreenVersion(
-"eventScreenVersion",
-r
-);
-
-S.eventConfig=
-r.config;
-
-$("eventMeta").textContent=
-"最後更新 "+
-formatDate(
-r.config.updatedAt
-);
-
-toast(
-"✅ 活動時程已儲存"
-);
-
+rememberScreenVersion("eventScreenVersion", r);
+S.eventConfig=r.config;
+S.eventConfigStatus="ok";
+paintEventFieldsFromConfig_(r.config);
+$("eventMeta").textContent="最後更新 "+formatDate(r.config.updatedAt);
+toast("✅ 活動時程已儲存");
 }
 catch(e){
-
-$("eventError").textContent=
-e.message;
-
+$("eventError").textContent=String((e&&e.message)||"儲存失敗");
 }
-
+finally{
+if(saveBtn){
+saveBtn.disabled=S.eventConfigStatus!=="ok";
+saveBtn.textContent=prevLabel||"💾 儲存時程";
+}
+}
 }
 
 function formatDate(v){
