@@ -1208,7 +1208,7 @@ onclick="loadClubCloudRows()"
 <div id="pairPreviewBox" class="list" style="margin-top:12px">
 
 <div class="state" id="pairPreviewState">
-FOLDER_OPS_PAUSED 維持：預覽／確認／ensure 經 Firebase portal（?cloud=1）仍擋。可唯讀列出 cloudLinks／雲端列／上傳設定；單社手動連結可用。不重建夾、不覆蓋手動連結、不搬刪或改共享。解暫停條件見 FOLDER_OPS_PAUSED_MATRIX。第 11 項未標完成。
+唯讀預覽已開放（P1）；確認配對／建夾仍暫停（FOLDER_OPS_PAUSED）。預覽只讀 Drive／既有綁定，不寫 cloudLinks、不建夾、不改共享。單社手動連結仍可用。未核准 P2。
 </div>
 
 <label class="label">評選活動根資料夾（配對預覽用，非特色共用夾）</label>
@@ -1220,8 +1220,8 @@ value="https://drive.google.com/drive/folders/1kp_2gbJxFi9nsoYZzya9Ms43hr6JtIga"
 >
 
 <div class="btn-row" style="margin-top:8px">
-<button class="btn" type="button" onclick="previewEvalFolderPairs()">預覽配對（仍暫停／未完成）</button>
-<button class="btn" type="button" onclick="confirmMatchedEvalFolderPairs()">確認配對（仍暫停／未完成）</button>
+<button class="btn" type="button" onclick="previewEvalFolderPairs()">預覽配對（唯讀）</button>
+<button class="btn" type="button" onclick="confirmMatchedEvalFolderPairs()">確認配對（仍暫停）</button>
 </div>
 
 </div>
@@ -14858,12 +14858,26 @@ S.pairPreviewFingerprint="";
 renderPairOpsPaused_(r,"預覽配對");
 return;
 }
+if(r&&(r.error==="DRIVE_READONLY_NOT_CONFIGURED"||r.error==="DRIVE_READONLY_UNAVAILABLE"||r.error==="UNREADABLE"||/^DRIVE_AUTH_LEASE/.test(String(r.error||"")))){
+S.pairPreviewMatched=[];
+S.pairPreviewLast=null;
+S.pairPreviewFingerprint="";
+const box=$("pairPreviewState");
+if(box){
+box.innerHTML=`<div class="state">⚠️ 唯讀預覽失敗（不是空清單／不是預覽成功）：${esc((r&&r.message)||r.error)}</div>`;
+}
+toast("⚠️ 唯讀預覽失敗："+((r&&r.message)||r.error));
+return;
+}
 if(r&&r.success===true){
 S.pairPreviewMatched=Array.isArray(r.matched)?r.matched.slice():[];
 S.pairPreviewFingerprint=r.previewFingerprint||"";
 S.pairPreviewLast=r;
 renderPairPreviewBuckets_(r);
-toast("預覽完成（六桶已列出）。正式確認仍待解暫停核准；不得批次重配 66 社");
+const note=(r.readOnly||r.policy==="P1_READONLY_PREVIEW")
+?"唯讀預覽已開放；確認／建夾仍暫停。不得批次重配 66 社"
+:"預覽完成；確認仍待核准";
+toast(note);
 return;
 }
 toast("⚠️ "+((r&&(r.message||r.error))||"預覽失敗"));
