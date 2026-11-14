@@ -43,11 +43,15 @@
       style.textContent = ".firebase-cloud-admin .panel[hidden],.firebase-cloud-admin .stat[hidden]{display:none!important}";
       document.head.append(style);
     }
+    // Migrated cloud panels only. Forms (#formList) is on Firebase list/stamp — keep visible.
+    // Unmigrated panels (judges, ranking, score, …) stay hidden.
     document.querySelectorAll(".panel").forEach(function (panel) {
-      if (!panel.querySelector("#clubList,#clubStudentList,#cloudList,#eventMeta,#cloudUploadMeta")) panel.hidden = true;
+      if (!panel.querySelector("#clubList,#clubStudentList,#cloudList,#eventMeta,#cloudUploadMeta,#formList")) {
+        panel.hidden = true;
+      }
     });
     document.querySelectorAll(".stat").forEach(function (stat) {
-      if (!stat.querySelector("#statClubs")) stat.hidden = true;
+      if (!stat.querySelector("#statClubs,#statForms")) stat.hidden = true;
     });
     document.querySelectorAll('button[onclick*="previewHandover"],button[onclick*="executeHandover"]').forEach(function (button) {
       button.disabled = true;
@@ -55,7 +59,7 @@
     var title = document.querySelector(".hero h1");
     if (title) title.textContent = "社團與雲端管理";
     var subtitle = document.querySelector(".hero .sub");
-    if (subtitle) subtitle.textContent = "參與項目、學生帳號、資料夾、上傳期限與補交";
+    if (subtitle) subtitle.textContent = "參與項目、學生帳號、資料夾、上傳期限、補交與表單進度";
     var box = $("clubCloudFolderField");
     if (box) box.hidden = false;
     ["eval", "feature"].forEach(function (prefix) {
