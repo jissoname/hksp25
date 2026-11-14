@@ -14749,8 +14749,8 @@ toast("⚠️ "+msg);
 
 /**
  * 配對預覽／確認接線候選。
- * FOLDER_OPS_PAUSED＝正式 portal 仍早退；候選六桶／fingerprint／確認契約已備。
- * 確認契約為 bindings（非 matched）；單次≤5；衝突不得任選。
+ * P1 唯讀；portal 以正式社團目錄為範圍權威（停用／不需評選→notInEvaluation，不進缺夾）。
+ * 確認契約為 bindings（非 matched）；單次≤5；衝突不得任選；confirm／ensure 仍暫停。
  */
 S.pairPreviewMatched=S.pairPreviewMatched||[];
 S.pairPreviewLast=S.pairPreviewLast||null;
@@ -14761,7 +14761,8 @@ return {
 permanentClubId:c.permanentClubId||c.clubId||"",
 clubName:c.name||c.clubName||"",
 name:c.name||c.clubName||"",
-category:c.category||""
+category:c.category||"",
+active:c.active===true
 };
 }).filter(function(c){ return /^D[0-9]{3,}$/.test(String(c.permanentClubId||"").trim().toUpperCase()); });
 return fromQuery.length?fromQuery:(S.clubs||[]).map(function(c){
@@ -14769,7 +14770,8 @@ return {
 permanentClubId:clubPermanentId_(c),
 clubName:c.name||"",
 name:c.name||"",
-category:c.category||""
+category:c.category||"",
+active:c.active===true
 };
 }).filter(function(c){ return !!c.permanentClubId; });
 }
@@ -14808,15 +14810,17 @@ const missing=Array.isArray(r.missing)?r.missing:[];
 const conflicts=Array.isArray(r.conflicts)?r.conflicts:[];
 const unreadables=Array.isArray(r.unreadables)?r.unreadables:[];
 const notFolders=Array.isArray(r.notFolders)?r.notFolders:[];
+const notInEval=Array.isArray(r.notInEvaluation)?r.notInEvaluation:[];
 const summary=
-'<div class="state">預覽六桶摘要｜既有綁定='+already.length+
+'<div class="state">預覽範圍摘要｜既有綁定='+already.length+
 '｜可配對='+matched.length+
 '｜找不到='+missing.length+
 '｜同名衝突='+conflicts.length+
 '｜無權限='+unreadables.length+
 '｜非資料夾='+notFolders.length+
+'｜不需評選／不納入配對='+notInEval.length+
 '｜fingerprint='+esc(r.previewFingerprint||"—")+
-'（衝突不得任選；確認≤5；預覽不得寫入）</div>';
+'（衝突不得任選；確認≤5；預覽不得寫入；停用／不需評選不計缺夾）</div>';
 box.innerHTML=summary+
 pairBucketRowsHtml_("既有綁定",already,function(row){
 return (row.permanentClubId||"?")+"｜"+(row.clubName||"")+"｜folder="+(row.folderId||"—");
@@ -14836,6 +14840,9 @@ return (row.permanentClubId||row.folderId||"?")+"｜"+(row.reason||"unreadable")
 })+
 pairBucketRowsHtml_("非資料夾",notFolders,function(row){
 return (row.permanentClubId||row.folderId||"?")+"｜"+(row.mimeType||"not-folder");
+})+
+pairBucketRowsHtml_("不需評選／不納入配對",notInEval,function(row){
+return (row.permanentClubId||"?")+"｜"+(row.label||"不需評選／不納入配對")+"｜"+(row.reason||"");
 });
 }
 
