@@ -684,7 +684,8 @@ onclick="openClubModal()"
 <div class="panel-body">
 
 <div class="notice warnbox">
-依伺服器目前活動，或明確指定的歷史活動查詢學生。社團篩選與活動範圍分開：可查全部社團、指定屬性的全部社團，或單一社團。結果依社團分組；未註冊也列出；停用社團會標示。解除綁定會釋放名額且帳號維持可用（可重新選社）；改綁保留 UID／學號／密碼。不可讀取生日／密碼／權杖。不搬移既有雲端檔案。
+依伺服器目前活動，或明確指定的歷史活動查詢學生。社團篩選與活動範圍分開：可查全部社團、指定屬性的全部社團，或單一社團。結果依社團分組；未註冊也列出；停用社團會標示。不可讀取生日／密碼／權杖。不搬移既有雲端檔案。
+<div style="margin-top:8px"><b>A. 解除綁定</b>：釋放原社團名額；帳號／學號／密碼保留，登入後可重選社團。<b>B. 錯誤註冊重設</b>：學號也填錯時用；先唯讀預覽，確認句通過後才執行；會刪除 Auth／帳號以利同號重新註冊；不刪 cloudLinks／評分／上傳檔。兩者不可混用。</div>
 </div>
 
 <div class="notice" id="activityHandoverBox">
@@ -767,6 +768,25 @@ onclick="openClubModal()"
 <div class="row-actions">
 <button class="btn btn-primary" type="button" id="clubStudentEnrollSubmitBtn" onclick="submitClubStudentEnrollBirth()">確認補登</button>
 <button class="btn" type="button" onclick="cancelClubStudentEnrollBirth()">取消</button>
+</div>
+</div>
+
+<div id="clubStudentWrongRegBox" class="notice warnbox hidden" style="margin-top:12px">
+<div style="font-weight:900;margin-bottom:6px">B. 錯誤註冊重設（不可逆預覽）</div>
+<div id="clubStudentWrongRegMeta" class="list-sub" style="margin-bottom:8px"></div>
+<div id="clubStudentWrongRegPreview" class="list-sub" style="margin-bottom:8px;white-space:pre-wrap"></div>
+<label class="club-student-field" style="display:block;margin-bottom:8px">
+<span class="mini-label">確認句（須完全相符）</span>
+<input id="clubStudentWrongRegConfirm" class="field" type="text" autocomplete="off" placeholder="RESET_WRONG_REGISTRATION">
+</label>
+<label class="club-student-field" style="display:block;margin-bottom:8px">
+<span class="mini-label">原因（必填）</span>
+<input id="clubStudentWrongRegReason" class="field" type="text" autocomplete="off" placeholder="例如：學號登錄錯誤">
+</label>
+<div class="list-sub" style="margin-bottom:8px">預覽不會寫入。執行會刪除 Auth 與帳號，使同學號可重新註冊；cloudLinks／評分／上傳紀錄保留。這不是「解除綁定」。</div>
+<div class="row-actions">
+<button class="btn btn-danger" type="button" id="clubStudentWrongRegExecBtn" onclick="executeWrongRegistrationReset_()">確認執行重設</button>
+<button class="btn" type="button" onclick="cancelWrongRegistrationReset_()">取消</button>
 </div>
 </div>
 
@@ -10278,6 +10298,7 @@ let clubStudentQuerySeq=0;
 let clubStudentResetSeq=0;
 let clubStudentPanelLocked=false;
 let clubStudentEnrollTarget=null;
+let clubStudentWrongRegTarget=null;
 let clubStudentPendingMutations={};
 let clubStudentLoadMoreBusy=false;
 let clubStudentLoadMoreRequestId=0;
@@ -10311,6 +10332,20 @@ if(box) box.classList.add("hidden");
 clubStudentEnrollTarget=null;
 }
 
+function clearClubStudentWrongRegForm(){
+const box=$("clubStudentWrongRegBox");
+const preview=$("clubStudentWrongRegPreview");
+const meta=$("clubStudentWrongRegMeta");
+const confirm=$("clubStudentWrongRegConfirm");
+const reason=$("clubStudentWrongRegReason");
+if(preview) preview.textContent="";
+if(meta) meta.textContent="";
+if(confirm) confirm.value="";
+if(reason) reason.value="";
+if(box) box.classList.add("hidden");
+clubStudentWrongRegTarget=null;
+}
+
 function clearClubStudentResults(){
 const state=$("clubStudentState");
 const list=$("clubStudentList");
@@ -10331,6 +10366,7 @@ fingerprint:""
 setClubStudentLoadMoreVisible(false,"");
 hideClubStudentTemp();
 clearClubStudentEnrollForm();
+clearClubStudentWrongRegForm();
 }
 
 function renderClubStudentGroups(groups,r,selectedSnapshot,clubScope){
@@ -10383,6 +10419,7 @@ const unknown=stu.authUnknown?`<div class="list-sub">${esc(stu.authNotice||"先�
 const recoverBtn=stu.authUnknown?`<button class="btn" data-cs-mutate type="button" onclick='recoverClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.authHolderOpId||""))},${JSON.stringify(Number(stu.authSecurityGeneration))})'>檢查密碼鎖定</button>`:"";
 const unbindBtn=stu.isPrimary?`<button class="btn" data-cs-mutate type="button" onclick='unbindClubStudent(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))},${JSON.stringify(stuSeatVersion)},${JSON.stringify(String(group.clubName||stuClubId))})'>解除綁定</button>`:"";
 const rebindBtn=stu.isPrimary?`<button class="btn" data-cs-mutate type="button" onclick='rebindClubStudent(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))},${JSON.stringify(stuSeatVersion)},${JSON.stringify(String(group.clubName||stuClubId))})'>改綁社團</button>`:"";
+const wrongRegBtn=stu.uid&&stu.studentId?`<button class="btn btn-danger" data-cs-mutate type="button" onclick='previewWrongRegistrationReset(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))},${JSON.stringify(stuSeatVersion)},${JSON.stringify(String(group.clubName||stuClubId))})'>錯誤註冊重設</button>`:"";
 return `<div class="list-row">
 <div>
 <div class="list-title">${sid} ${primary}</div>
@@ -10395,6 +10432,7 @@ ${recoverBtn}
 <button class="btn btn-danger" data-cs-mutate type="button" onclick='resetClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))})'>重設密碼</button>
 ${unbindBtn}
 ${rebindBtn}
+${wrongRegBtn}
 </div>
 </div>`;
 }).join("");
@@ -10543,6 +10581,9 @@ if(meta) meta.textContent=metaText||"";
 function clubStudentMutationKey(kind,op){
 if(kind==="unbind"){
 return ["unbind",op.activityId,op.permanentClubId,op.uid].join("|");
+}
+if(kind==="wrong_reg"){
+return ["wrong_reg",op.activityId,op.uid,op.studentId].join("|");
 }
 return ["rebind",op.activityId,op.fromPermanentClubId,op.uid].join("|");
 }
@@ -10726,6 +10767,16 @@ if(seatEmpty||!sameUid){
 summary="查證：原座位已非該 UID（可能已解除）。識別："+pending.clientRequestId;
 }else{
 summary="查證：原座位仍為該 UID（可能尚未生效或未送達）。識別："+pending.clientRequestId;
+}
+}else if(kind==="wrong_reg"){
+const students=group&&Array.isArray(group.students)?group.students:[];
+const stillListed=students.some(function(s){ return String(s&&s.uid||"")===String(pending.uid||""); });
+if(seatEmpty&&!stillListed){
+summary="查證：原座位已空且名單無該 UID（可能已重設）。識別："+pending.clientRequestId;
+}else if(sameUid||stillListed){
+summary="查證：該 UID 仍出現在座位／名單（可能尚未生效）。識別："+pending.clientRequestId;
+}else{
+summary="查證：狀態需人工核對。識別："+pending.clientRequestId+"；座位="+String(seatStatus||"?");
 }
 }else{
 const toId=String(pending.toPermanentClubId||"").trim().toUpperCase();
@@ -11059,6 +11110,7 @@ op.clubName=clubMeta?clubMeta.name:op.permanentClubId;
 op.category=clubMeta?clubMeta.category:"";
 clubStudentEnrollTarget=op;
 hideClubStudentTemp();
+clearClubStudentWrongRegForm();
 const box=$("clubStudentEnrollBox");
 const meta=$("clubStudentEnrollMeta");
 const input=$("clubStudentEnrollBirth");
@@ -12133,6 +12185,207 @@ toast(e.message||unclearMutationMessage(op,"結果不明"));
 }else{
 clearClubStudentMutation("rebind",op);
 toast((e.message||"改綁失敗")+"；本次請求被拒絕，原綁定應仍保留");
+}
+}finally{
+if(op.resetSeq===clubStudentResetSeq) setClubStudentPanelLocked(false);
+}
+}
+
+function formatWrongRegPreviewText_(preview){
+const del=preview&&preview.willDelete||{};
+const keep=preview&&preview.willPreserve||{};
+const seats=(del.primarySeatsToRelease||[]).map(function(s){
+return String(s.permanentClubId||"?")+"@v"+String(s.seatVersion);
+}).join("、")||"（無主座位）";
+return [
+"將刪除：Auth 使用者、clubStudentAccounts、生日保險庫／AuthCreator（若有）",
+"成員紀錄數："+String(del.memberships!=null?del.memberships:"?")+"（標示 released_wrong_registration）",
+"釋放主座位："+seats,
+"保留：cloudLinks／評分／表單／參與設定／Drive 上傳紀錄（計數 "+String(keep.driveUploadRecordsCounted!=null?keep.driveUploadRecordsCounted:"?")+"）",
+String(preview&&preview.distinctionFromUnbind||"")
+].join("\n");
+}
+
+async function previewWrongRegistrationReset(uid,activityId,permanentClubId,studentId,seatVersion,clubName){
+if(clubStudentPanelLocked){
+toast("操作進行中，請稍候");
+return;
+}
+const tokenAtStart=clubStudentSessionToken();
+if(!tokenAtStart){
+toast("請重新登入後再預覽");
+return;
+}
+const op={
+uid:String(uid||""),
+activityId:String(activityId||""),
+permanentClubId:String(permanentClubId||"").trim().toUpperCase(),
+studentId:String(studentId||""),
+seatVersion:Number(seatVersion),
+clubName:String(clubName||permanentClubId||""),
+token:tokenAtStart
+};
+if(!op.uid||!op.activityId||!op.studentId){
+toast("缺少 UID／活動／學號，已拒絕預覽");
+return;
+}
+clearClubStudentEnrollForm();
+hideClubStudentTemp();
+setClubStudentPanelLocked(true);
+try{
+const r=await api("adminPreviewWrongRegistrationReset",{
+activityId:op.activityId,
+uid:op.uid,
+studentId:op.studentId
+});
+if(unauthorized(r)){
+invalidateClubStudentOps("logout");
+return;
+}
+if(!r||r.success!==true){
+throw new Error((r&&(r.message||r.error))||"預覽失敗");
+}
+op.preview=r;
+if(Number.isFinite(op.seatVersion)===false&&r.willDelete&&Array.isArray(r.willDelete.primarySeatsToRelease)&&r.willDelete.primarySeatsToRelease[0]){
+op.seatVersion=Number(r.willDelete.primarySeatsToRelease[0].seatVersion);
+}
+clubStudentWrongRegTarget=op;
+const box=$("clubStudentWrongRegBox");
+const meta=$("clubStudentWrongRegMeta");
+const previewEl=$("clubStudentWrongRegPreview");
+const confirm=$("clubStudentWrongRegConfirm");
+const reason=$("clubStudentWrongRegReason");
+if(meta){
+meta.textContent=
+"活動 "+op.activityId+
+"｜"+(op.clubName||op.permanentClubId)+"（"+op.permanentClubId+"）"+
+"｜學號 "+maskStudentIdDisplay(op.studentId)+
+"｜UID "+String(op.uid).slice(0,12)+"…";
+}
+if(previewEl) previewEl.textContent=formatWrongRegPreviewText_(r);
+if(confirm) confirm.value="";
+if(reason) reason.value="";
+if(box) box.classList.remove("hidden");
+if(confirm&&typeof confirm.focus==="function") confirm.focus();
+}catch(e){
+clearClubStudentWrongRegForm();
+toast(e.message||"錯誤註冊重設預覽失敗");
+}finally{
+setClubStudentPanelLocked(false);
+}
+}
+
+function cancelWrongRegistrationReset_(){
+clearClubStudentWrongRegForm();
+}
+
+async function executeWrongRegistrationReset_(){
+if(clubStudentPanelLocked){
+toast("操作進行中，請稍候");
+return;
+}
+const target=clubStudentWrongRegTarget;
+if(!target||!target.uid||!target.preview){
+toast("請先完成唯讀預覽");
+return;
+}
+const tokenAtStart=clubStudentSessionToken();
+if(!tokenAtStart||tokenAtStart!==target.token){
+toast("請重新登入後再執行");
+clearClubStudentWrongRegForm();
+return;
+}
+const confirmPhrase=String($("clubStudentWrongRegConfirm")?$("clubStudentWrongRegConfirm").value:"").trim();
+const reason=String($("clubStudentWrongRegReason")?$("clubStudentWrongRegReason").value:"").trim();
+if(confirmPhrase!=="RESET_WRONG_REGISTRATION"){
+toast("確認句須完全相符：RESET_WRONG_REGISTRATION");
+return;
+}
+if(!reason){
+toast("須填寫重設原因");
+return;
+}
+const primarySeats=(target.preview.willDelete&&target.preview.willDelete.primarySeatsToRelease)||[];
+if(primarySeats.length&&!Number.isFinite(target.seatVersion)){
+toast("缺少 seatVersion，請重新預覽後再試");
+return;
+}
+if(!confirm(
+"再次確認錯誤註冊重設？此操作不可逆。\n\n"+
+"學生："+maskStudentIdDisplay(target.studentId)+"\n"+
+"活動："+target.activityId+"\n"+
+"原因："+reason+"\n\n"+
+"將刪除 Auth／帳號；不是解除綁定。"
+)) return;
+
+const opSeed={
+uid:target.uid,
+activityId:target.activityId,
+studentId:target.studentId
+};
+const gate=await resolveClubStudentPendingOrAbort("wrong_reg",opSeed);
+if(!gate.proceed) return;
+const op={
+resetSeq:++clubStudentResetSeq,
+uid:target.uid,
+activityId:target.activityId,
+permanentClubId:target.permanentClubId,
+studentId:target.studentId,
+seatVersion:target.seatVersion,
+clubName:target.clubName,
+token:tokenAtStart,
+clientRequestId:newClubStudentClientRequestId("wrongreg")
+};
+setClubStudentPanelLocked(true);
+let acceptedOk=false;
+let unclearAfter=false;
+markClubStudentMutation("wrong_reg",op,"in_flight");
+try{
+const payload={
+activityId:op.activityId,
+uid:op.uid,
+studentId:op.studentId,
+confirmPhrase:"RESET_WRONG_REGISTRATION",
+clientRequestId:op.clientRequestId,
+reason:reason
+};
+if(primarySeats.length) payload.expectedSeatVersion=op.seatVersion;
+const r=await api("adminResetWrongRegistration",payload);
+if(!clubStudentOpStillValid(op)) return;
+if(unauthorized(r)){
+invalidateClubStudentOps("logout");
+return;
+}
+if(!r||r.success!==true||r.authDeleted!==true){
+const msg=(r&&(r.message||r.error))||"錯誤註冊重設結果不明";
+unclearAfter=true;
+markClubStudentMutation("wrong_reg",op,"pending_verify",msg);
+throw new Error(msg+"（勿盲目重送）");
+}
+clearClubStudentMutation("wrong_reg",op);
+acceptedOk=true;
+clearClubStudentWrongRegForm();
+toast(r.idempotent?"錯誤註冊重設已先前完成（防重送）":"已重設錯誤註冊；同學號可重新註冊");
+await loadClubStudents({
+allowDuringReset:true,
+activityId:op.activityId,
+permanentClubId:op.permanentClubId,
+clubName:op.clubName,
+forResetSeq:op.resetSeq
+});
+}catch(e){
+if(!clubStudentOpStillValid(op)) return;
+if(acceptedOk){
+clearClubStudentMutation("wrong_reg",op);
+toast("重設已確認成功；名單刷新未完成，請重新查詢核對。識別："+op.clientRequestId);
+}else if(unclearAfter||(getClubStudentPendingMutation("wrong_reg",op)||{}).status==="in_flight"){
+markClubStudentMutation("wrong_reg",op,"pending_verify",e&&e.message);
+toast(e.message||unclearMutationMessage(op,"逾時、斷線或結果不明"));
+}else if((getClubStudentPendingMutation("wrong_reg",op)||{}).status==="pending_verify"){
+toast(e.message||unclearMutationMessage(op,"結果不明"));
+}else{
+clearClubStudentMutation("wrong_reg",op);
+toast((e.message||"錯誤註冊重設失敗")+"；本次請求被拒絕");
 }
 }finally{
 if(op.resetSeq===clubStudentResetSeq) setClubStudentPanelLocked(false);
