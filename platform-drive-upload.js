@@ -1136,10 +1136,10 @@
     if (data && data.fromFolderId) touch.push(data.fromFolderId);
     if (data && data.toFolderId) touch.push(data.toFolderId);
     invalidateFolderCaches(touch);
-    refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, true);
     Object.keys(treeExpandedIds).forEach(function (id) {
       if (treeExpandedIds[id]) loadTreeChildren(id, true);
     });
+    return refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, true);
   }
 
   function runPendingFileAction(confirmReplace) {
@@ -1173,10 +1173,9 @@
           conflictMessage: data.message || ""
         }));
         setEvalFolderStatus(data.message || "目的地有同名檔，請確認是否取代。", "warn");
-        return;
+        return null;
       }
       hideFileActionConfirm();
-      applyFileOpResult(data, action);
       var okMsg =
         action.kind === "trash"
           ? "已移入垃圾桶。"
@@ -1185,12 +1184,14 @@
               ? "已複製並登錄有效繳交。"
               : "已複製；未登錄檔不會因此變成有效繳交。")
             : "已移動。";
-      setEvalFolderStatus(okMsg, "ok");
+      return Promise.resolve(applyFileOpResult(data, action)).then(function () {
+        setEvalFolderStatus(okMsg, "ok");
+      });
     }).catch(function (error) {
       var info = errorInfo(error);
       setEvalFolderStatus(friendlyGateMessage(info), "error");
       // Keep current list; do not remove rows optimistically.
-    }).finally(function () {
+    }).then(function () {
       fileOpBusy = false;
     });
   }
