@@ -548,13 +548,15 @@
       var data = result.data || {};
       if (nameInput) nameInput.value = "";
       clearEvalFoldersCache();
-      setEvalFolderStatus(
+      var successText =
         (data.reused ? "已沿用同名資料夾：" : "已新增資料夾：") +
-          (data.name || name) +
-          "（位置：" + destLabel + "）",
-        "ok"
-      );
-      return refreshEvalFolders(token, true);
+        (data.name || name) +
+        "（位置：" + destLabel + "）";
+      return refreshEvalFolders(token, true).then(function () {
+        if (!sameOp(token)) return data;
+        setEvalFolderStatus(successText, "ok");
+        return data;
+      });
     }).catch(function (error) {
       if (!sameOp(token)) return;
       var info = errorInfo(error);
