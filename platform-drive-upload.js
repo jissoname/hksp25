@@ -24,7 +24,8 @@
   var workspaceView = "picker"; // picker | tools
   // Before first list: allow click; prepare／complete still server-gated.
   // After list: applyWindowReadOnly may force read-only.
-  var uploadWriteAllowed = true;
+  // 未取得 list／窗口前不得預設可操作；須等伺服器回傳後再開。
+  var uploadWriteAllowed = false;
   var listedAtLocalMs = 0;
   var windowWatchTimer = null;
   var listRefreshInflight = null;
@@ -589,7 +590,7 @@
     evalFoldersCache = null;
     evalFoldersInflight = null;
     listedAtLocalMs = 0;
-    uploadWriteAllowed = true;
+    uploadWriteAllowed = false;
     clearWindowWatch();
     if (abortController) {
       abortController.abort();
@@ -597,7 +598,7 @@
     }
     clearSurface();
     var button = $("btnDriveUpload");
-    if (button) button.disabled = false;
+    if (button) button.disabled = true;
     return { gen: generation, op: operationSeq, uid: boundUid };
   }
 
@@ -827,7 +828,13 @@
 
   /** Mirror server inspect: open only while nowMs < deadlineMs (到達當下即關). */
   function evaluateWindowLocally(win, nowMs) {
-    if (!win) return { open: true, code: null, message: null };
+    if (!win) {
+      return {
+        open: false,
+        code: "UPLOAD_WINDOW_NOT_CONFIGURED",
+        message: "尚未取得伺服器截止窗口，無法上傳。"
+      };
+    }
     if (win.code === "UPLOAD_WINDOW_NOT_CONFIGURED") {
       return { open: false, code: win.code, message: win.message };
     }
@@ -913,7 +920,10 @@
     var win = wins[kind] || null;
     if (!win) {
       clearWindowWatch();
-      setUploadControlsEnabled(true, "");
+      setUploadControlsEnabled(
+        false,
+        "尚未取得伺服器截止窗口，無法上傳。"
+      );
       return;
     }
     var local = evaluateWindowLocally(win, effectiveServerNowMs(wins));
