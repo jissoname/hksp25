@@ -670,6 +670,7 @@ body.drive-ws-open .news-band{display:none}
   background:#ffd56a
 }
 .drive-tree-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drive-tree-status{color:#6a7f94;font-size:.82rem;padding:4px 8px 4px 28px}
 .drive-ws-main{
   background:#fff;border:1px solid #d7e4f0;border-radius:16px;padding:16px 18px 18px;
   min-width:0;box-shadow:0 8px 22px rgba(24,53,82,.06)
@@ -843,6 +844,31 @@ body.drive-ws-open .news-band{display:none}
 .drive-ws-gate{margin:0 0 12px}
 .drive-replace{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff7e8;border:1px solid rgba(138,90,0,.2)}
 .drive-replace .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.drive-tree-row.is-drop-target,
+.drive-browser-table tr.is-drop-target{
+  outline:2px solid #2f6ea3;outline-offset:-2px;background:#e8f2fb
+}
+.drive-file-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.drive-file-menu{position:relative;display:inline-block}
+.drive-file-menu summary{
+  list-style:none;cursor:pointer;color:#2f6ea3;font-weight:700;user-select:none
+}
+.drive-file-menu summary::-webkit-details-marker{display:none}
+.drive-file-menu-panel{
+  position:absolute;right:0;top:120%;z-index:5;min-width:9rem;
+  background:#fff;border:1px solid #d7e4f0;border-radius:10px;
+  box-shadow:0 8px 20px rgba(24,53,82,.12);padding:6px;display:flex;flex-direction:column;gap:2px
+}
+.drive-file-menu-panel button{
+  border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:8px;
+  font:inherit;font-weight:600;color:#183552;cursor:pointer
+}
+.drive-file-menu-panel button:hover{background:#f3f8fc}
+.drive-file-menu-panel button.danger{color:#b00020}
+.drive-folder-picker-item{
+  width:100%;border:0;background:#fff;text-align:left;padding:10px 12px;cursor:pointer;font:inherit
+}
+.drive-folder-picker-item:hover{background:#f3f8fc}
 @media(max-width:860px){
   .drive-kind-picker{grid-template-columns:1fr}
   .drive-ws-panel{grid-template-columns:1fr}
@@ -1257,8 +1283,26 @@ body.cs-open .cs-fab{display:none}
                 <button type="button" class="drive-ws-btn" id="btnDriveReplaceCancel">取消，保留原檔</button>
               </div>
             </div>
-            <h4 class="drive-records-head" id="driveRecordsHead">已繳交紀錄</h4>
-            <ul id="driveUploadList" class="drive-list"></ul>
+            <div id="driveFileActionConfirm" class="drive-replace hidden" role="dialog" aria-labelledby="driveFileActionTitle">
+              <p class="drive-records-head" id="driveFileActionTitle" style="margin-top:0">確認操作</p>
+              <div id="driveFileActionDetail"></div>
+              <div class="links">
+                <button type="button" class="primary" id="btnDriveFileActionConfirm">確認</button>
+                <button type="button" class="drive-ws-btn" id="btnDriveFileActionCancel">取消</button>
+              </div>
+            </div>
+            <div id="driveFolderPicker" class="drive-replace hidden" role="dialog" aria-label="選擇目的資料夾">
+              <p class="drive-records-head" style="margin-top:0">選擇目的資料夾</p>
+              <p id="driveFolderPickerHint" class="auth-sub" style="margin:0 0 8px"></p>
+              <ul id="driveFolderPickerList" class="drive-list" aria-label="可選資料夾"></ul>
+              <div class="links">
+                <button type="button" class="drive-ws-btn" id="btnDriveFolderPickerCancel">取消</button>
+              </div>
+            </div>
+            <div id="driveRecordsSection" class="hidden">
+              <h4 class="drive-records-head" id="driveRecordsHead">已繳交紀錄</h4>
+              <ul id="driveUploadList" class="drive-list"></ul>
+            </div>
           </div>
         </div>
       </div>
