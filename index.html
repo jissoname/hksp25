@@ -593,26 +593,26 @@ body.cs-open{overflow-x:hidden;overflow-y:auto}
 .drive-list li{padding:10px 12px;border:1px solid #e6edf5;border-radius:12px;background:#fff;margin:0 0 8px}
 .drive-replace{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff7e8;border:1px solid rgba(138,90,0,.2)}
 .drive-replace .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
-/* Full upload workspace (post-login) */
+/* Full upload workspace (post-login) — mockup-aligned evaluation browser */
 .drive-workspace{
-  display:none;width:min(1100px,calc(100% - 32px));margin:18px auto 28px;padding:0 0 8px
+  display:none;width:min(1180px,calc(100% - 28px));margin:14px auto 32px;padding:0 0 12px
 }
+body.drive-ws-open{background:#e8f1fa}
 body.drive-ws-open .drive-workspace{display:block}
 body.drive-ws-open .hero,
 body.drive-ws-open .feature-row,
 body.drive-ws-open .news-band{display:none}
 .drive-ws-top{
   display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;
-  padding:16px 18px;border-radius:18px;background:var(--hk-card);border:1px solid rgba(30,58,95,.1);
-  box-shadow:var(--hk-shadow);margin-bottom:16px
+  margin:4px 0 14px;padding:0;background:transparent;border:0;box-shadow:none
 }
 .drive-ws-top .ws-actions{display:flex;flex-wrap:wrap;gap:8px}
 .drive-ws-top .ws-actions button{
-  border:1px solid var(--hk-line);background:#fff;border-radius:12px;padding:10px 14px;cursor:pointer;font:inherit;font-weight:600;color:var(--hk-navy)
+  border:1px solid #c5d6e8;background:#fff;border-radius:999px;padding:9px 14px;cursor:pointer;font:inherit;font-weight:600;color:var(--hk-navy)
 }
 .drive-ws-top .ws-actions button.primary{border:0;background:var(--hk-navy);color:#fff}
-.drive-ws-club{font-size:1.15rem;font-weight:800;color:var(--hk-navy);margin:0 0 4px}
-.drive-ws-meta{color:var(--hk-muted);font-size:.92rem;line-height:1.5}
+.drive-ws-club{font-size:clamp(1.55rem,2.6vw,1.85rem);font-weight:800;color:#183552;margin:0 0 6px;letter-spacing:.01em}
+.drive-ws-meta{color:#5b6f84;font-size:.98rem;line-height:1.5;margin:0}
 .drive-kind-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 16px}
 .drive-kind-card{
   display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;
@@ -625,61 +625,178 @@ body.drive-ws-open .news-band{display:none}
 .drive-kind-card .k-sub{color:var(--hk-muted);font-size:.92rem;line-height:1.5}
 .drive-kind-card.hidden,
 .drive-workspace .hidden{display:none!important}
+.drive-ws-backlink{
+  border:0;background:transparent;color:#2f6ea3;cursor:pointer;font:inherit;font-weight:600;
+  padding:0;margin:0 0 10px
+}
 .drive-ws-panel{
-  display:grid;grid-template-columns:minmax(200px,240px) minmax(0,1fr);gap:16px;
-  padding:16px;border-radius:18px;background:var(--hk-card);border:1px solid rgba(30,58,95,.1)
+  display:grid;grid-template-columns:minmax(232px,268px) minmax(0,1fr);gap:16px;align-items:start;
+  padding:0;background:transparent;border:0
 }
 .drive-ws-panel.feature-mode{grid-template-columns:1fr}
-.drive-folder-nav{border-right:1px solid #e6edf5;padding-right:12px;min-width:0;display:flex;flex-direction:column;gap:10px}
-.drive-folder-nav h4{margin:0;font-size:.95rem;color:var(--hk-navy);font-weight:800}
-.drive-browser-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.drive-browser-toolbar button{
-  border:1px solid var(--hk-line);background:#fff;border-radius:10px;padding:8px 12px;
-  cursor:pointer;font:inherit;font-weight:600;color:var(--hk-navy)
+.drive-folder-nav{
+  background:#fff;border:1px solid #d7e4f0;border-radius:16px;padding:14px 12px 16px;
+  min-width:0;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 22px rgba(24,53,82,.06)
 }
-.drive-browser-toolbar button:disabled{opacity:.55;cursor:not-allowed}
+.drive-folder-nav h4{margin:0;font-size:.95rem;color:#183552;font-weight:800}
+.drive-tree-toggle{
+  display:none;width:100%;border:1px solid #c5d6e8;background:#f7fbff;border-radius:12px;
+  padding:10px 12px;cursor:pointer;font:inherit;font-weight:700;color:var(--hk-navy);text-align:left
+}
+.drive-folder-tree{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px}
+.drive-folder-tree ul{margin:0;padding:0 0 0 14px;list-style:none}
+.drive-tree-row{
+  display:flex;align-items:center;gap:4px;min-width:0;border-radius:10px;padding:2px
+}
+.drive-tree-row.is-active{background:#e8f2fb}
+.drive-tree-expand{
+  flex:0 0 auto;width:22px;height:22px;border:0;background:transparent;color:#7a8ea3;
+  cursor:pointer;font:inherit;line-height:1;padding:0;border-radius:6px
+}
+.drive-tree-expand:disabled{opacity:.35;cursor:default}
+.drive-tree-open{
+  flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:8px;border:0;background:transparent;
+  text-align:left;cursor:pointer;font:inherit;color:#183552;padding:7px 8px;border-radius:8px
+}
+.drive-tree-open:hover{background:#f3f8fc}
+.drive-tree-row.is-active .drive-tree-open{font-weight:700}
+.drive-ico-folder{
+  flex:0 0 auto;width:18px;height:14px;border-radius:2px 2px 3px 3px;
+  background:linear-gradient(180deg,#ffd56a 0%,#f5b942 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55);position:relative
+}
+.drive-ico-folder:before{
+  content:"";position:absolute;left:1px;top:-4px;width:8px;height:5px;border-radius:2px 2px 0 0;
+  background:#ffd56a
+}
+.drive-tree-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drive-ws-main{
+  background:#fff;border:1px solid #d7e4f0;border-radius:16px;padding:16px 18px 18px;
+  min-width:0;box-shadow:0 8px 22px rgba(24,53,82,.06)
+}
+.drive-main-head{
+  display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 12px
+}
 .drive-browser-crumbs{
-  display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin:0;padding:8px 10px;
-  border-radius:12px;background:#f4f7fb;border:1px solid #e6edf5;min-width:0
+  display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin:0 0 8px;padding:0;border:0;background:transparent;min-width:0
 }
 .drive-browser-crumbs button{
   border:0;background:transparent;color:#2f6ea3;cursor:pointer;font:inherit;font-weight:700;
   padding:0;max-width:100%;text-align:left;word-break:break-word
 }
-.drive-browser-crumbs button:disabled{color:var(--hk-navy);cursor:default}
+.drive-browser-crumbs button:disabled{color:#183552;cursor:default}
 .drive-browser-crumbs .crumb-sep{color:#9aa8b8;user-select:none}
-.drive-browser-here{margin:0;color:var(--hk-muted);font-size:.86rem;line-height:1.45;word-break:break-word}
-.drive-browser-list{
-  display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;min-height:8rem
+.drive-folder-title-row{display:flex;align-items:center;gap:10px;min-width:0}
+.drive-folder-title{margin:0;font-size:1.35rem;font-weight:800;color:#183552;word-break:break-word}
+.drive-main-actions{display:flex;flex-wrap:wrap;gap:8px}
+.drive-main-actions .drive-btn-outline,
+.drive-main-actions .drive-btn-solid{
+  width:auto;border-radius:12px;padding:10px 14px;font:inherit;font-weight:700;cursor:pointer
 }
-.drive-browser-list li{
-  margin:0;padding:0;border:1px solid #e6edf5;border-radius:12px;background:#fff;overflow:hidden
+.drive-btn-outline{
+  border:1.5px solid #2f6ea3;background:#fff;color:#1e4f7a
 }
-.drive-browser-list .browser-row{
-  display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:8px;
-  width:100%;text-align:left;border:0;background:#fff;padding:10px 12px;cursor:pointer;font:inherit;color:var(--hk-navy)
+.drive-btn-outline:hover{background:#f3f8fc}
+.drive-btn-solid{
+  border:0;background:#1e3a5f;color:#fff
 }
-.drive-browser-list .browser-row:disabled{cursor:default}
-.drive-browser-list .browser-row.is-folder{background:#f7fafc}
-.drive-browser-list .browser-row:not(:disabled):hover{background:#eef5fb}
-.drive-browser-list .b-name{display:block;font-weight:700;word-break:break-word;max-width:100%}
-.drive-browser-list .b-meta{display:block;font-size:.82rem;color:var(--hk-muted);line-height:1.45;word-break:break-word}
-.drive-browser-list .b-open{
-  border:1px solid var(--hk-line);background:#fff;border-radius:999px;padding:6px 10px;
-  font:inherit;font-size:.82rem;font-weight:700;color:#2f6ea3;text-decoration:none;white-space:nowrap
+.drive-btn-solid:hover{background:#2a4a73}
+.drive-btn-outline:disabled,.drive-btn-solid:disabled{opacity:.55;cursor:not-allowed}
+.drive-browser-toolbar{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px
 }
-.drive-browser-empty,.drive-browser-loading,.drive-browser-error{
-  margin:0;padding:14px 12px;border-radius:12px;font-size:.9rem;line-height:1.5
+.drive-browser-toolbar button{
+  border:1px solid #c5d6e8;background:#fff;border-radius:12px;padding:9px 12px;
+  cursor:pointer;font:inherit;font-weight:600;color:var(--hk-navy);white-space:nowrap
+}
+.drive-browser-toolbar button:disabled{opacity:.55;cursor:not-allowed}
+.drive-browser-search-wrap{flex:1 1 180px;min-width:0;position:relative}
+.drive-browser-search-wrap input{
+  width:100%;box-sizing:border-box;padding:10px 12px 10px 34px;border:1px solid #c5d6e8;
+  border-radius:12px;font:inherit;background:#fff;color:var(--hk-navy)
+}
+.drive-browser-search-wrap:before{
+  content:"⌕";position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#8aa0b5;font-size:14px
+}
+.drive-dest-banner{
+  margin:0 0 12px;padding:12px 14px;border-radius:12px;background:#eaf3fb;border:1px solid #cfe0ef;
+  color:#183552;font-size:.92rem;line-height:1.55;word-break:break-word
+}
+.drive-dest-banner strong{font-weight:800}
+.drive-dest-banner .dest-note{display:block;margin-top:2px;color:#5b6f84}
+.drive-browser-state{
+  margin:0 0 10px;padding:14px 12px;border-radius:12px;font-size:.9rem;line-height:1.5
 }
 .drive-browser-loading{background:#f4f7fa;color:var(--hk-muted)}
 .drive-browser-empty{background:#f8fafc;color:var(--hk-muted);border:1px dashed #d5e0ec}
 .drive-browser-error{background:#fceaea;color:var(--hk-danger);border:1px solid rgba(176,0,32,.15)}
-.drive-dest-banner{
-  margin:0 0 10px;padding:10px 12px;border-radius:12px;background:#eef6fc;border:1px solid #cfe0ef;
-  color:var(--hk-navy);font-size:.9rem;line-height:1.5;word-break:break-word
+.drive-browser-table-wrap{overflow-x:auto;margin:0 0 8px;border:1px solid #e3ebf3;border-radius:12px}
+.drive-browser-table{
+  width:100%;border-collapse:collapse;min-width:520px;background:#fff
 }
-.drive-dest-banner strong{font-weight:800}
+.drive-browser-table th{
+  text-align:left;font-size:.82rem;font-weight:700;color:#6a7f94;padding:11px 14px;
+  border-bottom:1px solid #e6edf5;background:#f8fbfe;white-space:nowrap
+}
+.drive-browser-table td{
+  padding:12px 14px;border-bottom:1px solid #eef3f8;vertical-align:middle;color:#183552;font-size:.95rem
+}
+.drive-browser-table tr:last-child td{border-bottom:0}
+.drive-browser-table tr.is-folder{cursor:pointer}
+.drive-browser-table tr.is-folder:hover,
+.drive-browser-table tr.is-file:hover{background:#f7fbff}
+.drive-cell-name{display:flex;align-items:center;gap:10px;min-width:0}
+.drive-cell-name .name-text{min-width:0;word-break:break-word;font-weight:700}
+.drive-ico-pdf{
+  flex:0 0 auto;width:28px;height:32px;border-radius:4px;background:#f4f7fa;border:1px solid #d7e0ea;
+  display:grid;place-items:center;font-size:9px;font-weight:800;color:#c62828;letter-spacing:.02em
+}
+.drive-table-action{
+  border:0;background:transparent;color:#2f6ea3;cursor:pointer;font:inherit;font-weight:700;
+  padding:0;text-decoration:none;white-space:nowrap
+}
+.drive-table-meta{color:#6a7f94;white-space:nowrap}
+.drive-browser-count{margin:0 0 14px;color:#6a7f94;font-size:.86rem}
+.drive-create-box{
+  margin:0 0 12px;padding:12px;border:1px solid #d7e4f0;border-radius:12px;background:#f8fbfe;
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center
+}
+.drive-create-box input[type="text"]{flex:1 1 180px;margin:0}
+.drive-upload-foot{
+  display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);gap:12px;align-items:stretch
+}
+.drive-dropzone{
+  border:2px dashed #9db4cc;border-radius:14px;background:#f8fbfe;padding:22px 16px;text-align:center;
+  color:var(--hk-muted);cursor:pointer;transition:border-color .15s ease,background .15s ease;min-height:110px;
+  display:flex;flex-direction:column;justify-content:center
+}
+.drive-dropzone.dragover{border-color:var(--hk-accent);background:#eef6fc;color:var(--hk-navy)}
+.drive-dropzone.disabled{opacity:.55;cursor:not-allowed}
+.drive-dropzone .dz-title{font-size:1rem;font-weight:800;color:var(--hk-navy);margin:0 0 6px;word-break:break-word}
+.drive-dropzone .dz-sub{margin:0;font-size:.88rem;line-height:1.45}
+.drive-success-toast{
+  border-radius:14px;background:#e8f6ec;border:1px solid rgba(30,120,60,.18);padding:14px 14px 12px;
+  color:#146c38;position:relative;min-height:110px;box-sizing:border-box
+}
+.drive-success-toast .toast-title{margin:0 0 6px;font-weight:800;font-size:1rem}
+.drive-success-toast .toast-path{margin:0 0 8px;font-size:.9rem;line-height:1.45;word-break:break-word}
+.drive-success-toast .toast-file{display:flex;align-items:center;gap:8px;font-weight:700;word-break:break-word}
+.drive-success-toast .toast-close{
+  position:absolute;top:8px;right:10px;border:0;background:transparent;color:#4a7a5c;
+  cursor:pointer;font-size:18px;line-height:1;padding:2px 6px
+}
+.drive-queue{margin-top:12px}
+.drive-queue-item{
+  display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;
+  padding:12px;border:1px solid #e6edf5;border-radius:12px;background:#fff;margin:0 0 8px
+}
+.drive-queue-item .q-name{font-weight:700;color:var(--hk-navy);word-break:break-word}
+.drive-queue-item .q-meta{font-size:.85rem;color:var(--hk-muted)}
 .drive-queue-item .q-dest{display:block;font-size:.82rem;color:#2f6ea3;margin-top:4px;word-break:break-word}
+.drive-progress{
+  height:8px;border-radius:999px;background:#e6edf5;overflow:hidden;margin-top:8px
+}
+.drive-progress > span{display:block;height:100%;width:0;background:var(--hk-accent);transition:width .2s ease}
 .drive-workspace label{
   display:block;margin:0 0 6px;font-size:.88rem;font-weight:600;color:#3f5366
 }
@@ -693,16 +810,14 @@ body.drive-ws-open .news-band{display:none}
   outline:none;border-color:#8aa4c0;box-shadow:0 0 0 3px rgba(47,110,163,.12)
 }
 .drive-workspace .drive-ws-actions{
-  display:flex;flex-direction:column;gap:8px;margin-top:10px
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:10px
 }
 .drive-workspace .drive-ws-btn,
 .drive-workspace button.primary{
-  width:100%;border:0;border-radius:12px;padding:12px 14px;font:inherit;font-weight:700;
+  border:0;border-radius:12px;padding:11px 14px;font:inherit;font-weight:700;
   cursor:pointer;box-sizing:border-box
 }
-.drive-workspace button.primary{
-  background:var(--hk-navy);color:#fff;margin-top:0
-}
+.drive-workspace button.primary{background:var(--hk-navy);color:#fff;margin-top:0}
 .drive-workspace button.primary:hover{background:var(--hk-navy-2)}
 .drive-workspace button.primary:disabled{opacity:.55;cursor:not-allowed}
 .drive-workspace .drive-ws-btn{
@@ -717,38 +832,40 @@ body.drive-ws-open .news-band{display:none}
 .drive-workspace .msg.error{background:#fceaea;color:var(--hk-danger)}
 .drive-workspace .msg.ok{background:#e8f6ec;color:var(--hk-ok)}
 .drive-workspace .msg.warn{background:#fff7e8;color:var(--hk-warn)}
-.drive-folder-nav.is-readonly{
-  opacity:1;background:#fbfcfe;border-radius:14px;padding:12px 10px 12px 0
-}
+.drive-folder-nav.is-readonly{opacity:1}
 .drive-records-head{
   margin:18px 0 8px;font-size:.95rem;color:var(--hk-navy);font-weight:800
 }
+.drive-list{margin:10px 0 0;padding:0;list-style:none;color:var(--hk-muted);font-size:.9rem;line-height:1.55}
+.drive-list li{padding:10px 12px;border:1px solid #e6edf5;border-radius:12px;background:#fff;margin:0 0 8px}
 .drive-list li .rec-name{display:block;font-weight:700;color:var(--hk-navy);margin:0 0 4px;word-break:break-word}
 .drive-list li .rec-meta{display:block;font-size:.85rem;color:var(--hk-muted);line-height:1.5}
-.drive-dropzone{
-  border:2px dashed #9db4cc;border-radius:18px;background:#f8fbfe;padding:28px 18px;text-align:center;
-  color:var(--hk-muted);cursor:pointer;transition:border-color .15s ease,background .15s ease
-}
-.drive-dropzone.dragover{border-color:var(--hk-accent);background:#eef6fc;color:var(--hk-navy)}
-.drive-dropzone.disabled{opacity:.55;cursor:not-allowed}
-.drive-dropzone .dz-title{font-size:1.05rem;font-weight:800;color:var(--hk-navy);margin:0 0 6px}
-.drive-queue{margin-top:14px}
-.drive-queue-item{
-  display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;
-  padding:12px;border:1px solid #e6edf5;border-radius:12px;background:#fff;margin:0 0 8px
-}
-.drive-queue-item .q-name{font-weight:700;color:var(--hk-navy);word-break:break-word}
-.drive-queue-item .q-meta{font-size:.85rem;color:var(--hk-muted)}
-.drive-progress{
-  height:8px;border-radius:999px;background:#e6edf5;overflow:hidden;margin-top:8px
-}
-.drive-progress > span{display:block;height:100%;width:0;background:var(--hk-accent);transition:width .2s ease}
 .drive-ws-gate{margin:0 0 12px}
+.drive-replace{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff7e8;border:1px solid rgba(138,90,0,.2)}
+.drive-replace .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
 @media(max-width:860px){
   .drive-kind-picker{grid-template-columns:1fr}
   .drive-ws-panel{grid-template-columns:1fr}
-  .drive-folder-nav{border-right:0;padding-right:0;border-bottom:1px solid #e6edf5;padding-bottom:12px}
-  .drive-folder-mobile{display:block}
+  .drive-tree-toggle{display:block}
+  .drive-folder-nav.is-collapsed .drive-folder-tree,
+  .drive-folder-nav.is-collapsed .drive-tree-hint{display:none}
+  .drive-browser-table{min-width:0}
+  .drive-browser-table thead{display:none}
+  .drive-browser-table,.drive-browser-table tbody,.drive-browser-table tr,.drive-browser-table td{
+    display:block;width:100%
+  }
+  .drive-browser-table tr{padding:10px 12px;border-bottom:1px solid #eef3f8}
+  .drive-browser-table td{
+    border:0;padding:2px 0;white-space:normal
+  }
+  .drive-browser-table td[data-label]:before{
+    content:attr(data-label) "：";color:#6a7f94;font-size:.78rem;font-weight:700;margin-right:4px
+  }
+  .drive-browser-table td:first-child:before{content:none}
+  .drive-upload-foot{grid-template-columns:1fr}
+  .drive-main-actions{width:100%}
+  .drive-main-actions .drive-btn-outline,
+  .drive-main-actions .drive-btn-solid{flex:1 1 auto}
 }
 .auth-card label{display:block;margin:10px 0 6px;font-size:.88rem;font-weight:600;color:#3f5366}
 .auth-card input,.auth-card select{
@@ -1060,39 +1177,76 @@ body.cs-open .cs-fab{display:none}
       </button>
     </div>
     <div id="driveUploadTools" class="hidden">
-      <div class="links" style="margin:0 0 12px">
-        <button type="button" id="btnDriveBackToKinds" style="border:0;background:transparent;color:#2f6ea3;cursor:pointer;font:inherit;font-weight:600">← 返回項目選擇</button>
-      </div>
-      <p class="auth-sub" id="driveUploadKindHint" style="margin-top:0">評選：僅 PDF，每檔 ≤100 MiB，可多檔。</p>
+      <button type="button" class="drive-ws-backlink" id="btnDriveBackToKinds">← 返回項目選擇</button>
+      <p class="auth-sub hidden" id="driveUploadKindHint">評選：僅 PDF，每檔 ≤100 MiB，可多檔。</p>
       <div id="driveWsPanel" class="drive-ws-panel">
-        <aside id="driveEvalFolderPanel" class="drive-folder-nav hidden" aria-label="評選資料夾瀏覽器">
-          <h4>評選資料夾</h4>
-          <div class="drive-browser-toolbar">
-            <button type="button" id="btnDriveBrowserUp" aria-label="返回上一層">← 上一層</button>
-            <button type="button" id="btnDriveEvalFolderRefresh">重新整理</button>
-          </div>
-          <nav id="driveBrowserCrumbs" class="drive-browser-crumbs" aria-label="目前路徑"></nav>
-          <p id="driveBrowserHere" class="drive-browser-here">目前位置：—</p>
-          <div id="driveBrowserState" class="drive-browser-loading hidden" role="status"></div>
-          <ul class="drive-browser-list" id="driveEvalFolderList" aria-label="資料夾與檔案"></ul>
-          <div class="drive-ws-actions">
-            <input id="driveEvalFolderName" type="text" maxlength="80" placeholder="在目前位置新增資料夾" aria-label="新資料夾名稱">
-            <button type="button" class="primary" id="btnDriveEvalFolderCreate">新增資料夾</button>
-          </div>
-          <div id="driveEvalFolderStatus" class="msg" role="status"></div>
+        <aside id="driveEvalFolderPanel" class="drive-folder-nav hidden" aria-label="我的社團資料">
+          <button type="button" class="drive-tree-toggle" id="btnDriveTreeToggle" aria-expanded="true">資料夾導覽</button>
+          <h4>我的社團資料</h4>
+          <p class="drive-tree-hint" style="margin:0;color:#6a7f94;font-size:.82rem;line-height:1.4">展開節點才載入下一層，不會一次掃描全部資料夾。</p>
+          <ul class="drive-folder-tree" id="driveFolderTree" aria-label="資料夾樹"></ul>
         </aside>
         <div class="drive-ws-main">
+          <div class="drive-main-head">
+            <div style="min-width:0;flex:1 1 220px">
+              <nav id="driveBrowserCrumbs" class="drive-browser-crumbs" aria-label="目前路徑"></nav>
+              <div class="drive-folder-title-row">
+                <span class="drive-ico-folder" aria-hidden="true"></span>
+                <h3 class="drive-folder-title" id="driveFolderTitle">評選資料</h3>
+              </div>
+            </div>
+            <div class="drive-main-actions">
+              <button type="button" class="drive-btn-outline" id="btnDriveShowCreateFolder">＋ 新增資料夾</button>
+              <button type="button" class="drive-btn-solid" id="btnDrivePickUpload">↑ 上傳檔案</button>
+            </div>
+          </div>
+          <div class="drive-browser-toolbar">
+            <button type="button" id="btnDriveBrowserUp" aria-label="返回上一層">← 上一層</button>
+            <div class="drive-browser-search-wrap">
+              <input id="driveBrowserSearch" type="search" placeholder="搜尋此資料夾" aria-label="搜尋目前資料夾" autocomplete="off">
+            </div>
+            <button type="button" id="btnDriveEvalFolderRefresh">重新整理</button>
+          </div>
           <div id="driveUploadDestBanner" class="drive-dest-banner hidden" role="status"></div>
-          <div id="driveDropzone" class="drive-dropzone" tabindex="0" role="button" aria-label="拖曳或點選上傳檔案">
-            <p class="dz-title" id="driveDropzoneTitle">拖曳檔案到此，或點選選擇</p>
-            <p id="driveDropzoneSub">評選僅 PDF；可一次加入多份後依序上傳。</p>
-            <input id="driveFile" type="file" accept=".pdf,application/pdf" multiple hidden>
+          <div id="driveCreateFolderBox" class="drive-create-box hidden">
+            <input id="driveEvalFolderName" type="text" maxlength="80" placeholder="新資料夾名稱" aria-label="新資料夾名稱">
+            <button type="button" class="drive-btn-solid" id="btnDriveEvalFolderCreate">建立</button>
+            <button type="button" class="drive-ws-btn" id="btnDriveCancelCreateFolder">取消</button>
+          </div>
+          <div id="driveBrowserState" class="drive-browser-state drive-browser-loading hidden" role="status"></div>
+          <div class="drive-browser-table-wrap" id="driveBrowserTableWrap">
+            <table class="drive-browser-table" aria-label="資料夾與檔案">
+              <thead>
+                <tr>
+                  <th scope="col">名稱</th>
+                  <th scope="col">大小</th>
+                  <th scope="col">更新時間</th>
+                  <th scope="col">操作</th>
+                </tr>
+              </thead>
+              <tbody id="driveEvalFolderList"></tbody>
+            </table>
+          </div>
+          <p class="drive-browser-count" id="driveBrowserCount"></p>
+          <div id="driveEvalFolderStatus" class="msg" role="status"></div>
+          <div class="drive-upload-foot">
+            <div id="driveDropzone" class="drive-dropzone" tabindex="0" role="button" aria-label="拖曳或點選上傳檔案">
+              <p class="dz-title" id="driveDropzoneTitle">將 PDF 拖曳到這裡</p>
+              <p class="dz-sub" id="driveDropzoneSub">單檔上限 100 MiB</p>
+              <input id="driveFile" type="file" accept=".pdf,application/pdf" multiple hidden>
+            </div>
+            <div id="driveSuccessToast" class="drive-success-toast hidden" role="status">
+              <button type="button" class="toast-close" id="btnDriveToastClose" aria-label="關閉">×</button>
+              <p class="toast-title" id="driveToastTitle">上傳完成</p>
+              <p class="toast-path" id="driveToastPath"></p>
+              <div class="toast-file"><span class="drive-ico-pdf" aria-hidden="true">PDF</span><span id="driveToastFile"></span></div>
+            </div>
           </div>
           <div class="drive-queue" aria-label="上傳佇列">
             <div id="driveUploadStatus" class="msg" role="status"></div>
             <div class="drive-progress hidden" id="driveTransferProgress" aria-hidden="true"><span id="driveTransferBar"></span></div>
             <ul id="driveUploadQueue" class="drive-list" aria-label="待傳檔案"></ul>
-            <div class="drive-ws-actions" style="max-width:16rem;margin-top:10px">
+            <div class="drive-ws-actions">
               <button class="primary" id="btnDriveUpload" type="button">開始上傳</button>
               <button type="button" class="drive-ws-btn hidden" id="btnDriveRetry">重試這次上傳</button>
             </div>

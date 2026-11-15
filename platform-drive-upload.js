@@ -36,6 +36,12 @@
   /** Short-lived folder contents cache by parent. Cleared on logout/gen/write success. */
   var evalFoldersByParent = Object.create(null);
   var EVAL_FOLDERS_TTL_MS = 60 * 1000;
+  /** Expanded folder ids in the lazy sidebar tree (club root always expanded). */
+  var treeExpandedIds = Object.create(null);
+  var treeLoadInflight = Object.create(null);
+  var browseSearchQuery = "";
+  var lastBrowseSnapshot = null;
+  var treeMobileOpen = true;
 
   function $(id) {
     return document.getElementById(id);
@@ -211,21 +217,30 @@
 
   function setBrowserState(kind, text) {
     var el = $("driveBrowserState");
-    var list = $("driveEvalFolderList");
+    var wrap = $("driveBrowserTableWrap");
+    var count = $("driveBrowserCount");
     if (!el) return;
     if (!kind) {
       el.className = "hidden";
       el.textContent = "";
-      if (list) list.classList.remove("hidden");
+      if (wrap) wrap.classList.remove("hidden");
+      if (count) count.classList.remove("hidden");
       return;
     }
-    el.className = "drive-browser-" + kind;
+    el.className = "drive-browser-state drive-browser-" + kind;
     el.textContent = String(text || "");
-    if (list) list.classList.add("hidden");
+    if (wrap) wrap.classList.add("hidden");
+    if (count) count.classList.add("hidden");
   }
 
   function currentBrowseParentId() {
     return String(selectedEvalFolderId || browseClubFolderId || "");
+  }
+
+  function cacheKeyForFolderId(folderId) {
+    var id = String(folderId || "");
+    if (!id || (browseClubFolderId && id === browseClubFolderId)) return "";
+    return id;
   }
 
   function pathLabelFromPayload(data) {
@@ -234,6 +249,14 @@
       return (data && (data.parentName || data.clubName)) || "社團評選資料夾";
     }
     return path.map(function (step) { return step.name; }).join(" / ");
+  }
+
+  function currentFolderTitle(data) {
+    var path = (data && data.path) || [];
+    if (path.length) return String(path[path.length - 1].name || "資料夾");
+    return (data && (data.parentName || data.clubName)) ||
+      (serverCtx && serverCtx.clubName) ||
+      "評選資料";
   }
 
   function syncUploadDestBanner() {
@@ -246,9 +269,9 @@
     }
     banner.classList.remove("hidden");
     banner.innerHTML =
-      "上傳目的地（目前位置）：<strong>" +
+      "目前位置：<strong>" +
       (browsePathLabel || "社團評選資料夾") +
-      "</strong>";
+      "</strong><span class=\"dest-note\">新增資料夾及上傳檔案都會存放在這裡</span>";
   }
 
   function syncEvalFolderPanel() {
@@ -260,21 +283,29 @@
       lastListData.participation.evaluation === true;
     panel.classList.toggle("hidden", !show);
     panel.classList.toggle("is-readonly", !uploadWriteAllowed);
+    panel.classList.toggle("is-collapsed", !treeMobileOpen);
     if (!show) return;
     var createBtn = $("btnDriveEvalFolderCreate");
+    var showCreateBtn = $("btnDriveShowCreateFolder");
+    var pickUploadBtn = $("btnDrivePickUpload");
     var nameInput = $("driveEvalFolderName");
     var refreshBtn = $("btnDriveEvalFolderRefresh");
     var upBtn = $("btnDriveBrowserUp");
     var canWrite = uploadWriteAllowed && !evalFolderBusy;
+    var canCreate = canWrite && !(lastListData && lastListData._browseCanCreate === false);
     var atRoot = !selectedEvalFolderId ||
       (browseClubFolderId && selectedEvalFolderId === browseClubFolderId);
-    if (createBtn) {
-      createBtn.disabled = !canWrite ||
-        (lastListData && lastListData._browseCanCreate === false);
-    }
+    if (createBtn) createBtn.disabled = !canCreate;
+    if (showCreateBtn) showCreateBtn.disabled = !canCreate;
+    if (pickUploadBtn) pickUploadBtn.disabled = !canWrite;
     if (nameInput) nameInput.disabled = !canWrite;
     if (refreshBtn) refreshBtn.disabled = evalFolderBusy;
     if (upBtn) upBtn.disabled = evalFolderBusy || !!atRoot;
+    var toggle = $("btnDriveTreeToggle");
+    if (toggle) {
+      toggle.setAttribute("aria-expanded", treeMobileOpen ? "true" : "false");
+      toggle.textContent = treeMobileOpen ? "收合資料夾導覽" : "展開資料夾導覽";
+    }
     syncUploadDestBanner();
   }
 
@@ -322,16 +353,21 @@
     var nav = $("driveBrowserCrumbs");
     if (!nav) return;
     nav.replaceChildren();
+    var rootBtn = document.createElement("button");
+    rootBtn.type = "button";
+    rootBtn.textContent = "評選資料";
+    rootBtn.addEventListener("click", function () {
+      openBrowseFolder("", true);
+    });
+    nav.appendChild(rootBtn);
     var steps = path && path.length
       ? path
       : [{ folderId: clubFolderId || "", name: (serverCtx && serverCtx.clubName) || "社團評選資料夾", depth: 0 }];
     steps.forEach(function (step, index) {
-      if (index > 0) {
-        var sep = document.createElement("span");
-        sep.className = "crumb-sep";
-        sep.textContent = "/";
-        nav.appendChild(sep);
-      }
+      var sep = document.createElement("span");
+      sep.className = "crumb-sep";
+      sep.textContent = ">";
+      nav.appendChild(sep);
       var btn = document.createElement("button");
       btn.type = "button";
       btn.textContent = step.name || step.folderId || "資料夾";
@@ -348,69 +384,263 @@
     });
   }
 
-  function renderBrowserContents(data) {
+  function dashOr(value) {
+    if (value == null || value === "") return "—";
+    return value;
+  }
+
+  function formatSizeCell(size) {
+    if (size == null || size === "") return "—";
+    var n = Number(size);
+    if (!Number.isFinite(n) || n < 0) return "—";
+    return formatBytes(n);
+  }
+
+  function matchesBrowseSearch(name) {
+    var q = String(browseSearchQuery || "").trim().toLowerCase();
+    if (!q) return true;
+    return String(name || "").toLowerCase().indexOf(q) >= 0;
+  }
+
+  function appendTableCell(tr, text, className, dataLabel) {
+    var td = document.createElement("td");
+    if (className) td.className = className;
+    if (dataLabel) td.setAttribute("data-label", dataLabel);
+    td.textContent = text;
+    tr.appendChild(td);
+    return td;
+  }
+
+  function renderBrowserTable(data) {
     var list = $("driveEvalFolderList");
-    var here = $("driveBrowserHere");
-    if (!list) return { empty: true };
-    var folders = (data && data.folders) || [];
-    var files = (data && data.files) || [];
-    var clubFolderId = (data && data.clubFolderId) || browseClubFolderId || "";
-    browseClubFolderId = clubFolderId || browseClubFolderId;
-    browsePathLabel = pathLabelFromPayload(data);
-    if (here) here.textContent = "目前位置：" + browsePathLabel;
-    renderBrowserCrumbs(data && data.path, clubFolderId);
+    var countEl = $("driveBrowserCount");
+    if (!list) return { empty: true, folderCount: 0, fileCount: 0 };
+    var folders = ((data && data.folders) || []).filter(function (folder) {
+      return matchesBrowseSearch(folder && folder.name);
+    });
+    var files = ((data && data.files) || []).filter(function (file) {
+      return matchesBrowseSearch(file && file.name);
+    });
     list.replaceChildren();
     folders.forEach(function (folder) {
       var id = folder && (folder.folderId || folder.id);
       if (!id) return;
-      var li = document.createElement("li");
-      var btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "browser-row is-folder";
-      var name = document.createElement("span");
-      name.className = "b-name";
-      name.textContent = "📁 " + String(folder.name || id);
-      var meta = document.createElement("span");
-      meta.className = "b-meta";
-      meta.textContent = "資料夾 · 點擊進入";
-      btn.appendChild(name);
-      btn.appendChild(meta);
-      btn.addEventListener("click", function () {
+      var tr = document.createElement("tr");
+      tr.className = "is-folder";
+      var nameTd = document.createElement("td");
+      var nameWrap = document.createElement("div");
+      nameWrap.className = "drive-cell-name";
+      var ico = document.createElement("span");
+      ico.className = "drive-ico-folder";
+      ico.setAttribute("aria-hidden", "true");
+      var nameText = document.createElement("span");
+      nameText.className = "name-text";
+      nameText.textContent = String(folder.name || id);
+      nameWrap.appendChild(ico);
+      nameWrap.appendChild(nameText);
+      nameTd.appendChild(nameWrap);
+      tr.appendChild(nameTd);
+      appendTableCell(tr, "—", "drive-table-meta", "大小");
+      appendTableCell(tr, "—", "drive-table-meta", "更新時間");
+      var actionTd = document.createElement("td");
+      actionTd.setAttribute("data-label", "操作");
+      var openBtn = document.createElement("button");
+      openBtn.type = "button";
+      openBtn.className = "drive-table-action";
+      openBtn.textContent = "開啟 →";
+      openBtn.addEventListener("click", function (event) {
+        event.stopPropagation();
         openBrowseFolder(String(id), true);
       });
-      li.appendChild(btn);
-      list.appendChild(li);
+      actionTd.appendChild(openBtn);
+      tr.appendChild(actionTd);
+      tr.addEventListener("click", function () {
+        openBrowseFolder(String(id), true);
+      });
+      list.appendChild(tr);
     });
     files.forEach(function (file) {
-      var li = document.createElement("li");
-      var row = document.createElement("div");
-      row.className = "browser-row";
-      var left = document.createElement("div");
-      var name = document.createElement("span");
-      name.className = "b-name";
-      name.textContent = "📄 " + String(file.name || file.fileId || "（未命名）");
-      var meta = document.createElement("span");
-      meta.className = "b-meta";
-      meta.textContent =
-        (file.mimeType || "檔案") +
-        " · " + formatBytes(file.size) +
-        " · " + formatTaipeiDateTime(file.modifiedTime);
-      left.appendChild(name);
-      left.appendChild(meta);
-      row.appendChild(left);
+      var tr = document.createElement("tr");
+      tr.className = "is-file";
+      var nameTd = document.createElement("td");
+      var nameWrap = document.createElement("div");
+      nameWrap.className = "drive-cell-name";
+      var ico = document.createElement("span");
+      ico.className = "drive-ico-pdf";
+      ico.setAttribute("aria-hidden", "true");
+      ico.textContent = "PDF";
+      var nameText = document.createElement("span");
+      nameText.className = "name-text";
+      nameText.textContent = String(file.name || file.fileId || "（未命名）");
+      nameWrap.appendChild(ico);
+      nameWrap.appendChild(nameText);
+      nameTd.appendChild(nameWrap);
+      tr.appendChild(nameTd);
+      appendTableCell(tr, formatSizeCell(file.size), "drive-table-meta", "大小");
+      appendTableCell(
+        tr,
+        file.modifiedTime ? formatTaipeiDateTime(file.modifiedTime) : "—",
+        "drive-table-meta",
+        "更新時間"
+      );
+      var actionTd = document.createElement("td");
+      actionTd.setAttribute("data-label", "操作");
       if (file.viewUrl) {
         var link = document.createElement("a");
-        link.className = "b-open";
+        link.className = "drive-table-action";
         link.href = String(file.viewUrl);
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.textContent = "查看";
-        row.appendChild(link);
+        actionTd.appendChild(link);
+      } else {
+        actionTd.textContent = "—";
       }
-      li.appendChild(row);
-      list.appendChild(li);
+      tr.appendChild(actionTd);
+      list.appendChild(tr);
     });
-    return { empty: folders.length + files.length === 0 };
+    if (countEl) {
+      countEl.textContent =
+        folders.length + " 個資料夾　·　" + files.length + " 個檔案";
+    }
+    return {
+      empty: folders.length + files.length === 0,
+      folderCount: folders.length,
+      fileCount: files.length
+    };
+  }
+
+  function ensurePathExpanded(path) {
+    (path || []).forEach(function (step) {
+      var id = String((step && step.folderId) || "");
+      if (id) treeExpandedIds[id] = true;
+    });
+    if (browseClubFolderId) treeExpandedIds[browseClubFolderId] = true;
+  }
+
+  function loadTreeChildren(folderId) {
+    var key = cacheKeyForFolderId(folderId);
+    if (evalFoldersCacheValid(evalFoldersByParent[key], key)) {
+      renderSidebarTree();
+      return Promise.resolve(evalFoldersByParent[key]);
+    }
+    if (treeLoadInflight[key]) return treeLoadInflight[key];
+    var body = {};
+    if (key) body.parentFolderId = key;
+    var pending = call("listClubEvaluationFolders", body).then(function (result) {
+      var data = (result && result.data) || {};
+      rememberEvalFolders(data, key);
+      renderSidebarTree();
+      return data;
+    }).catch(function () {
+      return null;
+    }).finally(function () {
+      delete treeLoadInflight[key];
+    });
+    treeLoadInflight[key] = pending;
+    return pending;
+  }
+
+  function toggleTreeExpand(folderId) {
+    var id = String(folderId || "");
+    if (!id) return;
+    if (treeExpandedIds[id]) {
+      delete treeExpandedIds[id];
+      renderSidebarTree();
+      return;
+    }
+    treeExpandedIds[id] = true;
+    loadTreeChildren(id);
+    renderSidebarTree();
+  }
+
+  function renderTreeNode(parentUl, folder, depth) {
+    var id = String((folder && (folder.folderId || folder.id)) || "");
+    if (!id) return;
+    var li = document.createElement("li");
+    var row = document.createElement("div");
+    row.className = "drive-tree-row";
+    var selectedId = currentBrowseParentId();
+    if (id === selectedId || (!selectedEvalFolderId && id === browseClubFolderId)) {
+      row.classList.add("is-active");
+    }
+    var expand = document.createElement("button");
+    expand.type = "button";
+    expand.className = "drive-tree-expand";
+    var expanded = !!treeExpandedIds[id];
+    expand.textContent = expanded ? "▾" : "▸";
+    expand.setAttribute("aria-label", expanded ? "收合" : "展開");
+    expand.addEventListener("click", function (event) {
+      event.stopPropagation();
+      toggleTreeExpand(id);
+    });
+    var openBtn = document.createElement("button");
+    openBtn.type = "button";
+    openBtn.className = "drive-tree-open";
+    var ico = document.createElement("span");
+    ico.className = "drive-ico-folder";
+    ico.setAttribute("aria-hidden", "true");
+    var name = document.createElement("span");
+    name.className = "drive-tree-name";
+    name.textContent = String((folder && folder.name) || id);
+    openBtn.appendChild(ico);
+    openBtn.appendChild(name);
+    openBtn.addEventListener("click", function () {
+      treeExpandedIds[id] = true;
+      openBrowseFolder(id === browseClubFolderId ? "" : id, true);
+    });
+    row.appendChild(expand);
+    row.appendChild(openBtn);
+    li.appendChild(row);
+    if (expanded) {
+      var childKey = cacheKeyForFolderId(id);
+      var cache = evalFoldersByParent[childKey];
+      var childUl = document.createElement("ul");
+      if (cache && cache.folders && cache.folders.length) {
+        cache.folders.forEach(function (child) {
+          renderTreeNode(childUl, child, depth + 1);
+        });
+      } else if (treeLoadInflight[childKey]) {
+        var loading = document.createElement("li");
+        loading.style.cssText = "color:#6a7f94;font-size:.82rem;padding:4px 8px 4px 28px";
+        loading.textContent = "載入中…";
+        childUl.appendChild(loading);
+      }
+      li.appendChild(childUl);
+    }
+    parentUl.appendChild(li);
+  }
+
+  function renderSidebarTree() {
+    var tree = $("driveFolderTree");
+    if (!tree) return;
+    tree.replaceChildren();
+    var clubName =
+      (serverCtx && serverCtx.clubName) ||
+      (lastBrowseSnapshot && lastBrowseSnapshot.clubName) ||
+      "社團評選資料夾";
+    var root = {
+      folderId: browseClubFolderId || "root",
+      name: clubName
+    };
+    if (browseClubFolderId) treeExpandedIds[browseClubFolderId] = true;
+    renderTreeNode(tree, root, 0);
+  }
+
+  function renderBrowserContents(data) {
+    var title = $("driveFolderTitle");
+    if (!data) return { empty: true };
+    var clubFolderId = data.clubFolderId || browseClubFolderId || "";
+    browseClubFolderId = clubFolderId || browseClubFolderId;
+    browsePathLabel = pathLabelFromPayload(data);
+    lastBrowseSnapshot = data;
+    if (title) title.textContent = currentFolderTitle(data);
+    ensurePathExpanded(data.path);
+    renderBrowserCrumbs(data.path, clubFolderId);
+    syncUploadDestBanner();
+    syncDropzoneCopy();
+    renderSidebarTree();
+    return renderBrowserTable(data);
   }
 
   function applyEvalFoldersData(data, requestedParentId, requestSeq) {
@@ -555,6 +785,7 @@
       return refreshEvalFolders(token, true).then(function () {
         if (!sameOp(token)) return data;
         setEvalFolderStatus(successText, "ok");
+        showCreateFolderBox(false);
         return data;
       });
     }).catch(function (error) {
@@ -584,14 +815,53 @@
       input.accept = acceptForKind(activeKind);
       input.multiple = activeKind === "evaluation";
     }
+    var folderName = currentFolderTitle(lastBrowseSnapshot) || "目前資料夾";
     if (title) {
-      title.textContent = uploadWriteAllowed
-        ? "拖曳檔案到此，或點選選擇"
-        : "目前為唯讀（不可選檔上傳）";
+      if (!uploadWriteAllowed) {
+        title.textContent = "目前為唯讀（不可選檔上傳）";
+      } else if (activeKind === "evaluation") {
+        title.textContent = "將 PDF 拖曳到這裡，存入「" + folderName + "」";
+      } else {
+        title.textContent = "拖曳檔案到此，或點選選擇";
+      }
     }
-    if (sub) sub.textContent = hintForKind(activeKind);
+    if (sub) {
+      sub.textContent = activeKind === "evaluation"
+        ? "單檔上限 100 MiB；可多檔，同名須確認後才取代。"
+        : hintForKind(activeKind);
+    }
     var zone = $("driveDropzone");
     if (zone) zone.classList.toggle("disabled", !uploadWriteAllowed);
+  }
+
+  function showCreateFolderBox(show) {
+    var box = $("driveCreateFolderBox");
+    if (!box) return;
+    box.classList.toggle("hidden", !show);
+    if (show) {
+      var nameInput = $("driveEvalFolderName");
+      if (nameInput) {
+        nameInput.focus();
+        nameInput.select();
+      }
+    }
+  }
+
+  function showSuccessToast(fileName, destLabel) {
+    var toast = $("driveSuccessToast");
+    var pathEl = $("driveToastPath");
+    var fileEl = $("driveToastFile");
+    var titleEl = $("driveToastTitle");
+    if (!toast) return;
+    if (titleEl) titleEl.textContent = "上傳完成";
+    if (pathEl) pathEl.textContent = "已儲存至：" + (destLabel || "—");
+    if (fileEl) fileEl.textContent = fileName || "—";
+    toast.classList.remove("hidden");
+  }
+
+  function hideSuccessToast() {
+    var toast = $("driveSuccessToast");
+    if (toast) toast.classList.add("hidden");
   }
 
   function applyKindUi(kind, enterTools) {
@@ -618,9 +888,16 @@
     if (activeKind !== "evaluation") {
       selectedEvalFolderId = "";
       browsePathLabel = "";
+      browseSearchQuery = "";
+      lastBrowseSnapshot = null;
       setEvalFolderStatus("", "");
       setBrowserState("", "");
+      showCreateFolderBox(false);
       syncUploadDestBanner();
+    } else {
+      browseSearchQuery = "";
+      var search = $("driveBrowserSearch");
+      if (search) search.value = "";
     }
     // Re-render records for this kind immediately from last snapshot (no network).
     if (lastListData) renderList(lastListData.files || []);
@@ -737,6 +1014,13 @@
     browseClubFolderId = "";
     browsePathLabel = "";
     browseRequestSeq += 1;
+    browseSearchQuery = "";
+    lastBrowseSnapshot = null;
+    treeExpandedIds = Object.create(null);
+    treeLoadInflight = Object.create(null);
+    treeMobileOpen = true;
+    hideSuccessToast();
+    showCreateFolderBox(false);
     clearEvalFoldersCache();
     evalFoldersInflight = null;
     listedAtLocalMs = 0;
@@ -969,22 +1253,12 @@
       return;
     }
     if (title) {
-      title.textContent =
-        (serverCtx.clubName || "社團") +
-        "（" + (serverCtx.permanentClubId || "") + "）";
+      title.textContent = activeKind === "feature" ? "特色資料" : "評選資料";
     }
-    var wins = (lastListData && lastListData.uploadWindows) || {};
-    var kind = activeKind === "feature" ? "feature" : "evaluation";
-    var win = wins[kind] || null;
-    var deadlineText = win && win.deadlineAt
-      ? formatTaipeiDateTime(win.deadlineAt)
-      : "（伺服器尚未回傳截止）";
-    var kindLabel = activeKind === "feature" ? "特色" : "評選";
     if (meta) {
       meta.textContent =
-        "活動：" + (serverCtx.activityId || "") +
-        "　目前項目：" + kindLabel +
-        "　截止：" + deadlineText;
+        (serverCtx.clubName || "社團") +
+        "（" + (serverCtx.permanentClubId || "") + "）";
     }
   }
 
@@ -1224,12 +1498,16 @@
     renderList((done.data && done.data.files) || done.files || []);
     var destLabel = (queueItem && queueItem.destinationLabel) ||
       (kind === "evaluation" ? (browsePathLabel || "社團評選資料夾") : "特色共用資料夾");
+    var fileName = (file && file.name) || "—";
     setStatus(
       done.alreadyComplete
         ? "這次上傳已經完成，沒有再新增檔案。"
         : "已由伺服器確認完成並寫入紀錄（傳輸進度 100% 不算完成）。目的地：" + destLabel,
       "ok"
     );
+    if (!done.alreadyComplete) {
+      showSuccessToast(fileName, destLabel);
+    }
     var retry = $("btnDriveRetry");
     if (retry) retry.classList.add("hidden");
     hideReplaceConfirm();
@@ -1431,6 +1709,12 @@
     var folderCreate = $("btnDriveEvalFolderCreate");
     var folderRefresh = $("btnDriveEvalFolderRefresh");
     var folderUp = $("btnDriveBrowserUp");
+    var showCreate = $("btnDriveShowCreateFolder");
+    var cancelCreate = $("btnDriveCancelCreateFolder");
+    var pickUpload = $("btnDrivePickUpload");
+    var treeToggle = $("btnDriveTreeToggle");
+    var searchInput = $("driveBrowserSearch");
+    var toastClose = $("btnDriveToastClose");
     var dropzone = $("driveDropzone");
     var fileInput = $("driveFile");
     if (upload && !upload.dataset.bound) {
@@ -1453,6 +1737,7 @@
       backKinds.dataset.bound = "1";
       backKinds.addEventListener("click", function () {
         hideReplaceConfirm();
+        hideSuccessToast();
         uploadQueue = [];
         renderQueue();
         setWorkspaceView("picker");
@@ -1469,6 +1754,46 @@
     if (folderCreate && !folderCreate.dataset.bound) {
       folderCreate.dataset.bound = "1";
       folderCreate.addEventListener("click", createEvalFolder);
+    }
+    if (showCreate && !showCreate.dataset.bound) {
+      showCreate.dataset.bound = "1";
+      showCreate.addEventListener("click", function () {
+        showCreateFolderBox(true);
+      });
+    }
+    if (cancelCreate && !cancelCreate.dataset.bound) {
+      cancelCreate.dataset.bound = "1";
+      cancelCreate.addEventListener("click", function () {
+        showCreateFolderBox(false);
+      });
+    }
+    if (pickUpload && !pickUpload.dataset.bound) {
+      pickUpload.dataset.bound = "1";
+      pickUpload.addEventListener("click", function () {
+        if (!uploadWriteAllowed) {
+          setStatus("系統尚未開放上傳", "warn");
+          return;
+        }
+        if (fileInput) fileInput.click();
+      });
+    }
+    if (treeToggle && !treeToggle.dataset.bound) {
+      treeToggle.dataset.bound = "1";
+      treeToggle.addEventListener("click", function () {
+        treeMobileOpen = !treeMobileOpen;
+        syncEvalFolderPanel();
+      });
+    }
+    if (searchInput && !searchInput.dataset.bound) {
+      searchInput.dataset.bound = "1";
+      searchInput.addEventListener("input", function () {
+        browseSearchQuery = String(searchInput.value || "");
+        if (lastBrowseSnapshot) renderBrowserTable(lastBrowseSnapshot);
+      });
+    }
+    if (toastClose && !toastClose.dataset.bound) {
+      toastClose.dataset.bound = "1";
+      toastClose.addEventListener("click", hideSuccessToast);
     }
     if (folderRefresh && !folderRefresh.dataset.bound) {
       folderRefresh.dataset.bound = "1";
