@@ -12434,15 +12434,19 @@ ${esc(c.category)}
 <div class="row-actions">
 
 <button
+type="button"
 class="btn"
-onclick="openClubModal('${encodeURIComponent(c.name)}')"
+data-club-key="${attr(encodeURIComponent(c.name))}"
+onclick="openClubByButton_(this)"
 >
 編輯
 </button>
 
 <button
+type="button"
 class="btn btn-danger"
-onclick="deleteClub('${encodeURIComponent(c.name)}')"
+data-club-key="${attr(encodeURIComponent(c.name))}"
+onclick="deleteClubByButton_(this)"
 >
 刪除
 </button>
@@ -12588,6 +12592,19 @@ status:"found",
 formChanged:formChanged,
 club:saved
 };
+}
+
+function clubKeyFromButton_(btn){
+if(!btn || typeof btn.getAttribute!=="function") return "";
+return String(btn.getAttribute("data-club-key") || "");
+}
+
+function openClubByButton_(btn){
+return openClubModal(clubKeyFromButton_(btn));
+}
+
+function deleteClubByButton_(btn){
+return deleteClub(clubKeyFromButton_(btn));
 }
 
 async function openClubModal(
