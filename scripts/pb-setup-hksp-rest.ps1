@@ -27,7 +27,7 @@ function F-Json($n) { @{ id = (New-Fid 'json'); name = $n; type = 'json'; requir
 function F-Number($n, $onlyInt = $false) {
   @{ id = (New-Fid 'number'); name = $n; type = 'number'; required = $false; system = $false; hidden = $false; presentable = $false; onlyInt = [bool]$onlyInt; min = $null; max = $null }
 }
-function F-File($n, $maxSelect = 1, $maxSize = 104857600) {
+function F-File($n, $maxSelect = 1, $maxSize = 10737418240) {
   @{ id = (New-Fid 'file'); name = $n; type = 'file'; required = $false; system = $false; hidden = $false; presentable = $false; maxSelect = $maxSelect; maxSize = $maxSize; mimeTypes = @(); thumbs = @(); protected = $false }
 }
 function F-Rel($n, $cid, $req = $false, $max = 1, $cascade = $false) {
@@ -115,7 +115,7 @@ if (-not $by.ContainsKey('hksp_uploads')) {
       (F-Text 'mime_type' $false 120)
       (F-Number 'size_bytes' $true)
       (F-Select 'status' @('prepared', 'uploaded', 'completed', 'failed', 'trashed', 'replaced') $true)
-      (F-File 'file' 1 104857600)
+      (F-File 'file' 1 10737418240)
       (F-Text 'drive_file_id' $false 128)
       (F-Text 'drive_web_view_link' $false 500)
       (F-Json 'meta_json')

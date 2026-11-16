@@ -29,6 +29,7 @@
 ## 檔案策略
 
 - **現行主路徑**：`hksp_uploads.file`（PocketBase，支援整夾／大檔；無需 GCP 計費）
+- **後端單檔上限**：`file.maxSize = 10GiB`（前端不顯示此數字；過大僅提示「檔案過大」）
 - **可選鏡射**：Apps Script／Drive proxy 回寫 `drive_file_id`／`drive_folder_id`（`useDriveProxy=false` 預設關閉）
 - 布局說明：見 [hksp-backend-layout.md](./hksp-backend-layout.md)
 - 評審說明：見 [hksp-judge-pb.md](./hksp-judge-pb.md)

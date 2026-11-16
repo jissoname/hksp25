@@ -307,7 +307,7 @@ $uploads = Ensure-Collection @{
     (TextField 'mime_type' $false 120)
     (NumberField 'size_bytes' $false $true)
     (SelectField 'status' @('prepared','uploaded','completed','failed','trashed','replaced') $true)
-    (FileField 'file' 1 104857600)
+    (FileField 'file' 1 10737418240)
     (TextField 'drive_file_id' $false 128)
     (TextField 'drive_web_view_link' $false 500)
     (JsonField 'meta_json')

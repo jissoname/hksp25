@@ -408,6 +408,7 @@
             filter: 'club="' + ctx.club.id + '" && folder="' + parentId + '" && status!="trashed"',
             sort: "-created"
           }).then(function (files) {
+            var win = openWindowFromActivity(ctx.activity);
             return ok({
               clubFolderId: root.id,
               parentFolderId: parentId,
@@ -422,7 +423,16 @@
                   kind: f.kind || "evaluation"
                 };
               }),
-              files: files.map(mapUploadFile)
+              files: files.map(mapUploadFile),
+              driveWriteEnabled: true,
+              uploadGate: { envLive: true, open: true },
+              participation: { configured: true, evaluation: true, feature: true },
+              uploadWindows: {
+                serverNowMs: win.serverNowMs,
+                evaluation: win,
+                feature: win
+              },
+              storage: "pocketbase"
             });
           });
         });

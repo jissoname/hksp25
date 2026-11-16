@@ -277,6 +277,13 @@
       token.uid === boundUid;
   }
 
+  /** List/access refresh: kind switch bumps op, but must not abort the gate/list result. */
+  function sameSession(token) {
+    return !!token &&
+      token.gen === generation &&
+      token.uid === boundUid;
+  }
+
   function acceptForKind(kind) {
     return kind === "feature"
       ? ".pdf,.ppt,.pptx,.mp4,application/pdf,video/mp4"
@@ -285,8 +292,8 @@
 
   function hintForKind(kind) {
     return kind === "feature"
-      ? "特色：每社一檔；PDF／PPT／PPTX ≤100 MiB，MP4 ≤300 MiB。Drive 檔名會自動加上社團全名底線前綴。"
-      : "評選：僅 PDF，每檔 ≤100 MiB，可多檔。同名須確認後才取代。";
+      ? "特色：每社一檔；PDF／PPT／PPTX 或 MP4。Drive 檔名會自動加上社團全名底線前綴。"
+      : "評選：僅 PDF，可多檔或整夾上傳。同名須確認後才取代。";
   }
 
   function setEvalFolderStatus(text, kind) {
@@ -1242,7 +1249,12 @@
       !(parentKey === "" && responseParent === String(data.clubFolderId || ""))) {
       return null;
     }
-    if (lastListData && data.driveWriteEnabled === false) {
+    // PocketBase 主路徑不依賴 Drive 寫入開關；資料夾回應缺欄位時不可把學生打成唯讀。
+    if (
+      lastListData &&
+      data.driveWriteEnabled === false &&
+      !(window.HKSP_PB_CONFIG && HKSP_PB_CONFIG.usePocketBase && !HKSP_PB_CONFIG.useDriveProxy)
+    ) {
       lastListData.driveWriteEnabled = false;
       lastListData.driveUploadMode = data.driveUploadMode || "off";
     }
@@ -1260,7 +1272,9 @@
     rememberEvalFolders(data, parentKey);
     setBrowserState("", "");
     var rendered = renderBrowserContents(data);
-    if (data.driveWriteEnabled === false) {
+    var pbPrimary =
+      !!(window.HKSP_PB_CONFIG && HKSP_PB_CONFIG.usePocketBase && !HKSP_PB_CONFIG.useDriveProxy);
+    if (data.driveWriteEnabled === false && !pbPrimary) {
       setEvalFolderStatus("唯讀瀏覽（系統尚未開放寫入）。瀏覽到檔案不等於有效繳交。", "ok");
       setUploadControlsEnabled(false, "系統尚未開放上傳");
     } else if (rendered.empty) {
@@ -2199,14 +2213,14 @@
 
   function queueDirectoryUpload(fileList) {
     if (!uploadWriteAllowed) {
-      setStatus("系統尚未開放上傳", "warn");
+      setStatus(uploadClosedMessage(), "warn");
       return;
     }
     if (!serverCtx || !serverCtx.activityId || !serverCtx.permanentClubId) {
       setEvalFolderStatus("尚未取得伺服器確認的活動與社團，無法整夾上傳。", "warn");
       return;
     }
-    var MAX_BYTES = 100 * 1024 * 1024;
+    var MAX_BYTES = 10 * 1024 * 1024 * 1024;
     var destRootId = String(selectedEvalFolderId || "");
     var destRootLabel = browsePathLabel || "社團評選資料夾";
     var frozenUid = boundUid;
@@ -2222,7 +2236,7 @@
         return;
       }
       if (file.size > MAX_BYTES) {
-        rejected.push(name + "（超過 100 MiB）");
+        rejected.push(name + "（檔案過大）");
         return;
       }
       files.push(file);
@@ -2702,7 +2716,7 @@
     }
     if (sub) {
       sub.textContent = activeKind === "evaluation"
-        ? "單檔上限 100 MiB；可多檔，同名須確認後才取代。"
+        ? "可多檔或拖放；也可用「上傳資料夾」。同名須確認後才取代。"
         : hintForKind(activeKind);
     }
     var zone = $("driveDropzone");
@@ -2828,6 +2842,9 @@
     syncEvalFolderPanel();
     if (lastListData) {
       applyWindowReadOnly(lastListData.uploadWindows, lastListData.participation);
+    } else if (boundUid) {
+      // List still in-flight or failed earlier — re-pull so gate is not stuck closed.
+      refresh({ gen: generation, op: operationSeq, uid: boundUid });
     }
     if (activeKind === "evaluation" && lastListData && boundUid && workspaceView === "tools") {
       refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, false);
@@ -3086,6 +3103,15 @@
     return true;
   }
 
+  function uploadClosedMessage() {
+    if (!lastListData) return "正在確認上傳資格，請稍候再試。";
+    var gate = $("driveUploadGate");
+    if (gate && !gate.classList.contains("hidden") && gate.textContent) {
+      return gate.textContent;
+    }
+    return "系統尚未開放上傳";
+  }
+
   function setUploadControlsEnabled(enabled, readOnlyReason) {
     uploadWriteAllowed = !!enabled;
     var input = $("driveFile");
@@ -3172,7 +3198,7 @@
 
   function addFilesFromList(fileList) {
     if (!uploadWriteAllowed) {
-      setStatus("系統尚未開放上傳", "warn");
+      setStatus(uploadClosedMessage(), "warn");
       return;
     }
     var raw = Array.prototype.slice.call(fileList || []);
@@ -3181,7 +3207,7 @@
     var destLabel = activeKind === "evaluation"
       ? (browsePathLabel || "社團評選資料夾")
       : "特色共用資料夾";
-    var MAX_BYTES = 100 * 1024 * 1024;
+    var MAX_BYTES = 10 * 1024 * 1024 * 1024;
     var rejected = [];
     var files = [];
     raw.forEach(function (file) {
@@ -3192,7 +3218,7 @@
           return;
         }
         if (file.size > MAX_BYTES) {
-          rejected.push((file.name || "（未命名）") + "（超過 100 MiB）");
+          rejected.push((file.name || "（未命名）") + "（檔案過大）");
           return;
         }
       }
@@ -3358,7 +3384,9 @@
       setUploadControlsEnabled(false, "此社團未開放目前選取的上傳項目。");
       return;
     }
-    if (lastListData && lastListData.driveWriteEnabled === false) {
+    var pbPrimary =
+      !!(window.HKSP_PB_CONFIG && HKSP_PB_CONFIG.usePocketBase && !HKSP_PB_CONFIG.useDriveProxy);
+    if (lastListData && lastListData.driveWriteEnabled === false && !pbPrimary) {
       clearWindowWatch();
       var gate = lastListData.uploadGate || null;
       var pausedByAdmin = gate && gate.envLive === true && gate.open === false;
@@ -3417,7 +3445,8 @@
     listLoadError = null;
     syncWorkspaceLayout();
     var pending = call("listClubDriveUploads", {}).then(function (result) {
-      if (!sameOp(token) || mine !== listRequestSeq) return null;
+      // Kind switch bumps operationSeq; still apply list so upload gate is not stuck closed.
+      if (!sameSession(token) || mine !== listRequestSeq) return null;
       var data = result.data || {};
       serverCtx = {
         generation: token.gen,
@@ -3439,11 +3468,11 @@
       applyWindowReadOnly(data.uploadWindows, data.participation);
       syncEvalFolderPanel();
       if (activeKind === "evaluation" && workspaceView === "tools") {
-        refreshEvalFolders(token, false);
+        refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, false);
       }
       return data;
     }).catch(function (error) {
-      if (!sameOp(token) || mine !== listRequestSeq) return null;
+      if (!sameSession(token) || mine !== listRequestSeq) return null;
       var info = errorInfo(error);
       listLoadError = {
         code: info.code || "",
@@ -3630,7 +3659,7 @@
     var token = { gen: generation, op: operationSeq, uid: boundUid };
     if (busy) return;
     if (!uploadWriteAllowed) {
-      setStatus("系統尚未開放上傳", "warn");
+      setStatus(uploadClosedMessage(), "warn");
       return;
     }
     if (!serverCtx || serverCtx.generation !== token.gen || serverCtx.uid !== token.uid ||
@@ -3935,7 +3964,7 @@
       pickUpload.dataset.bound = "1";
       pickUpload.addEventListener("click", function () {
         if (!uploadWriteAllowed) {
-          setStatus("系統尚未開放上傳", "warn");
+          setStatus(uploadClosedMessage(), "warn");
           return;
         }
         if (fileInput) fileInput.click();
@@ -3945,7 +3974,7 @@
       pickFolderUpload.dataset.bound = "1";
       pickFolderUpload.addEventListener("click", function () {
         if (!uploadWriteAllowed) {
-          setStatus("系統尚未開放上傳", "warn");
+          setStatus(uploadClosedMessage(), "warn");
           return;
         }
         if (!supportsDirectoryUpload()) {
