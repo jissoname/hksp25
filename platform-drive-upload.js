@@ -284,16 +284,20 @@
       token.uid === boundUid;
   }
 
-  function acceptForKind(kind) {
-    return kind === "feature"
-      ? ".pdf,.ppt,.pptx,.mp4,application/pdf,video/mp4"
-      : ".pdf,application/pdf";
+  function acceptForKind(_kind) {
+    // 評選／特色皆開放常見辦公與影音格式；空白字串表示瀏覽器不預先過濾。
+    return "";
+  }
+
+  function fileExtLabel(name) {
+    var m = /\.([a-z0-9]{1,8})$/i.exec(String(name || ""));
+    return m ? m[1].toUpperCase() : "檔";
   }
 
   function hintForKind(kind) {
     return kind === "feature"
-      ? "特色：每社一檔；PDF／PPT／PPTX 或 MP4。Drive 檔名會自動加上社團全名底線前綴。"
-      : "評選：僅 PDF，可多檔或整夾上傳。同名須確認後才取代。";
+      ? "特色：每社一檔，可上傳各類檔案。Drive 檔名會自動加上社團全名底線前綴。"
+      : "評選：可多檔或整夾上傳各類檔案。同名須確認後才取代。";
   }
 
   function setEvalFolderStatus(text, kind) {
@@ -930,7 +934,7 @@
       var icoFile = document.createElement("span");
       icoFile.className = "drive-ico-pdf";
       icoFile.setAttribute("aria-hidden", "true");
-      icoFile.textContent = "PDF";
+      icoFile.textContent = fileExtLabel(row.name || fileId);
       var nameTextFile = document.createElement("span");
       nameTextFile.className = "name-text";
       nameTextFile.textContent = String(row.name || fileId || "（未命名）");
@@ -1020,7 +1024,7 @@
       nameWrap.className = "drive-cell-name";
       var ico = document.createElement("span");
       ico.className = item.itemKind === "folder" ? "drive-ico-folder" : "drive-ico-pdf";
-      if (item.itemKind !== "folder") ico.textContent = "PDF";
+      if (item.itemKind !== "folder") ico.textContent = fileExtLabel(item.name);
       ico.setAttribute("aria-hidden", "true");
       var nameText = document.createElement("span");
       nameText.className = "name-text";
@@ -1674,7 +1678,7 @@
       panel.appendChild(btn);
     }
     var isFolder = item.kind === "folder";
-    if (!isFolder) {
+    if (!isFolder && /\.pdf$/i.test(String(item.name || ""))) {
       addItem("預覽 PDF", "", function () {
         openPdfPreview(item);
       });
@@ -1895,9 +1899,7 @@
       title.textContent = pendingRename.kind === "folder" ? "重新命名資料夾" : "重新命名檔案";
     }
     if (input) {
-      var seed = String(pendingRename.name || "");
-      if (pendingRename.kind === "file") seed = seed.replace(/\.pdf$/i, "");
-      input.value = seed;
+      input.value = String(pendingRename.name || "");
     }
     if (box) box.classList.remove("hidden");
     hideFileActionConfirm();
@@ -2231,8 +2233,8 @@
     allEntries.forEach(function (file) {
       if (!file) return;
       var name = String(file.name || "");
-      if (!/\.pdf$/i.test(name)) {
-        rejected.push(name + "（僅支援 PDF）");
+      // Skip common junk from OS folders.
+      if (!name || name === ".DS_Store" || name === "Thumbs.db" || /^\./.test(name)) {
         return;
       }
       if (file.size > MAX_BYTES) {
@@ -2244,7 +2246,7 @@
     if (!files.length) {
       setEvalFolderStatus(
         rejected.length
-          ? "沒有可上傳的 PDF。" + (rejected.length ? " 略過：" + rejected.slice(0, 5).join("、") : "")
+          ? "沒有可上傳的檔案。略過：" + rejected.slice(0, 5).join("、")
           : "此資料夾沒有可上傳的檔案。",
         "warn"
       );
@@ -2327,7 +2329,7 @@
         ? "；另有 " + rejected.length + " 項未支援：" + rejected.slice(0, 5).join("、")
         : "";
       setEvalFolderStatus(
-        "已排入 " + byRel.length + " 個 PDF（整夾上傳，目的地已固定）。請按「開始上傳」。" + rejectNote,
+        "已排入 " + byRel.length + " 個檔案（整夾上傳，目的地已固定）。請按「開始上傳」。" + rejectNote,
         rejected.length ? "warn" : "ok"
       );
       return refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, true);
@@ -3212,15 +3214,11 @@
     var files = [];
     raw.forEach(function (file) {
       if (!file) return;
-      if (activeKind === "evaluation") {
-        if (!/\.pdf$/i.test(String(file.name || ""))) {
-          rejected.push((file.name || "（未命名）") + "（僅支援 PDF）");
-          return;
-        }
-        if (file.size > MAX_BYTES) {
-          rejected.push((file.name || "（未命名）") + "（檔案過大）");
-          return;
-        }
+      var name = String(file.name || "");
+      if (!name || name === ".DS_Store" || name === "Thumbs.db") return;
+      if (file.size > MAX_BYTES) {
+        rejected.push((name || "（未命名）") + "（檔案過大）");
+        return;
       }
       files.push(file);
     });

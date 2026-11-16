@@ -1272,16 +1272,16 @@ body.cs-open .cs-fab{display:none}
     <div id="driveKindPicker" class="drive-kind-picker" role="group" aria-label="選擇上傳項目">
       <button type="button" class="drive-kind-card" id="btnDriveKindEvaluation">
         <span class="k-title">評選資料</span>
-        <span class="k-sub">可多份 PDF；可在核定社團資料夾內建立／選擇分類後上傳。</span>
+        <span class="k-sub">可多檔或整夾；可在核定社團資料夾內建立／選擇分類後上傳。</span>
       </button>
       <button type="button" class="drive-kind-card" id="btnDriveKindFeature">
         <span class="k-title">特色資料</span>
-        <span class="k-sub">每社一檔；PDF／PPT／PPTX／MP4。集中單層，無分類。</span>
+        <span class="k-sub">每社一檔；可上傳各類檔案。集中單層，無分類。</span>
       </button>
     </div>
     <div id="driveUploadTools" class="hidden">
       <button type="button" class="drive-ws-backlink" id="btnDriveBackToKinds">← 返回項目選擇</button>
-      <p class="auth-sub hidden" id="driveUploadKindHint">評選：僅 PDF，可多檔或整夾上傳。</p>
+      <p class="auth-sub hidden" id="driveUploadKindHint">評選：可多檔或整夾上傳各類檔案。</p>
       <div id="driveWsPanel" class="drive-ws-panel">
         <aside id="driveEvalFolderPanel" class="drive-folder-nav hidden" aria-label="我的社團資料">
           <button type="button" class="drive-tree-toggle" id="btnDriveTreeToggle" aria-expanded="true">資料夾導覽</button>
@@ -1310,7 +1310,7 @@ body.cs-open .cs-fab{display:none}
               <button type="button" class="drive-btn-outline" id="btnDriveShowCreateFolder">＋ 新增資料夾</button>
               <button type="button" class="drive-btn-solid" id="btnDrivePickUpload">↑ 上傳檔案</button>
               <button type="button" class="drive-btn-outline" id="btnDrivePickFolderUpload">↑ 上傳資料夾</button>
-              <input id="driveFile" type="file" accept=".pdf,application/pdf" multiple hidden>
+              <input id="driveFile" type="file" multiple hidden>
               <input id="driveFolderUpload" type="file" multiple webkitdirectory directory hidden aria-hidden="true">
             </div>
           </div>
