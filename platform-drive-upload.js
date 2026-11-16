@@ -46,9 +46,47 @@
   var pendingFileAction = null;
   var fileOpBusy = false;
   var dragFilePayload = null;
+  var selectedBrowseItems = Object.create(null);
+  var browserViewMode = "browse"; // browse | trash
+  var priorBrowseFolderId = "";
+  var folderPickerState = null;
+  var pendingRename = null;
+  var pdfPreviewBlobUrl = null;
+  var searchDebounceTimer = null;
+  var browseSearchScope = "current";
+  var clubSearchResults = null;
+  var contextMenuEl = null;
+  var longPressTimer = null;
+  var longPressStart = null;
+  var LONG_PRESS_MS = 520;
+  var LONG_PRESS_MOVE_PX = 12;
+  var SORT_STORAGE_KEY = "hksp.evalBrowseSort";
+  var browseSort = loadBrowseSortPreference();
 
   function $(id) {
     return document.getElementById(id);
+  }
+
+  function loadBrowseSortPreference() {
+    try {
+      var raw = sessionStorage.getItem(SORT_STORAGE_KEY) || "name-asc";
+      var parts = String(raw).split("-");
+      var field = parts[0] || "name";
+      var dir = parts[1] === "desc" ? "desc" : "asc";
+      if (field !== "name" && field !== "size" && field !== "modified") field = "name";
+      return { field: field, dir: dir };
+    } catch (_error) {
+      return { field: "name", dir: "asc" };
+    }
+  }
+
+  function persistBrowseSort() {
+    try {
+      sessionStorage.setItem(
+        SORT_STORAGE_KEY,
+        String(browseSort.field || "name") + "-" + String(browseSort.dir || "asc")
+      );
+    } catch (_error) { /* ignore */ }
   }
 
   var TRANSIENT_RETRY_MAX = 2;
@@ -56,7 +94,15 @@
   var WRITE_CALLS = {
     prepareClubDriveUpload: true,
     completeClubDriveUpload: true,
-    createClubEvaluationFolder: true
+    createClubEvaluationFolder: true,
+    trashClubEvaluationFile: true,
+    moveClubEvaluationFile: true,
+    copyClubEvaluationFile: true,
+    renameClubEvaluationFile: true,
+    renameClubEvaluationFolder: true,
+    trashClubEvaluationFolder: true,
+    moveClubEvaluationFolder: true,
+    restoreClubEvaluationItem: true
   };
 
   function errorCode(error) {
@@ -297,25 +343,34 @@
     var createBtn = $("btnDriveEvalFolderCreate");
     var showCreateBtn = $("btnDriveShowCreateFolder");
     var pickUploadBtn = $("btnDrivePickUpload");
+    var pickFolderUploadBtn = $("btnDrivePickFolderUpload");
     var nameInput = $("driveEvalFolderName");
     var refreshBtn = $("btnDriveEvalFolderRefresh");
     var upBtn = $("btnDriveBrowserUp");
-    var canWrite = uploadWriteAllowed && !evalFolderBusy;
+    var viewBrowse = $("btnDriveViewBrowse");
+    var viewTrash = $("btnDriveViewTrash");
+    var inTrash = browserViewMode === "trash";
+    var canWrite = uploadWriteAllowed && !evalFolderBusy && !inTrash;
     var canCreate = canWrite && !(lastListData && lastListData._browseCanCreate === false);
     var atRoot = !selectedEvalFolderId ||
       (browseClubFolderId && selectedEvalFolderId === browseClubFolderId);
     if (createBtn) createBtn.disabled = !canCreate;
-    if (showCreateBtn) showCreateBtn.disabled = !canCreate;
+    if (showCreateBtn) showCreateBtn.disabled = !canCreate || inTrash;
     if (pickUploadBtn) pickUploadBtn.disabled = !canWrite;
+    if (pickFolderUploadBtn) pickFolderUploadBtn.disabled = !canWrite;
     if (nameInput) nameInput.disabled = !canWrite;
     if (refreshBtn) refreshBtn.disabled = evalFolderBusy;
-    if (upBtn) upBtn.disabled = evalFolderBusy || !!atRoot;
+    if (upBtn) upBtn.disabled = evalFolderBusy || !!atRoot || inTrash;
+    if (viewBrowse) viewBrowse.setAttribute("aria-pressed", inTrash ? "false" : "true");
+    if (viewTrash) viewTrash.setAttribute("aria-pressed", inTrash ? "true" : "false");
     var toggle = $("btnDriveTreeToggle");
     if (toggle) {
       toggle.setAttribute("aria-expanded", treeMobileOpen ? "true" : "false");
       toggle.textContent = treeMobileOpen ? "收合資料夾導覽" : "展開資料夾導覽";
     }
     syncUploadDestBanner();
+    syncBatchBar();
+    syncSortControls();
   }
 
   function clearEvalFoldersCache() {
@@ -406,6 +461,7 @@
   }
 
   function matchesBrowseSearch(name) {
+    if (browseSearchScope === "club") return true;
     var q = String(browseSearchQuery || "").trim().toLowerCase();
     if (!q) return true;
     return String(name || "").toLowerCase().indexOf(q) >= 0;
@@ -420,124 +476,481 @@
     return td;
   }
 
+  function isCoarsePointer() {
+    try {
+      return !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function sortKeyValue(item, field) {
+    if (field === "size") {
+      var size = item && item.size;
+      if (size == null || size === "") return null;
+      var n = Number(size);
+      return Number.isFinite(n) ? n : null;
+    }
+    if (field === "modified") {
+      var raw = item && (item.modifiedTime || item.trashedAt);
+      if (!raw) return null;
+      var ms = Date.parse(String(raw));
+      return Number.isFinite(ms) ? ms : null;
+    }
+    return String((item && item.name) || "").toLowerCase();
+  }
+
+  function compareBrowseItems(a, b) {
+    var aFolder = a.itemKind === "folder" ? 0 : 1;
+    var bFolder = b.itemKind === "folder" ? 0 : 1;
+    if (aFolder !== bFolder) return aFolder - bFolder;
+    var field = browseSort.field || "name";
+    var dir = browseSort.dir === "desc" ? -1 : 1;
+    var av = sortKeyValue(a, field);
+    var bv = sortKeyValue(b, field);
+    if (av == null && bv == null) {
+      return String(a.name || "").localeCompare(String(b.name || ""), "zh-Hant");
+    }
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return String(a.name || "").localeCompare(String(b.name || ""), "zh-Hant");
+  }
+
+  function syncSortControls() {
+    var select = $("driveBrowserSort");
+    var key = String(browseSort.field || "name") + "-" + String(browseSort.dir || "asc");
+    if (select && select.value !== key) select.value = key;
+    ["name", "size", "modified"].forEach(function (field) {
+      var btn = $(
+        field === "name" ? "driveSortByName" :
+          field === "size" ? "driveSortBySize" : "driveSortByModified"
+      );
+      if (!btn) return;
+      btn.classList.toggle("is-active", browseSort.field === field);
+      btn.setAttribute(
+        "aria-sort",
+        browseSort.field === field
+          ? (browseSort.dir === "desc" ? "descending" : "ascending")
+          : "none"
+      );
+    });
+  }
+
+  function setBrowseSort(field, dir) {
+    browseSort = {
+      field: field === "size" || field === "modified" ? field : "name",
+      dir: dir === "desc" ? "desc" : "asc"
+    };
+    persistBrowseSort();
+    syncSortControls();
+    if (browserViewMode === "trash") {
+      renderTrashTable(lastTrashSnapshot || { items: [] });
+    } else if (lastBrowseSnapshot) {
+      renderBrowserTable(lastBrowseSnapshot);
+    }
+  }
+
+  function selectionKey(kind, id) {
+    return String(kind || "file") + ":" + String(id || "");
+  }
+
+  function clearBrowseSelection() {
+    selectedBrowseItems = Object.create(null);
+    syncBatchBar();
+  }
+
+  function selectedItemList() {
+    return Object.keys(selectedBrowseItems).map(function (key) {
+      return selectedBrowseItems[key];
+    }).filter(Boolean);
+  }
+
+  function pruneDescendantSelection() {
+    var items = selectedItemList();
+    var folderIds = Object.create(null);
+    items.forEach(function (item) {
+      if (item.kind === "folder") folderIds[String(item.id)] = true;
+    });
+    if (!Object.keys(folderIds).length) return;
+    Object.keys(selectedBrowseItems).forEach(function (key) {
+      var item = selectedBrowseItems[key];
+      if (!item || item.kind !== "file" && item.kind !== "folder") return;
+      var parent = String(item.parentFolderId || "");
+      var pathIds = Array.isArray(item.pathFolderIds) ? item.pathFolderIds : [];
+      var covered = !!folderIds[parent];
+      if (!covered) {
+        pathIds.forEach(function (fid) {
+          if (folderIds[String(fid)]) covered = true;
+        });
+      }
+      if (covered && item.kind === "folder" && folderIds[String(item.id)]) {
+        // keep the ancestor folder itself
+        return;
+      }
+      if (covered && !folderIds[String(item.id)]) {
+        delete selectedBrowseItems[key];
+      }
+    });
+  }
+
+  function setItemSelected(item, selected) {
+    if (!item || !item.id) return;
+    var key = selectionKey(item.kind, item.id);
+    if (selected) selectedBrowseItems[key] = item;
+    else delete selectedBrowseItems[key];
+    pruneDescendantSelection();
+    syncBatchBar();
+  }
+
+  function syncBatchBar() {
+    var bar = $("driveBatchBar");
+    var countEl = $("driveBatchCount");
+    var items = selectedItemList();
+    if (countEl) countEl.textContent = "已選 " + items.length + " 項";
+    if (!bar) return;
+    var show = browserViewMode === "browse" && items.length > 0 && uploadWriteAllowed;
+    bar.classList.toggle("hidden", !show);
+    var copyBtn = $("btnDriveBatchCopy");
+    if (copyBtn) {
+      var hasFolder = items.some(function (item) { return item.kind === "folder"; });
+      copyBtn.disabled = hasFolder || !items.length;
+      copyBtn.title = hasFolder ? "批次複製僅支援檔案（不含整夾）" : "";
+    }
+  }
+
+  function currentPathFolderIds(data) {
+    var path = (data && data.path) || [];
+    return path.map(function (step) { return String(step.folderId || ""); }).filter(Boolean);
+  }
+
+  function hideContextMenu() {
+    if (contextMenuEl && contextMenuEl.parentNode) {
+      contextMenuEl.parentNode.removeChild(contextMenuEl);
+    }
+    contextMenuEl = null;
+  }
+
+  function showContextMenuAt(x, y, item) {
+    hideContextMenu();
+    if (!item) return;
+    var menu = document.createElement("div");
+    menu.className = "drive-context-menu";
+    menu.setAttribute("role", "menu");
+    fillItemActionButtons(menu, item, function () {
+      hideContextMenu();
+    });
+    document.body.appendChild(menu);
+    var left = Math.max(8, Math.min(Number(x) || 0, window.innerWidth - 180));
+    var top = Math.max(8, Math.min(Number(y) || 0, window.innerHeight - 220));
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
+    contextMenuEl = menu;
+  }
+
+  function bindRowContextAndLongPress(tr, item) {
+    if (!tr || !item) return;
+    tr.addEventListener("contextmenu", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      showContextMenuAt(event.clientX, event.clientY, item);
+    });
+    tr.addEventListener("pointerdown", function (event) {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      longPressStart = { x: event.clientX, y: event.clientY, item: item };
+      if (longPressTimer) clearTimeout(longPressTimer);
+      longPressTimer = setTimeout(function () {
+        longPressTimer = null;
+        if (!longPressStart || longPressStart.item !== item) return;
+        showContextMenuAt(longPressStart.x, longPressStart.y, item);
+      }, LONG_PRESS_MS);
+    });
+    function cancelLongPress(event) {
+      if (longPressTimer && longPressStart) {
+        var dx = Math.abs((event.clientX || 0) - longPressStart.x);
+        var dy = Math.abs((event.clientY || 0) - longPressStart.y);
+        if (event.type === "pointermove" && dx < LONG_PRESS_MOVE_PX && dy < LONG_PRESS_MOVE_PX) {
+          return;
+        }
+      }
+      if (longPressTimer) clearTimeout(longPressTimer);
+      longPressTimer = null;
+      longPressStart = null;
+    }
+    tr.addEventListener("pointermove", cancelLongPress);
+    tr.addEventListener("pointerup", cancelLongPress);
+    tr.addEventListener("pointercancel", cancelLongPress);
+  }
+
   function renderBrowserTable(data) {
     var list = $("driveEvalFolderList");
     var countEl = $("driveBrowserCount");
+    var selectAll = $("driveSelectAll");
     if (!list) return { empty: true, folderCount: 0, fileCount: 0 };
+    if (browserViewMode === "trash") {
+      return renderTrashTable(lastTrashSnapshot || { items: [] });
+    }
+    var pathFolderIds = currentPathFolderIds(data);
     var folders = ((data && data.folders) || []).filter(function (folder) {
       return matchesBrowseSearch(folder && folder.name);
+    }).map(function (folder) {
+      return Object.assign({}, folder, {
+        itemKind: "folder",
+        id: String(folder.folderId || folder.id || ""),
+        name: String(folder.name || folder.folderId || folder.id || "")
+      });
     });
     var files = ((data && data.files) || []).filter(function (file) {
       return matchesBrowseSearch(file && file.name);
+    }).map(function (file) {
+      return Object.assign({}, file, {
+        itemKind: "file",
+        id: String(file.fileId || file.id || ""),
+        name: String(file.name || file.fileId || file.id || "（未命名）"),
+        parentFolderId: String(file.parentFolderId || currentBrowseParentId() || "")
+      });
     });
+    var rows = folders.concat(files).sort(compareBrowseItems);
     list.replaceChildren();
-    folders.forEach(function (folder) {
-      var id = folder && (folder.folderId || folder.id);
-      if (!id) return;
-      var tr = document.createElement("tr");
-      tr.className = "is-folder";
-      tr.dataset.folderId = String(id);
-      var nameTd = document.createElement("td");
-      var nameWrap = document.createElement("div");
-      nameWrap.className = "drive-cell-name";
-      var ico = document.createElement("span");
-      ico.className = "drive-ico-folder";
-      ico.setAttribute("aria-hidden", "true");
-      var nameText = document.createElement("span");
-      nameText.className = "name-text";
-      nameText.textContent = String(folder.name || id);
-      nameWrap.appendChild(ico);
-      nameWrap.appendChild(nameText);
-      nameTd.appendChild(nameWrap);
-      tr.appendChild(nameTd);
-      appendTableCell(tr, "—", "drive-table-meta", "大小");
-      appendTableCell(tr, "—", "drive-table-meta", "更新時間");
-      var actionTd = document.createElement("td");
-      actionTd.setAttribute("data-label", "操作");
-      var openBtn = document.createElement("button");
-      openBtn.type = "button";
-      openBtn.className = "drive-table-action";
-      openBtn.textContent = "開啟 →";
-      openBtn.addEventListener("click", function (event) {
-        event.stopPropagation();
-        openBrowseFolder(String(id), true);
+    rows.forEach(function (row) {
+      if (!row.id) return;
+      if (row.itemKind === "folder") {
+        var id = row.id;
+        var tr = document.createElement("tr");
+        tr.className = "is-folder";
+        tr.dataset.folderId = String(id);
+        var folderItem = {
+          kind: "folder",
+          id: String(id),
+          name: String(row.name || id),
+          parentFolderId: String(currentBrowseParentId() || ""),
+          pathFolderIds: pathFolderIds.slice()
+        };
+        var checkTd = document.createElement("td");
+        checkTd.className = "drive-col-check";
+        checkTd.setAttribute("data-label", "選取");
+        var check = document.createElement("input");
+        check.type = "checkbox";
+        check.setAttribute("aria-label", "選取資料夾 " + folderItem.name);
+        check.checked = !!selectedBrowseItems[selectionKey("folder", id)];
+        if (check.checked) tr.classList.add("is-selected");
+        check.addEventListener("click", function (event) { event.stopPropagation(); });
+        check.addEventListener("change", function () {
+          setItemSelected(folderItem, check.checked);
+          tr.classList.toggle("is-selected", check.checked);
+        });
+        checkTd.appendChild(check);
+        tr.appendChild(checkTd);
+        var nameTd = document.createElement("td");
+        var nameWrap = document.createElement("div");
+        nameWrap.className = "drive-cell-name";
+        var ico = document.createElement("span");
+        ico.className = "drive-ico-folder";
+        ico.setAttribute("aria-hidden", "true");
+        var nameText = document.createElement("span");
+        nameText.className = "name-text";
+        nameText.textContent = String(row.name || id);
+        nameWrap.appendChild(ico);
+        nameWrap.appendChild(nameText);
+        nameTd.appendChild(nameWrap);
+        tr.appendChild(nameTd);
+        appendTableCell(tr, "—", "drive-table-meta", "大小");
+        appendTableCell(
+          tr,
+          row.modifiedTime ? formatTaipeiDateTime(row.modifiedTime) : "—",
+          "drive-table-meta",
+          "更新時間"
+        );
+        var actionTd = document.createElement("td");
+        actionTd.setAttribute("data-label", "操作");
+        var actions = document.createElement("div");
+        actions.className = "drive-file-actions";
+        var openBtn = document.createElement("button");
+        openBtn.type = "button";
+        openBtn.className = "drive-table-action";
+        openBtn.textContent = "開啟 →";
+        openBtn.addEventListener("click", function (event) {
+          event.stopPropagation();
+          openBrowseFolder(String(id), true);
+        });
+        actions.appendChild(openBtn);
+        actions.appendChild(buildItemActionMenu(folderItem));
+        actionTd.appendChild(actions);
+        tr.appendChild(actionTd);
+        tr.addEventListener("click", function (event) {
+          if (event.target && event.target.closest && event.target.closest("input,button,details,a,summary")) {
+            return;
+          }
+          openBrowseFolder(String(id), true);
+        });
+        bindFolderDropTarget(tr, String(id), String(row.name || id));
+        bindRowContextAndLongPress(tr, folderItem);
+        list.appendChild(tr);
+        return;
+      }
+      var fileId = row.id;
+      var trFile = document.createElement("tr");
+      trFile.className = "is-file";
+      trFile.dataset.fileId = fileId;
+      var fileItem = {
+        kind: "file",
+        id: fileId,
+        fileId: fileId,
+        name: String(row.name || fileId),
+        parentFolderId: String(row.parentFolderId || currentBrowseParentId() || ""),
+        pathFolderIds: pathFolderIds.slice()
+      };
+      var checkTdFile = document.createElement("td");
+      checkTdFile.className = "drive-col-check";
+      checkTdFile.setAttribute("data-label", "選取");
+      var checkFile = document.createElement("input");
+      checkFile.type = "checkbox";
+      checkFile.setAttribute("aria-label", "選取檔案 " + fileItem.name);
+      checkFile.checked = !!selectedBrowseItems[selectionKey("file", fileId)];
+      if (checkFile.checked) trFile.classList.add("is-selected");
+      checkFile.addEventListener("click", function (event) { event.stopPropagation(); });
+      checkFile.addEventListener("change", function () {
+        setItemSelected(fileItem, checkFile.checked);
+        trFile.classList.toggle("is-selected", checkFile.checked);
       });
-      actionTd.appendChild(openBtn);
-      tr.appendChild(actionTd);
-      tr.addEventListener("click", function () {
-        openBrowseFolder(String(id), true);
-      });
-      bindFolderDropTarget(tr, String(id), String(folder.name || id));
-      list.appendChild(tr);
-    });
-    files.forEach(function (file) {
-      var fileId = String((file && (file.fileId || file.id)) || "");
-      var tr = document.createElement("tr");
-      tr.className = "is-file";
-      if (fileId) tr.dataset.fileId = fileId;
-      var nameTd = document.createElement("td");
-      var nameWrap = document.createElement("div");
-      nameWrap.className = "drive-cell-name";
-      var ico = document.createElement("span");
-      ico.className = "drive-ico-pdf";
-      ico.setAttribute("aria-hidden", "true");
-      ico.textContent = "PDF";
-      var nameText = document.createElement("span");
-      nameText.className = "name-text";
-      nameText.textContent = String(file.name || fileId || "（未命名）");
-      nameWrap.appendChild(ico);
-      nameWrap.appendChild(nameText);
-      nameTd.appendChild(nameWrap);
-      tr.appendChild(nameTd);
-      appendTableCell(tr, formatSizeCell(file.size), "drive-table-meta", "大小");
+      checkTdFile.appendChild(checkFile);
+      trFile.appendChild(checkTdFile);
+      var nameTdFile = document.createElement("td");
+      var nameWrapFile = document.createElement("div");
+      nameWrapFile.className = "drive-cell-name";
+      var icoFile = document.createElement("span");
+      icoFile.className = "drive-ico-pdf";
+      icoFile.setAttribute("aria-hidden", "true");
+      icoFile.textContent = "PDF";
+      var nameTextFile = document.createElement("span");
+      nameTextFile.className = "name-text";
+      nameTextFile.textContent = String(row.name || fileId || "（未命名）");
+      nameWrapFile.appendChild(icoFile);
+      nameWrapFile.appendChild(nameTextFile);
+      nameTdFile.appendChild(nameWrapFile);
+      trFile.appendChild(nameTdFile);
+      appendTableCell(trFile, formatSizeCell(row.size), "drive-table-meta", "大小");
       appendTableCell(
-        tr,
-        file.modifiedTime ? formatTaipeiDateTime(file.modifiedTime) : "—",
+        trFile,
+        row.modifiedTime ? formatTaipeiDateTime(row.modifiedTime) : "—",
         "drive-table-meta",
         "更新時間"
       );
-      var actionTd = document.createElement("td");
-      actionTd.setAttribute("data-label", "操作");
-      var actions = document.createElement("div");
-      actions.className = "drive-file-actions";
-      if (file.viewUrl) {
-        var link = document.createElement("a");
-        link.className = "drive-table-action";
-        link.href = String(file.viewUrl);
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = "查看";
-        actions.appendChild(link);
-      }
-      if (fileId) {
-        actions.appendChild(buildFileActionMenu({
+      var actionTdFile = document.createElement("td");
+      actionTdFile.setAttribute("data-label", "操作");
+      var actionsFile = document.createElement("div");
+      actionsFile.className = "drive-file-actions";
+      actionsFile.appendChild(buildItemActionMenu(fileItem));
+      actionTdFile.appendChild(actionsFile);
+      trFile.appendChild(actionTdFile);
+      if (!isCoarsePointer()) {
+        bindFileDragSource(trFile, {
           fileId: fileId,
-          name: String(file.name || fileId),
-          parentFolderId: String(file.parentFolderId || currentBrowseParentId() || "")
-        }));
-        bindFileDragSource(tr, {
-          fileId: fileId,
-          name: String(file.name || fileId),
-          parentFolderId: String(file.parentFolderId || currentBrowseParentId() || "")
+          name: fileItem.name,
+          parentFolderId: fileItem.parentFolderId
         });
-      }
-      if (!(actions.children && actions.children.length)) {
-        actionTd.textContent = "—";
       } else {
-        actionTd.appendChild(actions);
+        trFile.draggable = false;
       }
-      tr.appendChild(actionTd);
-      list.appendChild(tr);
+      bindRowContextAndLongPress(trFile, fileItem);
+      list.appendChild(trFile);
     });
+    if (selectAll) {
+      var visibleKeys = rows.map(function (row) {
+        return selectionKey(row.itemKind, row.id);
+      });
+      selectAll.checked = visibleKeys.length > 0 &&
+        visibleKeys.every(function (key) { return !!selectedBrowseItems[key]; });
+      selectAll.indeterminate = !selectAll.checked &&
+        visibleKeys.some(function (key) { return !!selectedBrowseItems[key]; });
+    }
     if (countEl) {
       countEl.textContent =
         folders.length + " 個資料夾　·　" + files.length + " 個檔案";
     }
+    syncBatchBar();
+    syncSortControls();
     return {
       empty: folders.length + files.length === 0,
       folderCount: folders.length,
       fileCount: files.length
     };
+  }
+
+  var lastTrashSnapshot = null;
+
+  function renderTrashTable(data) {
+    var list = $("driveEvalFolderList");
+    var countEl = $("driveBrowserCount");
+    var selectAll = $("driveSelectAll");
+    if (!list) return { empty: true, folderCount: 0, fileCount: 0 };
+    lastTrashSnapshot = data || { items: [] };
+    var items = ((data && data.items) || []).slice().map(function (item) {
+      return Object.assign({}, item, {
+        itemKind: item.kind === "folder" ? "folder" : "file",
+        id: String(item.itemId || item.id || ""),
+        name: String(item.name || item.itemId || "")
+      });
+    }).sort(compareBrowseItems);
+    list.replaceChildren();
+    if (selectAll) {
+      selectAll.checked = false;
+      selectAll.indeterminate = false;
+      selectAll.disabled = true;
+    }
+    items.forEach(function (item) {
+      if (!item.id) return;
+      var tr = document.createElement("tr");
+      tr.className = item.itemKind === "folder" ? "is-folder" : "is-file";
+      var checkTd = document.createElement("td");
+      checkTd.className = "drive-col-check";
+      checkTd.textContent = "";
+      tr.appendChild(checkTd);
+      var nameTd = document.createElement("td");
+      var nameWrap = document.createElement("div");
+      nameWrap.className = "drive-cell-name";
+      var ico = document.createElement("span");
+      ico.className = item.itemKind === "folder" ? "drive-ico-folder" : "drive-ico-pdf";
+      if (item.itemKind !== "folder") ico.textContent = "PDF";
+      ico.setAttribute("aria-hidden", "true");
+      var nameText = document.createElement("span");
+      nameText.className = "name-text";
+      nameText.textContent = item.name || item.id;
+      nameWrap.appendChild(ico);
+      nameWrap.appendChild(nameText);
+      nameTd.appendChild(nameWrap);
+      if (item.pathLabel) {
+        var path = document.createElement("div");
+        path.className = "hit-path";
+        path.textContent = String(item.pathLabel);
+        nameTd.appendChild(path);
+      }
+      tr.appendChild(nameTd);
+      appendTableCell(tr, formatSizeCell(item.size), "drive-table-meta", "大小");
+      appendTableCell(
+        tr,
+        item.trashedAt ? formatTaipeiDateTime(item.trashedAt) : "—",
+        "drive-table-meta",
+        "刪除時間"
+      );
+      var actionTd = document.createElement("td");
+      actionTd.setAttribute("data-label", "操作");
+      var restoreBtn = document.createElement("button");
+      restoreBtn.type = "button";
+      restoreBtn.className = "drive-table-action";
+      restoreBtn.textContent = "還原";
+      restoreBtn.disabled = !uploadWriteAllowed || fileOpBusy;
+      restoreBtn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        requestRestoreItem(item);
+      });
+      actionTd.appendChild(restoreBtn);
+      tr.appendChild(actionTd);
+      list.appendChild(tr);
+    });
+    if (countEl) countEl.textContent = items.length + " 個垃圾桶項目";
+    return { empty: items.length === 0, folderCount: 0, fileCount: items.length };
   }
 
   function ensurePathExpanded(path) {
@@ -847,10 +1260,19 @@
   }
 
   function hideFolderPicker() {
+    folderPickerState = null;
     var box = $("driveFolderPicker");
     if (box) box.classList.add("hidden");
     var list = $("driveFolderPickerList");
     if (list) list.replaceChildren();
+    var crumbs = $("driveFolderPickerCrumbs");
+    if (crumbs) crumbs.replaceChildren();
+  }
+
+  function hideRenameDialog() {
+    pendingRename = null;
+    var box = $("driveRenameDialog");
+    if (box) box.classList.add("hidden");
   }
 
   function showFileActionConfirm(action) {
@@ -860,129 +1282,269 @@
     var detail = $("driveFileActionDetail");
     var confirmBtn = $("btnDriveFileActionConfirm");
     if (!box || !detail) return;
+    var itemKind = action.itemKind || (action.folderId && !action.fileId ? "folder" : "file");
     var labels = {
-      trash: "確認刪除（移入垃圾桶）",
+      trash: itemKind === "folder" ? "確認刪除資料夾（移入垃圾桶）" : "確認刪除（移入垃圾桶）",
       move: "確認移動",
-      copy: "確認複製"
+      copy: "確認複製",
+      rename: "確認重新命名",
+      restore: "確認還原"
     };
     if (title) title.textContent = labels[action.kind] || "確認操作";
     if (confirmBtn) {
-      confirmBtn.textContent = action.confirmReplace ? "確認取代並繼續" : "確認";
-    }
-    var lines = [];
-    lines.push("檔名：" + (action.fileName || "（未命名）"));
-    if (action.kind === "trash") {
-      lines.push("所在路徑：" + (action.fromPath || browsePathLabel || "社團評選資料夾"));
-      lines.push("將移入 Drive 垃圾桶；取消則保留原檔。");
-    } else {
-      lines.push("來源路徑：" + (action.fromPath || browsePathLabel || "社團評選資料夾"));
-      lines.push("目的路徑：" + (action.toPath || action.destinationFolderId || ""));
-      if (action.confirmReplace) {
-        lines.push("目的地已有同名檔，確認後才會取代目的地同名檔；取消則保留雙方原檔。");
+      if (action.kind === "trash") {
+        confirmBtn.textContent = action.confirmReplace ? "確認取代並刪除" : "確認刪除";
+      } else if (action.confirmReplace) {
+        confirmBtn.textContent = "確認取代並繼續";
       } else {
-        lines.push(action.kind === "move"
-          ? "移動會保留同一 fileId，並更新位置與相關紀錄。"
-          : "複製會產生新 fileId；僅在後端驗證並登錄成功後才更新有效繳交。");
+        confirmBtn.textContent = "確認";
       }
     }
-    detail.textContent = lines.join("\n");
+    detail.replaceChildren();
+    function addLine(text, strong) {
+      var p = document.createElement("p");
+      p.style.margin = "0 0 6px";
+      if (strong) {
+        var b = document.createElement("strong");
+        b.textContent = text;
+        p.appendChild(b);
+      } else {
+        p.textContent = text;
+      }
+      detail.appendChild(p);
+    }
+    var displayName = action.fileName || action.folderName || action.name || "（未命名）";
+    addLine((itemKind === "folder" ? "資料夾：" : "檔名：") + displayName, true);
+    if (action.kind === "trash") {
+      addLine("所在路徑：" + (action.fromPath || browsePathLabel || "社團評選資料夾"));
+      if (itemKind === "folder") {
+        addLine("注意：此資料夾及其子層內容可能一併移入垃圾桶；其下已完成登錄的繳交可能被標為 superseded。");
+      } else {
+        addLine("將移入校內垃圾桶索引；取消則保留原檔。");
+      }
+    } else if (action.kind === "restore") {
+      addLine("還原後會嘗試放回原路徑或最近可用祖先。");
+      if (action.confirmReplace) {
+        addLine("目的地已有同名項目，確認後才會處理衝突。");
+      }
+    } else {
+      addLine("來源路徑：" + (action.fromPath || browsePathLabel || "社團評選資料夾"));
+      addLine("目的路徑：" + (action.toPath || action.destinationFolderId || ""));
+      if (action.confirmReplace) {
+        addLine("目的地已有同名項目，確認後才會取代；取消則保留雙方原內容。");
+      } else if (action.kind === "move") {
+        addLine(itemKind === "folder"
+          ? "移動資料夾會保留同一 folderId 與子項識別。"
+          : "移動會保留同一 fileId，並更新位置與相關紀錄。");
+      } else if (action.kind === "copy") {
+        addLine("複製會產生新 fileId；僅在後端驗證並登錄成功後才更新有效繳交。");
+      }
+    }
+    if (action.batchItems && action.batchItems.length > 1) {
+      addLine("批次項目數：" + action.batchItems.length);
+    }
     box.classList.remove("hidden");
     hideFolderPicker();
+    hideRenameDialog();
   }
 
-  function collectPickerFolders() {
-    var rows = [];
-    var clubId = String(browseClubFolderId || "");
-    var clubName =
-      (serverCtx && serverCtx.clubName) ||
+  function clubRootLabel() {
+    return (serverCtx && serverCtx.clubName) ||
       (lastBrowseSnapshot && lastBrowseSnapshot.clubName) ||
       "社團評選資料夾";
-    if (clubId) {
-      rows.push({
-        folderId: clubId,
-        name: clubName,
-        pathLabel: clubName
-      });
-    }
-    Object.keys(evalFoldersByParent).forEach(function (key) {
-      var cache = evalFoldersByParent[key];
-      var parentLabel = key
-        ? ((cache && cache.parentName) || key)
-        : clubName;
-      ((cache && cache.folders) || []).forEach(function (folder) {
-        var id = String((folder && (folder.folderId || folder.id)) || "");
-        if (!id) return;
-        var name = String((folder && folder.name) || id);
-        rows.push({
-          folderId: id,
-          name: name,
-          pathLabel: parentLabel + " / " + name
-        });
-      });
-    });
-    var seen = Object.create(null);
-    return rows.filter(function (row) {
-      if (seen[row.folderId]) return false;
-      seen[row.folderId] = true;
-      return true;
-    });
   }
 
-  function openFolderPicker(action) {
+  function pickerCacheKey(folderId) {
+    var id = String(folderId || "");
+    if (!id || (browseClubFolderId && id === browseClubFolderId)) return "";
+    return id;
+  }
+
+  function renderFolderPicker() {
     var box = $("driveFolderPicker");
     var list = $("driveFolderPickerList");
     var hint = $("driveFolderPickerHint");
-    if (!box || !list) return;
-    list.replaceChildren();
+    var crumbs = $("driveFolderPickerCrumbs");
+    var confirmBtn = $("btnDriveFolderPickerConfirm");
+    var upBtn = $("btnDriveFolderPickerUp");
+    if (!box || !list || !folderPickerState) return;
+    var state = folderPickerState;
+    var currentId = String(state.currentFolderId || "");
+    var atRoot = !currentId || (browseClubFolderId && currentId === browseClubFolderId);
     if (hint) {
+      var label = state.fileName || state.folderName ||
+        (state.batchItems && state.batchItems.length
+          ? (state.batchItems.length + " 個項目")
+          : "項目");
       hint.textContent =
-        (action.kind === "move" ? "移動「" : "複製「") +
-        (action.fileName || "檔案") +
-        "」到：";
+        (state.kind === "move" ? "移動「" : "複製「") + label + "」：請進入目的資料夾後按確認。";
     }
-    var folders = collectPickerFolders().filter(function (folder) {
-      return String(folder.folderId) !== String(action.parentFolderId || "");
-    });
-    if (!folders.length) {
-      var empty = document.createElement("li");
-      empty.textContent = "目前沒有可選的目的資料夾。請先展開左側樹載入子資料夾。";
-      list.appendChild(empty);
-    } else {
-      folders.forEach(function (folder) {
-        var item = document.createElement("li");
+    if (confirmBtn) {
+      confirmBtn.textContent = state.kind === "copy" ? "複製到這裡" : "移動到這裡";
+      confirmBtn.disabled = false;
+    }
+    if (upBtn) upBtn.disabled = !!atRoot;
+    if (crumbs) {
+      crumbs.replaceChildren();
+      var rootBtn = document.createElement("button");
+      rootBtn.type = "button";
+      rootBtn.textContent = clubRootLabel();
+      rootBtn.disabled = !!atRoot && !(state.path && state.path.length);
+      rootBtn.addEventListener("click", function () {
+        enterFolderPickerFolder("");
+      });
+      crumbs.appendChild(rootBtn);
+      (state.path || []).forEach(function (step, index) {
+        var sep = document.createElement("span");
+        sep.className = "crumb-sep";
+        sep.textContent = ">";
+        crumbs.appendChild(sep);
         var btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "drive-folder-picker-item";
-        btn.textContent = folder.pathLabel || folder.name;
+        btn.textContent = step.name || step.folderId || "資料夾";
+        var isLast = index === state.path.length - 1;
+        btn.disabled = isLast;
         btn.addEventListener("click", function () {
-          hideFolderPicker();
-          showFileActionConfirm({
-            kind: action.kind,
-            fileId: action.fileId,
-            fileName: action.fileName,
-            parentFolderId: action.parentFolderId,
-            fromPath: action.fromPath || browsePathLabel,
-            destinationFolderId: folder.folderId,
-            toPath: folder.pathLabel || folder.name,
-            confirmReplace: false
-          });
+          enterFolderPickerFolder(String(step.folderId || ""));
         });
-        item.appendChild(btn);
-        list.appendChild(item);
+        crumbs.appendChild(btn);
       });
     }
+    list.replaceChildren();
+    var loading = document.createElement("li");
+    loading.textContent = "載入中…";
+    list.appendChild(loading);
+    var key = pickerCacheKey(currentId);
+    var body = {};
+    if (key) body.parentFolderId = key;
+    call("listClubEvaluationFolders", body).then(function (result) {
+      if (!folderPickerState || folderPickerState !== state) return;
+      var data = (result && result.data) || {};
+      rememberEvalFolders(data, key);
+      state.path = (data.path || []).slice();
+      state.currentFolderId = String(data.parentFolderId || browseClubFolderId || "");
+      state.currentPathLabel = pathLabelFromPayload(data);
+      list.replaceChildren();
+      var folders = (data.folders || []).slice();
+      if (crumbs) {
+        crumbs.replaceChildren();
+        var rootBtn2 = document.createElement("button");
+        rootBtn2.type = "button";
+        rootBtn2.textContent = clubRootLabel();
+        var atRoot2 = !state.currentFolderId ||
+          (browseClubFolderId && state.currentFolderId === browseClubFolderId);
+        rootBtn2.disabled = !!atRoot2 && !(state.path && state.path.length);
+        rootBtn2.addEventListener("click", function () {
+          enterFolderPickerFolder("");
+        });
+        crumbs.appendChild(rootBtn2);
+        (state.path || []).forEach(function (step, index) {
+          var sep2 = document.createElement("span");
+          sep2.className = "crumb-sep";
+          sep2.textContent = ">";
+          crumbs.appendChild(sep2);
+          var btn2 = document.createElement("button");
+          btn2.type = "button";
+          btn2.textContent = step.name || step.folderId || "資料夾";
+          btn2.disabled = index === state.path.length - 1;
+          btn2.addEventListener("click", function () {
+            enterFolderPickerFolder(String(step.folderId || ""));
+          });
+          crumbs.appendChild(btn2);
+        });
+      }
+      if (!folders.length) {
+        var empty = document.createElement("li");
+        empty.textContent = "此層沒有子資料夾。可直接「到這裡」確認。";
+        list.appendChild(empty);
+      } else {
+        folders.forEach(function (folder) {
+          var id = String((folder && (folder.folderId || folder.id)) || "");
+          if (!id) return;
+          if (state.itemKind === "folder" && String(state.folderId) === id) return;
+          var item = document.createElement("li");
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "drive-folder-picker-item";
+          btn.textContent = "進入：" + String((folder && folder.name) || id);
+          btn.addEventListener("click", function () {
+            enterFolderPickerFolder(id);
+          });
+          item.appendChild(btn);
+          list.appendChild(item);
+        });
+      }
+    }).catch(function (error) {
+      if (!folderPickerState || folderPickerState !== state) return;
+      list.replaceChildren();
+      var err = document.createElement("li");
+      err.textContent = "載入失敗：" + friendlyGateMessage(errorInfo(error));
+      list.appendChild(err);
+    });
     box.classList.remove("hidden");
     hideFileActionConfirm();
+    hideRenameDialog();
   }
 
-  function buildFileActionMenu(file) {
-    var details = document.createElement("details");
-    details.className = "drive-file-menu";
-    var summary = document.createElement("summary");
-    summary.textContent = "操作";
-    details.appendChild(summary);
-    var panel = document.createElement("div");
-    panel.className = "drive-file-menu-panel";
+  function enterFolderPickerFolder(folderId) {
+    if (!folderPickerState) return;
+    folderPickerState.currentFolderId =
+      String(folderId || "") === String(browseClubFolderId || "")
+        ? ""
+        : String(folderId || "");
+    renderFolderPicker();
+  }
+
+  function confirmFolderPickerDestination() {
+    if (!folderPickerState) return;
+    var state = folderPickerState;
+    var destId = String(state.currentFolderId || browseClubFolderId || "");
+    if (!destId) {
+      setEvalFolderStatus("尚未選到有效目的資料夾。", "warn");
+      return;
+    }
+    if (String(destId) === String(state.parentFolderId || "") &&
+      !(state.batchItems && state.batchItems.length)) {
+      setEvalFolderStatus("目的地與來源相同。", "warn");
+      return;
+    }
+    hideFolderPicker();
+    var confirmAction = {
+      kind: state.kind,
+      itemKind: state.itemKind || "file",
+      fileId: state.fileId,
+      folderId: state.folderId,
+      fileName: state.fileName,
+      folderName: state.folderName,
+      parentFolderId: state.parentFolderId,
+      fromPath: state.fromPath || browsePathLabel,
+      destinationFolderId: destId,
+      toPath: state.currentPathLabel || clubRootLabel(),
+      confirmReplace: false,
+      batchItems: state.batchItems || null
+    };
+    showFileActionConfirm(confirmAction);
+  }
+
+  function openFolderPicker(action) {
+    folderPickerState = {
+      kind: action.kind,
+      itemKind: action.itemKind || (action.folderId ? "folder" : "file"),
+      fileId: action.fileId,
+      folderId: action.folderId,
+      fileName: action.fileName,
+      folderName: action.folderName,
+      parentFolderId: action.parentFolderId,
+      fromPath: action.fromPath || browsePathLabel,
+      batchItems: action.batchItems || null,
+      currentFolderId: String(browseClubFolderId || ""),
+      path: [],
+      currentPathLabel: clubRootLabel()
+    };
+    renderFolderPicker();
+  }
+
+  function fillItemActionButtons(panel, item, onDone) {
     function addItem(label, className, handler) {
       var btn = document.createElement("button");
       btn.type = "button";
@@ -991,37 +1553,76 @@
       btn.addEventListener("click", function (event) {
         event.preventDefault();
         event.stopPropagation();
-        details.open = false;
+        if (typeof onDone === "function") onDone();
         handler();
       });
       panel.appendChild(btn);
     }
+    var isFolder = item.kind === "folder";
+    if (!isFolder) {
+      addItem("預覽 PDF", "", function () {
+        openPdfPreview(item);
+      });
+    }
+    addItem("重新命名", "", function () {
+      openRenameDialog(item);
+    });
     addItem("刪除", "danger", function () {
-      requestTrashFile(file);
+      requestTrashItem(item);
     });
     addItem("移動至…", "", function () {
       openFolderPicker({
         kind: "move",
-        fileId: file.fileId,
-        fileName: file.name,
-        parentFolderId: file.parentFolderId,
+        itemKind: item.kind,
+        fileId: isFolder ? undefined : item.id,
+        folderId: isFolder ? item.id : undefined,
+        fileName: isFolder ? undefined : item.name,
+        folderName: isFolder ? item.name : undefined,
+        parentFolderId: item.parentFolderId,
         fromPath: browsePathLabel
       });
     });
-    addItem("複製至…", "", function () {
-      openFolderPicker({
-        kind: "copy",
-        fileId: file.fileId,
-        fileName: file.name,
-        parentFolderId: file.parentFolderId,
-        fromPath: browsePathLabel
+    if (!isFolder) {
+      addItem("複製至…", "", function () {
+        openFolderPicker({
+          kind: "copy",
+          itemKind: "file",
+          fileId: item.id,
+          fileName: item.name,
+          parentFolderId: item.parentFolderId,
+          fromPath: browsePathLabel
+        });
       });
+    }
+  }
+
+  function buildItemActionMenu(item) {
+    var details = document.createElement("details");
+    details.className = "drive-file-menu";
+    var summary = document.createElement("summary");
+    summary.textContent = "操作";
+    details.appendChild(summary);
+    var panel = document.createElement("div");
+    panel.className = "drive-file-menu-panel";
+    fillItemActionButtons(panel, item, function () {
+      details.open = false;
     });
     details.appendChild(panel);
     details.addEventListener("click", function (event) {
       event.stopPropagation();
     });
     return details;
+  }
+
+  /** @deprecated use buildItemActionMenu */
+  function buildFileActionMenu(file) {
+    return buildItemActionMenu({
+      kind: "file",
+      id: file.fileId || file.id,
+      fileId: file.fileId || file.id,
+      name: file.name,
+      parentFolderId: file.parentFolderId
+    });
   }
 
   function bindFileDragSource(el, file) {
@@ -1113,18 +1714,531 @@
   }
 
   function requestTrashFile(file) {
+    requestTrashItem({
+      kind: "file",
+      id: file.fileId || file.id,
+      fileId: file.fileId || file.id,
+      name: file.name,
+      parentFolderId: file.parentFolderId
+    });
+  }
+
+  function requestTrashItem(item) {
     if (!uploadWriteAllowed) {
-      setEvalFolderStatus("目前為唯讀狀態，無法刪除檔案。", "warn");
+      setEvalFolderStatus("目前為唯讀狀態，無法刪除。", "warn");
       return;
     }
+    if (!item || !item.id) return;
+    var isFolder = item.kind === "folder";
     showFileActionConfirm({
       kind: "trash",
-      fileId: file.fileId,
-      fileName: file.name,
-      parentFolderId: file.parentFolderId,
+      itemKind: isFolder ? "folder" : "file",
+      fileId: isFolder ? undefined : item.id,
+      folderId: isFolder ? item.id : undefined,
+      fileName: isFolder ? undefined : item.name,
+      folderName: isFolder ? item.name : undefined,
+      parentFolderId: item.parentFolderId,
       fromPath: browsePathLabel,
       confirmReplace: false
     });
+  }
+
+  function requestRestoreItem(item) {
+    if (!uploadWriteAllowed) {
+      setEvalFolderStatus("目前為唯讀狀態，無法還原。", "warn");
+      return;
+    }
+    if (!item || !item.id) return;
+    showFileActionConfirm({
+      kind: "restore",
+      itemKind: item.itemKind || item.kind || "file",
+      itemId: item.id,
+      fileName: item.name,
+      folderName: item.kind === "folder" ? item.name : undefined,
+      parentFolderId: item.parentFolderId,
+      confirmReplace: false
+    });
+  }
+
+  function openRenameDialog(item) {
+    if (!uploadWriteAllowed) {
+      setEvalFolderStatus("目前為唯讀狀態，無法重新命名。", "warn");
+      return;
+    }
+    if (!item || !item.id) return;
+    pendingRename = {
+      kind: item.kind === "folder" ? "folder" : "file",
+      id: item.id,
+      name: item.name || "",
+      parentFolderId: item.parentFolderId
+    };
+    var box = $("driveRenameDialog");
+    var input = $("driveRenameInput");
+    var title = $("driveRenameTitle");
+    if (title) {
+      title.textContent = pendingRename.kind === "folder" ? "重新命名資料夾" : "重新命名檔案";
+    }
+    if (input) {
+      var seed = String(pendingRename.name || "");
+      if (pendingRename.kind === "file") seed = seed.replace(/\.pdf$/i, "");
+      input.value = seed;
+    }
+    if (box) box.classList.remove("hidden");
+    hideFileActionConfirm();
+    hideFolderPicker();
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }
+
+  function confirmRename() {
+    if (!pendingRename || fileOpBusy) return;
+    if (!uploadWriteAllowed) {
+      setEvalFolderStatus("目前為唯讀狀態，無法重新命名。", "warn");
+      return;
+    }
+    var input = $("driveRenameInput");
+    var nextName = input && input.value ? String(input.value).trim() : "";
+    if (!nextName) {
+      setEvalFolderStatus("請輸入新名稱。", "warn");
+      return;
+    }
+    var action = {
+      kind: "rename",
+      itemKind: pendingRename.kind,
+      fileId: pendingRename.kind === "file" ? pendingRename.id : undefined,
+      folderId: pendingRename.kind === "folder" ? pendingRename.id : undefined,
+      fileName: pendingRename.kind === "file" ? nextName : undefined,
+      folderName: pendingRename.kind === "folder" ? nextName : undefined,
+      name: nextName,
+      parentFolderId: pendingRename.parentFolderId
+    };
+    hideRenameDialog();
+    runSingleFileOp(action).then(function (outcome) {
+      if (!outcome) return;
+      if (outcome.replaceRequired) return;
+      setEvalFolderStatus("已重新命名。", "ok");
+    });
+  }
+
+  function previewEndpointUrl(fileId) {
+    var projectId = "";
+    try {
+      projectId = String((firebase.app().options && firebase.app().options.projectId) || "");
+    } catch (_error) {
+      projectId = "";
+    }
+    if (!projectId) throw new Error("尚未載入 Firebase 專案，無法預覽。");
+    return "https://asia-east1-" + projectId +
+      ".cloudfunctions.net/hkspEvalFilePreview?fileId=" + encodeURIComponent(fileId);
+  }
+
+  function closePdfPreview() {
+    var box = $("drivePdfPreview");
+    var frame = $("drivePdfPreviewFrame");
+    var status = $("drivePdfPreviewStatus");
+    if (frame) frame.removeAttribute("src");
+    if (pdfPreviewBlobUrl) {
+      try { URL.revokeObjectURL(pdfPreviewBlobUrl); } catch (_error) {}
+      pdfPreviewBlobUrl = null;
+    }
+    if (status) {
+      status.className = "msg";
+      status.textContent = "";
+    }
+    if (box) box.classList.add("hidden");
+  }
+
+  function openPdfPreview(item) {
+    var fileId = String((item && (item.id || item.fileId)) || "");
+    if (!fileId) return;
+    var box = $("drivePdfPreview");
+    var frame = $("drivePdfPreviewFrame");
+    var status = $("drivePdfPreviewStatus");
+    var title = $("drivePdfPreviewTitle");
+    if (!box || !frame) {
+      setEvalFolderStatus("預覽介面尚未就緒。", "error");
+      return;
+    }
+    closePdfPreview();
+    if (title) title.textContent = "預覽：" + String((item && item.name) || fileId);
+    if (status) {
+      status.className = "msg warn";
+      status.textContent = "正在載入預覽…";
+    }
+    box.classList.remove("hidden");
+    var user = null;
+    try { user = firebase.auth().currentUser; } catch (_error) { user = null; }
+    if (!user || typeof user.getIdToken !== "function") {
+      if (status) {
+        status.className = "msg error";
+        status.textContent = "需要登入才能預覽。";
+      }
+      return;
+    }
+    user.getIdToken().then(function (token) {
+      return fetch(previewEndpointUrl(fileId), {
+        method: "GET",
+        headers: { Authorization: "Bearer " + token },
+        credentials: "omit",
+        cache: "no-store"
+      });
+    }).then(function (response) {
+      if (!response.ok) {
+        return response.json().catch(function () { return {}; }).then(function (body) {
+          var msg = (body && (body.message || body.error)) ||
+            ("預覽失敗（HTTP " + response.status + "）");
+          throw new Error(msg);
+        });
+      }
+      return response.blob();
+    }).then(function (blob) {
+      pdfPreviewBlobUrl = URL.createObjectURL(blob);
+      frame.src = pdfPreviewBlobUrl;
+      if (status) {
+        status.className = "msg ok";
+        status.textContent = "可用瀏覽器內建控件縮放／翻頁。關閉後仍停留在目前資料夾。";
+      }
+    }).catch(function (error) {
+      if (status) {
+        status.className = "msg error";
+        status.textContent = String((error && error.message) || "預覽失敗。");
+      }
+    });
+  }
+
+  function setBrowserViewMode(mode) {
+    var next = mode === "trash" ? "trash" : "browse";
+    if (browserViewMode === "browse" && next === "trash") {
+      priorBrowseFolderId = String(selectedEvalFolderId || "");
+    }
+    browserViewMode = next;
+    clearBrowseSelection();
+    hideContextMenu();
+    hideFolderPicker();
+    hideRenameDialog();
+    hideFileActionConfirm();
+    var searchResults = $("driveSearchResults");
+    if (searchResults && next === "trash") searchResults.classList.add("hidden");
+    syncEvalFolderPanel();
+    if (next === "trash") {
+      return refreshTrashView(true);
+    }
+    selectedEvalFolderId = String(priorBrowseFolderId || "");
+    return refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, true);
+  }
+
+  function refreshTrashView(force) {
+    if (browserViewMode !== "trash") return Promise.resolve(null);
+    evalFolderBusy = true;
+    syncEvalFolderPanel();
+    setBrowserState("loading", "正在載入垃圾桶…");
+    setEvalFolderStatus("正在載入垃圾桶…", "warn");
+    return call("listClubEvaluationTrash", {}).then(function (result) {
+      if (browserViewMode !== "trash") return null;
+      var data = (result && result.data) || { items: [] };
+      setBrowserState("", "");
+      var rendered = renderTrashTable(data);
+      if (rendered.empty) {
+        setEvalFolderStatus("垃圾桶目前沒有項目。", "ok");
+      } else {
+        setEvalFolderStatus("僅顯示本社校內垃圾桶索引且仍在 Drive 垃圾桶中的項目。", "ok");
+      }
+      return data;
+    }).catch(function (error) {
+      if (browserViewMode !== "trash") return null;
+      setBrowserState("error", "讀取垃圾桶失敗：" + friendlyGateMessage(errorInfo(error)));
+      setEvalFolderStatus("讀取垃圾桶失敗：" + friendlyGateMessage(errorInfo(error)), "error");
+      return null;
+    }).then(function (data) {
+      evalFolderBusy = false;
+      syncEvalFolderPanel();
+      return data;
+    });
+  }
+
+  function hideClubSearchResults() {
+    clubSearchResults = null;
+    var box = $("driveSearchResults");
+    if (box) {
+      box.classList.add("hidden");
+      box.replaceChildren();
+    }
+  }
+
+  function renderClubSearchResults(data) {
+    var box = $("driveSearchResults");
+    if (!box) return;
+    clubSearchResults = data;
+    box.replaceChildren();
+    var items = (data && data.items) || [];
+    if (!items.length) {
+      var empty = document.createElement("p");
+      empty.style.margin = "0";
+      empty.textContent = "沒有符合的項目。";
+      box.appendChild(empty);
+      box.classList.remove("hidden");
+      return;
+    }
+    items.forEach(function (hit) {
+      var row = document.createElement("div");
+      row.className = "drive-search-hit";
+      var meta = document.createElement("div");
+      var name = document.createElement("strong");
+      name.textContent = String(hit.name || hit.itemId || "");
+      meta.appendChild(name);
+      if (hit.pathLabel) {
+        var path = document.createElement("span");
+        path.className = "hit-path";
+        path.textContent = String(hit.pathLabel);
+        meta.appendChild(path);
+      }
+      row.appendChild(meta);
+      var go = document.createElement("button");
+      go.type = "button";
+      go.className = "drive-table-action";
+      go.textContent = "前往";
+      go.addEventListener("click", function () {
+        var parentId = String(hit.parentFolderId || "");
+        var target =
+          parentId && browseClubFolderId && parentId === browseClubFolderId
+            ? ""
+            : parentId;
+        setBrowserViewMode("browse");
+        openBrowseFolder(target, true);
+      });
+      row.appendChild(go);
+      box.appendChild(row);
+    });
+    if (data && data.truncated) {
+      var note = document.createElement("p");
+      note.style.margin = "8px 0 0";
+      note.style.color = "#6a7f94";
+      note.style.fontSize = ".82rem";
+      note.textContent = "結果已截斷（有界搜尋）。請再縮小關鍵字。";
+      box.appendChild(note);
+    }
+    box.classList.remove("hidden");
+  }
+
+  function scheduleBrowseSearch() {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(function () {
+      searchDebounceTimer = null;
+      runBrowseSearchNow();
+    }, 320);
+  }
+
+  function runBrowseSearchNow() {
+    var q = String(browseSearchQuery || "").trim();
+    if (browseSearchScope !== "club") {
+      hideClubSearchResults();
+      if (lastBrowseSnapshot) renderBrowserTable(lastBrowseSnapshot);
+      return;
+    }
+    if (!q) {
+      hideClubSearchResults();
+      if (lastBrowseSnapshot) renderBrowserTable(lastBrowseSnapshot);
+      return;
+    }
+    call("searchClubEvaluationItems", {
+      query: q,
+      scope: "club"
+    }).then(function (result) {
+      if (browseSearchScope !== "club") return;
+      if (String(browseSearchQuery || "").trim() !== q) return;
+      renderClubSearchResults((result && result.data) || { items: [] });
+    }).catch(function (error) {
+      var box = $("driveSearchResults");
+      if (!box) return;
+      box.classList.remove("hidden");
+      box.replaceChildren();
+      var err = document.createElement("p");
+      err.style.margin = "0";
+      err.textContent = "搜尋失敗：" + friendlyGateMessage(errorInfo(error));
+      box.appendChild(err);
+    });
+  }
+
+  function supportsDirectoryUpload() {
+    var input = $("driveFolderUpload");
+    return !!(input && ("webkitdirectory" in input || "directory" in input));
+  }
+
+  function queueDirectoryUpload(fileList) {
+    if (!uploadWriteAllowed) {
+      setStatus("系統尚未開放上傳", "warn");
+      return;
+    }
+    var files = Array.prototype.slice.call(fileList || []).filter(function (file) {
+      return file && /\.pdf$/i.test(String(file.name || ""));
+    });
+    if (!files.length) {
+      setEvalFolderStatus("此資料夾沒有可上傳的 PDF。", "warn");
+      return;
+    }
+    var byRel = files.map(function (file) {
+      var rel = String(file.webkitRelativePath || file.name || "");
+      var parts = rel.split(/[/\\]/).filter(Boolean);
+      var fileName = parts.pop() || file.name;
+      return { file: file, dirs: parts, fileName: fileName };
+    });
+    var uniqueDirs = Object.create(null);
+    byRel.forEach(function (row) {
+      var pathKey = row.dirs.join("/");
+      if (pathKey) uniqueDirs[pathKey] = row.dirs.slice();
+    });
+    var dirKeys = Object.keys(uniqueDirs).sort(function (a, b) {
+      return a.split("/").length - b.split("/").length || a.localeCompare(b);
+    });
+    var folderIdByPath = Object.create(null);
+    folderIdByPath[""] = String(selectedEvalFolderId || "");
+    setEvalFolderStatus("正在預檢並建立資料夾結構（" + dirKeys.length + " 層路徑）…", "warn");
+    var chain = Promise.resolve();
+    dirKeys.forEach(function (pathKey) {
+      chain = chain.then(function () {
+        var parts = uniqueDirs[pathKey];
+        var parentKey = parts.slice(0, -1).join("/");
+        var parentId = folderIdByPath[parentKey];
+        if (parentId == null) parentId = String(selectedEvalFolderId || "");
+        var name = parts[parts.length - 1];
+        var body = { name: name };
+        if (parentId) body.parentFolderId = parentId;
+        return call("createClubEvaluationFolder", body).then(function (result) {
+          var data = (result && result.data) || {};
+          folderIdByPath[pathKey] = String(data.folderId || "");
+          return data;
+        });
+      });
+    });
+    return chain.then(function () {
+      byRel.forEach(function (row) {
+        var pathKey = row.dirs.join("/");
+        var destId = folderIdByPath[pathKey];
+        if (destId == null) destId = String(selectedEvalFolderId || "");
+        uploadQueue.push({
+          file: row.file,
+          destinationFolderId: String(destId || ""),
+          destinationLabel: (browsePathLabel || "社團評選資料夾") +
+            (pathKey ? " / " + pathKey.replace(/\//g, " / ") : "")
+        });
+      });
+      renderQueue();
+      clearEvalFoldersCache();
+      setEvalFolderStatus(
+        "已排入 " + byRel.length + " 個 PDF（整夾上傳）。請按「開始上傳」。",
+        "ok"
+      );
+      return refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, true);
+    }).catch(function (error) {
+      setEvalFolderStatus("整夾上傳預檢失敗：" + friendlyGateMessage(errorInfo(error)), "error");
+    });
+  }
+
+  function requestBatchTrash() {
+    var items = selectedItemList();
+    if (!items.length) return;
+    showFileActionConfirm({
+      kind: "trash",
+      itemKind: "batch",
+      fileName: items.length + " 個項目",
+      fromPath: browsePathLabel,
+      batchItems: items,
+      confirmReplace: false
+    });
+  }
+
+  function requestBatchMove() {
+    var items = selectedItemList();
+    if (!items.length) return;
+    openFolderPicker({
+      kind: "move",
+      itemKind: "batch",
+      fileName: items.length + " 個項目",
+      parentFolderId: currentBrowseParentId(),
+      fromPath: browsePathLabel,
+      batchItems: items
+    });
+  }
+
+  function requestBatchCopy() {
+    var items = selectedItemList().filter(function (item) { return item.kind === "file"; });
+    if (!items.length) {
+      setEvalFolderStatus("批次複製僅支援檔案。", "warn");
+      return;
+    }
+    openFolderPicker({
+      kind: "copy",
+      itemKind: "batch",
+      fileName: items.length + " 個檔案",
+      parentFolderId: currentBrowseParentId(),
+      fromPath: browsePathLabel,
+      batchItems: items
+    });
+  }
+
+  function callableAndBodyForAction(action) {
+    var itemKind = action.itemKind || (action.folderId ? "folder" : "file");
+    var kind = action.kind;
+    if (kind === "restore") {
+      return {
+        name: "restoreClubEvaluationItem",
+        body: {
+          itemId: action.itemId || action.fileId || action.folderId,
+          confirmReplace: !!action.confirmReplace
+        }
+      };
+    }
+    if (kind === "rename") {
+      if (itemKind === "folder") {
+        return {
+          name: "renameClubEvaluationFolder",
+          body: { folderId: action.folderId, name: action.name || action.folderName }
+        };
+      }
+      return {
+        name: "renameClubEvaluationFile",
+        body: { fileId: action.fileId, name: action.name || action.fileName }
+      };
+    }
+    if (kind === "trash") {
+      if (itemKind === "folder") {
+        return { name: "trashClubEvaluationFolder", body: { folderId: action.folderId } };
+      }
+      return { name: "trashClubEvaluationFile", body: { fileId: action.fileId } };
+    }
+    if (kind === "copy") {
+      return {
+        name: "copyClubEvaluationFile",
+        body: {
+          fileId: action.fileId,
+          destinationFolderId: action.destinationFolderId,
+          confirmReplace: !!action.confirmReplace
+        }
+      };
+    }
+    if (kind === "move") {
+      if (itemKind === "folder") {
+        return {
+          name: "moveClubEvaluationFolder",
+          body: {
+            folderId: action.folderId,
+            destinationFolderId: action.destinationFolderId,
+            confirmReplace: !!action.confirmReplace
+          }
+        };
+      }
+      return {
+        name: "moveClubEvaluationFile",
+        body: {
+          fileId: action.fileId,
+          destinationFolderId: action.destinationFolderId,
+          confirmReplace: !!action.confirmReplace
+        }
+      };
+    }
+    return null;
   }
 
   function applyFileOpResult(data, action) {
@@ -1133,13 +2247,158 @@
       renderList(data.files);
     }
     var touch = [action.parentFolderId, action.destinationFolderId, browseClubFolderId];
+    if (action.folderId) touch.push(action.folderId);
     if (data && data.fromFolderId) touch.push(data.fromFolderId);
     if (data && data.toFolderId) touch.push(data.toFolderId);
+    if (data && data.parentFolderId) touch.push(data.parentFolderId);
     invalidateFolderCaches(touch);
     Object.keys(treeExpandedIds).forEach(function (id) {
       if (treeExpandedIds[id]) loadTreeChildren(id, true);
     });
+    clearBrowseSelection();
+    if (browserViewMode === "trash") {
+      return refreshTrashView(true);
+    }
     return refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, true);
+  }
+
+  function runSingleFileOp(action) {
+    var packed = callableAndBodyForAction(action);
+    if (!packed) {
+      setEvalFolderStatus("未知操作。", "error");
+      return Promise.resolve(null);
+    }
+    fileOpBusy = true;
+    setEvalFolderStatus("處理中…", "warn");
+    return call(packed.name, packed.body).then(function (result) {
+      var data = (result && result.data) || {};
+      if (data.status === "replace_confirm_required") {
+        showFileActionConfirm(Object.assign({}, action, {
+          confirmReplace: true,
+          conflictMessage: data.message || ""
+        }));
+        setEvalFolderStatus(data.message || "目的地有同名項目，請確認是否取代。", "warn");
+        return { replaceRequired: true, data: data };
+      }
+      hideFileActionConfirm();
+      return Promise.resolve(applyFileOpResult(data, action)).then(function () {
+        return { data: data };
+      });
+    }).catch(function (error) {
+      var info = errorInfo(error);
+      setEvalFolderStatus(friendlyGateMessage(info), "error");
+      return null;
+    }).then(function (outcome) {
+      fileOpBusy = false;
+      syncEvalFolderPanel();
+      return outcome;
+    });
+  }
+
+  function runBatchFileOps(action) {
+    var items = (action.batchItems || []).slice();
+    if (!items.length) return Promise.resolve(null);
+    fileOpBusy = true;
+    var ok = 0;
+    var fail = 0;
+    var unclear = 0;
+    var pendingConfirm = null;
+    function next(index) {
+      if (pendingConfirm) {
+        return Promise.resolve({ pendingConfirm: pendingConfirm, ok: ok, fail: fail, unclear: unclear });
+      }
+      if (index >= items.length) {
+        return Promise.resolve({ ok: ok, fail: fail, unclear: unclear });
+      }
+      var item = items[index];
+      var step = {
+        kind: action.kind,
+        itemKind: item.kind === "folder" ? "folder" : "file",
+        fileId: item.kind === "folder" ? undefined : item.id,
+        folderId: item.kind === "folder" ? item.id : undefined,
+        fileName: item.kind === "folder" ? undefined : item.name,
+        folderName: item.kind === "folder" ? item.name : undefined,
+        itemId: action.kind === "restore" ? item.id : undefined,
+        parentFolderId: item.parentFolderId,
+        destinationFolderId: action.destinationFolderId,
+        toPath: action.toPath,
+        fromPath: action.fromPath,
+        confirmReplace: !!action.confirmReplace
+      };
+      if (action.kind === "copy" && step.itemKind === "folder") {
+        fail += 1;
+        return next(index + 1);
+      }
+      setEvalFolderStatus(
+        "批次處理中（" + (index + 1) + "/" + items.length + "）：" + (item.name || item.id),
+        "warn"
+      );
+      var packed = callableAndBodyForAction(step);
+      if (!packed) {
+        fail += 1;
+        return next(index + 1);
+      }
+      return call(packed.name, packed.body).then(function (result) {
+        var data = (result && result.data) || {};
+        if (data.status === "replace_confirm_required") {
+          pendingConfirm = Object.assign({}, action, {
+            batchItems: items.slice(index),
+            confirmReplace: true,
+            conflictMessage: data.message || "",
+            fileName: item.name,
+            itemKind: step.itemKind,
+            fileId: step.fileId,
+            folderId: step.folderId
+          });
+          return null;
+        }
+        ok += 1;
+        return null;
+      }).catch(function (error) {
+        var code = String((error && error.code) || "");
+        if (/FILE_OP_UNCLEAR|unclear/i.test(code + " " + String((error && error.message) || ""))) {
+          unclear += 1;
+        } else {
+          fail += 1;
+        }
+        return null;
+      }).then(function () {
+        return next(index + 1);
+      });
+    }
+    return next(0).then(function (summary) {
+      hideFileActionConfirm();
+      return Promise.resolve(
+        browserViewMode === "trash"
+          ? refreshTrashView(true)
+          : refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, true)
+      ).then(function () {
+        if (summary && summary.pendingConfirm) {
+          showFileActionConfirm(summary.pendingConfirm);
+          setEvalFolderStatus(
+            "批次已完成 " + summary.ok + " 項；遇到同名衝突，請確認後繼續其餘項目。" +
+              (summary.fail || summary.unclear
+                ? "（失敗 " + summary.fail + "／待查證 " + summary.unclear + "）"
+                : ""),
+            "warn"
+          );
+          return summary;
+        }
+        setEvalFolderStatus(
+          "批次結束：成功 " + (summary && summary.ok || 0) +
+            "／失敗 " + (summary && summary.fail || 0) +
+            "／待查證 " + (summary && summary.unclear || 0) +
+            "。失敗項未樂觀移除，請重新整理後查證。",
+          (summary && summary.fail) || (summary && summary.unclear) ? "warn" : "ok"
+        );
+        clearBrowseSelection();
+        return summary;
+      });
+    }).then(function (summary) {
+      fileOpBusy = false;
+      syncEvalFolderPanel();
+      return summary;
+    });
   }
 
   function runPendingFileAction(confirmReplace) {
@@ -1152,47 +2411,33 @@
     var action = Object.assign({}, pendingFileAction, {
       confirmReplace: !!confirmReplace || !!pendingFileAction.confirmReplace
     });
-    var callableName =
-      action.kind === "trash"
-        ? "trashClubEvaluationFile"
-        : action.kind === "copy"
-          ? "copyClubEvaluationFile"
-          : "moveClubEvaluationFile";
-    var body = { fileId: action.fileId };
-    if (action.kind !== "trash") {
-      body.destinationFolderId = action.destinationFolderId;
-      if (action.confirmReplace) body.confirmReplace = true;
+    if (action.batchItems && action.batchItems.length) {
+      runBatchFileOps(action);
+      return;
     }
-    fileOpBusy = true;
-    setEvalFolderStatus("處理中…", "warn");
-    call(callableName, body).then(function (result) {
-      var data = (result && result.data) || {};
-      if (data.status === "replace_confirm_required") {
-        showFileActionConfirm(Object.assign({}, action, {
-          confirmReplace: true,
-          conflictMessage: data.message || ""
-        }));
-        setEvalFolderStatus(data.message || "目的地有同名檔，請確認是否取代。", "warn");
-        return null;
+    var okMsg =
+      action.kind === "trash" ? "已移入垃圾桶。"
+        : action.kind === "copy"
+          ? "已複製。"
+          : action.kind === "restore"
+            ? "已還原。"
+            : action.kind === "rename"
+              ? "已重新命名。"
+              : "已移動。";
+    runSingleFileOp(action).then(function (outcome) {
+      if (!outcome || outcome.replaceRequired) return;
+      if (action.kind === "copy") {
+        var data = outcome.data || {};
+        okMsg = data.registeredAsSubmission
+          ? "已複製並登錄有效繳交。"
+          : "已複製；未登錄檔不會因此變成有效繳交。";
       }
-      hideFileActionConfirm();
-      var okMsg =
-        action.kind === "trash"
-          ? "已移入垃圾桶。"
-          : action.kind === "copy"
-            ? (data.registeredAsSubmission
-              ? "已複製並登錄有效繳交。"
-              : "已複製；未登錄檔不會因此變成有效繳交。")
-            : "已移動。";
-      return Promise.resolve(applyFileOpResult(data, action)).then(function () {
-        setEvalFolderStatus(okMsg, "ok");
-      });
-    }).catch(function (error) {
-      var info = errorInfo(error);
-      setEvalFolderStatus(friendlyGateMessage(info), "error");
-      // Keep current list; do not remove rows optimistically.
-    }).then(function () {
-      fileOpBusy = false;
+      if (action.kind === "restore" && outcome.data && outcome.data.reactivatedSubmission) {
+        okMsg = "已還原，並解除先前因刪除而 superseded 的繳交。";
+      } else if (action.kind === "restore") {
+        okMsg = "已還原 Drive 項目（未登錄檔不會因此變成有效繳交）。";
+      }
+      setEvalFolderStatus(okMsg, "ok");
     });
   }
 
@@ -1704,9 +2949,17 @@
       title.textContent = activeKind === "feature" ? "特色資料" : "評選資料";
     }
     if (meta) {
-      meta.textContent =
+      var line =
         (serverCtx.clubName || "社團") +
         "（" + (serverCtx.permanentClubId || "") + "）";
+      var windows = lastListData && lastListData.uploadWindows;
+      var win = windows && windows[activeKind === "feature" ? "feature" : "evaluation"];
+      if (win && win.deadlineAt) {
+        line += "　截止：" + formatTaipeiDateTime(win.deadlineAt);
+      } else if (lastListData) {
+        line += "　截止：伺服器尚未回傳截止";
+      }
+      meta.textContent = line;
     }
   }
 
@@ -2157,14 +3410,30 @@
     var fileActionConfirm = $("btnDriveFileActionConfirm");
     var fileActionCancel = $("btnDriveFileActionCancel");
     var folderPickerCancel = $("btnDriveFolderPickerCancel");
+    var folderPickerConfirm = $("btnDriveFolderPickerConfirm");
+    var folderPickerUp = $("btnDriveFolderPickerUp");
+    var renameConfirm = $("btnDriveRenameConfirm");
+    var renameCancel = $("btnDriveRenameCancel");
+    var pdfClose = $("btnDrivePdfPreviewClose");
     var folderCreate = $("btnDriveEvalFolderCreate");
     var folderRefresh = $("btnDriveEvalFolderRefresh");
     var folderUp = $("btnDriveBrowserUp");
     var showCreate = $("btnDriveShowCreateFolder");
     var cancelCreate = $("btnDriveCancelCreateFolder");
     var pickUpload = $("btnDrivePickUpload");
+    var pickFolderUpload = $("btnDrivePickFolderUpload");
+    var folderUploadInput = $("driveFolderUpload");
     var treeToggle = $("btnDriveTreeToggle");
     var searchInput = $("driveBrowserSearch");
+    var searchScope = $("driveBrowserSearchScope");
+    var sortSelect = $("driveBrowserSort");
+    var selectAll = $("driveSelectAll");
+    var viewBrowse = $("btnDriveViewBrowse");
+    var viewTrash = $("btnDriveViewTrash");
+    var batchTrash = $("btnDriveBatchTrash");
+    var batchMove = $("btnDriveBatchMove");
+    var batchCopy = $("btnDriveBatchCopy");
+    var batchClear = $("btnDriveBatchClear");
     var toastClose = $("btnDriveToastClose");
     var dropzone = $("driveDropzone");
     var fileInput = $("driveFile");
@@ -2189,6 +3458,7 @@
       backKinds.addEventListener("click", function () {
         hideReplaceConfirm();
         hideSuccessToast();
+        closePdfPreview();
         uploadQueue = [];
         renderQueue();
         setWorkspaceView("picker");
@@ -2222,6 +3492,37 @@
         setEvalFolderStatus("已取消選擇目的資料夾。", "ok");
       });
     }
+    if (folderPickerConfirm && !folderPickerConfirm.dataset.bound) {
+      folderPickerConfirm.dataset.bound = "1";
+      folderPickerConfirm.addEventListener("click", confirmFolderPickerDestination);
+    }
+    if (folderPickerUp && !folderPickerUp.dataset.bound) {
+      folderPickerUp.dataset.bound = "1";
+      folderPickerUp.addEventListener("click", function () {
+        if (!folderPickerState) return;
+        var path = folderPickerState.path || [];
+        if (path.length >= 2) {
+          enterFolderPickerFolder(String(path[path.length - 2].folderId || ""));
+        } else {
+          enterFolderPickerFolder("");
+        }
+      });
+    }
+    if (renameConfirm && !renameConfirm.dataset.bound) {
+      renameConfirm.dataset.bound = "1";
+      renameConfirm.addEventListener("click", confirmRename);
+    }
+    if (renameCancel && !renameCancel.dataset.bound) {
+      renameCancel.dataset.bound = "1";
+      renameCancel.addEventListener("click", function () {
+        hideRenameDialog();
+        setEvalFolderStatus("已取消重新命名。", "ok");
+      });
+    }
+    if (pdfClose && !pdfClose.dataset.bound) {
+      pdfClose.dataset.bound = "1";
+      pdfClose.addEventListener("click", closePdfPreview);
+    }
     if (folderCreate && !folderCreate.dataset.bound) {
       folderCreate.dataset.bound = "1";
       folderCreate.addEventListener("click", createEvalFolder);
@@ -2248,6 +3549,31 @@
         if (fileInput) fileInput.click();
       });
     }
+    if (pickFolderUpload && !pickFolderUpload.dataset.bound) {
+      pickFolderUpload.dataset.bound = "1";
+      pickFolderUpload.addEventListener("click", function () {
+        if (!uploadWriteAllowed) {
+          setStatus("系統尚未開放上傳", "warn");
+          return;
+        }
+        if (!supportsDirectoryUpload()) {
+          setEvalFolderStatus(
+            "此裝置不支援整夾選擇；請改用多檔上傳，或在電腦瀏覽器使用「上傳資料夾」。",
+            "warn"
+          );
+          if (fileInput) fileInput.click();
+          return;
+        }
+        if (folderUploadInput) folderUploadInput.click();
+      });
+    }
+    if (folderUploadInput && !folderUploadInput.dataset.bound) {
+      folderUploadInput.dataset.bound = "1";
+      folderUploadInput.addEventListener("change", function () {
+        queueDirectoryUpload(folderUploadInput.files);
+        folderUploadInput.value = "";
+      });
+    }
     if (treeToggle && !treeToggle.dataset.bound) {
       treeToggle.dataset.bound = "1";
       treeToggle.addEventListener("click", function () {
@@ -2259,6 +3585,109 @@
       searchInput.dataset.bound = "1";
       searchInput.addEventListener("input", function () {
         browseSearchQuery = String(searchInput.value || "");
+        if (browseSearchScope === "club") {
+          scheduleBrowseSearch();
+        } else {
+          hideClubSearchResults();
+          if (lastBrowseSnapshot) renderBrowserTable(lastBrowseSnapshot);
+        }
+      });
+    }
+    if (searchScope && !searchScope.dataset.bound) {
+      searchScope.dataset.bound = "1";
+      searchScope.addEventListener("change", function () {
+        browseSearchScope = String(searchScope.value || "current") === "club" ? "club" : "current";
+        if (browseSearchScope === "club") scheduleBrowseSearch();
+        else {
+          hideClubSearchResults();
+          if (lastBrowseSnapshot) renderBrowserTable(lastBrowseSnapshot);
+        }
+      });
+    }
+    if (sortSelect && !sortSelect.dataset.bound) {
+      sortSelect.dataset.bound = "1";
+      sortSelect.value = String(browseSort.field || "name") + "-" + String(browseSort.dir || "asc");
+      sortSelect.addEventListener("change", function () {
+        var parts = String(sortSelect.value || "name-asc").split("-");
+        setBrowseSort(parts[0], parts[1] === "desc" ? "desc" : "asc");
+      });
+    }
+    var sortButtons = [];
+    try {
+      if (typeof document.querySelectorAll === "function") {
+        sortButtons = Array.prototype.slice.call(document.querySelectorAll(".drive-th-sort") || []);
+      }
+    } catch (_error) {
+      sortButtons = [];
+    }
+    sortButtons.forEach(function (btn) {
+      if (!btn || btn.dataset && btn.dataset.bound) return;
+      if (btn.dataset) btn.dataset.bound = "1";
+      btn.addEventListener("click", function () {
+        var field = String(btn.getAttribute("data-sort") || "name");
+        if (browseSort.field === field) {
+          setBrowseSort(field, browseSort.dir === "asc" ? "desc" : "asc");
+        } else {
+          setBrowseSort(field, "asc");
+        }
+      });
+    });
+    if (selectAll && !selectAll.dataset.bound) {
+      selectAll.dataset.bound = "1";
+      selectAll.addEventListener("change", function () {
+        if (browserViewMode === "trash" || !lastBrowseSnapshot) return;
+        var checked = !!selectAll.checked;
+        var pathFolderIds = currentPathFolderIds(lastBrowseSnapshot);
+        ((lastBrowseSnapshot.folders || [])).forEach(function (folder) {
+          var id = String(folder.folderId || folder.id || "");
+          if (!id || !matchesBrowseSearch(folder.name)) return;
+          setItemSelected({
+            kind: "folder",
+            id: id,
+            name: String(folder.name || id),
+            parentFolderId: String(currentBrowseParentId() || ""),
+            pathFolderIds: pathFolderIds.slice()
+          }, checked);
+        });
+        ((lastBrowseSnapshot.files || [])).forEach(function (file) {
+          var id = String(file.fileId || file.id || "");
+          if (!id || !matchesBrowseSearch(file.name)) return;
+          setItemSelected({
+            kind: "file",
+            id: id,
+            fileId: id,
+            name: String(file.name || id),
+            parentFolderId: String(file.parentFolderId || currentBrowseParentId() || ""),
+            pathFolderIds: pathFolderIds.slice()
+          }, checked);
+        });
+        renderBrowserTable(lastBrowseSnapshot);
+      });
+    }
+    if (viewBrowse && !viewBrowse.dataset.bound) {
+      viewBrowse.dataset.bound = "1";
+      viewBrowse.addEventListener("click", function () { setBrowserViewMode("browse"); });
+    }
+    if (viewTrash && !viewTrash.dataset.bound) {
+      viewTrash.dataset.bound = "1";
+      viewTrash.addEventListener("click", function () { setBrowserViewMode("trash"); });
+    }
+    if (batchTrash && !batchTrash.dataset.bound) {
+      batchTrash.dataset.bound = "1";
+      batchTrash.addEventListener("click", requestBatchTrash);
+    }
+    if (batchMove && !batchMove.dataset.bound) {
+      batchMove.dataset.bound = "1";
+      batchMove.addEventListener("click", requestBatchMove);
+    }
+    if (batchCopy && !batchCopy.dataset.bound) {
+      batchCopy.dataset.bound = "1";
+      batchCopy.addEventListener("click", requestBatchCopy);
+    }
+    if (batchClear && !batchClear.dataset.bound) {
+      batchClear.dataset.bound = "1";
+      batchClear.addEventListener("click", function () {
+        clearBrowseSelection();
         if (lastBrowseSnapshot) renderBrowserTable(lastBrowseSnapshot);
       });
     }
@@ -2269,7 +3698,11 @@
     if (folderRefresh && !folderRefresh.dataset.bound) {
       folderRefresh.dataset.bound = "1";
       folderRefresh.addEventListener("click", function () {
-        refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, true);
+        if (browserViewMode === "trash") {
+          refreshTrashView(true);
+        } else {
+          refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, true);
+        }
       });
     }
     if (folderUp && !folderUp.dataset.bound) {
@@ -2318,6 +3751,23 @@
         fileInput.value = "";
       });
     }
+    try {
+      var rootEl = document.documentElement;
+      if (rootEl && rootEl.dataset && !rootEl.dataset.hkspDriveCtxBound) {
+        rootEl.dataset.hkspDriveCtxBound = "1";
+        document.addEventListener("click", function (event) {
+          if (!contextMenuEl) return;
+          if (contextMenuEl.contains && contextMenuEl.contains(event.target)) return;
+          hideContextMenu();
+        });
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "Escape") {
+            hideContextMenu();
+            closePdfPreview();
+          }
+        });
+      }
+    } catch (_error) { /* behavior harness may omit documentElement.dataset */ }
   }
 
   function onPageResume() {
