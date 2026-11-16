@@ -137,7 +137,18 @@
     });
   }
 
+  function usePocketBaseBackend() {
+    return !!(
+      window.HKSP_PB_CONFIG &&
+      window.HKSP_PB_CONFIG.usePocketBase &&
+      window.HKSP_PB_BACKEND
+    );
+  }
+
   function callOnce(name, data) {
+    if (usePocketBaseBackend()) {
+      return window.HKSP_PB_BACKEND.call(name, data || {});
+    }
     return firebase.app().functions("asia-east1").httpsCallable(name)(data || {});
   }
 
@@ -238,9 +249,21 @@
     });
   }
 
+  function getAuthBridge() {
+    if (usePocketBaseBackend()) {
+      try { return window.HKSP_PB_BACKEND.getAuth(); } catch (_e) { return null; }
+    }
+    try {
+      return firebase.auth();
+    } catch (_e2) {
+      return null;
+    }
+  }
+
   function currentUid() {
     try {
-      var user = firebase.auth() && firebase.auth().currentUser;
+      var authObj = getAuthBridge();
+      var user = authObj && authObj.currentUser;
       return user && user.uid ? String(user.uid) : "";
     } catch (error) {
       return "";
@@ -1902,6 +1925,9 @@
   }
 
   function previewEndpointUrl(fileId) {
+    if (usePocketBaseBackend()) {
+      throw new Error("PB_PREVIEW");
+    }
     var projectId = "";
     try {
       projectId = String((firebase.app().options && firebase.app().options.projectId) || "");
@@ -1947,6 +1973,32 @@
       status.textContent = "正在載入預覽…";
     }
     box.classList.remove("hidden");
+    if (usePocketBaseBackend()) {
+      var pb = window.HKSP_PB_BACKEND && window.HKSP_PB_BACKEND.pb;
+      if (!pb) {
+        if (status) {
+          status.className = "msg error";
+          status.textContent = "PocketBase 尚未就緒，無法預覽。";
+        }
+        return;
+      }
+      pb.collection(window.HKSP_PB_CONFIG.collections.uploads).getOne(fileId).then(function (rec) {
+        var fname = Array.isArray(rec.file) ? rec.file[0] : rec.file;
+        if (!fname) throw new Error("此筆上傳沒有可預覽檔案。");
+        var url = pb.files.getUrl(rec, fname);
+        frame.src = url;
+        if (status) {
+          status.className = "msg ok";
+          status.textContent = "預覽已載入。";
+        }
+      }).catch(function (error) {
+        if (status) {
+          status.className = "msg error";
+          status.textContent = (error && error.message) || "預覽失敗。";
+        }
+      });
+      return;
+    }
     var user = null;
     try { user = firebase.auth().currentUser; } catch (_error) { user = null; }
     if (!user || typeof user.getIdToken !== "function") {
@@ -3519,6 +3571,34 @@
       if (data.status === "remote_complete") {
         return call("completeClubDriveUpload", { clientAttemptId: attempt });
       }
+      if (
+        (data.pbDirectUpload || data.proxyUpload) &&
+        window.HKSP_PB_BACKEND &&
+        window.HKSP_PB_BACKEND.uploadFile
+      ) {
+        setStatus(
+          "傳輸中：正在上傳至 " +
+            (data.proxyUpload ? "Google Drive（代傳）" : "PocketBase") +
+            "…" +
+            (data.fileName ? "（檔名：" + data.fileName + "）" : ""),
+          "warn"
+        );
+        setTransferProgress(10);
+        return window.HKSP_PB_BACKEND.uploadFile({
+          attemptId: attempt,
+          file: file,
+          prepared: data,
+          signal: signal
+        }).then(function (done) {
+          if (!sameOp(token)) return null;
+          setTransferProgress(100);
+          return {
+            data: done,
+            files: (done && done.files) || [],
+            alreadyComplete: !!(done && done.alreadyComplete)
+          };
+        });
+      }
       if (!data.uploadUrl) throw new Error("伺服器沒有提供上傳位址。");
       setStatus(
         "傳輸中：正在把檔案直接送到社團資料夾…" +
@@ -4157,7 +4237,7 @@
 
   function watchAuth() {
     try {
-      var authObj = firebase.auth();
+      var authObj = getAuthBridge();
       if (!authObj || typeof authObj.onAuthStateChanged !== "function") return;
       authObj.onAuthStateChanged(function (user) {
         var nextUid = user && user.uid ? String(user.uid) : "";

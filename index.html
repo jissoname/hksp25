@@ -1571,6 +1571,9 @@ body.cs-open .cs-fab{display:none}
 </div><!-- /cs-panel -->
 
 <script src="./cs-local-fixture.js"></script>
+<script src="./pb-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
+<script src="./platform-pb-backend.js"></script>
 <script src="./firebase-client.js"></script>
 <script src="./platform-cloud-api.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -2006,6 +2009,15 @@ async function callPublicBackend(
     action,
     extraData={}
 ){
+
+    if (
+        window.HKSP_PB_CONFIG &&
+        HKSP_PB_CONFIG.usePocketBase &&
+        window.HKSP_PB_BACKEND &&
+        typeof HKSP_PB_BACKEND.publicRequest === "function"
+    ) {
+        return HKSP_PB_BACKEND.publicRequest({ action, ...extraData });
+    }
 
     if (window.HKSP_CS_LOCAL && HKSP_CS_LOCAL.isLocalPreview()) {
         return postBackend({ action, ...extraData });

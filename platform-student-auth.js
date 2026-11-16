@@ -137,26 +137,49 @@ function createRequireStudentAccess(deps) {
 
   if (typeof window === "undefined") return;
 
-  var client = window.HKSP_FIREBASE_CLIENT;
+  var usePb =
+    !!(window.HKSP_PB_CONFIG &&
+      window.HKSP_PB_CONFIG.usePocketBase &&
+      window.HKSP_PB_BACKEND);
+  var client = usePb
+    ? {
+        normalizeStudentId: window.HKSP_PB_CONFIG.normalizeStudentId,
+        studentIdToAuthEmail: window.HKSP_PB_CONFIG.studentIdToAuthEmail,
+        openForgotPasswordAssist: window.HKSP_PB_CONFIG.openForgotPasswordAssist,
+        FORGOT_PASSWORD_ASSIST_URL: window.HKSP_PB_CONFIG.FORGOT_PASSWORD_ASSIST_URL,
+        FORGOT_PASSWORD_ASSIST_LABEL: window.HKSP_PB_CONFIG.FORGOT_PASSWORD_ASSIST_LABEL,
+        CURRENT_ACTIVITY_ID: window.HKSP_PB_CONFIG.activityId
+      }
+    : window.HKSP_FIREBASE_CLIENT;
   if (!client) {
     var statusEl = document.getElementById("status");
-    if (statusEl) statusEl.textContent = "缺少 firebase-client.js";
+    if (statusEl) statusEl.textContent = usePb ? "缺少 PocketBase 設定" : "缺少 firebase-client.js";
     return;
   }
-  if (typeof firebase === "undefined") return;
 
-  var app = firebase.apps && firebase.apps.length
-    ? firebase.app()
-    : firebase.initializeApp(client.config);
-  var auth = firebase.auth();
-  var functions = firebase.app().functions("asia-east1");
-  var usingEmulator = client.connectEmulatorsIfNeeded(auth, functions, null);
+  var auth;
+  var functions = null;
+  var usingEmulator = false;
+  if (usePb) {
+    auth = window.HKSP_PB_BACKEND.getAuth();
+  } else {
+    if (typeof firebase === "undefined") return;
+    var app = firebase.apps && firebase.apps.length
+      ? firebase.app()
+      : firebase.initializeApp(client.config);
+    auth = firebase.auth();
+    functions = firebase.app().functions("asia-east1");
+    usingEmulator = client.connectEmulatorsIfNeeded
+      ? client.connectEmulatorsIfNeeded(auth, functions, null)
+      : false;
+  }
 
   var envMeta = document.getElementById("envMeta");
   if (envMeta) {
-    envMeta.textContent =
-      (usingEmulator ? "本機 Emulator 驗證環境" : "正式／本機畫面") +
-      " · 身分以伺服器確認為準";
+    envMeta.textContent = usePb
+      ? "PocketBase 後端 · 身分以伺服器確認為準"
+      : (usingEmulator ? "本機 Emulator 驗證環境" : "正式／本機畫面") +
+        " · 身分以伺服器確認為準";
   }
 
   var pendingClientRequestId = null;
@@ -311,6 +334,7 @@ function createRequireStudentAccess(deps) {
   }
 
   function callOnce(name, data) {
+    if (usePb) return window.HKSP_PB_BACKEND.call(name, data || {});
     return functions.httpsCallable(name)(data || {});
   }
 

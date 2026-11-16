@@ -1,0 +1,14 @@
+{
+  "name": "hksp-drive-proxy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "School Google Drive upload proxy for HKSP (student never holds Google token)",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

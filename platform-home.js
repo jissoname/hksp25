@@ -96,6 +96,11 @@
   });
 
   function openAccountAssist() {
+    var pb = window.HKSP_PB_CONFIG;
+    if (pb && pb.usePocketBase && typeof pb.openForgotPasswordAssist === "function") {
+      pb.openForgotPasswordAssist();
+      return;
+    }
     var client = window.HKSP_FIREBASE_CLIENT;
     if (client && typeof client.openForgotPasswordAssist === "function") {
       client.openForgotPasswordAssist();
