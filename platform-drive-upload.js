@@ -2937,7 +2937,30 @@
     if (code === "PARTICIPATION_NOT_ALLOWED") {
       return info.message || "此社團未開放此上傳項目。";
     }
+    if (code === "UPLOAD_NAME_HELD_INCOMPLETE") {
+      return info.message ||
+        "此檔名有未完成的上傳工作，無法直接取代；移出本機佇列不會刪除雲端檔或解除後端鎖。";
+    }
+    if (code === "FILE_NAME_EXISTS") {
+      return info.message ||
+        "此資料夾已有相同檔名。若應可取代，請重新整理後再試；不會自動強制取代。";
+    }
     return (code ? code + "：" : "") + info.message;
+  }
+
+  /** Keep upload button + queue remove controls in sync with busy. */
+  function setBusy(next) {
+    busy = !!next;
+    var button = $("btnDriveUpload");
+    if (button) button.disabled = busy || !uploadWriteAllowed;
+    renderQueue();
+  }
+
+  function queueItemRemovable(item) {
+    if (!item || busy || !uploadWriteAllowed) return false;
+    var state = String(item.state || "");
+    if (state === "上傳中" || state === "成功") return false;
+    return true;
   }
 
   function setUploadControlsEnabled(enabled, readOnlyReason) {
@@ -2946,11 +2969,12 @@
     var uploadBtn = $("btnDriveUpload");
     var retry = $("btnDriveRetry");
     if (input) input.disabled = !enabled;
-    if (uploadBtn) uploadBtn.disabled = !enabled;
+    if (uploadBtn) uploadBtn.disabled = busy || !enabled;
     if (retry && !enabled) retry.classList.add("hidden");
     syncEvalFolderPanel();
     syncDropzoneCopy();
     updateWorkspaceMeta();
+    renderQueue();
     var gate = $("driveUploadGate");
     if (!gate) return;
     if (!enabled && readOnlyReason) {
@@ -3002,11 +3026,20 @@
       var remove = document.createElement("button");
       remove.type = "button";
       remove.textContent = "移除";
-      remove.disabled = busy || !uploadWriteAllowed;
+      remove.disabled = !queueItemRemovable(item);
+      remove.title = remove.disabled
+        ? (busy ? "上傳進行中，暫不可移除" : "此項目目前不可移出佇列")
+        : "移出本機佇列（不會刪除雲端檔或解除後端名稱鎖）";
       remove.addEventListener("click", function () {
-        if (busy) return;
-        uploadQueue.splice(index, 1);
+        if (!queueItemRemovable(item)) return;
+        var at = uploadQueue.indexOf(item);
+        if (at < 0) return;
+        uploadQueue.splice(at, 1);
         renderQueue();
+        setStatus(
+          "已移出本機佇列。其餘項目可繼續上傳；這不會刪除雲端檔或解除後端名稱鎖。",
+          "ok"
+        );
       });
       li.appendChild(left);
       li.appendChild(remove);
@@ -3474,11 +3507,10 @@
       setStatus("這個瀏覽器無法產生上傳識別，已拒絕上傳。", "error");
       return;
     }
-    busy = true;
+    setBusy(true);
     if (uploadQueue[0] && uploadQueue[0].file === file) uploadQueue[0].state = "上傳中";
+    else if (queueItem) queueItem.state = "上傳中";
     renderQueue();
-    var button = $("btnDriveUpload");
-    if (button) button.disabled = true;
     abortController = typeof AbortController === "function" ? new AbortController() : null;
     var signal = abortController ? abortController.signal : undefined;
     setStatus(
@@ -3490,25 +3522,24 @@
     prepareAndSend(token, file, attempt, signal, true, !!confirmReplace, queueItem).then(function (done) {
       if (done && done.waitingReplaceConfirm) {
         if (pendingReplace) pendingReplace.queueItem = queueItem;
+        if (queueItem) queueItem.state = "待確認取代";
         if (uploadQueue[0] && uploadQueue[0].file === file) {
           uploadQueue[0].state = "待確認取代";
-          renderQueue();
         }
-        busy = false;
-        if ($("btnDriveUpload")) $("btnDriveUpload").disabled = !uploadWriteAllowed;
         setTransferProgress(null);
+        setBusy(false);
         return { stoppedForConfirm: true };
       }
       // null / stale responses must not count as success or leave the queue.
       // Transfer 100% alone never reaches here without a complete/alreadyComplete object.
       if (!done) {
+        if (queueItem) queueItem.state = "需核對（未確認）";
         if (uploadQueue[0] && uploadQueue[0].file === file) {
           uploadQueue[0].state = "需核對（未確認）";
-          renderQueue();
         }
         setTransferProgress(null);
         setStatus("這次上傳沒有取得伺服器確認結果，檔案仍留在佇列，請核對後再重試。", "warn");
-        return null;
+        return { needsReview: true };
       }
       var completePayload = done.data || done;
       var confirmed = !!(
@@ -3517,17 +3548,19 @@
         (completePayload && Array.isArray(completePayload.files))
       );
       if (!confirmed) {
+        if (queueItem) queueItem.state = "需核對（未確認）";
         if (uploadQueue[0] && uploadQueue[0].file === file) {
           uploadQueue[0].state = "需核對（未確認）";
-          renderQueue();
         }
         setTransferProgress(null);
         setStatus("伺服器未確認完成，未移出佇列。", "warn");
-        return null;
+        return { needsReview: true };
       }
       if (uploadQueue.length && uploadQueue[0].file === file) {
         uploadQueue.shift();
-        renderQueue();
+      } else if (queueItem) {
+        var doneAt = uploadQueue.indexOf(queueItem);
+        if (doneAt >= 0) uploadQueue.splice(doneAt, 1);
       }
       finishUpload(token, file, kind, done, queueItem);
       setTransferProgress(null);
@@ -3535,20 +3568,21 @@
     }).catch(function (error) {
       if (!sameOp(token)) return null;
       if (error && error.name === "AbortError") return null;
+      if (queueItem) queueItem.state = "失敗";
       if (uploadQueue[0] && uploadQueue[0].file === file) {
-        uploadQueue[0].state = "失敗（原檔保留）";
+        uploadQueue[0].state = "失敗";
       }
-      renderQueue();
       var info = errorInfo(error);
       setStatus("失敗：" + friendlyGateMessage(info), "error");
       setTransferProgress(null);
       var retry = $("btnDriveRetry");
       if (retry) retry.classList.remove("hidden");
-      return null;
+      // Do not auto-continue: user may remove the failed item, then start the rest.
+      return { failed: true };
     }).then(function (outcome) {
       if (!sameOp(token)) return;
-      busy = false;
-      if ($("btnDriveUpload")) $("btnDriveUpload").disabled = !uploadWriteAllowed;
+      if (outcome && outcome.stoppedForConfirm) return;
+      setBusy(false);
       if (outcome && outcome.continueQueue) runUpload(false);
     });
   }
@@ -3567,17 +3601,28 @@
   }
 
   function cancelReplaceUpload() {
+    var item = pendingReplace && pendingReplace.queueItem
+      ? pendingReplace.queueItem
+      : null;
     if (pendingReplace && pendingReplace.file) {
       clearAttempt(
         pendingReplace.file,
         pendingReplace.uploadKind || activeKind,
-        pendingReplace.queueItem && pendingReplace.queueItem.destinationFolderId != null
-          ? pendingReplace.queueItem.destinationFolderId
+        item && item.destinationFolderId != null
+          ? item.destinationFolderId
           : undefined
       );
     }
+    if (item) item.state = "已取消取代";
+    else if (uploadQueue[0] && uploadQueue[0].state === "待確認取代") {
+      uploadQueue[0].state = "已取消取代";
+    }
     hideReplaceConfirm();
-    setStatus("已取消取代，原檔保留。", "ok");
+    setBusy(false);
+    setStatus(
+      "已取消取代，原檔保留。可移出本機佇列後繼續其餘檔案；不會刪除雲端檔或解除後端鎖。",
+      "ok"
+    );
   }
 
   function bind() {
