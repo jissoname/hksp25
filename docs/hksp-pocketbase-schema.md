@@ -38,8 +38,9 @@
 
 - `pb-config.js`：`usePocketBase=true`；`useDriveProxy=false`
 - `platform-pb-backend.js`：學生 callable + 評審 API
-- `index.html`：學生端
+- `index.html`：學生端（註冊／強制改密／上傳）
 - `judge-pb.html`：評審最小頁（登入／清單／打分）
+- 註冊／改密說明：見 [hksp-student-auth.md](./hksp-student-auth.md)
 
 ## 重建指令
 

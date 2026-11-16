@@ -393,22 +393,12 @@ function createRequireStudentAccess(deps) {
     return call("getClubStudentForgotPasswordContact")
       .then(function (res) {
         var data = res.data || {};
-        if (data.source === "default" || !data.channel) {
-          box.className = "msg warn";
-          box.textContent =
-            (data.title || "聯絡學生議會") +
-            "\n" +
-            (data.message || "請聯絡學生議會協助重設密碼。") +
-            "\n\n正式聯絡方式：待設定（上線前待填，系統未編造聯絡管道）。";
-        } else {
-          box.className = "msg";
-          box.textContent =
-            (data.title || "聯絡學生議會") +
-            "\n" +
-            (data.message || "") +
-            "\n聯絡方式：" +
-            data.channel;
-        }
+        box.className = "msg";
+        box.textContent =
+          (data.title || "聯絡帳號協助窗口") +
+          "\n" +
+          (data.message || "請聯絡窗口協助重設密碼。") +
+          (data.channel ? "\n聯絡方式：" + data.channel : "");
       })
       .catch(function (error) {
         box.className = "msg warn";
@@ -759,6 +749,10 @@ function createRequireStudentAccess(deps) {
     }
     if (currentPassword === newPassword) {
       setStatus("新密碼不可與目前密碼相同。", "error");
+      return;
+    }
+    if (String(newPassword).length < 8) {
+      setStatus("新密碼至少 8 個字元。", "error");
       return;
     }
     setBusy(true);

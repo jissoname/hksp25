@@ -189,6 +189,67 @@
     });
   }
 
+  function isUniqueConflict(e) {
+    var status = e && (e.status || e.statusCode);
+    var raw = e && (e.data || e.response || {});
+    var fieldErrors = (raw && raw.data) || {};
+    if (status === 400 && (fieldErrors.email || fieldErrors.student_id)) return true;
+    var msg = String((e && e.message) || "");
+    return /not_unique|unique|Failed to create record/i.test(msg);
+  }
+
+  function ensureStudentMembership(activity, club, student, opId, studentId, permanentClubId) {
+    return pb.collection(C.memberships).getList(1, 1, {
+      filter:
+        'activity="' + activity.id + '" && club="' + club.id +
+        '" && student="' + student.id + '"'
+    }).then(function (res) {
+      if (res.totalItems > 0) {
+        var row = res.items[0];
+        if (row.status !== "active" || row.can_upload !== true) {
+          return pb.collection(C.memberships).update(row.id, {
+            status: "active",
+            can_upload: true
+          }).then(function () {
+            return ensureRootFolder(activity, club, student.id).then(function () {
+              return ok({
+                opId: opId,
+                studentId: studentId,
+                permanentClubId: permanentClubId,
+                alreadyMember: true
+              });
+            });
+          });
+        }
+        return ensureRootFolder(activity, club, student.id).then(function () {
+          return ok({
+            opId: opId,
+            studentId: studentId,
+            permanentClubId: permanentClubId,
+            alreadyMember: true
+          });
+        });
+      }
+      return pb.collection(C.memberships).create({
+        activity: activity.id,
+        club: club.id,
+        student: student.id,
+        role: "member",
+        status: "active",
+        can_upload: true,
+        bound_at: new Date().toISOString()
+      }).then(function () {
+        return ensureRootFolder(activity, club, student.id).then(function () {
+          return ok({
+            opId: opId,
+            studentId: studentId,
+            permanentClubId: permanentClubId
+          });
+        });
+      });
+    });
+  }
+
   function registerClubStudent(data) {
     var permanentClubId = String((data && data.permanentClubId) || "").trim();
     var studentId = cfg.normalizeStudentId(data && data.studentId);
@@ -203,45 +264,43 @@
       return pb.collection(C.clubs).getFirstListItem(
         'activity="' + activity.id + '" && permanent_club_id="' + permanentClubId + '" && active=true'
       ).then(function (club) {
-        return pb.collection(C.students).getList(1, 1, {
-          filter: 'student_id="' + studentId + '"'
-        }).then(function (existing) {
-          if (existing.totalItems > 0) {
-            var e = err("EXISTING_AUTH_REQUIRES_LOGIN", "此學號已有帳號。請先登入後完成本活動註冊。", {
-              code: "EXISTING_AUTH_REQUIRES_LOGIN",
-              opId: opId
-            });
-            throw e;
-          }
-          return pb.collection(C.students).create({
-            email: email,
-            emailVisibility: false,
-            password: birth,
-            passwordConfirm: birth,
-            student_id: studentId,
-            birth_ymd: birth,
-            name: studentId,
-            must_change_password: true,
-            active: true,
-            failed_login_count: 0,
-            registered_at: new Date().toISOString()
-          }).then(function (student) {
-            return pb.collection(C.students).authWithPassword(email, birth).then(function () {
-              return pb.collection(C.memberships).create({
-                activity: activity.id,
-                club: club.id,
-                student: student.id,
-                role: "member",
-                status: "active",
-                can_upload: true,
-                bound_at: new Date().toISOString()
-              }).then(function () {
-                return ensureRootFolder(activity, club, student.id).then(function () {
-                  return ok({ opId: opId, studentId: studentId, permanentClubId: permanentClubId });
-                });
-              });
-            });
+        var current = currentRecord();
+        // Already signed in as this student → only ensure activity membership.
+        if (current && cfg.normalizeStudentId(current.student_id) === studentId) {
+          return ensureStudentMembership(
+            activity, club, current, opId, studentId, permanentClubId
+          );
+        }
+
+        // Guest registration: create auth user (birthday = initial password).
+        // Guest cannot list others' student rows, so uniqueness is detected via create conflict.
+        return pb.collection(C.students).create({
+          email: email,
+          emailVisibility: false,
+          password: birth,
+          passwordConfirm: birth,
+          student_id: studentId,
+          birth_ymd: birth,
+          name: studentId,
+          must_change_password: true,
+          active: true,
+          failed_login_count: 0,
+          registered_at: new Date().toISOString()
+        }).then(function (student) {
+          return pb.collection(C.students).authWithPassword(email, birth).then(function () {
+            return ensureStudentMembership(
+              activity, club, student, opId, studentId, permanentClubId
+            );
           });
+        }).catch(function (e) {
+          if (isUniqueConflict(e)) {
+            throw err(
+              "EXISTING_AUTH_REQUIRES_LOGIN",
+              "此學號已有帳號。請先登入後完成本活動註冊。",
+              { code: "EXISTING_AUTH_REQUIRES_LOGIN", opId: opId }
+            );
+          }
+          throw err("REGISTER_FAILED", (e && e.message) || "註冊失敗，請稍後再試。");
         });
       });
     });
@@ -306,6 +365,12 @@
     if (!currentPassword || !newPassword) {
       return Promise.reject(err("INVALID_INPUT", "請輸入目前密碼與新密碼。"));
     }
+    if (String(newPassword).length < 8) {
+      return Promise.reject(err("INVALID_INPUT", "新密碼至少 8 個字元。"));
+    }
+    if (currentPassword === newPassword) {
+      return Promise.reject(err("INVALID_INPUT", "新密碼不可與目前密碼相同。"));
+    }
     var email = user.email || studentAuthEmail(user.studentId);
     return pb.collection(C.students).authWithPassword(email, currentPassword)
       .then(function () {
@@ -313,7 +378,8 @@
           oldPassword: currentPassword,
           password: newPassword,
           passwordConfirm: newPassword,
-          must_change_password: false
+          must_change_password: false,
+          failed_login_count: 0
         });
       })
       .then(function () {
@@ -321,14 +387,19 @@
         return ok({ ok: true });
       })
       .catch(function (e) {
-        throw err("PASSWORD_CHANGE_FAILED", (e && e.message) || "改密失敗。");
+        if (e && e.code === "INVALID_INPUT") throw e;
+        var msg = (e && e.message) || "改密失敗。";
+        if (/Failed to authenticate|Invalid login/i.test(msg)) {
+          throw err("PASSWORD_CHANGE_FAILED", "目前密碼不正確。");
+        }
+        throw err("PASSWORD_CHANGE_FAILED", msg);
       });
   }
 
   function getClubStudentForgotPasswordContact() {
     return Promise.resolve(ok({
-      source: "default",
-      title: "聯絡帳號協助窗口",
+      source: "assist",
+      title: cfg.FORGOT_PASSWORD_ASSIST_LABEL || "聯絡帳號協助窗口",
       message: "請透過指定窗口核對身分後，由有權限管理員協助重設密碼。",
       channel: cfg.FORGOT_PASSWORD_ASSIST_URL
     }));
