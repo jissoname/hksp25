@@ -1364,62 +1364,63 @@ body.cs-open .cs-fab{display:none}
               <ul id="driveUploadList" class="drive-list"></ul>
             </div>
           </div>
-          <div id="driveReplaceConfirm" class="drive-replace hidden" role="dialog" aria-modal="true" aria-labelledby="driveReplaceTitle">
-            <div class="drive-replace-card">
-              <p class="drive-records-head" id="driveReplaceTitle" style="margin-top:0">確認取代同名檔案</p>
-              <div id="driveReplaceDetail"></div>
-              <div class="links">
-                <button type="button" class="primary" id="btnDriveReplaceConfirm">確認取代</button>
-                <button type="button" class="drive-ws-btn" id="btnDriveReplaceCancel">取消，保留原檔</button>
-              </div>
-            </div>
-          </div>
-          <div id="driveFileActionConfirm" class="drive-replace hidden" role="dialog" aria-modal="true" aria-labelledby="driveFileActionTitle">
-            <div class="drive-replace-card">
-              <p class="drive-records-head" id="driveFileActionTitle" style="margin-top:0">確認操作</p>
-              <div id="driveFileActionDetail"></div>
-              <div class="links">
-                <button type="button" class="primary" id="btnDriveFileActionConfirm">確認</button>
-                <button type="button" class="drive-ws-btn" id="btnDriveFileActionCancel">取消</button>
-              </div>
-            </div>
-          </div>
-          <div id="driveFolderPicker" class="drive-replace hidden" role="dialog" aria-modal="true" aria-label="選擇目的資料夾">
-            <div class="drive-replace-card">
-              <p class="drive-records-head" style="margin-top:0">選擇目的資料夾</p>
-              <p id="driveFolderPickerHint" class="auth-sub" style="margin:0 0 8px"></p>
-              <nav id="driveFolderPickerCrumbs" class="drive-browser-crumbs" aria-label="目的資料夾路徑"></nav>
-              <div class="links" style="margin:0 0 8px">
-                <button type="button" class="drive-ws-btn" id="btnDriveFolderPickerUp">← 上一層</button>
-              </div>
-              <ul id="driveFolderPickerList" class="drive-list" aria-label="子資料夾"></ul>
-              <div class="links">
-                <button type="button" class="primary" id="btnDriveFolderPickerConfirm">移動／複製到這裡</button>
-                <button type="button" class="drive-ws-btn" id="btnDriveFolderPickerCancel">取消</button>
-              </div>
-            </div>
-          </div>
-          <div id="driveRenameDialog" class="drive-replace hidden" role="dialog" aria-modal="true" aria-labelledby="driveRenameTitle">
-            <div class="drive-replace-card">
-              <p class="drive-records-head" id="driveRenameTitle" style="margin-top:0">重新命名</p>
-              <label for="driveRenameInput">新名稱</label>
-              <input id="driveRenameInput" type="text" maxlength="120" autocomplete="off">
-              <div class="links">
-                <button type="button" class="primary" id="btnDriveRenameConfirm">確認重新命名</button>
-                <button type="button" class="drive-ws-btn" id="btnDriveRenameCancel">取消</button>
-              </div>
-            </div>
-          </div>
-          <div id="drivePdfPreview" class="drive-pdf-preview hidden" role="dialog" aria-labelledby="drivePdfPreviewTitle" aria-modal="true">
-            <div class="drive-pdf-preview-bar">
-              <p class="drive-records-head" id="drivePdfPreviewTitle" style="margin:0">PDF 預覽</p>
-              <button type="button" class="drive-ws-btn" id="btnDrivePdfPreviewClose">關閉</button>
-            </div>
-            <p id="drivePdfPreviewStatus" class="msg" role="status"></p>
-            <iframe id="drivePdfPreviewFrame" title="PDF 預覽" class="drive-pdf-preview-frame"></iframe>
-          </div>
         </div>
       </div>
+    </div>
+    <!-- Modals live outside driveUploadTools so fixed overlays are not trapped in display:none. -->
+    <div id="driveReplaceConfirm" class="drive-replace hidden" role="dialog" aria-modal="true" aria-labelledby="driveReplaceTitle">
+      <div class="drive-replace-card">
+        <p class="drive-records-head" id="driveReplaceTitle" style="margin-top:0">確認取代同名檔案</p>
+        <div id="driveReplaceDetail"></div>
+        <div class="links">
+          <button type="button" class="primary" id="btnDriveReplaceConfirm">確認取代</button>
+          <button type="button" class="drive-ws-btn" id="btnDriveReplaceCancel">取消，保留原檔</button>
+        </div>
+      </div>
+    </div>
+    <div id="driveFileActionConfirm" class="drive-replace hidden" role="dialog" aria-modal="true" aria-labelledby="driveFileActionTitle">
+      <div class="drive-replace-card">
+        <p class="drive-records-head" id="driveFileActionTitle" style="margin-top:0">確認操作</p>
+        <div id="driveFileActionDetail"></div>
+        <div class="links">
+          <button type="button" class="primary" id="btnDriveFileActionConfirm">確認</button>
+          <button type="button" class="drive-ws-btn" id="btnDriveFileActionCancel">取消</button>
+        </div>
+      </div>
+    </div>
+    <div id="driveFolderPicker" class="drive-replace hidden" role="dialog" aria-modal="true" aria-label="選擇目的資料夾">
+      <div class="drive-replace-card">
+        <p class="drive-records-head" style="margin-top:0">選擇目的資料夾</p>
+        <p id="driveFolderPickerHint" class="auth-sub" style="margin:0 0 8px"></p>
+        <nav id="driveFolderPickerCrumbs" class="drive-browser-crumbs" aria-label="目的資料夾路徑"></nav>
+        <div class="links" style="margin:0 0 8px">
+          <button type="button" class="drive-ws-btn" id="btnDriveFolderPickerUp">← 上一層</button>
+        </div>
+        <ul id="driveFolderPickerList" class="drive-list" aria-label="子資料夾"></ul>
+        <div class="links">
+          <button type="button" class="primary" id="btnDriveFolderPickerConfirm">移動／複製到這裡</button>
+          <button type="button" class="drive-ws-btn" id="btnDriveFolderPickerCancel">取消</button>
+        </div>
+      </div>
+    </div>
+    <div id="driveRenameDialog" class="drive-replace hidden" role="dialog" aria-modal="true" aria-labelledby="driveRenameTitle">
+      <div class="drive-replace-card">
+        <p class="drive-records-head" id="driveRenameTitle" style="margin-top:0">重新命名</p>
+        <label for="driveRenameInput">新名稱</label>
+        <input id="driveRenameInput" type="text" maxlength="120" autocomplete="off">
+        <div class="links">
+          <button type="button" class="primary" id="btnDriveRenameConfirm">確認重新命名</button>
+          <button type="button" class="drive-ws-btn" id="btnDriveRenameCancel">取消</button>
+        </div>
+      </div>
+    </div>
+    <div id="drivePdfPreview" class="drive-pdf-preview hidden" role="dialog" aria-labelledby="drivePdfPreviewTitle" aria-modal="true">
+      <div class="drive-pdf-preview-bar">
+        <p class="drive-records-head" id="drivePdfPreviewTitle" style="margin:0">PDF 預覽</p>
+        <button type="button" class="drive-ws-btn" id="btnDrivePdfPreviewClose">關閉</button>
+      </div>
+      <p id="drivePdfPreviewStatus" class="msg" role="status"></p>
+      <iframe id="drivePdfPreviewFrame" title="PDF 預覽" class="drive-pdf-preview-frame"></iframe>
     </div>
   </section>
 
