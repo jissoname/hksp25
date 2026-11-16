@@ -631,11 +631,32 @@ body.drive-ws-open .news-band{display:none}
   display:grid;grid-template-columns:minmax(232px,268px) minmax(0,1fr);gap:16px;align-items:start;
   padding:0;background:transparent;border:0
 }
-.drive-ws-panel.feature-mode{grid-template-columns:1fr}
+/*
+ * When the aside is display:none, a 2-column grid would place the only child
+ * (main) into the narrow first track. Explicit main-only / feature layouts
+ * collapse to one full-width column instead.
+ */
+.drive-ws-panel.feature-mode,
+.drive-ws-panel.is-main-only{grid-template-columns:1fr}
+.drive-ws-panel.is-eval-loading{grid-template-columns:minmax(232px,268px) minmax(0,1fr)}
 .drive-folder-nav{
   background:#fff;border:1px solid #d7e4f0;border-radius:16px;padding:14px 12px 16px;
   min-width:0;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 22px rgba(24,53,82,.06)
 }
+.drive-folder-nav.is-skeleton .drive-folder-tree{min-height:7.5rem}
+.drive-tree-skeleton{
+  display:flex;flex-direction:column;gap:10px;padding:8px 4px 4px;margin:0
+}
+.drive-tree-skeleton .drive-skel-bar{
+  height:12px;border-radius:999px;background:linear-gradient(90deg,#eef3f8 0%,#f7fbff 50%,#eef3f8 100%);
+  background-size:200% 100%;animation:driveSkel 1.2s ease-in-out infinite
+}
+.drive-tree-skeleton .drive-skel-bar.w60{width:60%}.drive-tree-skeleton .drive-skel-bar.w80{width:80%}
+.drive-tree-skeleton .drive-skel-bar.w45{width:45%}
+@keyframes driveSkel{0%{background-position:100% 0}100%{background-position:-100% 0}}
+.drive-tree-load-msg{margin:0;color:#6a7f94;font-size:.86rem;line-height:1.45;padding:2px 4px}
+.drive-tree-error-box{margin:0;padding:8px 10px;border-radius:10px;background:#fceaea;color:var(--hk-danger);font-size:.88rem;line-height:1.45}
+.drive-tree-retry{margin-top:4px;align-self:flex-start}
 .drive-folder-nav h4{margin:0;font-size:.95rem;color:#183552;font-weight:800}
 .drive-tree-toggle{
   display:none;width:100%;border:1px solid #c5d6e8;background:#f7fbff;border-radius:12px;
@@ -923,7 +944,11 @@ body.drive-ws-open .news-band{display:none}
 .drive-folder-hint{margin:6px 0 0;font-size:.82rem;color:#6a7f94}
 @media(max-width:860px){
   .drive-kind-picker{grid-template-columns:1fr}
-  .drive-ws-panel{grid-template-columns:1fr}
+  /* Beat .is-eval-loading dual-column so mobile always stacks full-width. */
+  .drive-ws-panel,
+  .drive-ws-panel.feature-mode,
+  .drive-ws-panel.is-main-only,
+  .drive-ws-panel.is-eval-loading{grid-template-columns:1fr}
   .drive-tree-toggle{display:block}
   .drive-folder-nav.is-collapsed .drive-folder-tree,
   .drive-folder-nav.is-collapsed .drive-tree-hint{display:none}
@@ -1262,6 +1287,14 @@ body.cs-open .cs-fab{display:none}
           <button type="button" class="drive-tree-toggle" id="btnDriveTreeToggle" aria-expanded="true">資料夾導覽</button>
           <h4>我的社團資料</h4>
           <p class="drive-tree-hint" style="margin:0;color:#6a7f94;font-size:.82rem;line-height:1.4">展開節點才載入下一層，不會一次掃描全部資料夾。</p>
+          <div id="driveFolderTreeSkeleton" class="drive-tree-skeleton hidden" aria-hidden="true">
+            <div class="drive-skel-bar w80"></div>
+            <div class="drive-skel-bar w60"></div>
+            <div class="drive-skel-bar w45"></div>
+            <p class="drive-tree-load-msg">正在載入資料夾導覽…</p>
+          </div>
+          <div id="driveFolderTreeError" class="drive-tree-error-box hidden" role="alert"></div>
+          <button type="button" class="drive-ws-btn drive-tree-retry hidden" id="btnDriveTreeRetry">重新載入</button>
           <ul class="drive-folder-tree" id="driveFolderTree" aria-label="資料夾樹"></ul>
         </aside>
         <div class="drive-ws-main" id="driveWsMain">

@@ -18,6 +18,9 @@
   var pendingReplace = null;
   var activeKind = "evaluation";
   var lastListData = null;
+  /** Set when listClubDriveUploads fails; cleared on success. Drives sidebar error layout. */
+  var listLoadError = null;
+  var listRefreshPending = false;
   var selectedEvalFolderId = "";
   var browseClubFolderId = "";
   var browsePathLabel = "";
@@ -329,16 +332,83 @@
       "</strong><span class=\"dest-note\">新增資料夾及上傳檔案都會存放在這裡</span>";
   }
 
+  function syncWorkspaceLayout() {
+    var wsPanel = $("driveWsPanel");
+    var aside = $("driveEvalFolderPanel");
+    var skel = $("driveFolderTreeSkeleton");
+    var errBox = $("driveFolderTreeError");
+    var retryBtn = $("btnDriveTreeRetry");
+    var tree = $("driveFolderTree");
+    var inEvalTools = activeKind === "evaluation" && workspaceView === "tools";
+    var listReady = !!lastListData;
+    var listFailed = !!listLoadError;
+    var evalEligible = !!(
+      listReady &&
+      lastListData.participation &&
+      lastListData.participation.evaluation === true
+    );
+    // Loading / failed: keep a left rail so main is not parked in the narrow first track.
+    var layoutLoading = inEvalTools && !listReady && !listFailed && !!listRefreshPending;
+    var layoutError = inEvalTools && listFailed && !evalEligible;
+    var showAside = inEvalTools && (layoutLoading || layoutError || evalEligible);
+    var mainOnly = !showAside;
+
+    if (wsPanel) {
+      wsPanel.classList.toggle("feature-mode", activeKind === "feature");
+      wsPanel.classList.toggle("is-main-only", mainOnly && activeKind !== "feature");
+      wsPanel.classList.toggle("is-eval-loading", !!layoutLoading);
+    }
+    if (!aside) return {
+      showAside: showAside,
+      layoutLoading: layoutLoading,
+      layoutError: layoutError,
+      evalEligible: evalEligible
+    };
+
+    aside.classList.toggle("hidden", !showAside);
+    aside.classList.toggle("is-skeleton", !!layoutLoading);
+    aside.classList.toggle("is-error", !!layoutError);
+    aside.classList.toggle("is-readonly", !uploadWriteAllowed);
+    aside.classList.toggle("is-collapsed", !treeMobileOpen);
+
+    if (skel) {
+      skel.classList.toggle("hidden", !layoutLoading);
+      skel.setAttribute("aria-hidden", layoutLoading ? "false" : "true");
+    }
+    if (errBox) {
+      if (layoutError) {
+        errBox.classList.remove("hidden");
+        errBox.textContent =
+          "無法載入社團資料：" +
+          (listLoadError.message || listLoadError || "請重試") +
+          "。不會顯示假空目錄。";
+      } else {
+        errBox.classList.add("hidden");
+        errBox.textContent = "";
+      }
+    }
+    if (retryBtn) {
+      retryBtn.classList.toggle("hidden", !layoutError);
+      retryBtn.disabled = !!listRefreshPending;
+    }
+    if (tree) {
+      // Hide real tree while skeleton/error so we never imply a fake empty directory.
+      tree.classList.toggle("hidden", !!(layoutLoading || layoutError));
+      if (layoutLoading || layoutError) tree.replaceChildren();
+    }
+    return {
+      showAside: showAside,
+      layoutLoading: layoutLoading,
+      layoutError: layoutError,
+      evalEligible: evalEligible
+    };
+  }
+
   function syncEvalFolderPanel() {
+    var layout = syncWorkspaceLayout();
     var panel = $("driveEvalFolderPanel");
     if (!panel) return;
-    var show = activeKind === "evaluation" &&
-      lastListData &&
-      lastListData.participation &&
-      lastListData.participation.evaluation === true;
-    panel.classList.toggle("hidden", !show);
-    panel.classList.toggle("is-readonly", !uploadWriteAllowed);
-    panel.classList.toggle("is-collapsed", !treeMobileOpen);
+    var show = !!(layout && layout.showAside && layout.evalEligible && !layout.layoutLoading && !layout.layoutError);
     if (!show) return;
     var createBtn = $("btnDriveEvalFolderCreate");
     var showCreateBtn = $("btnDriveShowCreateFolder");
@@ -2556,6 +2626,7 @@
     var tools = $("driveUploadTools");
     if (picker) picker.classList.toggle("hidden", workspaceView !== "picker");
     if (tools) tools.classList.toggle("hidden", workspaceView !== "tools");
+    syncWorkspaceLayout();
   }
 
   function syncDropzoneCopy() {
@@ -2677,8 +2748,6 @@
     renderQueue();
     var hint = $("driveUploadKindHint");
     if (hint) hint.textContent = hintForKind(activeKind);
-    var panel = $("driveWsPanel");
-    if (panel) panel.classList.toggle("feature-mode", activeKind === "feature");
     var evalBtn = $("btnDriveKindEvaluation");
     var featureBtn = $("btnDriveKindFeature");
     if (evalBtn) evalBtn.classList.toggle("active", activeKind === "evaluation");
@@ -2701,10 +2770,10 @@
     // Re-render records for this kind immediately from last snapshot (no network).
     if (lastListData) renderList(lastListData.files || []);
     else renderList([]);
-    syncEvalFolderPanel();
     syncDropzoneCopy();
     updateWorkspaceMeta();
     if (enterTools) setWorkspaceView("tools");
+    syncEvalFolderPanel();
     if (lastListData) {
       applyWindowReadOnly(lastListData.uploadWindows, lastListData.participation);
     }
@@ -2813,6 +2882,8 @@
     busy = false;
     serverCtx = null;
     lastListData = null;
+    listLoadError = null;
+    listRefreshPending = false;
     selectedEvalFolderId = "";
     browseClubFolderId = "";
     browsePathLabel = "";
@@ -3290,6 +3361,9 @@
     var prevFolders = lastListData && lastListData._evalFolders
       ? lastListData._evalFolders
       : null;
+    listRefreshPending = true;
+    listLoadError = null;
+    syncWorkspaceLayout();
     var pending = call("listClubDriveUploads", {}).then(function (result) {
       if (!sameOp(token) || mine !== listRequestSeq) return null;
       var data = result.data || {};
@@ -3301,6 +3375,7 @@
         clubName: data.clubName || ""
       };
       lastListData = data;
+      listLoadError = null;
       if (prevFolders && evalFoldersCacheValid(prevFolders, String(prevFolders._cacheParent || ""))) {
         lastListData._evalFolders = prevFolders;
         evalFoldersByParent[String(prevFolders._cacheParent || "")] = prevFolders;
@@ -3310,6 +3385,7 @@
       showParticipation(data.participation);
       renderList(data.files || []);
       applyWindowReadOnly(data.uploadWindows, data.participation);
+      syncEvalFolderPanel();
       if (activeKind === "evaluation" && workspaceView === "tools") {
         refreshEvalFolders(token, false);
       }
@@ -3317,10 +3393,19 @@
     }).catch(function (error) {
       if (!sameOp(token) || mine !== listRequestSeq) return null;
       var info = errorInfo(error);
+      listLoadError = {
+        code: info.code || "",
+        message: friendlyGateMessage(info)
+      };
       setStatus(friendlyGateMessage(info), "error");
+      syncWorkspaceLayout();
       // Auth / permission failures: no automatic resend.
       return null;
     }).finally(function () {
+      if (mine === listRequestSeq) {
+        listRefreshPending = false;
+        syncWorkspaceLayout();
+      }
       if (listRefreshInflight && listRefreshInflight.promise === pending) {
         listRefreshInflight = null;
       }
@@ -3650,6 +3735,7 @@
     var pickFolderUpload = $("btnDrivePickFolderUpload");
     var folderUploadInput = $("driveFolderUpload");
     var treeToggle = $("btnDriveTreeToggle");
+    var treeRetry = $("btnDriveTreeRetry");
     var searchInput = $("driveBrowserSearch");
     var searchScope = $("driveBrowserSearchScope");
     var sortSelect = $("driveBrowserSort");
@@ -3805,6 +3891,13 @@
       treeToggle.addEventListener("click", function () {
         treeMobileOpen = !treeMobileOpen;
         syncEvalFolderPanel();
+      });
+    }
+    if (treeRetry && !treeRetry.dataset.bound) {
+      treeRetry.dataset.bound = "1";
+      treeRetry.addEventListener("click", function () {
+        if (!boundUid) return;
+        refresh({ gen: generation, op: operationSeq, uid: boundUid });
       });
     }
     if (searchInput && !searchInput.dataset.bound) {
