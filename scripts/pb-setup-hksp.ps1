@@ -221,7 +221,7 @@ $memberships = Ensure-Collection @{
   type = 'base'
   listRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && student = @request.auth.id)'
   viewRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && student = @request.auth.id)'
-  createRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true'
+  createRule = '@request.auth.collectionName = "hksp_students" && student = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true)'
   updateRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true'
   deleteRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true'
   fields = @(
