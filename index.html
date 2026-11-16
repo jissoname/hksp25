@@ -591,8 +591,6 @@ body.cs-open{overflow-x:hidden;overflow-y:auto}
 .drive-kind-row button.active{background:var(--hk-accent,#2f6ea3);border-color:var(--hk-accent,#2f6ea3);color:#fff}
 .drive-list{margin:10px 0 0;padding:0;list-style:none;color:var(--hk-muted);font-size:.9rem;line-height:1.55}
 .drive-list li{padding:10px 12px;border:1px solid #e6edf5;border-radius:12px;background:#fff;margin:0 0 8px}
-.drive-replace{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff7e8;border:1px solid rgba(138,90,0,.2)}
-.drive-replace .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
 /* Full upload workspace (post-login) — mockup-aligned evaluation browser */
 .drive-workspace{
   display:none;width:min(1180px,calc(100% - 28px));margin:14px auto 32px;padding:0 0 12px
@@ -673,7 +671,8 @@ body.drive-ws-open .news-band{display:none}
 .drive-tree-status{color:#6a7f94;font-size:.82rem;padding:4px 8px 4px 28px}
 .drive-ws-main{
   background:#fff;border:1px solid #d7e4f0;border-radius:16px;padding:16px 18px 18px;
-  min-width:0;box-shadow:0 8px 22px rgba(24,53,82,.06)
+  min-width:0;min-height:min(72vh,860px);box-shadow:0 8px 22px rgba(24,53,82,.06);
+  display:flex;flex-direction:column
 }
 .drive-main-head{
   display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 12px
@@ -731,7 +730,11 @@ body.drive-ws-open .news-band{display:none}
 .drive-browser-loading{background:#f4f7fa;color:var(--hk-muted)}
 .drive-browser-empty{background:#f8fafc;color:var(--hk-muted);border:1px dashed #d5e0ec}
 .drive-browser-error{background:#fceaea;color:var(--hk-danger);border:1px solid rgba(176,0,32,.15)}
-.drive-browser-table-wrap{overflow-x:auto;margin:0 0 8px;border:1px solid #e3ebf3;border-radius:12px}
+.drive-browser-drop-surface{position:relative;flex:1 1 auto;min-height:min(52vh,640px);display:flex;flex-direction:column}
+.drive-browser-table-wrap{
+  overflow:auto;margin:0 0 8px;border:1px solid #e3ebf3;border-radius:12px;
+  flex:1 1 auto;min-height:min(48vh,580px);max-height:none;-webkit-overflow-scrolling:touch
+}
 .drive-browser-table{
   width:100%;border-collapse:collapse;min-width:520px;background:#fff
 }
@@ -763,18 +766,17 @@ body.drive-ws-open .news-band{display:none}
   display:flex;flex-wrap:wrap;gap:8px;align-items:center
 }
 .drive-create-box input[type="text"]{flex:1 1 180px;margin:0}
-.drive-upload-foot{
-  display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);gap:12px;align-items:stretch
-}
+.drive-upload-foot{margin:8px 0 0}
 .drive-dropzone{
-  border:2px dashed #9db4cc;border-radius:14px;background:#f8fbfe;padding:22px 16px;text-align:center;
-  color:var(--hk-muted);cursor:pointer;transition:border-color .15s ease,background .15s ease;min-height:110px;
-  display:flex;flex-direction:column;justify-content:center
+  position:absolute;inset:0;z-index:6;border:2px dashed var(--hk-accent);border-radius:14px;
+  background:rgba(238,246,252,.92);padding:22px 16px;text-align:center;color:var(--hk-navy);
+  display:flex;flex-direction:column;justify-content:center;align-items:center;pointer-events:none
 }
-.drive-dropzone.dragover{border-color:var(--hk-accent);background:#eef6fc;color:var(--hk-navy)}
-.drive-dropzone.disabled{opacity:.55;cursor:not-allowed}
-.drive-dropzone .dz-title{font-size:1rem;font-weight:800;color:var(--hk-navy);margin:0 0 6px;word-break:break-word}
-.drive-dropzone .dz-sub{margin:0;font-size:.88rem;line-height:1.45}
+.drive-dropzone.hidden{display:none!important}
+.drive-dropzone.dragover{border-color:var(--hk-accent);background:rgba(238,246,252,.96)}
+.drive-dropzone.disabled{opacity:.7}
+.drive-dropzone .dz-title{font-size:1.05rem;font-weight:800;color:var(--hk-navy);margin:0 0 6px;word-break:break-word;max-width:36rem}
+.drive-dropzone .dz-sub{margin:0;font-size:.88rem;line-height:1.45;color:#5b6f84;max-width:36rem;word-break:break-word}
 .drive-success-toast{
   border-radius:14px;background:#e8f6ec;border:1px solid rgba(30,120,60,.18);padding:14px 14px 12px;
   color:#146c38;position:relative;min-height:110px;box-sizing:border-box
@@ -842,29 +844,25 @@ body.drive-ws-open .news-band{display:none}
 .drive-list li .rec-name{display:block;font-weight:700;color:var(--hk-navy);margin:0 0 4px;word-break:break-word}
 .drive-list li .rec-meta{display:block;font-size:.85rem;color:var(--hk-muted);line-height:1.5}
 .drive-ws-gate{margin:0 0 12px}
-.drive-replace{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff7e8;border:1px solid rgba(138,90,0,.2)}
-.drive-replace .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.drive-replace{
+  position:fixed;inset:0;z-index:95;margin:0;padding:16px;border:0;border-radius:0;
+  background:rgba(16,28,40,.48);display:flex;align-items:center;justify-content:center;
+  box-sizing:border-box
+}
+.drive-replace.hidden{display:none!important}
+.drive-replace-card{
+  width:min(520px,100%);max-height:min(90vh,680px);overflow:auto;overscroll-behavior:contain;
+  background:#fff;border-radius:16px;padding:18px 16px 16px;border:1px solid #d7e4f0;
+  box-shadow:0 18px 40px rgba(20,35,55,.28);color:#183552
+}
+.drive-replace .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
 .drive-tree-row.is-drop-target,
 .drive-browser-table tr.is-drop-target{
   outline:2px solid #2f6ea3;outline-offset:-2px;background:#e8f2fb
 }
 .drive-file-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.drive-file-menu{position:relative;display:inline-block}
-.drive-file-menu summary{
-  list-style:none;cursor:pointer;color:#2f6ea3;font-weight:700;user-select:none
-}
-.drive-file-menu summary::-webkit-details-marker{display:none}
-.drive-file-menu-panel{
-  position:absolute;right:0;top:120%;z-index:5;min-width:9rem;
-  background:#fff;border:1px solid #d7e4f0;border-radius:10px;
-  box-shadow:0 8px 20px rgba(24,53,82,.12);padding:6px;display:flex;flex-direction:column;gap:2px
-}
-.drive-file-menu-panel button{
-  border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:8px;
-  font:inherit;font-weight:600;color:#183552;cursor:pointer
-}
-.drive-file-menu-panel button:hover{background:#f3f8fc}
-.drive-file-menu-panel button.danger{color:#b00020}
+.drive-file-menu{display:inline-block}
+.drive-file-menu-panel{display:none}
 .drive-folder-picker-item{
   width:100%;border:0;background:#fff;text-align:left;padding:10px 12px;cursor:pointer;font:inherit
 }
@@ -911,8 +909,9 @@ body.drive-ws-open .news-band{display:none}
   flex:1 1 auto;width:100%;border:0;background:#fff;border-radius:0 0 12px 12px;min-height:60vh
 }
 .drive-context-menu{
-  position:fixed;z-index:90;min-width:10rem;background:#fff;border:1px solid #d7e4f0;
-  border-radius:10px;box-shadow:0 8px 20px rgba(24,53,82,.14);padding:6px;display:flex;flex-direction:column;gap:2px
+  position:fixed;z-index:100;min-width:10.5rem;max-height:min(70vh,420px);overflow:auto;
+  background:#fff;border:1px solid #d7e4f0;border-radius:10px;
+  box-shadow:0 8px 20px rgba(24,53,82,.14);padding:6px;display:flex;flex-direction:column;gap:2px
 }
 .drive-context-menu button{
   border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:8px;
@@ -1265,7 +1264,7 @@ body.cs-open .cs-fab{display:none}
           <p class="drive-tree-hint" style="margin:0;color:#6a7f94;font-size:.82rem;line-height:1.4">展開節點才載入下一層，不會一次掃描全部資料夾。</p>
           <ul class="drive-folder-tree" id="driveFolderTree" aria-label="資料夾樹"></ul>
         </aside>
-        <div class="drive-ws-main">
+        <div class="drive-ws-main" id="driveWsMain">
           <div class="drive-main-head">
             <div style="min-width:0;flex:1 1 220px">
               <nav id="driveBrowserCrumbs" class="drive-browser-crumbs" aria-label="目前路徑"></nav>
@@ -1278,6 +1277,7 @@ body.cs-open .cs-fab{display:none}
               <button type="button" class="drive-btn-outline" id="btnDriveShowCreateFolder">＋ 新增資料夾</button>
               <button type="button" class="drive-btn-solid" id="btnDrivePickUpload">↑ 上傳檔案</button>
               <button type="button" class="drive-btn-outline" id="btnDrivePickFolderUpload">↑ 上傳資料夾</button>
+              <input id="driveFile" type="file" accept=".pdf,application/pdf" multiple hidden>
               <input id="driveFolderUpload" type="file" multiple webkitdirectory directory hidden aria-hidden="true">
             </div>
           </div>
@@ -1319,30 +1319,31 @@ body.cs-open .cs-fab{display:none}
             <button type="button" class="drive-ws-btn" id="btnDriveCancelCreateFolder">取消</button>
           </div>
           <div id="driveBrowserState" class="drive-browser-state drive-browser-loading hidden" role="status"></div>
-          <div class="drive-browser-table-wrap" id="driveBrowserTableWrap">
-            <table class="drive-browser-table" aria-label="資料夾與檔案">
-              <thead>
-                <tr>
-                  <th scope="col" class="drive-col-check">
-                    <input type="checkbox" id="driveSelectAll" aria-label="全選目前列表">
-                  </th>
-                  <th scope="col"><button type="button" class="drive-th-sort" data-sort="name" id="driveSortByName">名稱</button></th>
-                  <th scope="col"><button type="button" class="drive-th-sort" data-sort="size" id="driveSortBySize">大小</button></th>
-                  <th scope="col"><button type="button" class="drive-th-sort" data-sort="modified" id="driveSortByModified">更新時間</button></th>
-                  <th scope="col">操作</th>
-                </tr>
-              </thead>
-              <tbody id="driveEvalFolderList"></tbody>
-            </table>
+          <div class="drive-browser-drop-surface" id="driveBrowserDropSurface">
+            <div id="driveDropzone" class="drive-dropzone hidden" aria-hidden="true">
+              <p class="dz-title" id="driveDropzoneTitle">放開以上傳</p>
+              <p class="dz-sub" id="driveDropzoneSub">單檔上限 100 MiB</p>
+            </div>
+            <div class="drive-browser-table-wrap" id="driveBrowserTableWrap">
+              <table class="drive-browser-table" aria-label="資料夾與檔案">
+                <thead>
+                  <tr>
+                    <th scope="col" class="drive-col-check">
+                      <input type="checkbox" id="driveSelectAll" aria-label="全選目前列表">
+                    </th>
+                    <th scope="col"><button type="button" class="drive-th-sort" data-sort="name" id="driveSortByName">名稱</button></th>
+                    <th scope="col"><button type="button" class="drive-th-sort" data-sort="size" id="driveSortBySize">大小</button></th>
+                    <th scope="col"><button type="button" class="drive-th-sort" data-sort="modified" id="driveSortByModified">更新時間</button></th>
+                    <th scope="col">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="driveEvalFolderList"></tbody>
+              </table>
+            </div>
           </div>
           <p class="drive-browser-count" id="driveBrowserCount"></p>
           <div id="driveEvalFolderStatus" class="msg" role="status"></div>
           <div class="drive-upload-foot">
-            <div id="driveDropzone" class="drive-dropzone" tabindex="0" role="button" aria-label="拖曳或點選上傳檔案">
-              <p class="dz-title" id="driveDropzoneTitle">將 PDF 拖曳到這裡</p>
-              <p class="dz-sub" id="driveDropzoneSub">單檔上限 100 MiB</p>
-              <input id="driveFile" type="file" accept=".pdf,application/pdf" multiple hidden>
-            </div>
             <div id="driveSuccessToast" class="drive-success-toast hidden" role="status">
               <button type="button" class="toast-close" id="btnDriveToastClose" aria-label="關閉">×</button>
               <p class="toast-title" id="driveToastTitle">上傳完成</p>
@@ -1358,14 +1359,23 @@ body.cs-open .cs-fab{display:none}
               <button class="primary" id="btnDriveUpload" type="button">開始上傳</button>
               <button type="button" class="drive-ws-btn hidden" id="btnDriveRetry">重試這次上傳</button>
             </div>
-            <div id="driveReplaceConfirm" class="drive-replace hidden">
+            <div id="driveRecordsSection" class="hidden">
+              <h4 class="drive-records-head" id="driveRecordsHead">已繳交紀錄</h4>
+              <ul id="driveUploadList" class="drive-list"></ul>
+            </div>
+          </div>
+          <div id="driveReplaceConfirm" class="drive-replace hidden" role="dialog" aria-modal="true" aria-labelledby="driveReplaceTitle">
+            <div class="drive-replace-card">
+              <p class="drive-records-head" id="driveReplaceTitle" style="margin-top:0">確認取代同名檔案</p>
               <div id="driveReplaceDetail"></div>
               <div class="links">
                 <button type="button" class="primary" id="btnDriveReplaceConfirm">確認取代</button>
                 <button type="button" class="drive-ws-btn" id="btnDriveReplaceCancel">取消，保留原檔</button>
               </div>
             </div>
-            <div id="driveFileActionConfirm" class="drive-replace hidden" role="dialog" aria-labelledby="driveFileActionTitle">
+          </div>
+          <div id="driveFileActionConfirm" class="drive-replace hidden" role="dialog" aria-modal="true" aria-labelledby="driveFileActionTitle">
+            <div class="drive-replace-card">
               <p class="drive-records-head" id="driveFileActionTitle" style="margin-top:0">確認操作</p>
               <div id="driveFileActionDetail"></div>
               <div class="links">
@@ -1373,7 +1383,9 @@ body.cs-open .cs-fab{display:none}
                 <button type="button" class="drive-ws-btn" id="btnDriveFileActionCancel">取消</button>
               </div>
             </div>
-            <div id="driveFolderPicker" class="drive-replace hidden" role="dialog" aria-label="選擇目的資料夾">
+          </div>
+          <div id="driveFolderPicker" class="drive-replace hidden" role="dialog" aria-modal="true" aria-label="選擇目的資料夾">
+            <div class="drive-replace-card">
               <p class="drive-records-head" style="margin-top:0">選擇目的資料夾</p>
               <p id="driveFolderPickerHint" class="auth-sub" style="margin:0 0 8px"></p>
               <nav id="driveFolderPickerCrumbs" class="drive-browser-crumbs" aria-label="目的資料夾路徑"></nav>
@@ -1386,7 +1398,9 @@ body.cs-open .cs-fab{display:none}
                 <button type="button" class="drive-ws-btn" id="btnDriveFolderPickerCancel">取消</button>
               </div>
             </div>
-            <div id="driveRenameDialog" class="drive-replace hidden" role="dialog" aria-labelledby="driveRenameTitle">
+          </div>
+          <div id="driveRenameDialog" class="drive-replace hidden" role="dialog" aria-modal="true" aria-labelledby="driveRenameTitle">
+            <div class="drive-replace-card">
               <p class="drive-records-head" id="driveRenameTitle" style="margin-top:0">重新命名</p>
               <label for="driveRenameInput">新名稱</label>
               <input id="driveRenameInput" type="text" maxlength="120" autocomplete="off">
@@ -1395,18 +1409,14 @@ body.cs-open .cs-fab{display:none}
                 <button type="button" class="drive-ws-btn" id="btnDriveRenameCancel">取消</button>
               </div>
             </div>
-            <div id="drivePdfPreview" class="drive-pdf-preview hidden" role="dialog" aria-labelledby="drivePdfPreviewTitle" aria-modal="true">
-              <div class="drive-pdf-preview-bar">
-                <p class="drive-records-head" id="drivePdfPreviewTitle" style="margin:0">PDF 預覽</p>
-                <button type="button" class="drive-ws-btn" id="btnDrivePdfPreviewClose">關閉</button>
-              </div>
-              <p id="drivePdfPreviewStatus" class="msg" role="status"></p>
-              <iframe id="drivePdfPreviewFrame" title="PDF 預覽" class="drive-pdf-preview-frame"></iframe>
+          </div>
+          <div id="drivePdfPreview" class="drive-pdf-preview hidden" role="dialog" aria-labelledby="drivePdfPreviewTitle" aria-modal="true">
+            <div class="drive-pdf-preview-bar">
+              <p class="drive-records-head" id="drivePdfPreviewTitle" style="margin:0">PDF 預覽</p>
+              <button type="button" class="drive-ws-btn" id="btnDrivePdfPreviewClose">關閉</button>
             </div>
-            <div id="driveRecordsSection" class="hidden">
-              <h4 class="drive-records-head" id="driveRecordsHead">已繳交紀錄</h4>
-              <ul id="driveUploadList" class="drive-list"></ul>
-            </div>
+            <p id="drivePdfPreviewStatus" class="msg" role="status"></p>
+            <iframe id="drivePdfPreviewFrame" title="PDF 預覽" class="drive-pdf-preview-frame"></iframe>
           </div>
         </div>
       </div>

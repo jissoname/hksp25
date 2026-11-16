@@ -642,8 +642,16 @@
       hideContextMenu();
     });
     document.body.appendChild(menu);
-    var left = Math.max(8, Math.min(Number(x) || 0, window.innerWidth - 180));
-    var top = Math.max(8, Math.min(Number(y) || 0, window.innerHeight - 220));
+    var mw = menu.offsetWidth || 168;
+    var mh = menu.offsetHeight || 240;
+    var left = Math.max(8, Math.min(Number(x) || 0, window.innerWidth - mw - 8));
+    var top = Number(y) || 0;
+    if (top + mh > window.innerHeight - 8) {
+      top = Math.max(8, (Number(y) || 0) - mh);
+    }
+    if (top + mh > window.innerHeight - 8) {
+      top = Math.max(8, window.innerHeight - mh - 8);
+    }
     menu.style.left = left + "px";
     menu.style.top = top + "px";
     contextMenuEl = menu;
@@ -1318,9 +1326,9 @@
     if (action.kind === "trash") {
       addLine("所在路徑：" + (action.fromPath || browsePathLabel || "社團評選資料夾"));
       if (itemKind === "folder") {
-        addLine("注意：此資料夾及其子層內容可能一併移入垃圾桶；其下已完成登錄的繳交可能被標為 superseded。");
+        addLine("注意：此資料夾及其子層內容可能一併移入垃圾桶；其下已完成登錄的繳交之後可能不再算有效繳交。");
       } else {
-        addLine("將移入校內垃圾桶索引；取消則保留原檔。");
+        addLine("將移入垃圾桶；取消則保留原檔。");
       }
     } else if (action.kind === "restore") {
       addLine("還原後會嘗試放回原路徑或最近可用祖先。");
@@ -1597,21 +1605,22 @@
   }
 
   function buildItemActionMenu(item) {
-    var details = document.createElement("details");
-    details.className = "drive-file-menu";
-    var summary = document.createElement("summary");
-    summary.textContent = "操作";
-    details.appendChild(summary);
-    var panel = document.createElement("div");
-    panel.className = "drive-file-menu-panel";
-    fillItemActionButtons(panel, item, function () {
-      details.open = false;
-    });
-    details.appendChild(panel);
-    details.addEventListener("click", function (event) {
+    var wrap = document.createElement("div");
+    wrap.className = "drive-file-menu";
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "drive-table-action";
+    btn.setAttribute("aria-haspopup", "menu");
+    btn.textContent = "操作";
+    btn.addEventListener("click", function (event) {
+      event.preventDefault();
       event.stopPropagation();
+      var rect = btn.getBoundingClientRect();
+      // Open as a body-level popover so table overflow cannot clip options.
+      showContextMenuAt(rect.right - 160, rect.bottom + 4, item);
     });
-    return details;
+    wrap.appendChild(btn);
+    return wrap;
   }
 
   /** @deprecated use buildItemActionMenu */
@@ -2071,11 +2080,38 @@
       setStatus("系統尚未開放上傳", "warn");
       return;
     }
-    var files = Array.prototype.slice.call(fileList || []).filter(function (file) {
-      return file && /\.pdf$/i.test(String(file.name || ""));
+    if (!serverCtx || !serverCtx.activityId || !serverCtx.permanentClubId) {
+      setEvalFolderStatus("尚未取得伺服器確認的活動與社團，無法整夾上傳。", "warn");
+      return;
+    }
+    var MAX_BYTES = 100 * 1024 * 1024;
+    var destRootId = String(selectedEvalFolderId || "");
+    var destRootLabel = browsePathLabel || "社團評選資料夾";
+    var frozenUid = boundUid;
+    var frozenGen = generation;
+    var allEntries = Array.prototype.slice.call(fileList || []);
+    var rejected = [];
+    var files = [];
+    allEntries.forEach(function (file) {
+      if (!file) return;
+      var name = String(file.name || "");
+      if (!/\.pdf$/i.test(name)) {
+        rejected.push(name + "（僅支援 PDF）");
+        return;
+      }
+      if (file.size > MAX_BYTES) {
+        rejected.push(name + "（超過 100 MiB）");
+        return;
+      }
+      files.push(file);
     });
     if (!files.length) {
-      setEvalFolderStatus("此資料夾沒有可上傳的 PDF。", "warn");
+      setEvalFolderStatus(
+        rejected.length
+          ? "沒有可上傳的 PDF。" + (rejected.length ? " 略過：" + rejected.slice(0, 5).join("、") : "")
+          : "此資料夾沒有可上傳的檔案。",
+        "warn"
+      );
       return;
     }
     var byRel = files.map(function (file) {
@@ -2086,49 +2122,77 @@
     });
     var uniqueDirs = Object.create(null);
     byRel.forEach(function (row) {
-      var pathKey = row.dirs.join("/");
-      if (pathKey) uniqueDirs[pathKey] = row.dirs.slice();
+      // Fill every ancestor path so parents exist before leaf folders.
+      for (var i = 1; i <= row.dirs.length; i += 1) {
+        var pathKey = row.dirs.slice(0, i).join("/");
+        if (pathKey) uniqueDirs[pathKey] = row.dirs.slice(0, i);
+      }
     });
     var dirKeys = Object.keys(uniqueDirs).sort(function (a, b) {
       return a.split("/").length - b.split("/").length || a.localeCompare(b);
     });
     var folderIdByPath = Object.create(null);
-    folderIdByPath[""] = String(selectedEvalFolderId || "");
-    setEvalFolderStatus("正在預檢並建立資料夾結構（" + dirKeys.length + " 層路徑）…", "warn");
+    folderIdByPath[""] = destRootId;
+    setEvalFolderStatus("正在預檢並建立資料夾結構（" + dirKeys.length + " 條路徑）…", "warn");
     var chain = Promise.resolve();
     dirKeys.forEach(function (pathKey) {
       chain = chain.then(function () {
+        if (frozenGen !== generation || frozenUid !== boundUid) {
+          throw new Error("登入或工作階段已變更，已中止整夾上傳預檢。");
+        }
         var parts = uniqueDirs[pathKey];
         var parentKey = parts.slice(0, -1).join("/");
+        if (!Object.prototype.hasOwnProperty.call(folderIdByPath, parentKey)) {
+          throw new Error("找不到上層資料夾「" + (parentKey || destRootLabel) + "」，已中止以免放到錯誤位置。");
+        }
         var parentId = folderIdByPath[parentKey];
-        if (parentId == null) parentId = String(selectedEvalFolderId || "");
+        if (parentId == null || parentId === "") {
+          throw new Error("上層資料夾識別不明，已中止以免默默放到根目錄。");
+        }
         var name = parts[parts.length - 1];
-        var body = { name: name };
-        if (parentId) body.parentFolderId = parentId;
-        return call("createClubEvaluationFolder", body).then(function (result) {
+        return call("createClubEvaluationFolder", {
+          name: name,
+          parentFolderId: parentId
+        }).then(function (result) {
           var data = (result && result.data) || {};
-          folderIdByPath[pathKey] = String(data.folderId || "");
+          var createdId = String(data.folderId || "");
+          if (!createdId) {
+            throw new Error("建立「" + name + "」後未取得資料夾識別。");
+          }
+          folderIdByPath[pathKey] = createdId;
           return data;
         });
       });
     });
     return chain.then(function () {
+      if (frozenGen !== generation || frozenUid !== boundUid) {
+        throw new Error("登入或工作階段已變更，已中止整夾上傳。");
+      }
       byRel.forEach(function (row) {
         var pathKey = row.dirs.join("/");
+        if (!Object.prototype.hasOwnProperty.call(folderIdByPath, pathKey)) {
+          throw new Error("目的資料夾「" + pathKey + "」尚未建立完成。");
+        }
         var destId = folderIdByPath[pathKey];
-        if (destId == null) destId = String(selectedEvalFolderId || "");
+        if (!destId) {
+          throw new Error("目的資料夾識別不明，未排入「" + row.fileName + "」。");
+        }
         uploadQueue.push({
           file: row.file,
-          destinationFolderId: String(destId || ""),
-          destinationLabel: (browsePathLabel || "社團評選資料夾") +
+          state: "等待上傳",
+          destinationFolderId: String(destId),
+          destinationLabel: destRootLabel +
             (pathKey ? " / " + pathKey.replace(/\//g, " / ") : "")
         });
       });
       renderQueue();
       clearEvalFoldersCache();
+      var rejectNote = rejected.length
+        ? "；另有 " + rejected.length + " 項未支援：" + rejected.slice(0, 5).join("、")
+        : "";
       setEvalFolderStatus(
-        "已排入 " + byRel.length + " 個 PDF（整夾上傳）。請按「開始上傳」。",
-        "ok"
+        "已排入 " + byRel.length + " 個 PDF（整夾上傳，目的地已固定）。請按「開始上傳」。" + rejectNote,
+        rejected.length ? "warn" : "ok"
       );
       return refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, true);
     }).catch(function (error) {
@@ -2503,13 +2567,14 @@
       input.multiple = activeKind === "evaluation";
     }
     var folderName = currentFolderTitle(lastBrowseSnapshot) || "目前資料夾";
+    var pathLabel = browsePathLabel || folderName;
     if (title) {
       if (!uploadWriteAllowed) {
-        title.textContent = "目前為唯讀（不可選檔上傳）";
+        title.textContent = "目前為唯讀（不可上傳）";
       } else if (activeKind === "evaluation") {
-        title.textContent = "將 PDF 拖曳到這裡，存入「" + folderName + "」";
+        title.textContent = "放開以上傳至「" + pathLabel + "」";
       } else {
-        title.textContent = "拖曳檔案到此，或點選選擇";
+        title.textContent = "放開以上傳特色資料";
       }
     }
     if (sub) {
@@ -2519,6 +2584,53 @@
     }
     var zone = $("driveDropzone");
     if (zone) zone.classList.toggle("disabled", !uploadWriteAllowed);
+  }
+
+  function isExternalFileDrag(event) {
+    if (dragFilePayload) return false;
+    var dt = event && event.dataTransfer;
+    if (!dt) return false;
+    try {
+      if (dt.types && typeof dt.types.contains === "function" &&
+        dt.types.contains("application/x-hksp-drive-file")) {
+        return false;
+      }
+      if (dt.types && typeof dt.types.indexOf === "function" &&
+        dt.types.indexOf("application/x-hksp-drive-file") >= 0) {
+        return false;
+      }
+      if (dt.types && typeof dt.types.includes === "function" &&
+        dt.types.includes("application/x-hksp-drive-file")) {
+        return false;
+      }
+    } catch (_error) { /* ignore */ }
+    try {
+      if (dt.files && dt.files.length) return true;
+      if (dt.types) {
+        if (typeof dt.types.contains === "function") return dt.types.contains("Files");
+        if (typeof dt.types.indexOf === "function") return dt.types.indexOf("Files") >= 0;
+        if (typeof dt.types.includes === "function") return dt.types.includes("Files");
+        for (var i = 0; i < dt.types.length; i += 1) {
+          if (String(dt.types[i]) === "Files") return true;
+        }
+      }
+    } catch (_error2) { /* ignore */ }
+    return false;
+  }
+
+  function setExternalDropHighlight(on) {
+    var zone = $("driveDropzone");
+    if (!zone) return;
+    if (on && uploadWriteAllowed) {
+      syncDropzoneCopy();
+      zone.classList.remove("hidden");
+      zone.classList.add("dragover");
+      zone.setAttribute("aria-hidden", "false");
+    } else {
+      zone.classList.add("hidden");
+      zone.classList.remove("dragover");
+      zone.setAttribute("aria-hidden", "true");
+    }
   }
 
   function showCreateFolderBox(show) {
@@ -2646,12 +2758,13 @@
     if (box) box.classList.add("hidden");
   }
 
-  function showReplaceConfirm(payload, file, attempt) {
+  function showReplaceConfirm(payload, file, attempt, queueItem) {
     pendingReplace = {
       payload: payload,
       file: file,
       attempt: attempt,
-      uploadKind: activeKind
+      uploadKind: activeKind,
+      queueItem: queueItem || null
     };
     var box = $("driveReplaceConfirm");
     var detail = $("driveReplaceDetail");
@@ -2660,7 +2773,10 @@
       detail.textContent =
         "原檔：" + (existing.fileName || "（未知）") +
         (existing.size != null ? "（" + existing.size + " bytes）" : "") +
-        "。確認後才會以新檔取代；取消則保留舊檔。";
+        "。確認後才會以新檔取代；取消則保留舊檔。" +
+        (queueItem && queueItem.destinationLabel
+          ? " 目的地：" + queueItem.destinationLabel + "。"
+          : "");
     }
     if (box) box.classList.remove("hidden");
     setStatus((payload && payload.message) || "請確認是否取代原檔。", "warn");
@@ -2903,12 +3019,38 @@
       setStatus("系統尚未開放上傳", "warn");
       return;
     }
-    var files = Array.prototype.slice.call(fileList || []);
-    if (!files.length) return;
+    var raw = Array.prototype.slice.call(fileList || []);
+    if (!raw.length) return;
     var destId = activeKind === "evaluation" ? String(selectedEvalFolderId || "") : "";
     var destLabel = activeKind === "evaluation"
       ? (browsePathLabel || "社團評選資料夾")
       : "特色共用資料夾";
+    var MAX_BYTES = 100 * 1024 * 1024;
+    var rejected = [];
+    var files = [];
+    raw.forEach(function (file) {
+      if (!file) return;
+      if (activeKind === "evaluation") {
+        if (!/\.pdf$/i.test(String(file.name || ""))) {
+          rejected.push((file.name || "（未命名）") + "（僅支援 PDF）");
+          return;
+        }
+        if (file.size > MAX_BYTES) {
+          rejected.push((file.name || "（未命名）") + "（超過 100 MiB）");
+          return;
+        }
+      }
+      files.push(file);
+    });
+    if (!files.length) {
+      setStatus(
+        rejected.length
+          ? "沒有可上傳的檔案。略過：" + rejected.slice(0, 5).join("、")
+          : "沒有可上傳的檔案。",
+        "warn"
+      );
+      return;
+    }
     syncUploadDestBanner();
     if (activeKind === "feature") {
       uploadQueue = [{
@@ -2919,7 +3061,6 @@
       }];
     } else {
       files.forEach(function (file) {
-        if (!file) return;
         uploadQueue.push({
           file: file,
           state: "等待上傳",
@@ -2929,11 +3070,14 @@
       });
     }
     renderQueue();
+    var rejectNote = rejected.length
+      ? "；略過 " + rejected.length + " 項：" + rejected.slice(0, 5).join("、")
+      : "";
     setStatus(
       activeKind === "feature"
-        ? "已選取 1 個檔案，目的地：" + destLabel + "。按「開始上傳」送出。"
-        : "已加入 " + files.length + " 個檔案至佇列（目的地已固定為：" + destLabel + "）。",
-      "ok"
+        ? "已選取 1 個檔案，目的地：" + destLabel + "。按「開始上傳」送出。" + rejectNote
+        : "已加入 " + files.length + " 個檔案至佇列（目的地已固定為：" + destLabel + "）。" + rejectNote,
+      rejected.length ? "warn" : "ok"
     );
   }
 
@@ -3250,7 +3394,7 @@
       if (!sameOp(token)) return null;
       var data = prepared.data || {};
       if (data.status === "replace_confirm_required") {
-        showReplaceConfirm(data, file, attempt);
+        showReplaceConfirm(data, file, attempt, queueItem);
         return { waitingReplaceConfirm: true };
       }
       if (data.alreadyComplete) return { data: data, alreadyComplete: true };
@@ -3346,9 +3490,40 @@
     prepareAndSend(token, file, attempt, signal, true, !!confirmReplace, queueItem).then(function (done) {
       if (done && done.waitingReplaceConfirm) {
         if (pendingReplace) pendingReplace.queueItem = queueItem;
+        if (uploadQueue[0] && uploadQueue[0].file === file) {
+          uploadQueue[0].state = "待確認取代";
+          renderQueue();
+        }
         busy = false;
         if ($("btnDriveUpload")) $("btnDriveUpload").disabled = !uploadWriteAllowed;
+        setTransferProgress(null);
         return { stoppedForConfirm: true };
+      }
+      // null / stale responses must not count as success or leave the queue.
+      // Transfer 100% alone never reaches here without a complete/alreadyComplete object.
+      if (!done) {
+        if (uploadQueue[0] && uploadQueue[0].file === file) {
+          uploadQueue[0].state = "需核對（未確認）";
+          renderQueue();
+        }
+        setTransferProgress(null);
+        setStatus("這次上傳沒有取得伺服器確認結果，檔案仍留在佇列，請核對後再重試。", "warn");
+        return null;
+      }
+      var completePayload = done.data || done;
+      var confirmed = !!(
+        done.alreadyComplete === true ||
+        (completePayload && completePayload.alreadyComplete === true) ||
+        (completePayload && Array.isArray(completePayload.files))
+      );
+      if (!confirmed) {
+        if (uploadQueue[0] && uploadQueue[0].file === file) {
+          uploadQueue[0].state = "需核對（未確認）";
+          renderQueue();
+        }
+        setTransferProgress(null);
+        setStatus("伺服器未確認完成，未移出佇列。", "warn");
+        return null;
       }
       if (uploadQueue.length && uploadQueue[0].file === file) {
         uploadQueue.shift();
@@ -3393,7 +3568,13 @@
 
   function cancelReplaceUpload() {
     if (pendingReplace && pendingReplace.file) {
-      clearAttempt(pendingReplace.file, pendingReplace.uploadKind || activeKind);
+      clearAttempt(
+        pendingReplace.file,
+        pendingReplace.uploadKind || activeKind,
+        pendingReplace.queueItem && pendingReplace.queueItem.destinationFolderId != null
+          ? pendingReplace.queueItem.destinationFolderId
+          : undefined
+      );
     }
     hideReplaceConfirm();
     setStatus("已取消取代，原檔保留。", "ok");
@@ -3711,36 +3892,30 @@
         browseUpOneLevel();
       });
     }
-    if (dropzone && !dropzone.dataset.bound) {
-      dropzone.dataset.bound = "1";
-      dropzone.addEventListener("click", function () {
-        if (!uploadWriteAllowed) {
-          setStatus("系統尚未開放上傳", "warn");
-          return;
-        }
-        if (fileInput) fileInput.click();
-      });
-      dropzone.addEventListener("keydown", function (event) {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          dropzone.click();
-        }
-      });
+    var dropSurface = $("driveBrowserDropSurface") || $("driveWsMain") || dropzone;
+    if (dropSurface && !dropSurface.dataset.boundExternalDrop) {
+      dropSurface.dataset.boundExternalDrop = "1";
       ["dragenter", "dragover"].forEach(function (type) {
-        dropzone.addEventListener(type, function (event) {
+        dropSurface.addEventListener(type, function (event) {
+          if (!isExternalFileDrag(event)) return;
           event.preventDefault();
           event.stopPropagation();
-          if (uploadWriteAllowed) dropzone.classList.add("dragover");
+          setExternalDropHighlight(true);
         });
       });
-      ["dragleave", "drop"].forEach(function (type) {
-        dropzone.addEventListener(type, function (event) {
-          event.preventDefault();
-          event.stopPropagation();
-          dropzone.classList.remove("dragover");
-        });
+      dropSurface.addEventListener("dragleave", function (event) {
+        if (!isExternalFileDrag(event) && !dragFilePayload) {
+          // Still clear highlight when leaving the surface during external drag.
+        }
+        var related = event.relatedTarget;
+        if (related && dropSurface.contains && dropSurface.contains(related)) return;
+        setExternalDropHighlight(false);
       });
-      dropzone.addEventListener("drop", function (event) {
+      dropSurface.addEventListener("drop", function (event) {
+        if (!isExternalFileDrag(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        setExternalDropHighlight(false);
         addFilesFromList(event.dataTransfer && event.dataTransfer.files);
       });
     }
@@ -3761,10 +3936,13 @@
           hideContextMenu();
         });
         document.addEventListener("keydown", function (event) {
-          if (event.key === "Escape") {
-            hideContextMenu();
-            closePdfPreview();
-          }
+          if (event.key !== "Escape") return;
+          hideContextMenu();
+          closePdfPreview();
+          if (pendingReplace) cancelReplaceUpload();
+          else if (pendingFileAction) hideFileActionConfirm();
+          else if (folderPickerState) hideFolderPicker();
+          else if (pendingRename) hideRenameDialog();
         });
       }
     } catch (_error) { /* behavior harness may omit documentElement.dataset */ }
