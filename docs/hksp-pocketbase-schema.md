@@ -24,6 +24,7 @@
 - 活動：`activity_id = 115-1-club-evaluation`（已建立）
 - 示範社團：`DEMO-CLUB-001`
 - 示範評審：`judge.demo@hksp.local` / `JudgeDemo123!`（`hksp_staff.role=judge`）
+- 業務超管：見 [hksp-admin-acl.md](./hksp-admin-acl.md)（`hksp_staff.role=admin`；帳密填 `.env` 後跑 `pb-seed-staff-admin.ps1`）
 - Drive 設定：`hksp_drive_config.key=default`（PB 為主時可不啟用代傳）
 
 ## 檔案策略

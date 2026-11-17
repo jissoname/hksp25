@@ -43,6 +43,17 @@ powershell -File scripts/pb-seed-clubs-115-1.ps1
 
 最小煙測頁：`judge-pb.html`（同上帳密）。
 
+## 業務超管（`hksp_staff` / `role=admin`）
+
+帳密不進 git。於 `.env` 填 `HKSP_STAFF_ADMIN_EMAIL`／`HKSP_STAFF_ADMIN_PASSWORD` 後：
+
+```powershell
+powershell -File scripts/pb-apply-admin-acl.ps1
+powershell -File scripts/pb-seed-staff-admin.ps1
+```
+
+權限矩陣：見 [hksp-admin-acl.md](./hksp-admin-acl.md)。建立業務超管前需先有 PocketBase `_superusers`（`.env` 的 `PB_ADMIN_*`）。
+
 ## 重建
 
 ```powershell
