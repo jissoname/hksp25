@@ -92,6 +92,14 @@
     );
   }
 
+  function persistJudgeSession(rec) {
+    try {
+      if (rec) sessionStorage.setItem(SESSION_RECORD_KEY, JSON.stringify(rec));
+    } catch (_e) {
+      /* ignore */
+    }
+  }
+
   async function ensureJudgeFromToken(sessionToken) {
     var client = pb();
     var token = String(sessionToken || "").trim();
@@ -100,11 +108,7 @@
     // Prefer an already-valid judge session. authRefresh rotates tokens; never
     // overwrite a good store with a stale APP.sessionToken from login time.
     if (client.authStore.isValid && isActiveJudgeRecord(rec)) {
-      try {
-        sessionStorage.setItem(SESSION_RECORD_KEY, JSON.stringify(rec));
-      } catch (_e0) {
-        /* ignore */
-      }
+      persistJudgeSession(rec);
       return rec;
     }
 
@@ -120,10 +124,22 @@
     client.authStore.save(token, model);
 
     if (!client.authStore.isValid) {
+      // PocketBase clears authStore when authRefresh fails — snapshot first.
+      var snapToken = client.authStore.token || token;
+      var snapModel = client.authStore.model || model;
       try {
         await client.collection(C().staff).authRefresh();
       } catch (_refreshErr) {
-        throw new Error("JUDGE_UNAUTHORIZED");
+        if (snapToken) {
+          try {
+            client.authStore.save(snapToken, snapModel);
+          } catch (_restoreErr) {
+            /* ignore */
+          }
+        }
+        if (!(client.authStore.isValid && isActiveJudgeRecord(client.authStore.model))) {
+          throw new Error("JUDGE_UNAUTHORIZED");
+        }
       }
     }
 
@@ -131,11 +147,7 @@
     if (!isActiveJudgeRecord(rec)) {
       throw new Error("JUDGE_UNAUTHORIZED");
     }
-    try {
-      sessionStorage.setItem(SESSION_RECORD_KEY, JSON.stringify(rec));
-    } catch (_e2) {
-      /* ignore */
-    }
+    persistJudgeSession(rec);
     return rec;
   }
 
@@ -575,15 +587,22 @@
       revision: revision,
       submitted_at: submittedAt
     };
-    // Best-effort refresh; do not kick out if refresh fails but token still valid.
-    try {
-      await pb().collection(C().staff).authRefresh();
-    } catch (_refreshErr) {
-      /* keep existing authStore */
-    }
+    // Do NOT authRefresh here: failed refresh clears PocketBase authStore and
+    // falsely kicks judges to "登入已失效" after a normal score write attempt.
     judgeRec = pb().authStore.model || judgeRec;
-    if (!judgeRec || !judgeRec.id || !pb().authStore.isValid) {
+    if (!judgeRec || !judgeRec.id) {
       return fail("評審登入已失效，請重新登入。", "JUDGE_UNAUTHORIZED");
+    }
+    if (!pb().authStore.isValid) {
+      // Try restoring from the session snapshot instead of refreshing.
+      try {
+        await ensureJudgeFromToken(
+          (data && data.sessionToken) || pb().authStore.token || ""
+        );
+        judgeRec = pb().authStore.model || judgeRec;
+      } catch (_ensureErr) {
+        return fail("評審登入已失效，請重新登入。", "JUDGE_UNAUTHORIZED");
+      }
     }
     payload.judge = judgeRec.id;
     if (payload.answers_json) payload.answers_json.judgeId = judgeRec.id;

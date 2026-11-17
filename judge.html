@@ -2219,7 +2219,8 @@ button{
       if (!op) return false;
       if (op.generation !== state.generation) return false;
       if (op.requestId !== state.dashboardRequestId) return false;
-      if (!state.sessionToken || op.sessionToken !== state.sessionToken) return false;
+      // sessionToken may rotate via PocketBase; require a live session + same judge.
+      if (!state.sessionToken) return false;
       if (op.judgeId && state.judgeId && op.judgeId !== state.judgeId) return false;
       return true;
     }
@@ -2250,7 +2251,8 @@ button{
       if (!intent) return false;
       if (intent.generation !== state.generation) return false;
       if (intent.confirmGeneration !== state.confirmGeneration) return false;
-      if (!state.sessionToken || intent.sessionToken !== state.sessionToken) return false;
+      // sessionToken may rotate after authRefresh; judgeId+generation is enough.
+      if (!state.sessionToken) return false;
       if (intent.judgeId && state.judgeId && intent.judgeId !== state.judgeId) return false;
       if (state.activeSubmit && state.activeSubmit.confirmGeneration !== intent.confirmGeneration) {
         return false;
@@ -6207,10 +6209,15 @@ function sameJudgeOpIdentity_(snap) {
   if (!snap) {
     return false;
   }
+  // PocketBase may rotate auth tokens during a request; judgeId + loginGen
+  // identify the same signed-in judge. Do not require sessionToken equality.
+  const liveJudgeId = currentJudgeId_();
+  if (!liveJudgeId) {
+    return false;
+  }
   return (
     Number(snap.loginGen) === currentLoginGen_() &&
-    String(snap.sessionToken || "") === currentSessionToken_() &&
-    String(snap.judgeId || "") === currentJudgeId_()
+    String(snap.judgeId || "") === liveJudgeId
   );
 }
 
