@@ -370,7 +370,7 @@
             status: "active",
             mustChangePassword: false,
             activityId: cfg.activityId,
-            access: { allowed: false, code: "NO_MEMBERSHIP", message: "尚無合法社團活動帳號。" }
+            access: { allowed: false, code: "NO_MEMBERSHIP", message: "目前無法使用，請先完成註冊或聯絡學生議會。" }
           });
         }
         var club = (mem.expand && mem.expand.club) || null;

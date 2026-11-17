@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1e3a5f">
 <title>隱私權政策｜弘光社團資訊平台</title>
+<link rel="icon" href="./bg-logo.png" type="image/png">
+<link rel="apple-touch-icon" href="./bg-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
@@ -47,10 +49,10 @@ a:hover{text-decoration:underline}
 }
 .brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 200px;text-decoration:none;color:inherit}
 .brand-mark{
-  width:38px;height:38px;border-radius:11px;flex:0 0 auto;
-  display:grid;place-items:center;background:var(--hk-navy);color:#fff;font-weight:800;font-size:13px;
-  letter-spacing:.02em;box-shadow:0 6px 14px rgba(30,58,95,.22)
+  width:38px;height:38px;border-radius:50%;flex:0 0 auto;overflow:hidden;
+  display:block;background:#000;box-shadow:0 6px 14px rgba(30,58,95,.22)
 }
+.brand-mark img{width:100%;height:100%;display:block;object-fit:cover}
 .brand-text{font-size:14px;font-weight:700;line-height:1.35;color:var(--hk-navy)}
 .nav-links{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center}
 .nav-links a{
@@ -103,7 +105,7 @@ li{margin:6px 0}
 <div class="platform">
   <header class="platform-nav">
     <a class="brand" href="./index.html">
-      <span class="brand-mark">HK</span>
+      <span class="brand-mark"><img src="./bg-logo.png" alt="" width="38" height="38"></span>
       <span class="brand-text">弘光社團資訊平台 | 學生議會 | 社團服務</span>
     </a>
     <nav class="nav-links" aria-label="主要導覽">

@@ -81,13 +81,57 @@
     });
   });
 
+  function prefersReducedMotion() {
+    return !!(
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+  }
+
+  function smoothScrollTo(target, block) {
+    if (!target) return;
+    var behavior = prefersReducedMotion() ? "auto" : "smooth";
+    try {
+      target.scrollIntoView({
+        behavior: behavior,
+        block: block || "start"
+      });
+    } catch (_e) {
+      target.scrollIntoView(true);
+    }
+  }
+
+  function bindInPageSmoothLinks() {
+    document.addEventListener("click", function (event) {
+      var link = event.target && event.target.closest
+        ? event.target.closest('a[href^="#"]')
+        : null;
+      if (!link) return;
+      var href = link.getAttribute("href") || "";
+      if (href === "#" || href.length < 2) return;
+      if (link.getAttribute("target") === "_blank") return;
+      var id = decodeURIComponent(href.slice(1));
+      var target = document.getElementById(id);
+      if (!target) return;
+      event.preventDefault();
+      smoothScrollTo(target, id === "authCard" ? "center" : "start");
+      if (history && typeof history.pushState === "function") {
+        history.pushState(null, "", href);
+      } else {
+        location.hash = href;
+      }
+    });
+  }
+
+  bindInPageSmoothLinks();
+
   var navLogin = document.getElementById("navLoginBtn");
   if (navLogin) {
     navLogin.addEventListener("click", function () {
       if (window.HKSP_PLATFORM_AUTH) window.HKSP_PLATFORM_AUTH.focusLogin();
       else {
         var card = document.getElementById("authCard");
-        if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (card) smoothScrollTo(card, "center");
       }
     });
   }
@@ -156,7 +200,7 @@
       dataDeadline: formatDeadline(config.dataDeadline),
       formDeadline: formatDeadline(config.formDeadline),
       eventTimeRange: formatEventTimeRange(config),
-      observationWindow: facts.observationWindow || "15:30–16:00",
+      observationWindow: facts.observationWindow || "15:30–16:00", // 與 PB scheduleNote／HOME_EVENT_FACTS 一致
       venueName: facts.venueName || "毓麟館"
     };
   }
@@ -273,6 +317,28 @@
     if (venueEl) venueEl.textContent = facts.venueName || "毓麟館";
     if (obsEl) obsEl.textContent = facts.observationWindow || "15:30–16:00";
     renderAnnouncements();
+  }
+
+  function focusLoginCard() {
+    if (window.HKSP_PLATFORM_AUTH && typeof window.HKSP_PLATFORM_AUTH.focusLogin === "function") {
+      window.HKSP_PLATFORM_AUTH.focusLogin();
+      return;
+    }
+    var card = document.getElementById("authCard");
+    var input = document.getElementById("loginStudentId");
+    if (card) smoothScrollTo(card, "center");
+    if (input) {
+      try {
+        input.focus({ preventScroll: true });
+      } catch (_e) {
+        input.focus();
+      }
+    }
+  }
+
+  var heroLoginBtn = document.getElementById("heroFocusLogin");
+  if (heroLoginBtn) {
+    heroLoginBtn.addEventListener("click", focusLoginCard);
   }
 
   if (document.readyState === "loading") {

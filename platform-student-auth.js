@@ -87,7 +87,7 @@ function createRequireStudentAccess(deps) {
             allowed: false,
             code: (data.access && data.access.code) || "DENIED",
             message:
-              (data.access && data.access.message) || "尚無合法社團活動帳號。"
+              (data.access && data.access.message) || "目前無法使用，請先完成註冊或聯絡學生議會。"
           };
         }
         current = getCurrentUser();
@@ -176,10 +176,9 @@ function createRequireStudentAccess(deps) {
 
   var envMeta = document.getElementById("envMeta");
   if (envMeta) {
-    envMeta.textContent = usePb
-      ? "PocketBase 後端 · 身分以伺服器確認為準"
-      : (usingEmulator ? "本機 Emulator 驗證環境" : "正式／本機畫面") +
-        " · 身分以伺服器確認為準";
+    envMeta.textContent = "";
+    envMeta.classList.add("hidden");
+    envMeta.setAttribute("aria-hidden", "true");
   }
 
   var pendingClientRequestId = null;
@@ -189,6 +188,8 @@ function createRequireStudentAccess(deps) {
   var busy = false;
   var accessRequestSeq = 0;
   var accessAuthGeneration = 0;
+  /** true 時才在「無法使用」時顯示紅字；頁面自動還原登入狀態不嚇使用者 */
+  var expectAccessFeedback = false;
   /** Server-confirmed drive context; cleared on logout／換帳／資格不符. */
   var confirmedDriveAccess = null;
 
@@ -245,8 +246,16 @@ function createRequireStudentAccess(deps) {
   function setStatus(text, kind) {
     var el = $("status");
     if (!el) return;
-    el.className = "msg" + (kind ? " " + kind : "");
-    el.textContent = String(text || "");
+    var msg = String(text || "");
+    el.className = "msg" + (kind ? " " + kind : "") + (msg ? "" : " hidden");
+    el.textContent = msg;
+  }
+
+  function clearSessionBar() {
+    var bar = $("sessionBar");
+    if (!bar) return;
+    bar.className = "msg warn hidden";
+    bar.textContent = "";
   }
 
   function setBusy(flag) {
@@ -273,10 +282,10 @@ function createRequireStudentAccess(deps) {
     var sub = $("authCardSub");
     if (name === "register") {
       if (title) title.textContent = "立即註冊";
-      if (sub) sub.textContent = "選擇社團、學號與生日完成註冊（社團選單不授予登入權限）";
+      if (sub) sub.textContent = "選擇社團、學號與生日後即可註冊";
     } else {
       if (title) title.textContent = "登入平台";
-      if (sub) sub.textContent = "學生與社團幹部專屬入口";
+      if (sub) sub.textContent = "請用學號與密碼登入";
     }
   }
 
@@ -468,18 +477,17 @@ function createRequireStudentAccess(deps) {
       }
       var data = res.data || {};
       var bar = $("sessionBar");
-      if (bar) {
-        bar.classList.remove("hidden");
-      }
       if (data.status === "disabled") {
         clearConfirmedDriveAccess();
         setShell("auth");
         showTab("login");
         if (bar) {
+          bar.classList.remove("hidden");
           bar.className = "msg error";
-          bar.textContent = "帳號已停用，無法使用正式功能。請聯絡管理員／帳號協助窗口。";
+          bar.textContent = "帳號已停用，請聯絡學生議會協助。";
         }
-        setStatus("帳號已停用，無法使用正式功能。", "error");
+        setStatus("帳號已停用，請聯絡學生議會協助。", "error");
+        expectAccessFeedback = false;
         return auth.signOut().then(function () {
           return data;
         });
@@ -488,10 +496,12 @@ function createRequireStudentAccess(deps) {
         clearConfirmedDriveAccess();
         setShell("change");
         if (bar) {
+          bar.classList.remove("hidden");
           bar.className = "msg warn";
-          bar.textContent = "首次登入：請先完成修改密碼（正式功能已鎖定）。";
+          bar.textContent = "第一次登入請先改密碼。";
         }
-        setStatus("首次登入：請先完成修改密碼。", "warn");
+        setStatus("第一次登入請先改密碼。", "warn");
+        expectAccessFeedback = false;
         return data;
       }
       if (!data.access || !data.access.allowed) {
@@ -499,35 +509,43 @@ function createRequireStudentAccess(deps) {
         setShell("auth");
         showTab("login");
         var msg =
-          (data.access && data.access.message) || "尚無合法社團活動帳號。";
-        if (bar) {
-          bar.className = "msg error";
-          bar.textContent = msg;
+          (data.access && data.access.message) ||
+          "目前無法使用，請先完成註冊或聯絡學生議會。";
+        var showDeny = expectAccessFeedback;
+        expectAccessFeedback = false;
+        if (showDeny) {
+          if (bar) {
+            bar.classList.remove("hidden");
+            bar.className = "msg error";
+            bar.textContent = msg;
+          }
+          setStatus(msg, "error");
+        } else {
+          clearSessionBar();
+          setStatus("", "");
         }
-        setStatus(msg, "error");
-        return data;
+        return auth.signOut().then(function () {
+          return data;
+        });
       }
       if (isStaleAccessResponse(seq, gen, expectedUid)) {
         return { stale: true, reason: "superseded_before_apply" };
       }
       setShell("home");
+      expectAccessFeedback = false;
       if (bar) {
+        bar.classList.remove("hidden");
         bar.className = "msg ok";
-        bar.textContent = "伺服器已確認可使用正式功能。";
+        bar.textContent = "已登入，可以開始上傳。";
       }
       setStatus("登入成功", "ok");
       if ($("homeStatus")) $("homeStatus").textContent = "登入成功。";
       var clubLabel = data.clubName
         ? data.clubName + "（" + (data.permanentClubId || "") + "）"
-        : data.permanentClubId || "（無）";
+        : data.permanentClubId || "（尚未綁定社團）";
       if ($("homeIdentity")) {
         $("homeIdentity").textContent =
-          "活動：" +
-          (data.activityId || "（伺服器確認）") +
-          "\n社團：" +
-          clubLabel +
-          "\n帳號狀態：" +
-          (data.status || "（未知）");
+          "活動：115-1 社團評選\n社團：" + clubLabel;
       }
       notifyDriveUpload({
         activityId: data.activityId || "",
@@ -731,6 +749,8 @@ function createRequireStudentAccess(deps) {
       return;
     }
     setBusy(true);
+    expectAccessFeedback = true;
+    clearSessionBar();
     setStatus("登入中…", "warn");
     auth
       .signInWithEmailAndPassword(client.studentIdToAuthEmail(studentId), password)
@@ -903,6 +923,9 @@ function createRequireStudentAccess(deps) {
         window.HKSP_DRIVE_UPLOAD.onSignedOut();
       }
       setShell("auth");
+      if (!expectAccessFeedback) {
+        clearSessionBar();
+      }
       return;
     }
     var sameUid = lastAuthUid && lastAuthUid === user.uid;

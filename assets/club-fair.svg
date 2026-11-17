@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" fill="none" role="img" aria-labelledby="clubFairTitle">
+  <title id="clubFairTitle">>Z½#Òk</title>
+  <!-- ground -->
+  <rect width="640" height="420" fill="#eef6fb"/>
+  <path d="M0 300h640v120H0z" fill="#d7ebe3"/>
+  <path d="M0 300c80-28 160-28 240 0s160 28 240 0 160-28 160 0v20H0z" fill="#c5e2d6"/>
+  <!-- sun -->
+  <circle cx="540" cy="78" r="36" fill="#ffd166"/>
+  <circle cx="540" cy="78" r="52" fill="#ffd166" opacity=".28"/>
+  <!-- banners / booths -->
+  <rect x="48" y="168" width="120" height="88" rx="14" fill="#fff"/>
+  <rect x="48" y="168" width="120" height="22" rx="11" fill="#e85d4c"/>
+  <rect x="64" y="204" width="54" height="10" rx="5" fill="#f3d0cb"/>
+  <rect x="64" y="222" width="78" height="10" rx="5" fill="#f3d0cb"/>
+  <rect x="188" y="148" width="132" height="108" rx="14" fill="#fff"/>
+  <rect x="188" y="148" width="132" height="24" rx="12" fill="#3d8fd1"/>
+  <rect x="206" y="188" width="64" height="10" rx="5" fill="#cfe3f5"/>
+  <rect x="206" y="208" width="88" height="10" rx="5" fill="#cfe3f5"/>
+  <rect x="206" y="228" width="48" height="10" rx="5" fill="#cfe3f5"/>
+  <rect x="340" y="160" width="118" height="96" rx="14" fill="#fff"/>
+  <rect x="340" y="160" width="118" height="22" rx="11" fill="#3a9b7a"/>
+  <rect x="356" y="196" width="58" height="10" rx="5" fill="#cce6db"/>
+  <rect x="356" y="216" width="76" height="10" rx="5" fill="#cce6db"/>
+  <rect x="478" y="176" width="110" height="80" rx="14" fill="#fff"/>
+  <rect x="478" y="176" width="110" height="20" rx="10" fill="#f0a202"/>
+  <rect x="494" y="210" width="50" height="10" rx="5" fill="#f7e2b0"/>
+  <rect x="494" y="228" width="70" height="10" rx="5" fill="#f7e2b0"/>
+  <!-- people (simple geometric) -->
+  <circle cx="110" cy="278" r="16" fill="#f2c4a8"/>
+  <rect x="90" y="296" width="40" height="46" rx="14" fill="#e85d4c"/>
+  <circle cx="250" cy="270" r="16" fill="#e8b894"/>
+  <rect x="230" y="288" width="40" height="50" rx="14" fill="#3d8fd1"/>
+  <circle cx="400" cy="274" r="16" fill="#f0c9a8"/>
+  <rect x="380" y="292" width="40" height="48" rx="14" fill="#3a9b7a"/>
+  <circle cx="530" cy="282" r="15" fill="#e8b894"/>
+  <rect x="512" y="298" width="36" height="44" rx="13" fill="#f0a202"/>
+  <!-- confetti -->
+  <circle cx="86" cy="120" r="6" fill="#e85d4c"/>
+  <circle cx="160" cy="96" r="5" fill="#3d8fd1"/>
+  <circle cx="300" cy="84" r="6" fill="#f0a202"/>
+  <circle cx="420" cy="110" r="5" fill="#3a9b7a"/>
+  <rect x="210" y="108" width="10" height="10" rx="2" fill="#e85d4c" transform="rotate(18 215 113)"/>
+  <rect x="460" y="132" width="9" height="9" rx="2" fill="#3d8fd1" transform="rotate(-16 464 136)"/>
+  <rect x="120" y="140" width="8" height="8" rx="2" fill="#f0a202" transform="rotate(30 124 144)"/>
+  <!-- floating balloons -->
+  <ellipse cx="70" cy="70" rx="16" ry="20" fill="#ff7a6a"/>
+  <path d="M70 90c0 14 6 22 0 34" stroke="#9bb0c2" stroke-width="2"/>
+  <ellipse cx="360" cy="58" rx="14" ry="18" fill="#5eb0ef"/>
+  <path d="M360 76c0 12 5 20 0 30" stroke="#9bb0c2" stroke-width="2"/>
+  <ellipse cx="600" cy="140" rx="13" ry="17" fill="#59c39a"/>
+  <path d="M600 157c0 12 4 18 0 28" stroke="#9bb0c2" stroke-width="2"/>
+</svg>

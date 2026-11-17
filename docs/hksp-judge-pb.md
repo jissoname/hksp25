@@ -31,6 +31,8 @@
 - `judgeSubmitScore`（`scores` map）
 - 管理：`adminGetScoreConfig` / `adminSaveScoreConfig` / `adminSetScorePhasePublished` / `adminUnlockJudgeScore` / `adminJudgeScoreProgress`
 
-## 尚未搬（管理端）
+## 管理端（PB）
 
-- 排名彙整、評審確認單 PDF／Excel 匯出等仍隱藏
+- 已接：成績彙整、排名規則／各屬性排名、各屬性排名 CSV、主辦核對 CSV
+- 尚未接：評審確認單 PDF／批次 ZIP（面板仍隱藏）
+- 匯出為 UTF-8 CSV（Excel 可開）；非舊版 xlsx base64 版型

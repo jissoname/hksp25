@@ -3,11 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1e3a5f">
+<meta name="theme-color" content="#1a2438">
 <title>弘光社團資訊平台</title>
+<link rel="icon" href="./bg-logo.png" type="image/png">
+<link rel="apple-touch-icon" href="./bg-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Noto+Serif+TC:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
 html,body{
@@ -488,100 +490,195 @@ button{-webkit-tap-highlight-color:transparent}
     }
 }
 
-/* ===== Platform homepage shell ===== */
+/* ===== Platform shell · 校園印信報 · tokens → docs/DESIGN.md ===== */
 :root{
-  --hk-navy:#1e3a5f;
-  --hk-navy-2:#2a4a73;
-  --hk-ink:#1a2a3a;
-  --hk-muted:#5a6d80;
-  --hk-line:#d5e0ec;
-  --hk-bg:#eef3f8;
-  --hk-card:#ffffff;
-  --hk-soft:#e3eef8;
-  --hk-accent:#2f6ea3;
-  --hk-ok:#1f6b3a;
-  --hk-warn:#8a5a00;
-  --hk-danger:#a12626;
-  --hk-radius:18px;
-  --hk-shadow:0 14px 36px rgba(28,50,80,.09);
+  --hk-navy:oklch(24% 0.035 255);
+  --hk-navy-2:oklch(32% 0.04 255);
+  --hk-ink:oklch(27% 0.02 255);
+  --hk-muted:oklch(50% 0.018 250);
+  --hk-line:oklch(89% 0.008 250);
+  --hk-bg:oklch(95.5% 0.006 250);
+  --hk-paper:oklch(98.2% 0.004 250);
+  --hk-card:oklch(100% 0 0);
+  --hk-soft:oklch(93.5% 0.01 250);
+  --hk-accent:oklch(42% 0.065 200);
+  --hk-accent-2:oklch(48% 0.08 245);
+  --hk-ok:oklch(45% 0.09 150);
+  --hk-warn:oklch(55% 0.11 75);
+  --hk-danger:oklch(50% 0.14 25);
+  --hk-radius:8px;
+  --hk-shadow:0 12px 28px oklch(24% 0.035 255 / .1);
   --font-sans:"Noto Sans TC","Segoe UI",sans-serif;
   --font-display:"Noto Serif TC","Noto Sans TC",serif;
+  --ease-out:cubic-bezier(0.16,1,0.3,1);
+  --motion:200ms;
+  --motion-stamp:420ms;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:24px;
+  --space-6:32px;
+  --space-7:40px;
+  --space:clamp(16px,4vw,40px);
 }
+::selection{background:oklch(42% 0.065 200 / .18);color:var(--hk-navy)}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 html,body{
   width:100%;min-height:100%;height:auto;margin:0;padding:0;
   background:var(--hk-bg);overflow-x:hidden;overflow-y:auto;
   font-family:var(--font-sans);color:var(--hk-ink);-webkit-text-size-adjust:100%
 }
+#top,#event,#news,#schedule,#authCard,.schedule-band{scroll-margin-top:84px}
 .platform{
-  min-height:100vh;position:relative;
-  background:
-    radial-gradient(1200px 480px at 12% -10%,rgba(90,140,190,.18),transparent 55%),
-    radial-gradient(900px 420px at 92% 8%,rgba(30,58,95,.10),transparent 50%),
-    linear-gradient(180deg,#f8fbfd 0%,var(--hk-bg) 42%,#e7eef6 100%)
+  min-height:100vh;position:relative;isolation:isolate;
+  background:var(--hk-paper)
 }
+.platform > *{position:relative;z-index:1}
 .platform-nav{
   position:sticky;top:0;z-index:40;
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 16px;
-  padding:14px clamp(16px,4vw,40px);
-  background:rgba(255,255,255,.94);backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(30,58,95,.08)
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-3) var(--space-4);
+  padding:var(--space-3) var(--space);
+  background:var(--hk-card);
+  border-bottom:1px solid var(--hk-line)
 }
 .brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 200px;text-decoration:none;color:inherit}
 .brand-mark{
-  width:38px;height:38px;border-radius:11px;flex:0 0 auto;
-  display:grid;place-items:center;background:var(--hk-navy);color:#fff;font-weight:800;font-size:13px;
-  letter-spacing:.02em;box-shadow:0 6px 14px rgba(30,58,95,.22)
+  width:36px;height:36px;border-radius:50%;flex:0 0 auto;overflow:hidden;
+  display:block;background:oklch(0% 0 0);border:1px solid oklch(24% 0.035 255 / .18)
 }
-.brand-text{font-size:14px;font-weight:700;white-space:normal;line-height:1.35;color:var(--hk-navy)}
-.nav-links{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center}
+.brand-mark img{width:100%;height:100%;display:block;object-fit:cover}
+.brand-text{font-size:13px;font-weight:700;white-space:normal;line-height:1.35;color:var(--hk-navy)}
+.nav-links{display:flex;flex-wrap:wrap;gap:var(--space-2) 20px;align-items:center}
 .nav-links a{
-  color:var(--hk-muted);text-decoration:none;font-size:14px;font-weight:600;
-  padding-bottom:4px;border-bottom:2px solid transparent
+  color:var(--hk-muted);text-decoration:none;font-size:13.5px;font-weight:600;
+  padding:4px 0;border-bottom:1px solid transparent;cursor:pointer
 }
-.nav-links a.active,.nav-links a:hover{color:var(--hk-navy);border-bottom-color:var(--hk-navy)}
+@media (hover:hover){
+  .nav-links a:hover{color:var(--hk-navy);border-bottom-color:var(--hk-navy)}
+}
+.nav-links a.active{color:var(--hk-navy);border-bottom-color:var(--hk-navy)}
+.nav-links a:focus-visible{outline:2px solid var(--hk-accent);outline-offset:3px;border-radius:2px}
 .nav-login{
-  border:0;border-radius:12px;padding:10px 18px;cursor:pointer;flex:0 0 auto;margin-left:auto;
-  background:var(--hk-navy);color:#fff;font:inherit;font-size:14px;font-weight:700;white-space:nowrap
+  border:0;border-radius:var(--hk-radius);padding:9px 16px;cursor:pointer;flex:0 0 auto;margin-left:auto;
+  background:var(--hk-navy);color:var(--hk-card);font:inherit;font-size:13.5px;font-weight:700;white-space:nowrap;
+  transition:background var(--motion) var(--ease-out)
 }
-.nav-login:hover{background:var(--hk-navy-2)}
+@media (hover:hover){.nav-login:hover{background:var(--hk-navy-2)}}
+.nav-login:focus-visible{outline:2px solid var(--hk-accent);outline-offset:3px}
 .hero{
-  display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.9fr);gap:28px;align-items:stretch;
-  padding:40px clamp(16px,4vw,40px) 20px
+  display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.86fr);gap:clamp(28px,4vw,48px);align-items:end;
+  min-height:0;padding:clamp(36px,5vw,64px) var(--space) var(--space-5);
+  border-bottom:1px solid var(--hk-line);
+  background:linear-gradient(180deg,var(--hk-bg) 0%,var(--hk-paper) 72%)
 }
-.hero-countdown{min-width:0;display:flex}
-.hero-countdown .home-event-announcement{
-  flex:1;width:100%;margin:0;padding:20px 18px;
-  border:1px solid rgba(30,58,95,.12);border-radius:22px;
-  background:linear-gradient(180deg,#f7faff 0%,#eef4fb 100%);
-  box-shadow:var(--hk-shadow)
+.hero-copy{min-width:0;display:flex;flex-direction:column;gap:14px;padding-bottom:8px}
+.hero-title{
+  margin:0;font-family:var(--font-display);font-weight:700;color:var(--hk-navy);
+  font-size:clamp(1.85rem,4.4vw,3rem);line-height:1.18;letter-spacing:-.02em;
+  white-space:nowrap
 }
-.hero-countdown .event-announcement-title{
-  color:var(--hk-navy);font-size:1.05rem;margin-bottom:12px
+.hero-lead{
+  margin:0;max-width:28rem;color:var(--hk-muted);font-size:1rem;line-height:1.7
 }
-.hero-countdown .event-countdown-main{
-  background:rgba(30,58,95,.08);border-radius:14px;padding:14px 12px
+.club-chips{
+  display:flex;flex-wrap:wrap;gap:0;margin:4px 0 2px;padding:0;list-style:none;
+  border-top:1px solid var(--hk-line);border-bottom:1px solid var(--hk-line)
 }
-.hero-countdown .event-countdown-value{
-  color:var(--hk-navy);font-size:clamp(1.05rem,2.4vw,1.25rem)
+.club-chips li{
+  display:inline-flex;align-items:center;gap:0;
+  padding:9px 14px 9px 0;margin-right:14px;
+  border:0;background:transparent;border-radius:0;
+  font-size:.8rem;font-weight:700;color:var(--hk-navy);letter-spacing:.02em
 }
-.hero-countdown .event-deadline-row{border-bottom-color:#d7e3f0}
-.hero-countdown .event-time-line{
-  margin-top:12px;padding-top:10px;color:var(--hk-muted);font-size:.92rem;line-height:1.65
+.club-chips li + li{border-left:1px solid var(--hk-line);padding-left:14px}
+.club-chips i{display:none}
+.hero-visual{
+  display:none;min-width:0;place-items:center;justify-content:center
+}
+.hero-visual-frame{
+  width:min(100%,280px);aspect-ratio:1;border-radius:50%;position:relative;
+  display:grid;place-items:center;background:transparent;
+  box-shadow:none
+}
+.hero-visual-frame img{
+  width:100%;height:100%;display:block;border-radius:50%;object-fit:cover;
+  filter:none;border:1px solid oklch(24% 0.035 255 / .16)
+}
+@media (min-width:900px){
+  .hero{grid-template-columns:minmax(0,1.05fr) minmax(240px,.85fr);align-items:end}
+  .hero-visual{display:grid;grid-column:1;grid-row:2;justify-content:start;padding:8px 0 4px}
+  .hero-copy{grid-column:1;grid-row:1}
+  .auth-card{grid-column:2;grid-row:1 / span 2;align-self:center}
+}
+@media (min-width:1180px){
+  .hero{grid-template-columns:minmax(0,1.05fr) minmax(240px,.72fr) minmax(300px,.88fr);align-items:center}
+  .hero-copy{grid-column:1;grid-row:1;padding-bottom:0}
+  .hero-visual{display:grid;grid-column:2;grid-row:1;justify-content:center}
+  .auth-card{grid-column:3;grid-row:1;align-self:center}
+}
+.hero-cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px}
+.hero-countdown{min-width:0;display:none}
+.schedule-band{padding:28px var(--space) 8px}
+.schedule-band .home-event-announcement,
+.schedule-band .event-announcement.home-event-announcement{
+  width:100%;margin:0;padding:0;position:relative;overflow:visible;
+  border:0 !important;border-radius:0 !important;background:transparent !important;box-shadow:none !important
+}
+.schedule-band .event-announcement-title{
+  color:var(--hk-navy) !important;font-family:var(--font-display);font-size:1.35rem;margin:0 0 16px;font-weight:700;
+  padding-bottom:10px;border-bottom:1px solid var(--hk-navy)
+}
+.schedule-band .event-countdown-main{
+  background:transparent !important;border-radius:0 !important;padding:12px 0 !important;margin:0 0 4px;
+  border-bottom:1px solid var(--hk-line);text-align:left !important
+}
+.schedule-band .event-countdown-value{
+  color:var(--hk-navy) !important;font-size:clamp(1.05rem,2.4vw,1.2rem);font-weight:700
+}
+.schedule-band .event-deadline-row{border-bottom-color:var(--hk-line)}
+.schedule-band .event-deadline-status{
+  border-radius:4px;font-weight:700
+}
+.schedule-band .deadline-green{background:oklch(95% 0.03 150);color:var(--hk-ok)}
+.schedule-band .deadline-yellow{background:oklch(95% 0.04 85);color:oklch(48% 0.1 75)}
+.schedule-band .deadline-warning{background:oklch(95% 0.04 55);color:oklch(48% 0.12 45)}
+.schedule-band .deadline-today{background:oklch(95% 0.04 25);color:var(--hk-danger)}
+.schedule-band .event-time-line{
+  margin-top:14px;padding-top:12px;color:var(--hk-muted);font-size:.92rem;line-height:1.7;
+  border-top:1px solid var(--hk-line)
 }
 .btn-solid,.btn-ghost{
-  border-radius:12px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer;
-  text-decoration:none;display:inline-flex;align-items:center;justify-content:center;transition:transform .15s ease,background .15s ease
+  border-radius:var(--hk-radius);padding:11px 16px;font:inherit;font-weight:700;cursor:pointer;
+  text-decoration:none;display:inline-flex;align-items:center;justify-content:center;
+  transition:background var(--motion) var(--ease-out),border-color var(--motion) var(--ease-out),color var(--motion) var(--ease-out)
 }
-.btn-solid{border:0;background:var(--hk-navy);color:#fff}
-.btn-solid:hover{background:var(--hk-navy-2)}
-.btn-ghost{border:1.5px solid #8aa4c0;background:rgba(255,255,255,.55);color:var(--hk-navy)}
-.btn-ghost:hover{background:#fff}
+.btn-solid{border:0;background:var(--hk-navy);color:var(--hk-card)}
+@media (hover:hover){.btn-solid:hover{background:var(--hk-navy-2)}}
+.btn-ghost{border:1px solid var(--hk-navy);background:transparent;color:var(--hk-navy)}
+@media (hover:hover){.btn-ghost:hover{background:var(--hk-navy);color:var(--hk-card)}}
+.btn-solid:focus-visible,.btn-ghost:focus-visible{outline:2px solid var(--hk-accent);outline-offset:3px}
 .auth-card{
-  background:var(--hk-card);border:1px solid rgba(30,58,95,.1);border-radius:22px;
-  box-shadow:var(--hk-shadow);padding:24px 22px 18px;min-width:0
+  background:var(--hk-card);border:1px solid var(--hk-line);border-radius:10px;
+  box-shadow:var(--hk-shadow);padding:var(--space-5) 22px var(--space-4);min-width:0
 }
-.auth-card h2{margin:0;font-size:1.3rem;color:var(--hk-navy);font-weight:800}
-.auth-card .auth-sub{margin:6px 0 14px;color:var(--hk-muted);font-size:.92rem;line-height:1.55}
+.auth-card h2{
+  margin:0;font-family:var(--font-display);font-size:1.35rem;color:var(--hk-navy);font-weight:700
+}
+.auth-card .auth-sub{margin:6px 0 14px;color:var(--hk-muted);font-size:.9rem;line-height:1.55}
+@media (prefers-reduced-motion:no-preference){
+  .hero-visual-frame{
+    animation:hkStamp var(--motion-stamp) var(--ease-out) both
+  }
+}
+@keyframes hkStamp{
+  from{opacity:0;transform:scale(.94)}
+  to{opacity:1;transform:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .hero-visual-frame{animation:none}
+}
 .drive-upload{margin:16px 0 12px;padding:14px 12px;border:1px solid rgba(30,58,95,.12);border-radius:14px;background:rgba(248,251,253,.9)}
 .drive-upload h3{margin:0 0 8px;font-size:1rem;color:var(--hk-navy)}
 .drive-kind-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px}
@@ -968,19 +1065,21 @@ body.drive-ws-open .news-band{display:none}
   .drive-main-actions .drive-btn-outline,
   .drive-main-actions .drive-btn-solid{flex:1 1 auto}
 }
-.auth-card label{display:block;margin:10px 0 6px;font-size:.88rem;font-weight:600;color:#3f5366}
+.auth-card label{display:block;margin:10px 0 6px;font-size:.88rem;font-weight:600;color:var(--hk-ink)}
 .auth-card input,.auth-card select{
-  width:100%;max-width:100%;padding:12px 14px;border:1px solid var(--hk-line);border-radius:12px;
-  font:inherit;background:#fff;box-sizing:border-box
+  width:100%;max-width:100%;padding:12px 14px;border:1px solid var(--hk-line);border-radius:var(--hk-radius);
+  font:inherit;background:var(--hk-card);box-sizing:border-box;color:var(--hk-ink)
 }
 .auth-card input:focus,.auth-card select:focus{
-  outline:none;border-color:#8aa4c0;box-shadow:0 0 0 3px rgba(47,110,163,.12)
+  outline:none;border-color:var(--hk-accent);box-shadow:0 0 0 3px oklch(42% 0.065 200 / .16)
 }
 .auth-card .primary{
-  width:100%;margin-top:16px;border:0;border-radius:12px;padding:13px 16px;
-  background:var(--hk-navy);color:#fff;font:inherit;font-weight:700;cursor:pointer
+  width:100%;margin-top:16px;border:0;border-radius:var(--hk-radius);padding:13px 16px;
+  background:var(--hk-navy);color:var(--hk-card);font:inherit;font-weight:700;cursor:pointer;
+  transition:background var(--motion) var(--ease-out)
 }
-.auth-card .primary:hover{background:var(--hk-navy-2)}
+@media (hover:hover){.auth-card .primary:hover{background:var(--hk-navy-2)}}
+.auth-card .primary:focus-visible{outline:2px solid var(--hk-accent);outline-offset:3px}
 .auth-card .primary:disabled{opacity:.55;cursor:not-allowed}
 .auth-card .links{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-top:12px;flex-wrap:wrap}
 .auth-card .links button{
@@ -988,12 +1087,12 @@ body.drive-ws-open .news-band{display:none}
   white-space:normal;text-align:left;max-width:100%;line-height:1.45;font-weight:600
 }
 .auth-card .msg{
-  margin-top:12px;padding:10px 12px;border-radius:12px;background:#f4f7fa;color:var(--hk-muted);
+  margin-top:12px;padding:10px 12px;border-radius:var(--hk-radius);background:var(--hk-soft);color:var(--hk-muted);
   white-space:pre-wrap;font-size:.88rem;line-height:1.5
 }
-.auth-card .msg.error{background:#fceaea;color:var(--hk-danger)}
-.auth-card .msg.ok{background:#e8f6ec;color:var(--hk-ok)}
-.auth-card .msg.warn{background:#fff7e8;color:var(--hk-warn)}
+.auth-card .msg.error{background:oklch(95% 0.03 25);color:var(--hk-danger)}
+.auth-card .msg.ok{background:oklch(95% 0.03 150);color:var(--hk-ok)}
+.auth-card .msg.warn{background:oklch(95% 0.035 75);color:var(--hk-warn)}
 .auth-card .hidden{display:none!important}
 .auth-card .panel{display:none}
 .auth-card .panel.active{display:block}
@@ -1001,36 +1100,38 @@ body.drive-ws-open .news-band{display:none}
   margin-top:10px;padding:12px;border:1px dashed var(--hk-line);border-radius:12px;font-size:.9rem;line-height:1.6
 }
 .feature-row{
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;
-  padding:12px clamp(16px,4vw,40px) 28px
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;
+  padding:8px var(--space) 8px;margin:8px 0 20px;
+  border-top:1px solid var(--hk-line);border-bottom:1px solid var(--hk-line)
 }
 .feature-card{
-  background:#fff;border:1px solid rgba(30,58,95,.09);border-radius:var(--hk-radius);padding:18px 16px;
-  text-align:left;cursor:pointer;box-shadow:0 8px 20px rgba(28,50,80,.04);min-width:0;
-  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+  background:transparent;border:0;border-radius:0;padding:18px 16px 18px 0;
+  text-align:left;cursor:pointer;box-shadow:none;min-width:0;
+  transition:color 160ms var(--ease-out);
   color:inherit;text-decoration:none;font:inherit;display:block
 }
-a.feature-card:hover{
-  transform:translateY(-2px);border-color:rgba(47,110,163,.28);
-  box-shadow:0 14px 28px rgba(28,50,80,.08)
+.feature-row > .feature-card + .feature-card{
+  border-left:1px solid var(--hk-line);padding-left:16px
+}
+@media (hover:hover){
+  a.feature-card:hover{color:var(--hk-accent)}
+  a.feature-card:hover h3{color:var(--hk-accent)}
 }
 .feature-card-static{cursor:default}
-.feature-card-static:hover{transform:none;border-color:rgba(30,58,95,.09);box-shadow:0 8px 20px rgba(28,50,80,.04)}
-.feature-card h3{margin:10px 0 6px;font-size:1.02rem;color:var(--hk-navy);font-weight:800}
+.feature-card-static:hover{color:inherit}
+.feature-card h3{margin:0 0 8px;font-size:.78rem;color:var(--hk-muted);font-weight:700;letter-spacing:.04em}
 .feature-card p{margin:0;color:var(--hk-muted);font-size:.88rem;line-height:1.55}
-.feature-card .feature-value{color:var(--hk-navy);font-size:.95rem;line-height:1.55;font-weight:600}
+.feature-card .feature-value{color:var(--hk-navy);font-size:1rem;line-height:1.5;font-weight:700}
 .feature-card .feature-value strong{font-weight:800}
-.feature-ico{
-  width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
-  background:var(--hk-soft);color:var(--hk-navy);font-size:18px
-}
+.feature-ico{display:none}
+.feature-ico svg{display:block}
 .news-band{
-  margin:0 clamp(16px,4vw,40px) 36px;border-radius:22px;padding:22px 20px;
-  background:#fff;border:1px solid rgba(30,58,95,.08);
-  box-shadow:0 8px 20px rgba(28,50,80,.04);min-width:0
+  margin:0 var(--space) 40px;border-radius:0;padding:8px 0 0;
+  background:transparent;border:0;box-shadow:none;min-width:0
 }
-.section-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.section-head h2{margin:0;font-size:1.15rem;color:var(--hk-navy)}
+.section-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap;
+  padding-bottom:10px;border-bottom:1px solid var(--hk-navy)}
+.section-head h2{margin:0;font-family:var(--font-display);font-size:1.35rem;color:var(--hk-navy);font-weight:700}
 .section-head button,.section-head a{
   border:0;background:transparent;color:var(--hk-accent);cursor:pointer;font:inherit;font-size:.88rem;font-weight:600
 }
@@ -1039,25 +1140,24 @@ a.feature-card:hover{
   max-height:min(420px,58vh);overflow-y:auto;overscroll-behavior:contain;
   padding-right:4px;-webkit-overflow-scrolling:touch
 }
-.news-item{padding:12px 0;border-top:1px solid #eef2f6;min-width:0}
-.news-item:first-child{border-top:0;padding-top:0}
+.news-item{padding:14px 0;border-top:1px solid var(--hk-line);min-width:0}
+.news-item:first-child{border-top:0;padding-top:4px}
 .news-tag{
-  display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;margin-bottom:6px
+  display:inline-block;padding:0;border-radius:0;font-size:11px;font-weight:700;margin-bottom:6px;
+  background:transparent;color:var(--hk-accent);letter-spacing:.04em
 }
-.news-tag.t1{background:#e8f0ff;color:#2759a0}
-.news-tag.t2{background:#eaf8ef;color:#1f6b3a}
-.news-tag.t3{background:#fff3df;color:#8a5a00}
+.news-tag.t1,.news-tag.t2,.news-tag.t3{background:transparent;color:var(--hk-accent)}
 .news-item-title{
   display:block;width:100%;margin:0 0 4px;padding:0;border:0;background:transparent;
-  text-align:left;font:inherit;font-size:.98rem;font-weight:700;color:var(--hk-navy);cursor:pointer;
+  text-align:left;font:inherit;font-size:1rem;font-weight:700;color:var(--hk-navy);cursor:pointer;
   line-height:1.4;white-space:normal;word-break:break-word
 }
 .news-item-title:hover,.news-item-title:focus-visible{color:var(--hk-accent);outline:none}
 .news-item-title:focus-visible{text-decoration:underline}
 .news-item-summary{margin:0;color:var(--hk-muted);font-size:.88rem;line-height:1.5}
 .news-item-body{
-  margin:10px 0 0;padding:12px 12px;border-radius:12px;background:#f5f8fc;
-  border:1px solid #e4eaf2;color:var(--hk-navy);font-size:.9rem;line-height:1.65
+  margin:10px 0 0;padding:12px 0;border-radius:0;background:transparent;
+  border:0;border-top:1px dashed var(--hk-line);color:var(--hk-navy);font-size:.9rem;line-height:1.65
 }
 .news-item-body ul{margin:0;padding-left:1.15em}
 .news-item-body li{margin:0 0 6px}
@@ -1065,26 +1165,38 @@ a.feature-card:hover{
 .news-item[hidden],.news-item-body[hidden]{display:none !important}
 .platform-footer{
   display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  padding:18px clamp(16px,4vw,40px) 28px;color:var(--hk-muted);font-size:.9rem;
-  border-top:1px solid rgba(30,58,95,.08);background:rgba(255,255,255,.65)
+  padding:18px var(--space) 28px;color:var(--hk-muted);font-size:.9rem;
+  border-top:1px solid var(--hk-line);background:#fff
 }
 .platform-footer a,.platform-footer button{color:var(--hk-accent);text-decoration:none}
 
 @media(max-width:960px){
-  .hero{grid-template-columns:1fr;gap:22px}
-  .hero-countdown{order:1}
-  .auth-card{order:2}
-  .feature-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hero{grid-template-columns:1fr;gap:18px;min-height:0;align-items:start;padding-top:28px}
+  .hero-title{font-size:clamp(1.55rem,7.2vw,2.2rem);white-space:normal}
+  .hero-copy{grid-column:1;grid-row:1}
+  .hero-visual{display:grid;grid-column:1;grid-row:2;justify-content:start;margin:2px 0 6px}
+  .hero-visual-frame{width:min(42vw,160px)}
+  .auth-card{grid-column:1;grid-row:3}
+  .feature-row{grid-template-columns:1fr 1fr}
+  .feature-row > .feature-card:nth-child(2n+1){border-left:0;padding-left:0}
+  .feature-row > .feature-card:nth-child(n+3){border-top:1px solid var(--hk-line)}
   .nav-links{display:none}
   .platform-nav{row-gap:10px}
   .nav-login{margin-left:auto}
 }
 @media(max-width:560px){
   .feature-row{grid-template-columns:1fr}
+  .feature-row > .feature-card{border-left:0 !important;padding-left:0;padding-right:0}
+  .feature-row > .feature-card + .feature-card{border-top:1px solid var(--hk-line)}
   .brand{flex:1 1 100%}
   .brand-text{font-size:12.5px}
   .nav-login{width:100%;margin-left:0;text-align:center}
-  .hero{padding-top:24px}
+  .hero{padding-top:24px;padding-bottom:18px}
+  .hero-cta{width:100%}
+  .hero-cta .btn-solid,.hero-cta .btn-ghost{flex:1 1 auto}
+  .hero-visual-frame{width:min(40vw,140px)}
+  .club-chips{flex-wrap:wrap}
+  .club-chips li{padding:8px 10px 8px 0;margin-right:0}
   .auth-card .links{flex-direction:column;align-items:stretch}
   .auth-card .links button{width:100%}
   .news-list.news-list-expanded{max-height:min(360px,55vh)}
@@ -1100,36 +1212,47 @@ a.feature-card:hover{
 <div class="platform" id="platformHome">
   <header class="platform-nav">
     <a class="brand" href="#top">
-      <span class="brand-mark">HK</span>
+      <span class="brand-mark"><img src="./bg-logo.png" alt="" width="42" height="42"></span>
       <span class="brand-text">弘光社團資訊平台 | 學生議會 | 社團服務</span>
     </a>
     <nav class="nav-links" aria-label="主要導覽">
       <a class="active" href="#top">首頁</a>
-      <a href="#event">評選與觀摩</a>
+      <a href="#schedule">評選與觀摩</a>
       <a href="#news">最新公告</a>
     </nav>
     <button type="button" class="nav-login" id="navLoginBtn">登入平台</button>
   </header>
 
   <section class="hero" id="top">
-    <div class="hero-countdown" aria-label="活動倒計時">
-      <div class="event-announcement home-event-announcement">
-        <div class="event-announcement-title">⏰ 活動重要時程</div>
-        <div id="homeEventAnnouncementContent" data-event-announcement>正在讀取活動倒數...</div>
-        <div id="homeEventAnnouncementRetry" class="mini-note event-announcement-retry" style="display:none;margin-top:8px">
-          時程載入失敗，目前顯示預設時程。<button type="button" class="action-btn action-primary" onclick="loadEventAnnouncement()">重試</button>
-        </div>
+    <div class="hero-copy">
+      <h1 class="hero-title">弘光社團資訊平台</h1>
+      <p class="hero-lead">115-1 社團評選。請用學號登入後上傳評選資料。</p>
+      <ul class="club-chips" aria-label="社團屬性">
+        <li>自治</li>
+        <li>學藝</li>
+        <li>體能</li>
+        <li>服務</li>
+        <li>康樂</li>
+      </ul>
+      <div class="hero-cta">
+        <button type="button" class="btn-solid" id="heroFocusLogin">前往登入</button>
+        <a class="btn-ghost" href="#schedule">查看評選時程</a>
+      </div>
+    </div>
+
+    <div class="hero-visual" aria-hidden="true">
+      <div class="hero-visual-frame">
+        <img src="./bg-logo.png" alt="" width="320" height="320">
       </div>
     </div>
 
     <aside class="auth-card" id="authCard" aria-label="學生登入">
       <h2 id="authCardTitle">登入平台</h2>
-      <p class="auth-sub" id="authCardSub">學生與社團幹部專屬入口 · 同頁完成註冊與改密</p>
+      <p class="auth-sub" id="authCardSub">請用學號與密碼登入</p>
       <div id="sessionBar" class="msg warn hidden"></div>
 
       <div id="authShell">
         <section id="panel-login" class="panel active">
-          <p class="auth-sub" style="margin-top:0">身分以伺服器確認的活動與社團為準。</p>
           <label for="loginStudentId">學號</label>
           <input id="loginStudentId" autocomplete="username" maxlength="20" placeholder="請輸入學號">
           <label for="loginPassword">密碼</label>
@@ -1185,13 +1308,13 @@ a.feature-card:hover{
       <section id="homeShell" class="hidden">
         <div class="msg ok" id="homeStatus">登入成功</div>
         <div class="identity" id="homeIdentity"></div>
-        <p class="auth-sub" id="driveUploadContext">登入後會開啟社團資料上傳工作區。</p>
-        <button class="primary" id="btnOpenDriveWorkspace" type="button">開啟上傳工作區</button>
+        <p class="auth-sub" id="driveUploadContext">登入後可上傳社團評選資料。</p>
+        <button class="primary" id="btnOpenDriveWorkspace" type="button">開始上傳</button>
         <button class="primary" id="btnLogout" type="button" style="margin-top:10px;background:transparent;color:var(--hk-navy);border:1px solid var(--hk-line)">登出</button>
       </section>
 
-      <div id="status" class="msg" role="status"></div>
-      <p class="auth-sub" id="envMeta" style="margin-bottom:0"></p>
+      <div id="status" class="msg hidden" role="status"></div>
+      <p class="auth-sub hidden" id="envMeta" style="margin-bottom:0" aria-hidden="true"></p>
     </aside>
   </section>
 
@@ -1199,7 +1322,7 @@ a.feature-card:hover{
     <div class="drive-ws-top">
       <div>
         <p class="drive-ws-club" id="driveWsClubTitle">社團資料上傳</p>
-        <p class="drive-ws-meta" id="driveWsMeta">登入後會顯示伺服器確認的活動、社團與截止。</p>
+        <p class="drive-ws-meta" id="driveWsMeta">登入後會顯示你的社團與截止時間。</p>
       </div>
       <div class="ws-actions">
         <button type="button" id="btnDriveBackHome">返回首頁</button>
@@ -1395,23 +1518,33 @@ a.feature-card:hover{
     </div>
   </section>
 
+  <section class="schedule-band" id="schedule" aria-label="活動倒計時">
+    <div class="event-announcement home-event-announcement">
+      <div class="event-announcement-title">活動重要時程</div>
+      <div id="homeEventAnnouncementContent" data-event-announcement>正在讀取活動倒數...</div>
+      <div id="homeEventAnnouncementRetry" class="mini-note event-announcement-retry" style="display:none;margin-top:8px">
+        時程載入失敗，目前顯示預設時程。<button type="button" class="action-btn action-primary" onclick="loadEventAnnouncement()">重試</button>
+      </div>
+    </div>
+  </section>
+
   <section class="feature-row" id="event" aria-label="活動資訊與相關表單">
     <article class="feature-card feature-card-static" aria-labelledby="infoTimeTitle">
-      <div class="feature-ico" aria-hidden="true">🕒</div>
+      <div class="feature-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 1.5"/></svg></div>
       <h3 id="infoTimeTitle">活動時間</h3>
       <p id="homeInfoEventTime" class="feature-value">載入中…</p>
     </article>
     <article class="feature-card feature-card-static" aria-labelledby="infoPlaceTitle">
-      <div class="feature-ico" aria-hidden="true">📍</div>
+      <div class="feature-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10z"/><circle cx="12" cy="11" r="2.2"/></svg></div>
       <h3 id="infoPlaceTitle">活動地點</h3>
       <p class="feature-value"><strong id="homeInfoVenue">毓麟館</strong></p>
     </article>
     <article class="feature-card feature-card-static" aria-labelledby="infoObsTitle">
-      <div class="feature-ico" aria-hidden="true">🗓️</div>
+      <div class="feature-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M8 3.5V7M16 3.5V7M3.5 10h17"/></svg></div>
       <h3 id="infoObsTitle">觀摩資訊</h3>
-      <p id="homeInfoObservation" class="feature-value">16:30–16:50</p>
+      <p id="homeInfoObservation" class="feature-value">15:30–16:00</p>
     </article>
-    <a class="feature-card" id="linkRelatedForm" href="https://docs.google.com/forms/d/e/1FAIpQLSdVMx0TbO5kcPrZ9HFQiuHkBOUziq1K67n5bsy91FJ8GMlPJg/viewform?usp=header" target="_blank" rel="noopener noreferrer"><div class="feature-ico" aria-hidden="true">📝</div><h3>相關表單</h3><p>開啟 Google 表單填寫相關資料（新分頁）。</p></a>
+    <a class="feature-card" id="linkRelatedForm" href="https://docs.google.com/forms/d/e/1FAIpQLSdVMx0TbO5kcPrZ9HFQiuHkBOUziq1K67n5bsy91FJ8GMlPJg/viewform?usp=header" target="_blank" rel="noopener noreferrer"><div class="feature-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h7l4 4V20a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 20V5A1.5 1.5 0 0 1 7 3.5z"/><path d="M14 3.5V8h4.5M8.5 12h7M8.5 15.5h7"/></svg></div><h3>相關表單</h3><p>開啟 Google 表單填寫相關資料（新分頁）。</p></a>
   </section>
 
   <section class="news-band" id="news">
@@ -1426,7 +1559,7 @@ a.feature-card:hover{
     <div>HK 弘光社團資訊平台 | 學生議會 | 社團服務</div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
       <a href="./privacy.html">隱私權政策</a>
-      <button type="button" id="btnFooterContact" style="border:0;background:transparent;color:#2f6ea3;cursor:pointer;font:inherit">聯絡學生議會</button>
+      <button type="button" id="btnFooterContact" style="border:0;background:transparent;color:var(--hk-accent);cursor:pointer;font:inherit">聯絡學生議會</button>
     </div>
   </footer>
 </div>
@@ -3694,7 +3827,7 @@ function deadlineStatus(
         return{
 
             text:
-                `🔥 今天截止・剩餘 ${p.hours} 小時 ${p.minutes} 分`,
+                `今天截止・剩餘 ${p.hours} 小時 ${p.minutes} 分`,
 
             className:
                 "deadline-today"
@@ -3718,7 +3851,7 @@ function deadlineStatus(
         return{
 
             text:
-                `🟢 剩餘 ${d} 天`,
+                `剩餘 ${d} 天`,
 
             className:
                 "deadline-green"
@@ -3735,7 +3868,7 @@ function deadlineStatus(
         return{
 
             text:
-                `🟡 剩餘 ${d} 天`,
+                `剩餘 ${d} 天`,
 
             className:
                 "deadline-yellow"
@@ -3748,7 +3881,7 @@ function deadlineStatus(
     return{
 
         text:
-            `⚠️ 剩餘 ${d} 天`,
+            `剩餘 ${d} 天`,
 
         className:
             "deadline-warning"
@@ -3821,12 +3954,12 @@ function eventMainStatus(
         taipeiDateKey(now)
     ){
 
-        return `🎉 活動就是今天！<br>距離開始還有 ${p.hours} 小時 ${p.minutes} 分`;
+        return `活動就是今天<br>距離開始還有 ${p.hours} 小時 ${p.minutes} 分`;
 
     }
 
 
-    return `🎯 距離社團評選<br>還有 ${p.days} 天 ${p.hours} 小時 ${p.minutes} 分`;
+    return `距離社團評選<br>還有 ${p.days} 天 ${p.hours} 小時 ${p.minutes} 分`;
 
 }
 
@@ -3911,7 +4044,7 @@ function renderEventAnnouncement(){
 
 
     const html=
-        `<div class="event-countdown-main"><div class="event-countdown-value">${eventMainStatus(config,now)}</div></div><div class="event-deadline-row"><div class="event-deadline-name">📂 資料繳交截止</div><div class="event-deadline-date">${escapeHtml(formatTaipeiDateTime(config.dataDeadline))}</div><span class="event-deadline-status ${data.className}">${escapeHtml(data.text)}</span></div><div class="event-deadline-row"><div class="event-deadline-name">📝 表單填寫截止</div><div class="event-deadline-date">${escapeHtml(formatTaipeiDateTime(config.formDeadline))}</div><span class="event-deadline-status ${form.className}">${escapeHtml(form.text)}</span></div><div class="event-time-line">📅 <b>${escapeHtml(formatTaipeiDate(config.eventStart))}</b><br>⏰ ${escapeHtml(formatTaipeiTime(config.eventStart))} - ${escapeHtml(formatTaipeiTime(config.eventEnd))}<br>📍 ${escapeHtml(HOME_EVENT_FACTS.venueCampus)} ${escapeHtml(HOME_EVENT_FACTS.venueName)}</div>`;
+        `<div class="event-countdown-main"><div class="event-countdown-value">${eventMainStatus(config,now)}</div></div><div class="event-deadline-row"><div class="event-deadline-name">資料繳交截止</div><div class="event-deadline-date">${escapeHtml(formatTaipeiDateTime(config.dataDeadline))}</div><span class="event-deadline-status ${data.className}">${escapeHtml(data.text)}</span></div><div class="event-deadline-row"><div class="event-deadline-name">表單填寫截止</div><div class="event-deadline-date">${escapeHtml(formatTaipeiDateTime(config.formDeadline))}</div><span class="event-deadline-status ${form.className}">${escapeHtml(form.text)}</span></div><div class="event-time-line"><b>${escapeHtml(formatTaipeiDate(config.eventStart))}</b><br>${escapeHtml(formatTaipeiTime(config.eventStart))} – ${escapeHtml(formatTaipeiTime(config.eventEnd))}<br>${escapeHtml(HOME_EVENT_FACTS.venueCampus)} ${escapeHtml(HOME_EVENT_FACTS.venueName)}</div>`;
 
     boxes.forEach(function(box){
         box.innerHTML=html;

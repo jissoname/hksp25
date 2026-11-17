@@ -971,6 +971,570 @@
     return fail("PocketBase 管理端尚未實作：" + name + "（此面板已隱藏）", "UNIMPLEMENTED");
   }
 
+  function defaultRankingConfig() {
+    return {
+      pass: { threshold: 70, comparator: "gte" },
+      ranking: {
+        eligibility: "all_completed",
+        incompletePolicy: "show_unranked",
+        tieMode: "shared",
+        rankStyle: "competition",
+        unresolvedTie: "shared",
+        tieBreakers: []
+      }
+    };
+  }
+
+  function rankingConfigOf(activity) {
+    var conf = (activity && activity.config_json) || {};
+    var base = defaultRankingConfig();
+    var saved = conf.rankingConfig && typeof conf.rankingConfig === "object" ? conf.rankingConfig : {};
+    return {
+      pass: Object.assign({}, base.pass, saved.pass || {}),
+      ranking: Object.assign({}, base.ranking, saved.ranking || {}, {
+        tieBreakers: Array.isArray((saved.ranking || {}).tieBreakers)
+          ? saved.ranking.tieBreakers
+          : []
+      })
+    };
+  }
+
+  function publishedSectionsOf(scoreConfig) {
+    return (scoreConfig.sections || []).filter(function (s) {
+      return s && s.enabled !== false && s.published === true;
+    });
+  }
+
+  function judgeCoversClub(judge, club, sectionId) {
+    if (!judge || judge.active === false) return false;
+    var sections = Array.isArray(judge.scoreSectionIds) ? judge.scoreSectionIds : [];
+    if (sections.length && sections.indexOf(sectionId) < 0) return false;
+    var cats = Array.isArray(judge.categories) ? judge.categories : [];
+    if (!cats.length) return true;
+    var cat = String(club.category || "").trim();
+    return cats.indexOf(cat) >= 0;
+  }
+
+  function scoreBucket(maxScore) {
+    return {
+      averageScore: null,
+      currentScore: null,
+      finalScore: null,
+      maxScore: Number(maxScore) || 0,
+      complete: false,
+      submittedCount: 0,
+      assignedCount: 0,
+      reopenedCount: 0
+    };
+  }
+
+  async function loadAggregationContext() {
+    var activity = await getActivityRecord();
+    var conf = activity.config_json || {};
+    var scoreConfig = conf.scoreConfig || defaultScoreConfig();
+    var rankingConfig = rankingConfigOf(activity);
+    var judges = (await pb().collection(C().staff).getFullList({
+      filter: 'role="judge" && active=true',
+      sort: "email"
+    })).map(mapJudgeAdmin);
+    var clubs = await pb().collection(C().clubs).getFullList({
+      filter: 'activity="' + activity.id + '" && active=true',
+      sort: "name"
+    });
+    var scores = await pb().collection(C().scores).getFullList({
+      filter: 'activity="' + activity.id + '"'
+    });
+    var byKey = {};
+    scores.forEach(function (row) {
+      byKey[row.judge + "::" + row.club + "::" + row.section_id] = row;
+    });
+    return {
+      activity: activity,
+      scoreConfig: scoreConfig,
+      rankingConfig: rankingConfig,
+      judges: judges,
+      clubs: clubs,
+      byKey: byKey
+    };
+  }
+
+  function buildClubAggregation(ctx) {
+    var sections = publishedSectionsOf(ctx.scoreConfig);
+    var totalMax = sections.reduce(function (sum, s) {
+      return sum + (Number(s.maxScore) || 0);
+    }, 0);
+    var clubs = ctx.clubs.map(function (club) {
+      var sectionScores = {};
+      var groupScores = {};
+      var missing = 0;
+      var reopenedSectionCount = 0;
+      var allComplete = sections.length > 0;
+      var finalTotal = 0;
+      var currentTotal = 0;
+      var hasAnyCurrent = false;
+      var sectionDetails = [];
+
+      sections.forEach(function (section) {
+        var assigned = ctx.judges.filter(function (j) {
+          return judgeCoversClub(j, club, section.id);
+        });
+        if (!assigned.length) missing += 1;
+        var bucket = scoreBucket(section.maxScore);
+        bucket.assignedCount = assigned.length;
+        var values = [];
+        var judgeRows = assigned.map(function (judge) {
+          var row = ctx.byKey[judge.id + "::" + club.id + "::" + section.id];
+          var answers = (row && row.answers_json) || {};
+          var reopened = !!(answers && answers.reopened);
+          var submitted = !!(row && row.status === "submitted" && !reopened);
+          if (reopened) bucket.reopenedCount += 1;
+          if (submitted) {
+            bucket.submittedCount += 1;
+            values.push(Number(row.score) || 0);
+          }
+          return {
+            judgeId: judge.id,
+            judgeName: judge.displayName || judge.name || judge.email,
+            status: !row ? "notStarted" : reopened ? "reopened" : row.status === "submitted" ? "submitted" : "draft",
+            score: row ? Number(row.score) || 0 : null,
+            submittedAt: row && row.submitted_at ? row.submitted_at : null
+          };
+        });
+        if (values.length) {
+          var avg = values.reduce(function (a, b) {
+            return a + b;
+          }, 0) / values.length;
+          bucket.averageScore = avg;
+          bucket.currentScore = avg;
+          hasAnyCurrent = true;
+          currentTotal += avg;
+        }
+        bucket.complete =
+          assigned.length > 0 &&
+          bucket.submittedCount === assigned.length &&
+          bucket.reopenedCount === 0;
+        if (bucket.complete) {
+          bucket.finalScore = bucket.averageScore;
+          finalTotal += bucket.finalScore;
+        } else {
+          allComplete = false;
+        }
+        if (bucket.reopenedCount > 0) reopenedSectionCount += 1;
+        sectionScores[section.id] = bucket;
+        // 舊 UI 欄位相容：若大項／分類 id 剛好對上就一併填
+        if (section.id === "dataReview" || section.id === "fieldReview") {
+          sectionScores[section.id] = bucket;
+        }
+        (section.groups || []).forEach(function (g) {
+          if (g && g.id === "routinePerformance") {
+            groupScores.routinePerformance = Object.assign({}, bucket, {
+              maxScore: Number(g.maxScore) || bucket.maxScore
+            });
+          }
+        });
+        sectionDetails.push({
+          sectionId: section.id,
+          sectionName: section.name,
+          maxScore: Number(section.maxScore) || 0,
+          complete: bucket.complete,
+          averageScore: bucket.averageScore,
+          finalScore: bucket.finalScore,
+          currentScore: bucket.currentScore,
+          judges: judgeRows
+        });
+      });
+
+      return {
+        clubId: club.id,
+        permanentClubId: String(club.permanent_club_id || "").toUpperCase(),
+        clubName: club.name,
+        category: club.category || "",
+        complete: allComplete && missing === 0,
+        missingJudgeAssignments: missing,
+        reopenedSectionCount: reopenedSectionCount,
+        finalTotalScore: allComplete && missing === 0 ? finalTotal : null,
+        currentTotalScore: hasAnyCurrent ? currentTotal : null,
+        totalMaxScore: totalMax || Number(ctx.scoreConfig.totalMaxScore) || 0,
+        sectionScores: sectionScores,
+        groupScores: groupScores,
+        sections: sectionDetails
+      };
+    });
+
+    var summary = {
+      completeClubCount: 0,
+      incompleteClubCount: 0,
+      reopenedClubCount: 0,
+      missingAssignmentClubCount: 0
+    };
+    clubs.forEach(function (c) {
+      if (c.missingJudgeAssignments > 0) summary.missingAssignmentClubCount += 1;
+      if (c.reopenedSectionCount > 0) summary.reopenedClubCount += 1;
+      if (c.complete) summary.completeClubCount += 1;
+      else summary.incompleteClubCount += 1;
+    });
+
+    return {
+      clubs: clubs,
+      summary: summary,
+      configRevision: Number(ctx.scoreConfig.revision) || 1,
+      totalMaxScore: totalMax || Number(ctx.scoreConfig.totalMaxScore) || 0,
+      generatedAt: new Date().toISOString()
+    };
+  }
+
+  function availableMetricsOf(scoreConfig) {
+    var metrics = [
+      {
+        sourceType: "total",
+        sourceId: "finalTotalScore",
+        name: "最終總分",
+        maxScore: Number(scoreConfig.totalMaxScore) || null
+      }
+    ];
+    publishedSectionsOf(scoreConfig).forEach(function (section) {
+      metrics.push({
+        sourceType: "section",
+        sourceId: section.id,
+        name: section.name || section.id,
+        maxScore: Number(section.maxScore) || 0
+      });
+      (section.groups || []).forEach(function (g) {
+        if (!g) return;
+        metrics.push({
+          sourceType: "group",
+          sourceId: g.id,
+          name: (section.name || "") + " / " + (g.name || g.id),
+          maxScore: Number(g.maxScore) || 0
+        });
+      });
+    });
+    return metrics;
+  }
+
+  function metricValue(clubAgg, sourceType, sourceId) {
+    if (sourceType === "total" && sourceId === "finalTotalScore") {
+      return clubAgg.finalTotalScore;
+    }
+    if (sourceType === "section") {
+      var sec = clubAgg.sectionScores && clubAgg.sectionScores[sourceId];
+      if (!sec) return null;
+      if (sec.finalScore != null) return sec.finalScore;
+      if (sec.currentScore != null) return sec.currentScore;
+      return sec.averageScore;
+    }
+    if (sourceType === "group") {
+      var grp = clubAgg.groupScores && clubAgg.groupScores[sourceId];
+      if (!grp) return null;
+      if (grp.finalScore != null) return grp.finalScore;
+      if (grp.currentScore != null) return grp.currentScore;
+      return grp.averageScore;
+    }
+    return null;
+  }
+
+  function passesThreshold(score, pass) {
+    if (score === null || score === undefined || !Number.isFinite(Number(score))) return null;
+    var threshold = Number(pass && pass.threshold);
+    if (!Number.isFinite(threshold)) threshold = 70;
+    if ((pass && pass.comparator) === "gt") return Number(score) > threshold;
+    return Number(score) >= threshold;
+  }
+
+  function compareRankRows(a, b, rankingConfig, clubMap) {
+    var totalDiff = (Number(b.finalTotalScore) || 0) - (Number(a.finalTotalScore) || 0);
+    if (totalDiff) return totalDiff;
+    var mode = (rankingConfig.ranking && rankingConfig.ranking.tieMode) || "shared";
+    if (mode !== "rules") return 0;
+    var breakers = (rankingConfig.ranking && rankingConfig.ranking.tieBreakers) || [];
+    for (var i = 0; i < breakers.length; i++) {
+      var rule = breakers[i] || {};
+      var av = metricValue(clubMap[a.clubName] || {}, rule.sourceType, rule.sourceId);
+      var bv = metricValue(clubMap[b.clubName] || {}, rule.sourceType, rule.sourceId);
+      var an = av === null || av === undefined ? -Infinity : Number(av);
+      var bn = bv === null || bv === undefined ? -Infinity : Number(bv);
+      var diff = rule.direction === "asc" ? an - bn : bn - an;
+      if (diff) return diff;
+    }
+    return 0;
+  }
+
+  function buildRankingPayload(ctx, aggregation) {
+    var rankingConfig = ctx.rankingConfig;
+    var clubMap = {};
+    aggregation.clubs.forEach(function (c) {
+      clubMap[c.clubName] = c;
+    });
+    var byCategory = {};
+    aggregation.clubs.forEach(function (club) {
+      var cat = club.category || "未分類";
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push(club);
+    });
+    var categories = Object.keys(byCategory)
+      .sort(function (a, b) {
+        return a.localeCompare(b, "zh-Hant");
+      })
+      .map(function (category) {
+        var rows = byCategory[category].map(function (club) {
+          var complete = !!club.complete;
+          var eligible =
+            (rankingConfig.ranking && rankingConfig.ranking.eligibility) === "all_completed"
+              ? complete
+              : true;
+          var passed = complete ? passesThreshold(club.finalTotalScore, rankingConfig.pass) : null;
+          return {
+            clubName: club.clubName,
+            permanentClubId: club.permanentClubId,
+            category: category,
+            complete: complete,
+            eligible: eligible,
+            passed: passed,
+            finalTotalScore: complete ? club.finalTotalScore : null,
+            totalMaxScore: club.totalMaxScore,
+            displayRank: null,
+            rankStatus: !complete
+              ? "incomplete"
+              : !eligible
+                ? "not_eligible"
+                : "ranked"
+          };
+        });
+
+        var rankable = rows.filter(function (r) {
+          return r.complete && r.eligible;
+        });
+        rankable.sort(function (a, b) {
+          return compareRankRows(a, b, rankingConfig, clubMap);
+        });
+
+        var style = (rankingConfig.ranking && rankingConfig.ranking.rankStyle) || "competition";
+        var tieMode = (rankingConfig.ranking && rankingConfig.ranking.tieMode) || "shared";
+        var i = 0;
+        var denseRank = 0;
+        while (i < rankable.length) {
+          var j = i + 1;
+          while (
+            j < rankable.length &&
+            compareRankRows(rankable[i], rankable[j], rankingConfig, clubMap) === 0
+          ) {
+            j += 1;
+          }
+          denseRank += 1;
+          var rank = style === "dense" ? denseRank : i + 1;
+          var tied = j - i > 1;
+          for (var k = i; k < j; k++) {
+            rankable[k].displayRank = String(rank);
+            if (tied) {
+              rankable[k].rankStatus = tieMode === "manual" ? "tie_pending" : "tied";
+            } else {
+              rankable[k].rankStatus = "ranked";
+            }
+          }
+          i = j;
+        }
+
+        if ((rankingConfig.ranking && rankingConfig.ranking.incompletePolicy) === "hide") {
+          rows = rows.filter(function (r) {
+            return r.complete;
+          });
+        }
+
+        return {
+          category: category,
+          totalClubCount: byCategory[category].length,
+          rows: rows
+        };
+      });
+
+    var summary = {
+      clubCount: aggregation.clubs.length,
+      completedCount: 0,
+      passedCount: 0,
+      failedCount: 0,
+      incompleteCount: 0
+    };
+    aggregation.clubs.forEach(function (c) {
+      if (!c.complete) {
+        summary.incompleteCount += 1;
+        return;
+      }
+      summary.completedCount += 1;
+      var passed = passesThreshold(c.finalTotalScore, rankingConfig.pass);
+      if (passed) summary.passedCount += 1;
+      else summary.failedCount += 1;
+    });
+
+    return {
+      categories: categories,
+      summary: summary,
+      config: rankingConfig,
+      availableMetrics: availableMetricsOf(ctx.scoreConfig),
+      totalMaxScore: aggregation.totalMaxScore,
+      generatedAt: new Date().toISOString(),
+      source: "pocketbase",
+      updateTime: String(ctx.activity.updated || new Date().toISOString())
+    };
+  }
+
+  async function adminScoreAggregationSummary() {
+    var ctx = await loadAggregationContext();
+    return ok(buildClubAggregation(ctx));
+  }
+
+  async function adminScoreAggregation() {
+    return adminScoreAggregationSummary();
+  }
+
+  async function adminRanking() {
+    var ctx = await loadAggregationContext();
+    var aggregation = buildClubAggregation(ctx);
+    return ok(buildRankingPayload(ctx, aggregation));
+  }
+
+  async function adminSaveRankingConfig(data) {
+    var activity = await getActivityRecord();
+    var conf = Object.assign({}, activity.config_json || {});
+    var next = data.config || data.rankingConfig || null;
+    if (!next || typeof next !== "object") return fail("缺少排名規則。");
+    conf.rankingConfig = {
+      pass: Object.assign({}, defaultRankingConfig().pass, next.pass || {}),
+      ranking: Object.assign({}, defaultRankingConfig().ranking, next.ranking || {}, {
+        tieBreakers: Array.isArray((next.ranking || {}).tieBreakers)
+          ? next.ranking.tieBreakers
+          : []
+      })
+    };
+    var updated = await pb().collection(C().activities).update(activity.id, {
+      config_json: conf
+    });
+    var ctx = await loadAggregationContext();
+    return ok({
+      config: conf.rankingConfig,
+      availableMetrics: availableMetricsOf(ctx.scoreConfig),
+      source: "pocketbase",
+      updateTime: String(updated.updated || new Date().toISOString())
+    });
+  }
+
+  function csvEscape(value) {
+    var s = value === null || value === undefined ? "" : String(value);
+    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function toBase64Utf8(text) {
+    return btoa(unescape(encodeURIComponent(text)));
+  }
+
+  function buildCategoryRankingCsv(ranking) {
+    var lines = ["屬性,名次,社團,永久社團編號,總分,滿分,完成,及格,狀態"];
+    (ranking.categories || []).forEach(function (cat) {
+      (cat.rows || []).forEach(function (row) {
+        lines.push(
+          [
+            cat.category,
+            row.displayRank || "",
+            row.clubName,
+            row.permanentClubId || "",
+            row.finalTotalScore === null || row.finalTotalScore === undefined
+              ? ""
+              : row.finalTotalScore,
+            row.totalMaxScore,
+            row.complete ? "Y" : "N",
+            row.passed === true ? "及格" : row.passed === false ? "不及格" : "",
+            row.rankStatus || ""
+          ]
+            .map(csvEscape)
+            .join(",")
+        );
+      });
+    });
+    return "\uFEFF" + lines.join("\r\n");
+  }
+
+  function buildOrganizerAuditCsv(aggregation) {
+    var lines = [
+      "社團,屬性,永久社團編號,完成,缺少評審,待重送大項,目前總分,正式總分,滿分"
+    ];
+    (aggregation.clubs || []).forEach(function (club) {
+      lines.push(
+        [
+          club.clubName,
+          club.category,
+          club.permanentClubId || "",
+          club.complete ? "Y" : "N",
+          club.missingJudgeAssignments || 0,
+          club.reopenedSectionCount || 0,
+          club.currentTotalScore === null || club.currentTotalScore === undefined
+            ? ""
+            : club.currentTotalScore,
+          club.finalTotalScore === null || club.finalTotalScore === undefined
+            ? ""
+            : club.finalTotalScore,
+          club.totalMaxScore
+        ]
+          .map(csvEscape)
+          .join(",")
+      );
+      (club.sections || []).forEach(function (sec) {
+        (sec.judges || []).forEach(function (j) {
+          lines.push(
+            [
+              club.clubName,
+              sec.sectionName,
+              j.judgeName,
+              j.status,
+              j.score === null || j.score === undefined ? "" : j.score,
+              "",
+              "",
+              "",
+              sec.maxScore
+            ]
+              .map(csvEscape)
+              .join(",")
+          );
+        });
+      });
+    });
+    return "\uFEFF" + lines.join("\r\n");
+  }
+
+  async function adminCategoryRankingExcelExport() {
+    var ctx = await loadAggregationContext();
+    var aggregation = buildClubAggregation(ctx);
+    var ranking = buildRankingPayload(ctx, aggregation);
+    var csv = buildCategoryRankingCsv(ranking);
+    var stamp = new Date().toISOString().slice(0, 10);
+    return ok({
+      base64: toBase64Utf8(csv),
+      mimeType: "text/csv;charset=utf-8",
+      fileName: "hksp-category-ranking-" + stamp + ".csv",
+      generatedAt: ranking.generatedAt,
+      summary: {
+        categoryCount: (ranking.categories || []).length,
+        rowCount: aggregation.clubs.length
+      }
+    });
+  }
+
+  async function adminOrganizerAuditExcelExport() {
+    var ctx = await loadAggregationContext();
+    var aggregation = buildClubAggregation(ctx);
+    var csv = buildOrganizerAuditCsv(aggregation);
+    var stamp = new Date().toISOString().slice(0, 10);
+    return ok({
+      base64: toBase64Utf8(csv),
+      mimeType: "text/csv;charset=utf-8",
+      fileName: "hksp-organizer-audit-" + stamp + ".csv",
+      generatedAt: aggregation.generatedAt,
+      summary: {
+        clubCount: aggregation.clubs.length,
+        completeClubCount: aggregation.summary.completeClubCount
+      }
+    });
+  }
+
   var handlers = {
     adminLogin: adminLogin,
     adminLogout: adminLogout,
@@ -1001,7 +1565,13 @@
     adminSaveScoreConfig: adminSaveScoreConfig,
     adminSetScorePhasePublished: adminSetScorePhasePublished,
     adminUnlockJudgeScore: adminUnlockJudgeScore,
-    adminJudgeScoreProgress: adminJudgeScoreProgress
+    adminJudgeScoreProgress: adminJudgeScoreProgress,
+    adminScoreAggregationSummary: adminScoreAggregationSummary,
+    adminScoreAggregation: adminScoreAggregation,
+    adminRanking: adminRanking,
+    adminSaveRankingConfig: adminSaveRankingConfig,
+    adminCategoryRankingExcelExport: adminCategoryRankingExcelExport,
+    adminOrganizerAuditExcelExport: adminOrganizerAuditExcelExport
   };
 
   async function request(payload) {
@@ -1036,7 +1606,7 @@
     document.querySelectorAll(".panel").forEach(function (panel) {
       if (
         !panel.querySelector(
-          "#clubList,#clubStudentList,#eventMeta,#cloudUploadMeta,#uploadGateStatus,#judgeList,#sectionsEditor,#progressMeta,#judgeProgressList"
+          "#clubList,#clubStudentList,#eventMeta,#cloudUploadMeta,#uploadGateStatus,#judgeList,#sectionsEditor,#progressMeta,#judgeProgressList,#aggregationMeta,#rankingMeta,#categoryRankingExcelMeta,#organizerAuditExcelMeta"
         )
       ) {
         panel.hidden = true;
@@ -1054,7 +1624,8 @@
     if (title) title.textContent = "PocketBase 管理中心";
     var subtitle = document.querySelector(".hero .sub");
     if (subtitle) {
-      subtitle.textContent = "社團、學生、評審、活動時程與上傳窗口（Drive 代傳已擱置）";
+      subtitle.textContent =
+        "社團、評審、時程、成績彙整／排名與 CSV 匯出（Drive 代傳已擱置；評審 PDF 確認單尚未接）";
     }
     var emailInput = $("adminEmail");
     if (emailInput && !String(emailInput.value || "").trim()) {

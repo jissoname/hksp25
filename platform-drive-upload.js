@@ -2936,7 +2936,7 @@
     hideReplaceConfirm();
     setWorkspaceView("picker");
     var ctx = $("driveUploadContext");
-    if (ctx) ctx.textContent = "登入後會顯示伺服器確認的活動與社團。";
+    if (ctx) ctx.textContent = "登入後可上傳社團評選資料。";
     var gate = $("driveUploadGate");
     if (gate) {
       gate.classList.add("hidden");
@@ -3266,7 +3266,7 @@
     var meta = $("driveWsMeta");
     if (!serverCtx) {
       if (title) title.textContent = "社團資料上傳";
-      if (meta) meta.textContent = "登入後會顯示伺服器確認的活動、社團與截止。";
+      if (meta) meta.textContent = "登入後會顯示你的社團與截止時間。";
       return;
     }
     if (title) {
