@@ -1,0 +1,316 @@
+{
+  "runId": "2026-11-17T20-13-52-769Z",
+  "at": "2026-11-17T20:14:07.550Z",
+  "base": "https://db.keson.pro",
+  "totals": {
+    "pass": 50,
+    "criticalFail": 0,
+    "softFail": 0,
+    "all": 50
+  },
+  "criticalFails": [],
+  "softFails": [],
+  "checks": [
+    {
+      "id": "local.pb-config.usePocketBase",
+      "ok": true,
+      "severity": "critical",
+      "detail": "usePocketBase=true"
+    },
+    {
+      "id": "local.pb-config.useDriveProxyOff",
+      "ok": true,
+      "severity": "critical",
+      "detail": "useDriveProxy=false"
+    },
+    {
+      "id": "local.pb-config.noSecrets",
+      "ok": true,
+      "severity": "critical",
+      "detail": "no admin/oauth secrets in pb-config"
+    },
+    {
+      "id": "local.env.exists",
+      "ok": true,
+      "severity": "soft",
+      "detail": ".env present for ops"
+    },
+    {
+      "id": "local.env.notTracked",
+      "ok": true,
+      "severity": "soft",
+      "detail": "env should stay gitignored"
+    },
+    {
+      "id": "pb.health",
+      "ok": true,
+      "severity": "critical",
+      "detail": "status=200 762ms"
+    },
+    {
+      "id": "pb.activity",
+      "ok": true,
+      "severity": "critical",
+      "detail": "id=oec367vkd3u6167"
+    },
+    {
+      "id": "pb.clubs.active",
+      "ok": true,
+      "severity": "critical",
+      "detail": "total=70"
+    },
+    {
+      "id": "pb.collection.hksp_students",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "pb.collection.hksp_memberships",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "pb.collection.hksp_folders",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "pb.collection.hksp_uploads",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "pb.collection.hksp_scores",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "pb.collection.hksp_staff",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "pb.collection.hksp_audit_events",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "pb.scoreConfig.sections",
+      "ok": true,
+      "severity": "critical",
+      "detail": "rev=46 sections=5 judgeAssignable≈5"
+    },
+    {
+      "id": "pb.scheduleNote",
+      "ok": true,
+      "severity": "soft",
+      "detail": "scheduleNote=布置10:30-11:50；開幕暨實地審查13:15-15:30；觀摩15:30-16:00；閉幕16:00-16:30"
+    },
+    {
+      "id": "ops.adminAuth",
+      "ok": true,
+      "severity": "soft",
+      "detail": "superuser ok"
+    },
+    {
+      "id": "auth.staff",
+      "ok": true,
+      "severity": "critical",
+      "detail": "email=hksp_6188@hk.edu.tw role=admin"
+    },
+    {
+      "id": "auth.judgeDemo",
+      "ok": true,
+      "severity": "soft",
+      "detail": "http=200"
+    },
+    {
+      "id": "auth.studentDemo",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "pb.scores.submittedReadable",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 n=1"
+    },
+    {
+      "id": "smoke.student.create",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "smoke.student.auth",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "smoke.membership",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "smoke.changePassword",
+      "ok": true,
+      "severity": "soft",
+      "detail": "http=200"
+    },
+    {
+      "id": "smoke.folder",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "smoke.upload",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200"
+    },
+    {
+      "id": "smoke.upload.confirm",
+      "ok": true,
+      "severity": "critical",
+      "detail": "total=1"
+    },
+    {
+      "id": "smoke.cleanup",
+      "ok": true,
+      "severity": "critical",
+      "detail": "deleted debug rows"
+    },
+    {
+      "id": "fe.hksp25.vercel.app/",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 110ms"
+    },
+    {
+      "id": "fe.hksp25.vercel.app/index.html",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 408ms"
+    },
+    {
+      "id": "fe.hksp25.vercel.app/judge.html",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 308ms"
+    },
+    {
+      "id": "fe.hksp25.vercel.app/admin.html",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 133ms"
+    },
+    {
+      "id": "fe.hksp25.vercel.app/privacy.html",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 88ms"
+    },
+    {
+      "id": "fe.hksp25.vercel.app/pb-config.js",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 45ms"
+    },
+    {
+      "id": "fe.hksp25.vercel.app/judge.cacheBust",
+      "ok": true,
+      "severity": "soft",
+      "detail": "expects score-persist-4"
+    },
+    {
+      "id": "fe.hksp25.vercel.app/pb-config.flags",
+      "ok": true,
+      "severity": "critical",
+      "detail": "PB on / Drive off"
+    },
+    {
+      "id": "fe.hksp25-1uox.vercel.app/",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 131ms"
+    },
+    {
+      "id": "fe.hksp25-1uox.vercel.app/index.html",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 153ms"
+    },
+    {
+      "id": "fe.hksp25-1uox.vercel.app/judge.html",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 79ms"
+    },
+    {
+      "id": "fe.hksp25-1uox.vercel.app/admin.html",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 92ms"
+    },
+    {
+      "id": "fe.hksp25-1uox.vercel.app/privacy.html",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 71ms"
+    },
+    {
+      "id": "fe.hksp25-1uox.vercel.app/pb-config.js",
+      "ok": true,
+      "severity": "critical",
+      "detail": "http=200 42ms"
+    },
+    {
+      "id": "fe.hksp25-1uox.vercel.app/judge.cacheBust",
+      "ok": true,
+      "severity": "soft",
+      "detail": "expects score-persist-4"
+    },
+    {
+      "id": "fe.hksp25-1uox.vercel.app/pb-config.flags",
+      "ok": true,
+      "severity": "critical",
+      "detail": "PB on / Drive off"
+    },
+    {
+      "id": "fe.privacy.formal",
+      "ok": true,
+      "severity": "soft",
+      "detail": "privacy page reachable"
+    },
+    {
+      "id": "local.judge.recentSubmitGuard",
+      "ok": true,
+      "severity": "critical",
+      "detail": "flash-gone guards present"
+    },
+    {
+      "id": "local.judge.scoreMap",
+      "ok": true,
+      "severity": "critical",
+      "detail": "multi-key score map present"
+    },
+    {
+      "id": "evidence.stressWrap",
+      "ok": true,
+      "severity": "soft",
+      "detail": "66-concurrent PASS report"
+    }
+  ],
+  "verdict": "PASS"
+}
