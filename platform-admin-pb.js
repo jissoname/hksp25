@@ -918,12 +918,116 @@
     };
   }
 
+  function scoreNum(v) {
+    if (v === "" || v === null || v === undefined) return 0;
+    var n = Number(v);
+    if (!Number.isFinite(n)) return 0;
+    return Math.round(n * 10000) / 10000;
+  }
+
+  /** Mirror admin.html validateClientScore — required by publish gate. */
+  function validateScoreConfig(cfg) {
+    var errors = [];
+    var config = cfg && typeof cfg === "object" ? cfg : { sections: [], totalMaxScore: 0 };
+    var sections = (config.sections || []).filter(function (s) {
+      return s && s.enabled !== false;
+    });
+
+    if (scoreNum(config.totalMaxScore) < 0) {
+      errors.push("總配分不得小於 0。");
+    }
+
+    sections.forEach(function (s) {
+      if (!String(s.name || "").trim()) errors.push("有大項尚未填寫名稱。");
+      if (scoreNum(s.maxScore) < 0) {
+        errors.push("大項「" + (s.name || "") + "」不得為負分。");
+      }
+      var groups = (s.groups || []).filter(function (g) {
+        return g && g.enabled !== false;
+      });
+      if (!groups.length) {
+        errors.push("大項「" + (s.name || "") + "」至少需要一個啟用分類。");
+      }
+      var groupsSum = 0;
+      groups.forEach(function (g) {
+        if (!String(g.name || "").trim()) {
+          errors.push("「" + (s.name || "") + "」有分類未命名。");
+        }
+        var criteria = (g.criteria || []).filter(function (c) {
+          return c && c.enabled !== false;
+        });
+        if (!criteria.length) {
+          errors.push(
+            "分類「" + (s.name || "") + " → " + (g.name || "") + "」至少需要一個啟用小項。"
+          );
+        }
+        var criteriaSum = 0;
+        criteria.forEach(function (c) {
+          if (!String(c.name || "").trim()) {
+            errors.push(
+              "「" + (s.name || "") + " → " + (g.name || "") + "」有小項未命名。"
+            );
+          }
+          if (scoreNum(c.maxScore) < 0) {
+            errors.push("小項「" + (c.name || "") + "」不得為負分。");
+          }
+          criteriaSum += scoreNum(c.maxScore);
+        });
+        if (Math.abs(criteriaSum - scoreNum(g.maxScore)) > 0.000001) {
+          errors.push(
+            "分類「" +
+              (s.name || "") +
+              " → " +
+              (g.name || "") +
+              "」：設定 " +
+              scoreNum(g.maxScore) +
+              "，小項合計 " +
+              criteriaSum +
+              "。"
+          );
+        }
+        groupsSum += scoreNum(g.maxScore);
+      });
+      if (Math.abs(groupsSum - scoreNum(s.maxScore)) > 0.000001) {
+        errors.push(
+          "大項「" +
+            (s.name || "") +
+            "」：設定 " +
+            scoreNum(s.maxScore) +
+            "，分類合計 " +
+            groupsSum +
+            "。"
+        );
+      }
+    });
+
+    var sectionsSum = sections.reduce(function (a, s) {
+      return a + scoreNum(s.maxScore);
+    }, 0);
+    if (Math.abs(sectionsSum - scoreNum(config.totalMaxScore)) > 0.000001) {
+      errors.push(
+        "總配分設定 " +
+          scoreNum(config.totalMaxScore) +
+          "，啟用大項合計 " +
+          sectionsSum +
+          "。"
+      );
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors: errors,
+      total: sectionsSum
+    };
+  }
+
   async function adminGetScoreConfig() {
     var activity = await getActivityRecord();
     var conf = activity.config_json || {};
     var scoreConfig = conf.scoreConfig || defaultScoreConfig();
     return ok({
       config: scoreConfig,
+      validation: validateScoreConfig(scoreConfig),
       source: "pocketbase",
       updateTime: String(activity.updated || new Date().toISOString())
     });
@@ -934,19 +1038,25 @@
     var conf = Object.assign({}, activity.config_json || {});
     var next = data.config || data.scoreConfig || null;
     if (!next || typeof next !== "object") return fail("缺少配分表內容。");
+    // Validate the payload the admin editor sent (before syncing totals).
+    var validation = validateScoreConfig(next);
     next.revision = Number(conf.scoreConfig && conf.scoreConfig.revision) + 1 || 1;
     next.updatedAt = new Date().toISOString();
     var total = 0;
     (next.sections || []).forEach(function (s) {
       if (s && s.enabled !== false) total += Number(s.maxScore) || 0;
     });
-    next.totalMaxScore = total;
+    // Keep totalMaxScore aligned with enabled section max scores after save.
+    next.totalMaxScore = scoreNum(total);
     conf.scoreConfig = next;
     var updated = await pb().collection(C().activities).update(activity.id, {
       config_json: conf
     });
+    // Re-validate saved shape (post-sync) so publish gate matches stored config.
+    validation = validateScoreConfig(next);
     return ok({
       config: next,
+      validation: validation,
       source: "pocketbase",
       updateTime: String(updated.updated || next.updatedAt)
     });

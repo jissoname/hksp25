@@ -4165,6 +4165,23 @@ return;
 
 }
 
+const clientValidation =
+validateClientScore();
+
+if(
+!clientValidation.valid
+){
+
+toast(
+"❌ 配分尚未合理，不能發布"
+);
+
+renderScoreValidation();
+
+return;
+
+}
+
 const saved =
 await saveScoreConfig(
 true
@@ -4172,14 +4189,19 @@ true
 
 if(!saved)return;
 
+const serverValidation =
+saved.validation ||
+clientValidation;
+
 if(
-!saved.validation ||
-!saved.validation.valid
+!serverValidation.valid
 ){
 
 toast(
 "❌ 配分尚未合理，不能發布"
 );
+
+renderScoreValidation();
 
 return;
 
