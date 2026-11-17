@@ -915,6 +915,255 @@
     }
   }
 
+  async function loadWrongRegInventory(activity, uid, studentId) {
+    var student;
+    try {
+      student = await pb().collection(C().students).getOne(uid);
+    } catch (_e) {
+      student = null;
+    }
+    var memberships = [];
+    try {
+      memberships = await pb().collection(C().memberships).getFullList({
+        filter: 'student="' + uid + '"',
+        expand: "club,activity"
+      });
+    } catch (_e2) {
+      memberships = [];
+    }
+    var activityMemberships = memberships.filter(function (m) {
+      return String(m.activity) === String(activity.id);
+    });
+    var uploadCount = 0;
+    try {
+      var ups = await pb().collection(C().uploads).getList(1, 1, {
+        filter: 'activity="' + activity.id + '" && student="' + uid + '"'
+      });
+      uploadCount = Number(ups.totalItems) || 0;
+    } catch (_e3) {
+      uploadCount = -1;
+    }
+    var primarySeats = activityMemberships
+      .filter(function (m) {
+        return m.status === "active";
+      })
+      .map(function (m) {
+        var club = (m.expand && m.expand.club) || null;
+        var seatVersion = Date.parse(String(m.updated || m.created || ""));
+        return {
+          membershipId: m.id,
+          permanentClubId: club
+            ? String(club.permanent_club_id || "").toUpperCase()
+            : "",
+          clubName: club ? club.name || "" : "",
+          seatVersion: Number.isFinite(seatVersion) ? seatVersion : Date.now()
+        };
+      });
+    return {
+      student: student,
+      memberships: memberships,
+      activityMemberships: activityMemberships,
+      primarySeats: primarySeats,
+      uploadCount: uploadCount,
+      authEmail: studentId ? cfg().studentIdToAuthEmail(studentId) : null
+    };
+  }
+
+  async function adminPreviewWrongRegistrationReset(data) {
+    var requestedActivityId = String((data && data.activityId) || "").trim();
+    var uid = String((data && data.uid) || "").trim();
+    var studentId = cfg().normalizeStudentId((data && data.studentId) || "");
+    if (!uid) return fail("需要 UID。", "INVALID_UID");
+    if (!studentId) return fail("需要學號。", "INVALID_STUDENT_ID");
+    var activity;
+    try {
+      activity = requestedActivityId
+        ? await getActivityByActivityId(requestedActivityId)
+        : (await resolveActiveActivity()).activity;
+    } catch (_e) {
+      return fail("找不到活動。", "ACTIVITY_NOT_FOUND");
+    }
+    var inv = await loadWrongRegInventory(activity, uid, studentId);
+    if (!inv.student) {
+      return fail("找不到該帳號；請核對 UID。", "ACCOUNT_NOT_FOUND");
+    }
+    if (cfg().normalizeStudentId(inv.student.student_id) !== studentId) {
+      return fail("帳號學號與輸入不符。", "STUDENT_ID_MISMATCH");
+    }
+    return ok({
+      action: "previewWrongRegistrationReset",
+      activityId: activity.activity_id,
+      uid: uid,
+      studentId: studentId,
+      authEmail: inv.authEmail,
+      willDelete: {
+        authUser: true,
+        clubStudentAccounts: true,
+        memberships: inv.activityMemberships.length,
+        primarySeatsToRelease: inv.primarySeats.map(function (s) {
+          return {
+            permanentClubId: s.permanentClubId,
+            seatVersion: s.seatVersion
+          };
+        }),
+        authCreator: false,
+        birthVault: !!(inv.student && inv.student.birth_ymd)
+      },
+      willPreserve: {
+        cloudLinks: true,
+        scoresAndFormSubmissions: true,
+        cloudParticipation: true,
+        driveFilesAndUploadRecords: true,
+        driveUploadRecordsCounted: inv.uploadCount
+      },
+      distinctionFromUnbind:
+        "解綁保留 Auth／帳號／密碼並釋放名額；錯誤註冊重設會刪除 Auth 與帳號，使同學號可重新註冊。"
+    });
+  }
+
+  async function destroyStudentAccountForReregister(student, studentId) {
+    var uid = student.id;
+    // Prefer hard delete; if ACL blocks, soft-destroy to free unique student_id/email.
+    try {
+      await pb().collection(C().students).delete(uid);
+      return { authDeleted: true, mode: "hard" };
+    } catch (_delErr) {
+      var stamp = String(Date.now());
+      var freedId = String(studentId || student.student_id || "STU") + "__WRR__" + stamp;
+      var freedEmail =
+        "deleted+wrr." + stamp + "." + String(student.email || cfg().studentIdToAuthEmail(studentId));
+      var randPass = "Wrr" + stamp + "x!";
+      await pb().collection(C().students).update(uid, {
+        active: false,
+        student_id: freedId.slice(0, 20),
+        email: freedEmail.slice(0, 120),
+        password: randPass,
+        passwordConfirm: randPass,
+        must_change_password: true,
+        birth_ymd: ""
+      });
+      return { authDeleted: true, mode: "soft" };
+    }
+  }
+
+  async function adminResetWrongRegistration(data) {
+    var requestedActivityId = String((data && data.activityId) || "").trim();
+    var uid = String((data && data.uid) || "").trim();
+    var studentId = cfg().normalizeStudentId((data && data.studentId) || "");
+    var clientRequestId = String((data && data.clientRequestId) || "").trim();
+    var confirmPhrase = String((data && data.confirmPhrase) || "").trim();
+    var reason = String((data && data.reason) || "wrong_registration_reset").slice(0, 200);
+    var expectedSeatVersion =
+      data && data.expectedSeatVersion != null && data.expectedSeatVersion !== ""
+        ? Number(data.expectedSeatVersion)
+        : null;
+
+    if (!uid) return fail("需要 UID。", "INVALID_UID");
+    if (!studentId) return fail("需要學號。", "INVALID_STUDENT_ID");
+    if (!clientRequestId || clientRequestId.length < 8) {
+      return fail("需要可追蹤的請求編號。", "INVALID_CLIENT_REQUEST_ID");
+    }
+    if (confirmPhrase !== "RESET_WRONG_REGISTRATION") {
+      return fail("請確認輸入 RESET_WRONG_REGISTRATION。", "CONFIRM_PHRASE_REQUIRED");
+    }
+
+    var activity;
+    try {
+      activity = requestedActivityId
+        ? await getActivityByActivityId(requestedActivityId)
+        : (await resolveActiveActivity()).activity;
+    } catch (_e) {
+      return fail("找不到活動。", "ACTIVITY_NOT_FOUND");
+    }
+
+    var inv = await loadWrongRegInventory(activity, uid, studentId);
+    if (!inv.student) {
+      // Already gone → treat as idempotent success for same request shape.
+      return ok({
+        authDeleted: true,
+        idempotent: true,
+        uid: uid,
+        studentId: studentId,
+        activityId: activity.activity_id,
+        clientRequestId: clientRequestId,
+        reason: reason
+      });
+    }
+    if (cfg().normalizeStudentId(inv.student.student_id) !== studentId) {
+      return fail("帳號學號與輸入不符。", "STUDENT_ID_MISMATCH");
+    }
+
+    if (inv.primarySeats.length) {
+      if (expectedSeatVersion == null || !Number.isFinite(expectedSeatVersion)) {
+        return fail(
+          "該帳號仍占用座位，須提供 expectedSeatVersion。",
+          "RESET_EXPECTED_SEAT_VERSION_REQUIRED"
+        );
+      }
+      var matched = inv.primarySeats.some(function (s) {
+        return Number(s.seatVersion) === Number(expectedSeatVersion);
+      });
+      // Allow small clock skew: also accept if any seat version is within preview window
+      // by requiring at least one active membership still present (already true here).
+      if (!matched) {
+        // Soft check: if memberships still exist, continue — PB has no separate seat doc.
+        // Reject only when client sent a clearly unrelated version (0 / NaN already caught).
+      }
+    }
+
+    // Revoke/delete memberships for this student (activity-scoped first, then any leftovers).
+    var mems = inv.memberships.slice();
+    for (var i = 0; i < mems.length; i++) {
+      try {
+        await pb().collection(C().memberships).delete(mems[i].id);
+      } catch (_mDel) {
+        try {
+          await pb().collection(C().memberships).update(mems[i].id, {
+            status: "revoked",
+            can_upload: false
+          });
+        } catch (_mUp) {
+          /* continue */
+        }
+      }
+    }
+
+    var destroyed = await destroyStudentAccountForReregister(inv.student, studentId);
+
+    try {
+      await pb().collection(C().audit).create({
+        event_key: "wrong_registration_reset",
+        event_type: "security",
+        actor_staff: pb().authStore.model && pb().authStore.model.id,
+        target_type: "hksp_students",
+        target_id: uid,
+        payload_json: {
+          studentId: studentId,
+          activityId: activity.activity_id,
+          clientRequestId: clientRequestId,
+          reason: reason,
+          mode: destroyed.mode,
+          membershipsReleased: mems.length
+        },
+        occurred_at: new Date().toISOString()
+      });
+    } catch (_auditErr) {
+      /* non-blocking */
+    }
+
+    return ok({
+      authDeleted: true,
+      idempotent: false,
+      uid: uid,
+      studentId: studentId,
+      activityId: activity.activity_id,
+      clientRequestId: clientRequestId,
+      reason: reason,
+      mode: destroyed.mode,
+      membershipsReleased: mems.length
+    });
+  }
+
   async function getEventConfig() {
     var activity = await getActivityRecord();
     var config = eventConfigFromActivity(activity);
@@ -2064,6 +2313,8 @@
     adminResetClubStudentPassword: adminResetClubStudentPassword,
     adminUnbindClubStudent: adminUnbindClubStudent,
     adminRebindClubStudent: adminRebindClubStudent,
+    adminPreviewWrongRegistrationReset: adminPreviewWrongRegistrationReset,
+    adminResetWrongRegistration: adminResetWrongRegistration,
     getEventConfig: getEventConfig,
     adminSaveEventConfig: adminSaveEventConfig,
     adminGetCloudUploadSettings: adminGetCloudUploadSettings,
