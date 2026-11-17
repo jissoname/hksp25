@@ -8804,10 +8804,8 @@ html,body{margin:0;padding:0;background:#fff;color:#1a2a3a;font-family:"Noto San
 width:1122px;height:793px;padding:28px 36px 22px;background:#fff;color:#1a2a3a;
 overflow:hidden;position:relative;page-break-after:always
 }
-.jc-tag{color:#1B4F8C;font-size:12px;font-weight:800;letter-spacing:.04em;margin:0 0 6px}
 .jc-title{color:#1B4F8C;font-size:26px;font-weight:900;line-height:1.25;margin:0}
 .jc-subtitle{color:#1B4F8C;font-size:20px;font-weight:900;line-height:1.3;margin:4px 0 0}
-.jc-desc{color:#5a6b7d;font-size:12px;margin:8px 0 0}
 .jc-rule{border:0;border-top:1px solid #c5d0dc;margin:14px 0 12px}
 .jc-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px;margin:0 0 8px}
 .jc-meta-item{font-size:13px;line-height:1.5;color:#243447}
@@ -8917,10 +8915,8 @@ return `<td class="${cls}">${esc(cell)}</td>`;
 }).join("");
 return `
 <section class="jc-page" data-jc-page="1">
-<div class="jc-tag">B / 橫式明細</div>
 <div class="jc-title">115學年度第一學期 社團評選</div>
 <div class="jc-subtitle">評審個人評分確認表</div>
-<div class="jc-desc">${esc(sectionTitle)}確認｜橫式 A4｜適合查看各項分數</div>
 <hr class="jc-rule">
 <div class="jc-meta-grid">
 <div class="jc-meta-item">評審姓名：<span class="u">${esc(judgeName || "　")}</span></div>
@@ -9168,7 +9164,8 @@ throw new Error("jsPDF 未載入");
 async function captureJudgeConfirmPageCanvas_(pageEl){
 const opts =
 {
-scale:2,
+/* ~288dpi 等級：A4 橫式畫布 1122×793 × scale 3 */
+scale:3,
 useCORS:true,
 logging:false,
 backgroundColor:"#ffffff",
