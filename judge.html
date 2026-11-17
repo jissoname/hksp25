@@ -2388,7 +2388,7 @@ button{
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
-<script src="./platform-judge-pb.js?v=materials-readonly-1"></script>
+<script src="./platform-judge-pb.js?v=materials-readonly-2"></script>
 
 <script>
 /**
@@ -8790,14 +8790,6 @@ async function loadScoreMaterials_(
     .trim();
 
 
-  const access =
-    (
-      opts &&
-      opts.materialsAccess
-    ) ||
-    null;
-
-
   APP.materialsState =
   {
     loading: true,
@@ -8819,38 +8811,11 @@ async function loadScoreMaterials_(
   renderScoreMaterialsPane_();
 
 
-  if (
-    access &&
-    access.canBrowse !==
-      true
-  ) {
-
-    APP.materialsState.loading =
-      false;
-
-
-    APP.materialsState.closed =
-      true;
-
-
-    APP.materialsState.hint =
-      access.message ||
-      (
-        access.allowedByCategory ===
-        false
-          ? "此社團不在您被分配的屬性範圍內。"
-          : "評選截止後才可閱覽社團評選資料。"
-      );
-
-
-    renderScoreMaterialsPane_();
-
-
-    return;
-
-  }
-
-
+  /*
+   * 一律打後端核對截止／屬性／最新檔案。
+   * 不可只信 openScore 當下的 materialsAccess 快取，否則改截止或學生換檔後
+   * 按「重新載入」仍會卡在舊狀態（例如空資料夾）。
+   */
   try {
 
     const result =
@@ -8963,6 +8928,27 @@ async function loadScoreMaterials_(
       ) ||
       files[0] ||
       null;
+
+
+    if (
+      APP.scoreContext &&
+      APP.scoreContext.result
+    ) {
+
+      APP.scoreContext.result.materialsAccess =
+        Object.assign(
+          {},
+          APP.scoreContext.result.materialsAccess ||
+          {},
+          result.materialsAccess ||
+          {},
+          {
+            canBrowse: true,
+            allowedByCategory: true
+          }
+        );
+
+    }
 
 
     APP.materialsState =

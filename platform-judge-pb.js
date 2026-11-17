@@ -494,7 +494,7 @@
 
     var uploadRows = await pb().collection(C().uploads).getFullList({
       filter: 'club="' + club.id + '" && status="completed"',
-      sort: "-completed_at,-created"
+      sort: "-created"
     });
     uploadRows = uploadRows.filter(isJudgeReadableUploadRow);
 
