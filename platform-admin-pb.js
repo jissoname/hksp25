@@ -792,6 +792,16 @@
         registered_at: new Date().toISOString()
       });
     }
+    var seatHolders = await pb().collection(C().memberships).getFullList({
+      filter:
+        'activity="' + activity.id + '" && club="' + club.id + '" && status="active"'
+    });
+    var otherHolder = seatHolders.some(function (m) {
+      return String(m.student) !== String(student.id);
+    });
+    if (otherHolder) {
+      return fail("此社團名額已被占用，每個社團僅能有一個帳號。", "TARGET_SEAT_OCCUPIED");
+    }
     var existing = await pb().collection(C().memberships).getList(1, 1, {
       filter:
         'activity="' + activity.id + '" && club="' + club.id + '" && student="' + student.id + '"'
@@ -816,7 +826,8 @@
       studentId: studentId,
       uid: student.id,
       permanentClubId: permanent,
-      mustChangePassword: !!student.must_change_password
+      mustChangePassword: !!student.must_change_password,
+      seatStatus: "occupied"
     });
   }
 
@@ -855,7 +866,12 @@
         status: "revoked",
         can_upload: false
       });
-      return ok({ uid: uid, permanentClubId: permanent });
+      return ok({
+        uid: uid,
+        permanentClubId: permanent,
+        seatReleased: true,
+        seatStatus: "empty"
+      });
     } catch (e) {
       return fail((e && e.message) || "解除綁定失敗。");
     }
@@ -876,6 +892,16 @@
         .getFirstListItem(
           'activity="' + activity.id + '" && permanent_club_id="' + toId + '" && active=true'
         );
+      var targetHolders = await pb().collection(C().memberships).getFullList({
+        filter:
+          'activity="' + activity.id + '" && club="' + toClub.id + '" && status="active"'
+      });
+      var targetTaken = targetHolders.some(function (m) {
+        return String(m.student) !== String(uid);
+      });
+      if (targetTaken) {
+        return fail("目標社團名額已被占用，每個社團僅能有一個帳號。", "TARGET_SEAT_OCCUPIED");
+      }
       try {
         var oldMem = await pb()
           .collection(C().memberships)
@@ -909,7 +935,13 @@
           bound_at: new Date().toISOString()
         });
       }
-      return ok({ uid: uid, fromPermanentClubId: fromId, toPermanentClubId: toId });
+      return ok({
+        uid: uid,
+        fromPermanentClubId: fromId,
+        toPermanentClubId: toId,
+        seatReleasedFrom: fromId,
+        seatOccupiedTo: toId
+      });
     } catch (e) {
       return fail((e && e.message) || "改綁失敗。");
     }
@@ -1144,7 +1176,9 @@
       clientRequestId: clientRequestId,
       reason: reason,
       mode: destroyed.mode,
-      membershipsReleased: mems.length
+      membershipsReleased: mems.length,
+      seatReleased: true,
+      seatStatus: "empty"
     });
   }
 

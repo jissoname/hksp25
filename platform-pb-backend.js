@@ -194,15 +194,29 @@
       "體能性"
     ];
     return getActivity().then(function (activity) {
-      return pb.collection(C.clubs).getFullList({
-        filter: 'activity="' + activity.id + '" && active=true',
-        sort: "name"
-      }).then(function (clubs) {
+      return Promise.all([
+        pb.collection(C.clubs).getFullList({
+          filter: 'activity="' + activity.id + '" && active=true',
+          sort: "name"
+        }),
+        pb.collection(C.memberships).getFullList({
+          filter: 'activity="' + activity.id + '" && status="active"'
+        })
+      ]).then(function (pair) {
+        var clubs = pair[0] || [];
+        var mems = pair[1] || [];
+        var occupied = Object.create(null);
+        mems.forEach(function (m) {
+          if (m && m.club) occupied[String(m.club)] = true;
+        });
         var mapped = clubs.map(function (club) {
+          var taken = !!occupied[String(club.id)];
           return {
             permanentClubId: club.permanent_club_id,
             clubName: club.name,
-            category: cfg.mapClubCategory(club.category)
+            category: cfg.mapClubCategory(club.category),
+            seatStatus: taken ? "occupied" : "empty",
+            seatOccupied: taken
           };
         });
         mapped.sort(function (a, b) {
@@ -232,6 +246,28 @@
     return /not_unique|unique|Failed to create record/i.test(msg);
   }
 
+  /** One active membership per club. Same student may keep/reclaim their own seat. */
+  function assertClubSeatAvailable(activity, club, studentRecordId) {
+    return pb.collection(C.memberships).getFullList({
+      filter:
+        'activity="' + activity.id + '" && club="' + club.id + '" && status="active"'
+    }).then(function (mems) {
+      var others = (mems || []).filter(function (m) {
+        return String(m.student) !== String(studentRecordId);
+      });
+      if (others.length) {
+        throw err(
+          "SEAT_TAKEN",
+          "此社團名額已被占用，每個社團僅能註冊一個帳號。",
+          {
+            code: "SEAT_TAKEN",
+            permanentClubId: club.permanent_club_id || ""
+          }
+        );
+      }
+    });
+  }
+
   function ensureStudentMembership(activity, club, student, opId, studentId, permanentClubId) {
     return pb.collection(C.memberships).getList(1, 1, {
       filter:
@@ -240,7 +276,17 @@
     }).then(function (res) {
       if (res.totalItems > 0) {
         var row = res.items[0];
-        if (row.status !== "active" || row.can_upload !== true) {
+        if (row.status === "active" && row.can_upload === true) {
+          return ensureRootFolder(activity, club, student.id).then(function () {
+            return ok({
+              opId: opId,
+              studentId: studentId,
+              permanentClubId: permanentClubId,
+              alreadyMember: true
+            });
+          });
+        }
+        return assertClubSeatAvailable(activity, club, student.id).then(function () {
           return pb.collection(C.memberships).update(row.id, {
             status: "active",
             can_upload: true
@@ -254,31 +300,39 @@
               });
             });
           });
-        }
-        return ensureRootFolder(activity, club, student.id).then(function () {
-          return ok({
-            opId: opId,
-            studentId: studentId,
-            permanentClubId: permanentClubId,
-            alreadyMember: true
-          });
         });
       }
-      return pb.collection(C.memberships).create({
-        activity: activity.id,
-        club: club.id,
-        student: student.id,
-        role: "member",
-        status: "active",
-        can_upload: true,
-        bound_at: new Date().toISOString()
-      }).then(function () {
-        return ensureRootFolder(activity, club, student.id).then(function () {
-          return ok({
-            opId: opId,
-            studentId: studentId,
-            permanentClubId: permanentClubId
-          });
+      return assertClubSeatAvailable(activity, club, student.id).then(function () {
+        return pb.collection(C.memberships).create({
+          activity: activity.id,
+          club: club.id,
+          student: student.id,
+          role: "member",
+          status: "active",
+          can_upload: true,
+          bound_at: new Date().toISOString()
+        }).then(function (created) {
+          // Best-effort race guard: if another active seat appeared, roll back ours.
+          return assertClubSeatAvailable(activity, club, student.id)
+            .then(function () {
+              return ensureRootFolder(activity, club, student.id).then(function () {
+                return ok({
+                  opId: opId,
+                  studentId: studentId,
+                  permanentClubId: permanentClubId
+                });
+              });
+            })
+            .catch(function (seatErr) {
+              return pb.collection(C.memberships).delete(created.id).catch(function () {
+                return pb.collection(C.memberships).update(created.id, {
+                  status: "revoked",
+                  can_upload: false
+                });
+              }).then(function () {
+                throw seatErr;
+              });
+            });
         });
       });
     });

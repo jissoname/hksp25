@@ -392,7 +392,13 @@ function createRequireStudentAccess(deps) {
     select.disabled = false;
     select.appendChild(new Option("請選擇社團", ""));
     list.forEach(function (club) {
-      select.appendChild(new Option(club.clubName, club.permanentClubId));
+      var occupied = club.seatOccupied === true || club.seatStatus === "occupied";
+      var opt = new Option(
+        occupied ? String(club.clubName || "") + "（名額已滿）" : club.clubName,
+        club.permanentClubId
+      );
+      opt.disabled = occupied;
+      select.appendChild(opt);
     });
   }
 
@@ -684,6 +690,13 @@ function createRequireStudentAccess(deps) {
         var details = error && error.details;
         if (details && details.opId) pendingOpId = details.opId;
         var code = errorCode(error);
+        if (
+          code === "SEAT_TAKEN" ||
+          /名額已被占用|僅能註冊一個帳號/.test(String((error && error.message) || ""))
+        ) {
+          setStatus("此社團名額已被占用，每個社團僅能註冊一個帳號。請改選其他社團或聯絡窗口。", "err");
+          return;
+        }
         if (
           code === "EXISTING_AUTH_REQUIRES_LOGIN" ||
           /先.*登入|既有帳號/.test(String((error && error.message) || ""))

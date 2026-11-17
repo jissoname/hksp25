@@ -12550,7 +12550,7 @@ throw new Error(msg+"（勿盲目重送）");
 }
 clearClubStudentMutation("wrong_reg",op);
 acceptedOk=true;
-toast(r.idempotent?"帳號已先前刪除（防重送）":"已刪除帳號；同學號可重新註冊");
+toast(r.idempotent?"帳號已先前刪除（防重送）":"已刪除帳號並釋放社團名額；同學號可重新註冊");
 await loadClubStudents({
 allowDuringReset:true,
 activityId:op.activityId,
