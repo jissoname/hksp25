@@ -1591,7 +1591,36 @@
         return r.role === "judge";
       })
       .map(mapJudgeAdmin);
-    return ok({ judges: judges });
+    var activity = null;
+    var scoreConfig = defaultScoreConfig();
+    try {
+      activity = await getActivityRecord();
+      scoreConfig = (activity.config_json && activity.config_json.scoreConfig) || scoreConfig;
+    } catch (_e) {
+      /* keep default */
+    }
+    var availableScoreSections = (scoreConfig.sections || [])
+      .filter(function (s) {
+        if (!s || s.enabled === false) return false;
+        // 缺 scoringMode 時視為 judge（與評審端一致）
+        return s.scoringMode !== "manual";
+      })
+      .map(function (s) {
+        return {
+          id: s.id,
+          key: s.id,
+          name: s.name || s.id,
+          icon: s.icon || "📌",
+          maxScore: Number(s.maxScore) || 0,
+          scoringMode: s.scoringMode || "judge",
+          published: s.published === true
+        };
+      });
+    return ok({
+      judges: judges,
+      availableScoreSections: availableScoreSections,
+      scoreSections: availableScoreSections
+    });
   }
 
   function defaultScoreConfig() {
@@ -1841,7 +1870,12 @@
     });
     var byKey = {};
     scores.forEach(function (row) {
-      byKey[row.judge + "::" + row.club + "::" + row.section_id] = row;
+      var jid =
+        row.judge && typeof row.judge === "object" ? row.judge.id : row.judge;
+      var cid = row.club && typeof row.club === "object" ? row.club.id : row.club;
+      var sid = row.section_id || (row.answers_json && row.answers_json.sectionId) || "";
+      if (!jid || !cid || !sid) return;
+      byKey[jid + "::" + cid + "::" + sid] = row;
     });
     var sections = publishedSectionsOf(scoreConfig);
     var totalExpected = 0;
@@ -2329,7 +2363,12 @@
     });
     var byKey = {};
     scores.forEach(function (row) {
-      byKey[row.judge + "::" + row.club + "::" + row.section_id] = row;
+      var jid =
+        row.judge && typeof row.judge === "object" ? row.judge.id : row.judge;
+      var cid = row.club && typeof row.club === "object" ? row.club.id : row.club;
+      var sid = row.section_id || (row.answers_json && row.answers_json.sectionId) || "";
+      if (!jid || !cid || !sid) return;
+      byKey[jid + "::" + cid + "::" + sid] = row;
     });
     return {
       activity: activity,

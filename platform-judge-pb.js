@@ -84,6 +84,23 @@
     };
   }
 
+  function relationId(value) {
+    if (value == null || value === "") return "";
+    if (typeof value === "object") return String(value.id || value.recordId || "");
+    return String(value);
+  }
+
+  function normalizeCategoryKey(raw) {
+    var key = String(raw || "").trim();
+    if (!key) return "";
+    try {
+      if (cfg().mapClubCategory) return String(cfg().mapClubCategory(key) || key).trim();
+    } catch (_e) {
+      /* ignore */
+    }
+    return key;
+  }
+
   function isActiveJudgeRecord(rec) {
     return !!(
       rec &&
@@ -370,10 +387,12 @@
     if (judge.categories && judge.categories.length) {
       var catSet = {};
       judge.categories.forEach(function (c) {
-        catSet[String(c)] = true;
+        catSet[normalizeCategoryKey(c)] = true;
+        catSet[String(c || "").trim()] = true;
       });
       clubs = clubs.filter(function (c) {
-        return catSet[String(c.category || "")];
+        var raw = String(c.category || "").trim();
+        return !!(catSet[normalizeCategoryKey(raw)] || catSet[raw]);
       });
     }
     var myScores = await pb().collection(C().scores).getFullList({
@@ -381,7 +400,10 @@
     });
     var scoreMap = {};
     myScores.forEach(function (row) {
-      scoreMap[row.club + "::" + row.section_id] = row;
+      var clubKey = relationId(row.club);
+      var sectionKey = String(row.section_id || (row.answers_json && row.answers_json.sectionId) || "");
+      if (!clubKey || !sectionKey) return;
+      scoreMap[clubKey + "::" + sectionKey] = row;
     });
     var stages = {};
     var sectionList = [];
@@ -390,6 +412,7 @@
       var submittedCount = 0;
       var draftCount = 0;
       var reopenedCount = 0;
+      var notStartedCount = 0;
       var clubRows = clubs.map(function (club) {
         var row = scoreMap[club.id + "::" + section.id] || null;
         var answers = answersMeta(row);
@@ -405,7 +428,11 @@
           } else if (row.status === "draft") {
             status = "draft";
             draftCount += 1;
+          } else {
+            notStartedCount += 1;
           }
+        } else {
+          notStartedCount += 1;
         }
         return {
           clubName: club.name,
@@ -415,7 +442,8 @@
           reopened: reopened,
           locked: status === "submitted",
           totalScore: row ? Number(row.score) || 0 : null,
-          updatedAt: row ? row.updated : null
+          updatedAt: row ? row.updated : null,
+          submittedAt: row && row.submitted_at ? row.submitted_at : null
         };
       });
       stages[section.id] = Object.assign({}, meta, {
@@ -424,6 +452,7 @@
         submittedCount: submittedCount,
         draftCount: draftCount,
         reopenedCount: reopenedCount,
+        notStartedCount: notStartedCount,
         statusPending: false
       });
       sectionList.push({

@@ -555,10 +555,10 @@ class="field"
 onchange="resetJudgeConfirmationPreview()"
 disabled
 >
-<option value="dataReview">資料審查</option>
-<option value="fieldReview">實地審查</option>
+<option value="dataReview">資料審查（或同名大項）</option>
+<option value="fieldReview">實地審查（或同名大項）</option>
 <option value="total">總成績</option>
-<option value="all" selected>全部三表</option>
+<option value="all" selected>全部大項</option>
 </select>
 
 <button
@@ -1654,7 +1654,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=upload-browse-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=upload-browse-2"></script>
-<script src="./platform-admin-pb.js?v=judge-progress-fix-1"></script>
+<script src="./platform-admin-pb.js?v=judge-sections-fix-2"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -4470,7 +4470,9 @@ S.scoreConfig.sections
 ?
 S.scoreConfig.sections.filter(
 x=>
-x.scoringMode==="judge"
+x &&
+x.enabled!==false &&
+x.scoringMode!=="manual"
 )
 :
 []
