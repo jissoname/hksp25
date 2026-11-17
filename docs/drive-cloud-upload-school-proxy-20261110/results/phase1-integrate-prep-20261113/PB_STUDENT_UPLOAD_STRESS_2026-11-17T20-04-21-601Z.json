@@ -1,0 +1,104 @@
+{
+  "kind": "pb_student_upload_stress",
+  "runId": "2026-11-17T20-04-21-601Z",
+  "at": "2026-11-17T20:07:33.892Z",
+  "target": {
+    "BASE": "https://db.keson.pro",
+    "ACTIVITY_ID": "115-1-club-evaluation",
+    "fileBytes": 4096
+  },
+  "criteriaNote": "Adapted from prior Drive peak ladder (10→30→66). PB direct upload path (useDriveProxy=false). Pass gate: success≥99%, upload p95≤5s, e2e p95≤15s.",
+  "clubsAvailable": 70,
+  "levels": [
+    {
+      "concurrency": 10,
+      "wallMs": 4909,
+      "success": 10,
+      "failed": 0,
+      "successRate": 1,
+      "distinctClubs": 10,
+      "statusBuckets": {
+        "ok": 10
+      },
+      "failByStage": {},
+      "uploadLatencyMs": {
+        "count": 10,
+        "min": 379.78319999999985,
+        "p50": 389.09440000000086,
+        "p95": 437.9380999999994,
+        "max": 437.9380999999994
+      },
+      "endToEndLatencyMs": {
+        "count": 10,
+        "min": 3829.5298999999995,
+        "p50": 4205.856599999999,
+        "p95": 4904.528000000001,
+        "max": 4904.528000000001
+      },
+      "failures": []
+    },
+    {
+      "concurrency": 30,
+      "wallMs": 6755,
+      "success": 30,
+      "failed": 0,
+      "successRate": 1,
+      "distinctClubs": 30,
+      "statusBuckets": {
+        "ok": 30
+      },
+      "failByStage": {},
+      "uploadLatencyMs": {
+        "count": 30,
+        "min": 381.27289999999994,
+        "p50": 408.03989999999976,
+        "p95": 672.8140999999996,
+        "max": 782.5130999999983
+      },
+      "endToEndLatencyMs": {
+        "count": 30,
+        "min": 4994.583099999998,
+        "p50": 6338.994600000001,
+        "p95": 6735.3337,
+        "max": 6752.778799999998
+      },
+      "failures": []
+    },
+    {
+      "concurrency": 66,
+      "wallMs": 12283,
+      "success": 66,
+      "failed": 0,
+      "successRate": 1,
+      "distinctClubs": 66,
+      "statusBuckets": {
+        "ok": 66
+      },
+      "failByStage": {},
+      "uploadLatencyMs": {
+        "count": 66,
+        "min": 375.5103999999992,
+        "p50": 405.461299999999,
+        "p95": 1102.9269999999997,
+        "max": 1139.6510999999991
+      },
+      "endToEndLatencyMs": {
+        "count": 66,
+        "min": 10230.284800000005,
+        "p50": 11546.729299999994,
+        "p95": 12258.0033,
+        "max": 12278.526099999992
+      },
+      "failures": []
+    }
+  ],
+  "cleanup": {
+    "uploads": 106,
+    "folders": 106,
+    "memberships": 106,
+    "students": 106,
+    "errors": 0
+  },
+  "passGate": true,
+  "verdict": "PASS"
+}
