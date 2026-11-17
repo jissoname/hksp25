@@ -145,6 +145,15 @@
     );
   }
 
+  /** PB file store primary path: permanent delete, no trash retention. */
+  function isPbPrimary() {
+    return !!(
+      window.HKSP_PB_CONFIG &&
+      window.HKSP_PB_CONFIG.usePocketBase &&
+      !window.HKSP_PB_CONFIG.useDriveProxy
+    );
+  }
+
   function callOnce(name, data) {
     if (usePocketBaseBackend()) {
       return window.HKSP_PB_BACKEND.call(name, data || {});
@@ -466,7 +475,12 @@
     if (refreshBtn) refreshBtn.disabled = evalFolderBusy;
     if (upBtn) upBtn.disabled = evalFolderBusy || !!atRoot || inTrash;
     if (viewBrowse) viewBrowse.setAttribute("aria-pressed", inTrash ? "false" : "true");
-    if (viewTrash) viewTrash.setAttribute("aria-pressed", inTrash ? "true" : "false");
+    if (viewTrash) {
+      viewTrash.setAttribute("aria-pressed", inTrash ? "true" : "false");
+      // PB primary: no trash retention — hide trash view entirely.
+      if (isPbPrimary()) viewTrash.classList.add("hidden");
+      else viewTrash.classList.remove("hidden");
+    }
     var toggle = $("btnDriveTreeToggle");
     if (toggle) {
       toggle.setAttribute("aria-expanded", treeMobileOpen ? "true" : "false");
@@ -1403,7 +1417,9 @@
     if (!box || !detail) return;
     var itemKind = action.itemKind || (action.folderId && !action.fileId ? "folder" : "file");
     var labels = {
-      trash: itemKind === "folder" ? "確認刪除資料夾（移入垃圾桶）" : "確認刪除（移入垃圾桶）",
+      trash: isPbPrimary()
+        ? (itemKind === "folder" ? "確認永久刪除資料夾" : "確認永久刪除")
+        : (itemKind === "folder" ? "確認刪除資料夾（移入垃圾桶）" : "確認刪除（移入垃圾桶）"),
       move: "確認移動",
       copy: "確認複製",
       rename: "確認重新命名",
@@ -1436,7 +1452,13 @@
     addLine((itemKind === "folder" ? "資料夾：" : "檔名：") + displayName, true);
     if (action.kind === "trash") {
       addLine("所在路徑：" + (action.fromPath || browsePathLabel || "社團評選資料夾"));
-      if (itemKind === "folder") {
+      if (isPbPrimary()) {
+        if (itemKind === "folder") {
+          addLine("注意：將永久刪除此資料夾及其子層內容，無法從垃圾桶還原；其下已完成登錄的繳交之後不再算有效繳交。");
+        } else {
+          addLine("將永久刪除，無法從垃圾桶還原；取消則保留原檔。");
+        }
+      } else if (itemKind === "folder") {
         addLine("注意：此資料夾及其子層內容可能一併移入垃圾桶；其下已完成登錄的繳交之後可能不再算有效繳交。");
       } else {
         addLine("將移入垃圾桶；取消則保留原檔。");
@@ -2057,6 +2079,10 @@
 
   function setBrowserViewMode(mode) {
     var next = mode === "trash" ? "trash" : "browse";
+    if (next === "trash" && isPbPrimary()) {
+      setEvalFolderStatus("PocketBase 主路徑不保留垃圾桶；刪除即永久移除。", "warn");
+      next = "browse";
+    }
     if (browserViewMode === "browse" && next === "trash") {
       priorBrowseFolderId = String(selectedEvalFolderId || "");
     }
@@ -2618,7 +2644,8 @@
       return;
     }
     var okMsg =
-      action.kind === "trash" ? "已移入垃圾桶。"
+      action.kind === "trash"
+        ? (isPbPrimary() ? "已永久刪除。" : "已移入垃圾桶。")
         : action.kind === "copy"
           ? "已複製。"
           : action.kind === "restore"

@@ -568,6 +568,105 @@
     });
   }
 
+  /** Permanent delete (no trash retention on PB primary path). */
+  function assertClubOwnedUpload(ctx, fileId) {
+    return pb.collection(C.uploads).getOne(fileId).then(function (row) {
+      if (!row || String(row.club) !== String(ctx.club.id)) {
+        throw err("NOT_FOUND", "找不到此檔案，或它不屬於目前社團。");
+      }
+      return row;
+    });
+  }
+
+  function assertClubOwnedFolder(ctx, folderId, rootId) {
+    return pb.collection(C.folders).getOne(folderId).then(function (row) {
+      if (!row || String(row.club) !== String(ctx.club.id)) {
+        throw err("NOT_FOUND", "找不到此資料夾，或它不屬於目前社團。");
+      }
+      if (String(row.id) === String(rootId)) {
+        throw err("FORBIDDEN", "不能刪除社團根資料夾。");
+      }
+      return row;
+    });
+  }
+
+  function deleteUploadsInFolder(ctx, folderId) {
+    return pb.collection(C.uploads).getFullList({
+      filter: 'club="' + ctx.club.id + '" && folder="' + folderId + '"'
+    }).then(function (rows) {
+      var chain = Promise.resolve();
+      (rows || []).forEach(function (row) {
+        chain = chain.then(function () {
+          return pb.collection(C.uploads).delete(row.id);
+        });
+      });
+      return chain;
+    });
+  }
+
+  function permanentlyDeleteFolderTree(ctx, folderId, rootId) {
+    return assertClubOwnedFolder(ctx, folderId, rootId).then(function () {
+      return pb.collection(C.folders).getFullList({
+        filter: 'club="' + ctx.club.id + '" && parent="' + folderId + '"'
+      }).then(function (children) {
+        var chain = Promise.resolve();
+        (children || []).forEach(function (child) {
+          chain = chain.then(function () {
+            return permanentlyDeleteFolderTree(ctx, child.id, rootId);
+          });
+        });
+        return chain
+          .then(function () { return deleteUploadsInFolder(ctx, folderId); })
+          .then(function () { return pb.collection(C.folders).delete(folderId); });
+      });
+    });
+  }
+
+  function trashClubEvaluationFile(data) {
+    var fileId = String((data && data.fileId) || "").trim();
+    if (!fileId) return Promise.reject(err("INVALID_INPUT", "缺少檔案。"));
+    return contextFromAuth().then(function (ctx) {
+      return assertClubOwnedUpload(ctx, fileId).then(function () {
+        return pb.collection(C.uploads).delete(fileId).then(function () {
+          return ok({ deleted: true, permanent: true, fileId: fileId });
+        });
+      }).catch(function (e) {
+        if (e && e.code) throw e;
+        throw err(
+          "DELETE_FAILED",
+          (e && e.message) || "刪除檔案失敗（可能無權刪除他人上傳的檔案）。"
+        );
+      });
+    });
+  }
+
+  function trashClubEvaluationFolder(data) {
+    var folderId = String((data && data.folderId) || "").trim();
+    if (!folderId) return Promise.reject(err("INVALID_INPUT", "缺少資料夾。"));
+    return contextFromAuth().then(function (ctx) {
+      return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid).then(function (root) {
+        return permanentlyDeleteFolderTree(ctx, folderId, root.id).then(function () {
+          return ok({ deleted: true, permanent: true, folderId: folderId });
+        });
+      }).catch(function (e) {
+        if (e && e.code) throw e;
+        throw err(
+          "DELETE_FAILED",
+          (e && e.message) || "刪除資料夾失敗（若含他人上傳檔可能無法整夾刪除）。"
+        );
+      });
+    });
+  }
+
+  function listClubEvaluationTrash() {
+    // PB primary path does not retain trash.
+    return Promise.resolve(ok({ items: [], storage: "pocketbase", trashRetained: false }));
+  }
+
+  function restoreClubEvaluationItem() {
+    return Promise.reject(err("UNIMPLEMENTED", "PocketBase 主路徑不保留垃圾桶，無法還原。"));
+  }
+
   function studentAuthHeader() {
     var token = pb.authStore && pb.authStore.token;
     if (!token) throw err("UNAUTHENTICATED", "請先登入。");
@@ -1044,6 +1143,10 @@
     listClubDriveUploads: listClubDriveUploads,
     listClubEvaluationFolders: listClubEvaluationFolders,
     createClubEvaluationFolder: createClubEvaluationFolder,
+    trashClubEvaluationFile: trashClubEvaluationFile,
+    trashClubEvaluationFolder: trashClubEvaluationFolder,
+    listClubEvaluationTrash: listClubEvaluationTrash,
+    restoreClubEvaluationItem: restoreClubEvaluationItem,
     prepareClubDriveUpload: prepareClubDriveUpload,
     completeClubDriveUpload: completeClubDriveUpload,
     judgeLogin: judgeLogin,
