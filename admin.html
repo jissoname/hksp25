@@ -583,7 +583,7 @@ disabled
 <div id="judgeExportPreview" class="export-preview hidden" hidden></div>
 
 <div class="notice" style="margin-top:18px">
-<strong>多位評審一次下載 ZIP</strong>（保留上方單位老師匯出）。每位老師各一份 PDF；全部三表仍在各老師自己的 PDF（資料審查→實地審查→總成績）。
+<strong>多位評審一次下載</strong>（保留上方單位老師匯出）。選 1 位直接下 PDF；選多位才打包 ZIP。每位老師各一份 PDF（資料審查→實地審查→總成績）。
 </div>
 
 <div class="toolbar export-toolbar" style="flex-wrap:wrap;align-items:flex-start;gap:10px">
@@ -604,7 +604,7 @@ disabled
 </select>
 
 <button id="judgeBatchZipBtn" class="btn btn-primary" type="button" onclick="downloadJudgeConfirmationPdfZip()">
-📦 下載 ZIP
+📦 下載（1人PDF／多人ZIP）
 </button>
 
 <button id="judgeBatchRetryBtn" class="btn" type="button" onclick="retryFailedJudgeConfirmationPdfZip()" disabled>
@@ -614,7 +614,7 @@ disabled
 </div>
 
 <div id="judgeBatchState" class="state">
-選擇多位評審與類別後按「下載 ZIP」。產生中請勿連點；登出或換登入後舊結果不會交付。
+勾選評審與類別後按下載。1 人直接 PDF，2 人以上才 ZIP。產生中請勿連點；登出或換登入後舊結果不會交付。
 </div>
 
 </div>
@@ -8630,51 +8630,64 @@ syncJudgeConfirmationExportBusyUi_();
 let html2pdfLoaderPromise_ =
 null;
 
-function ensureHtml2PdfLoaded_(){
-if(
-typeof window.html2pdf === "function"
-){
-return Promise.resolve(window.html2pdf);
-}
-if(html2pdfLoaderPromise_){
-return html2pdfLoaderPromise_;
-}
-html2pdfLoaderPromise_ =
-new Promise(function(resolve,reject){
-const existing =
-document.querySelector('script[data-hksp-html2pdf="1"]');
-if(
-existing &&
-typeof window.html2pdf === "function"
-){
-resolve(window.html2pdf);
+function loadScriptOnce_(src,marker){
+return new Promise(function(resolve,reject){
+if(document.querySelector('script[data-hksp-script="'+marker+'"]')){
+resolve();
 return;
 }
 const script =
 document.createElement("script");
-script.setAttribute("data-hksp-html2pdf","1");
+script.setAttribute("data-hksp-script",marker);
 script.src =
-"https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js";
+src;
 script.async =
 true;
 script.onload =
-function(){
-if(
-typeof window.html2pdf === "function"
-){
-resolve(window.html2pdf);
-}
-else{
-reject(new Error("PDF 元件載入後無法使用"));
-}
-};
+function(){ resolve(); };
 script.onerror =
 function(){
-html2pdfLoaderPromise_ =
-null;
-reject(new Error("無法載入 PDF 產生元件，請檢查網路後重試"));
+reject(new Error("無法載入：" + marker));
 };
 document.head.appendChild(script);
+});
+}
+
+function ensureHtml2PdfLoaded_(){
+if(html2pdfLoaderPromise_){
+return html2pdfLoaderPromise_;
+}
+html2pdfLoaderPromise_ =
+(async function(){
+if(typeof window.html2pdf !== "function"){
+await loadScriptOnce_(
+"https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js",
+"html2pdf"
+);
+}
+if(
+!(window.jspdf && window.jspdf.jsPDF) &&
+typeof window.jsPDF !== "function"
+){
+await loadScriptOnce_(
+"https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js",
+"jspdf"
+);
+}
+if(typeof window.html2canvas !== "function"){
+await loadScriptOnce_(
+"https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js",
+"html2canvas"
+);
+}
+if(typeof window.html2pdf !== "function"){
+throw new Error("PDF 元件載入後無法使用");
+}
+return window.html2pdf;
+})().catch(function(error){
+html2pdfLoaderPromise_ =
+null;
+throw error;
 });
 return html2pdfLoaderPromise_;
 }
@@ -8781,25 +8794,23 @@ return total;
 
 function judgeConfirmPdfLandscapeCss_(){
 return `
-@page{size:A4 landscape;margin:8mm}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:#fff;color:#111;font-family:"Noto Sans TC","Microsoft JhengHei","Segoe UI",sans-serif}
-.jc-pdf-root{width:100%;background:#fff}
-.jc-sheet{width:100%;padding:4px 2px 10px;page-break-inside:avoid}
-.jc-sheet + .jc-sheet{page-break-before:always}
-.jc-title{color:#1B4F8C;font-size:16px;font-weight:900;margin:0 0 4px}
+.jc-pdf-root{width:1100px;max-width:1100px;background:#fff;padding:0;margin:0}
+.jc-sheet{width:1100px;max-width:1100px;padding:10px 12px 16px;background:#fff;overflow:visible}
+.jc-title{color:#1B4F8C;font-size:18px;font-weight:900;margin:0 0 6px;line-height:1.35}
 .jc-meta{color:#333;font-size:11px;line-height:1.55;margin:2px 0}
 .jc-meta.muted{color:#555;font-size:10px}
 .jc-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:8px}
-.jc-table th,.jc-table td{border:1px solid #9aa8b8;padding:5px 6px;font-size:10px;vertical-align:middle;word-break:break-word}
+.jc-table th,.jc-table td{border:1px solid #9aa8b8;padding:6px 5px;font-size:10px;vertical-align:middle;word-break:break-word}
 .jc-table th{background:#1B4F8C;color:#fff;font-weight:800;text-align:center}
-.jc-table td.num,.jc-table th.num{width:36px;text-align:center}
-.jc-table td.club{width:160px;font-weight:700}
+.jc-table td.num,.jc-table th.num{width:40px;text-align:center}
+.jc-table td.club,.jc-table th.club{width:170px;font-weight:700;text-align:left}
 .jc-table td.score,.jc-table th.score{text-align:center}
-.jc-table td.status{width:110px;text-align:center;font-size:9px}
+.jc-table td.status,.jc-table th.status{width:120px;text-align:center;font-size:9px}
 .jc-table tbody tr:nth-child(even) td{background:#E8F1FB}
 .jc-empty{text-align:center;color:#666;padding:14px}
-.jc-foot{margin-top:10px;font-size:10px;line-height:1.6;color:#333}
+.jc-foot{margin-top:12px;font-size:10px;line-height:1.65;color:#333}
 .jc-foot .sign{font-size:12px;margin-top:8px}
 .jc-foot .note{color:#444;font-size:9px}
 .jc-foot .dim{color:#666;font-size:9px}
@@ -9116,15 +9127,124 @@ ${parts.join("") || '<div class="jc-empty">沒有可匯出的確認表資料</di
 `;
 }
 
+function resolveJsPdfCtor_(){
+if(window.jspdf && typeof window.jspdf.jsPDF === "function"){
+return window.jspdf.jsPDF;
+}
+if(typeof window.jsPDF === "function"){
+return window.jsPDF;
+}
+throw new Error("jsPDF 未載入");
+}
+
+async function captureJudgeConfirmSheetCanvas_(sheet){
+const opts =
+{
+scale:2,
+useCORS:true,
+logging:false,
+backgroundColor:"#ffffff",
+scrollX:0,
+scrollY:0,
+windowWidth:1140,
+width:1100
+};
+if(typeof window.html2canvas === "function"){
+return window.html2canvas(sheet,opts);
+}
+/*
+ * html2pdf bundle 有時不掛全域 html2canvas；改走 worker.toCanvas。
+ */
+const canvas =
+await window.html2pdf()
+.set({
+html2canvas:opts
+})
+.from(sheet)
+.toCanvas()
+.get("canvas");
+if(!canvas){
+throw new Error("html2canvas 未載入");
+}
+return canvas;
+}
+
+function addCanvasPagesToPdf_(pdf,canvas,marginMm,startBlankPage){
+const pageW =
+pdf.internal.pageSize.getWidth();
+const pageH =
+pdf.internal.pageSize.getHeight();
+const usableW =
+pageW - marginMm * 2;
+const usableH =
+pageH - marginMm * 2;
+const ratio =
+usableW / canvas.width;
+const pageHeightPx =
+Math.max(1,Math.floor(usableH / ratio));
+let sy =
+0;
+let pageIndex =
+0;
+while(sy < canvas.height){
+if(startBlankPage || pageIndex > 0){
+pdf.addPage();
+}
+startBlankPage =
+false;
+const sh =
+Math.min(pageHeightPx,canvas.height - sy);
+const slice =
+document.createElement("canvas");
+slice.width =
+canvas.width;
+slice.height =
+Math.max(1,Math.ceil(sh));
+const ctx =
+slice.getContext("2d");
+ctx.fillStyle =
+"#ffffff";
+ctx.fillRect(0,0,slice.width,slice.height);
+ctx.drawImage(
+canvas,
+0,
+sy,
+canvas.width,
+sh,
+0,
+0,
+canvas.width,
+sh
+);
+const img =
+slice.toDataURL("image/jpeg",0.95);
+pdf.addImage(
+img,
+"JPEG",
+marginMm,
+marginMm,
+usableW,
+sh * ratio
+);
+sy +=
+sh;
+pageIndex +=
+1;
+}
+return pageIndex > 0;
+}
+
 async function renderJudgeConfirmPdfBase64_(data){
 await ensureHtml2PdfLoaded_();
+const JsPDF =
+resolveJsPdfCtor_();
 const html =
 buildJudgeConfirmLandscapePdfHtml_(data);
 const iframe =
 document.createElement("iframe");
 iframe.setAttribute("aria-hidden","true");
 iframe.style.cssText =
-"position:fixed;left:0;top:0;width:1200px;height:900px;opacity:0.01;border:0;z-index:2147483646;pointer-events:none;background:#fff;";
+"position:fixed;left:0;top:0;width:1140px;height:1600px;opacity:0.02;border:0;z-index:2147483646;pointer-events:none;background:#fff;";
 document.body.appendChild(iframe);
 try{
 const doc =
@@ -9133,36 +9253,45 @@ doc.open();
 doc.write(html);
 doc.close();
 await new Promise(function(resolve){
-setTimeout(resolve,120);
+setTimeout(resolve,180);
 });
-const target =
-doc.querySelector(".jc-pdf-root") || doc.body;
-const dataUri =
-await window.html2pdf()
-.set({
-margin:[6,6,6,6],
-image:{type:"jpeg",quality:0.98},
-html2canvas:{
-scale:2,
-useCORS:true,
-logging:false,
-backgroundColor:"#ffffff",
-scrollX:0,
-scrollY:0,
-windowWidth:1200
-},
-jsPDF:{
+const sheets =
+Array.from(doc.querySelectorAll(".jc-sheet"));
+if(!sheets.length){
+throw new Error("確認表沒有可輸出的頁面");
+}
+const pdf =
+new JsPDF({
+orientation:"landscape",
 unit:"mm",
 format:"a4",
-orientation:"landscape"
-},
-pagebreak:{
-mode:["css","legacy"],
-before:".jc-sheet-break"
+compress:true
+});
+/*
+ * 每一張「資料審查／實地審查／總成績」獨立截圖再入 PDF，
+ * 避免 html2pdf 自動裁切把橫式表格切成空白碎片。
+ */
+let hasPage =
+false;
+for(let i=0;i<sheets.length;i+=1){
+const sheet =
+sheets[i];
+const canvas =
+await captureJudgeConfirmSheetCanvas_(sheet);
+if(!canvas || !canvas.width || !canvas.height){
+throw new Error("PDF 畫面截取失敗");
 }
-})
-.from(target)
-.outputPdf("datauristring");
+addCanvasPagesToPdf_(
+pdf,
+canvas,
+8,
+hasPage
+);
+hasPage =
+true;
+}
+const dataUri =
+pdf.output("datauristring");
 const comma =
 String(dataUri || "").indexOf(",");
 if(comma < 0){
@@ -10325,6 +10454,40 @@ failures.length
 );
 }
 
+if(
+!judgeConfirmExportJobLive_(job)
+){
+return;
+}
+
+/*
+ * 只成功 1 位時直接下 PDF，不要再包成 ZIP。
+ */
+if(successes.length === 1){
+const one =
+successes[0];
+downloadBase64Artifact(
+one.base64,
+one.mimeType || "application/pdf",
+one.fileName
+);
+if(state){
+state.innerHTML =
+`✅ PDF 已開始下載（1 位` +
+(
+failures.length
+?
+`｜失敗 ${esc(String(failures.length))}：${esc(failures.map(function(row){return row.judgeId;}).join("、"))}`
+:
+""
+) +
+`｜耗時 ${esc(String(job.elapsedMs))} ms）｜${esc(one.fileName)}`;
+}
+toast(
+"✅ PDF 已開始下載：" + one.fileName
+);
+}
+else{
 const zipFiles =
 successes.map(
 function(row){
@@ -10334,10 +10497,8 @@ bytes:base64ToUint8Array_(row.base64)
 };
 }
 );
-
 const zipBlob =
 buildZipStoreBlob_(zipFiles);
-
 const zipName =
 exportSafeClientFileName_(
 EVENT_NAME +
@@ -10349,18 +10510,10 @@ String(successes.length) +
 new Date().toISOString().replace(/[:.]/g,"-") +
 ".zip"
 );
-
-if(
-!judgeConfirmExportJobLive_(job)
-){
-return;
-}
-
 downloadBlobArtifact_(
 zipBlob,
 zipName
 );
-
 if(state){
 state.innerHTML =
 `✅ ZIP 已開始下載（成功 ${esc(String(successes.length))} 位` +
@@ -10373,10 +10526,10 @@ failures.length
 ) +
 `｜耗時 ${esc(String(job.elapsedMs))} ms）`;
 }
-
 toast(
 "✅ ZIP 已開始下載：" + zipName
 );
+}
 
 }
 catch(error){
