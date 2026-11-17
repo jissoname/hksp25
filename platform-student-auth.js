@@ -360,28 +360,69 @@ function createRequireStudentAccess(deps) {
     }
   });
 
+  var registrationClubs = [];
+
+  function fillClubSelectByCategory(category) {
+    var select = $("regClub");
+    if (!select) return;
+    select.innerHTML = "";
+    var cat = String(category || "").trim();
+    if (!cat) {
+      select.disabled = true;
+      select.appendChild(new Option("請先選擇屬性", ""));
+      return;
+    }
+    var list = registrationClubs.filter(function (club) {
+      return club.category === cat;
+    });
+    if (!list.length) {
+      select.disabled = true;
+      select.appendChild(new Option("此屬性目前沒有社團", ""));
+      return;
+    }
+    select.disabled = false;
+    select.appendChild(new Option("請選擇社團", ""));
+    list.forEach(function (club) {
+      select.appendChild(new Option(club.clubName, club.permanentClubId));
+    });
+  }
+
   function loadClubs() {
+    var catSelect = $("regClubCategory");
     var select = $("regClub");
     if (!select) return Promise.resolve();
     return call("listActiveClubsForRegistration")
       .then(function (res) {
-        var clubs = (res.data && res.data.clubs) || [];
-        select.innerHTML = "";
-        if (!clubs.length) {
-          select.innerHTML = "<option value=\"\">目前沒有可註冊社團</option>";
-          return;
+        registrationClubs = (res.data && res.data.clubs) || [];
+        var categories = (res.data && res.data.categories) || [];
+        if (!categories.length) {
+          var seen = Object.create(null);
+          registrationClubs.forEach(function (club) {
+            if (club.category && !seen[club.category]) {
+              seen[club.category] = true;
+              categories.push(club.category);
+            }
+          });
         }
-        select.appendChild(new Option("請選擇社團", ""));
-        clubs.forEach(function (club) {
-          select.appendChild(
-            new Option(
-              club.clubName + "（" + club.permanentClubId + "）",
-              club.permanentClubId
-            )
-          );
-        });
+        if (catSelect) {
+          catSelect.innerHTML = "";
+          if (!categories.length) {
+            catSelect.appendChild(new Option("目前沒有可註冊屬性", ""));
+            fillClubSelectByCategory("");
+            return;
+          }
+          catSelect.appendChild(new Option("請選擇屬性", ""));
+          categories.forEach(function (cat) {
+            catSelect.appendChild(new Option(cat, cat));
+          });
+        }
+        fillClubSelectByCategory(catSelect ? catSelect.value : "");
       })
       .catch(function (error) {
+        if (catSelect) {
+          catSelect.innerHTML = "<option value=\"\">屬性載入失敗</option>";
+        }
+        select.disabled = true;
         select.innerHTML = "<option value=\"\">社團名單載入失敗</option>";
         setStatus(safeError(error), "error");
       });
@@ -545,6 +586,11 @@ function createRequireStudentAccess(deps) {
     if (el) el.addEventListener(evt, fn);
   }
 
+  bind("regClubCategory", "change", function () {
+    var catSelect = $("regClubCategory");
+    fillClubSelectByCategory(catSelect ? catSelect.value : "");
+  });
+
   bind("linkToRegister", "click", function () {
     showTab("register");
   });
@@ -576,8 +622,9 @@ function createRequireStudentAccess(deps) {
     var permanentClubId = $("regClub").value;
     var studentId = client.normalizeStudentId($("regStudentId").value);
     var birthYYYYMMDD = String($("regBirth").value || "").trim();
-    if (!permanentClubId || !studentId || !/^\d{8}$/.test(birthYYYYMMDD)) {
-      setStatus("請完整填寫社團、學號與生日。", "error");
+    var category = $("regClubCategory") ? $("regClubCategory").value : "";
+    if (!category || !permanentClubId || !studentId || !/^\d{8}$/.test(birthYYYYMMDD)) {
+      setStatus("請完整填寫屬性、社團、學號與生日。", "error");
       return;
     }
     pendingClientRequestId =

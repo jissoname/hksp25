@@ -4,7 +4,7 @@
 
 ## 註冊
 
-1. 選擇進行中活動的社團（`listActiveClubsForRegistration`）
+1. 先選「社團屬性」，再選「社團名稱」（資料來源：`scripts/hksp-clubs-115-1.json`／`listActiveClubsForRegistration`）
 2. 填學號 + 西元生日 `YYYYMMDD`（初始密碼）
 3. 建立 `hksp_students` 後自動登入，並綁定 `hksp_memberships`
 4. `must_change_password=true` → 強制進入改密頁，完成前不可上傳

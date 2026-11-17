@@ -1206,8 +1206,10 @@ body.cs-open .cs-fab{display:none}
         </section>
 
         <section id="panel-register" class="panel">
+          <label for="regClubCategory">社團屬性</label>
+          <select id="regClubCategory"><option value="">載入中…</option></select>
           <label for="regClub">社團名稱</label>
-          <select id="regClub"><option value="">載入中…</option></select>
+          <select id="regClub" disabled><option value="">請先選擇屬性</option></select>
           <label for="regStudentId">學號</label>
           <input id="regStudentId" maxlength="20" autocomplete="username" placeholder="請輸入學號">
           <label for="regBirth">西元生日（YYYYMMDD，作為初始密碼）</label>

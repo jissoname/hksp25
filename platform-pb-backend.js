@@ -171,18 +171,38 @@
   }
 
   function listActiveClubsForRegistration() {
+    var categoryOrder = [
+      "全校自治性",
+      "自治綜合性",
+      "康樂性",
+      "學藝性",
+      "服務性",
+      "體能性"
+    ];
     return getActivity().then(function (activity) {
       return pb.collection(C.clubs).getFullList({
         filter: 'activity="' + activity.id + '" && active=true',
         sort: "name"
       }).then(function (clubs) {
+        var mapped = clubs.map(function (club) {
+          return {
+            permanentClubId: club.permanent_club_id,
+            clubName: club.name,
+            category: cfg.mapClubCategory(club.category)
+          };
+        });
+        mapped.sort(function (a, b) {
+          var ai = categoryOrder.indexOf(a.category);
+          var bi = categoryOrder.indexOf(b.category);
+          if (ai < 0) ai = 99;
+          if (bi < 0) bi = 99;
+          if (ai !== bi) return ai - bi;
+          return String(a.clubName || "").localeCompare(String(b.clubName || ""), "zh-Hant");
+        });
         return ok({
-          clubs: clubs.map(function (club) {
-            return {
-              permanentClubId: club.permanent_club_id,
-              clubName: club.name,
-              category: club.category || ""
-            };
+          clubs: mapped,
+          categories: categoryOrder.filter(function (cat) {
+            return mapped.some(function (c) { return c.category === cat; });
           })
         });
       });
