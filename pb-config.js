@@ -9,8 +9,9 @@
   var api = {
     usePocketBase: true,
     url: "https://db.keson.pro",
-    /** admin.html PocketBase 管理登入預設帳（密碼不寫進前端） */
-    staffAdminEmail: "admin@hksp.local",
+    /** admin.html / judge.html PocketBase 登入預設帳（密碼不寫進前端） */
+    staffAdminEmail: "hksp_6188@hk.edu.tw",
+    staffJudgeEmail: "hksp_6188@hk.edu.tw",
     /**
      * 正式上線：上傳主路徑 = PocketBase。
      * Drive 代傳已擱置（非主路徑、避免 API 費用）；保持 false。

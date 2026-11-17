@@ -560,8 +560,17 @@ html,body{
 }
 .nav-links a.active{color:var(--hk-navy);border-bottom-color:var(--hk-navy)}
 .nav-links a:focus-visible{outline:2px solid var(--hk-accent);outline-offset:3px;border-radius:2px}
+.nav-actions{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;flex:0 0 auto;margin-left:auto
+}
+.nav-side{
+  color:var(--hk-muted);text-decoration:none;font-size:13.5px;font-weight:600;
+  padding:4px 0;border-bottom:1px solid transparent;white-space:nowrap
+}
+@media (hover:hover){.nav-side:hover{color:var(--hk-navy);border-bottom-color:var(--hk-navy)}}
+.nav-side:focus-visible{outline:2px solid var(--hk-accent);outline-offset:3px;border-radius:2px}
 .nav-login{
-  border:0;border-radius:var(--hk-radius);padding:9px 16px;cursor:pointer;flex:0 0 auto;margin-left:auto;
+  border:0;border-radius:var(--hk-radius);padding:9px 16px;cursor:pointer;flex:0 0 auto;
   background:var(--hk-navy);color:var(--hk-card);font:inherit;font-size:13.5px;font-weight:700;white-space:nowrap;
   transition:background var(--motion) var(--ease-out)
 }
@@ -1182,7 +1191,7 @@ body.drive-ws-open .news-band{display:none}
   .feature-row > .feature-card:nth-child(n+3){border-top:1px solid var(--hk-line)}
   .nav-links{display:none}
   .platform-nav{row-gap:10px}
-  .nav-login{margin-left:auto}
+  .nav-actions{margin-left:auto}
 }
 @media(max-width:560px){
   .feature-row{grid-template-columns:1fr}
@@ -1190,7 +1199,9 @@ body.drive-ws-open .news-band{display:none}
   .feature-row > .feature-card + .feature-card{border-top:1px solid var(--hk-line)}
   .brand{flex:1 1 100%}
   .brand-text{font-size:12.5px}
-  .nav-login{width:100%;margin-left:0;text-align:center}
+  .nav-actions{width:100%;margin-left:0;justify-content:stretch}
+  .nav-side{padding:8px 0}
+  .nav-login{flex:1 1 auto;text-align:center}
   .hero{padding-top:24px;padding-bottom:18px}
   .hero-cta{width:100%}
   .hero-cta .btn-solid,.hero-cta .btn-ghost{flex:1 1 auto}
@@ -1220,7 +1231,11 @@ body.drive-ws-open .news-band{display:none}
       <a href="#schedule">評選與觀摩</a>
       <a href="#news">最新公告</a>
     </nav>
-    <button type="button" class="nav-login" id="navLoginBtn">登入平台</button>
+    <div class="nav-actions">
+      <a class="nav-side" href="./judge.html">評審</a>
+      <a class="nav-side" href="./admin.html">後台</a>
+      <button type="button" class="nav-login" id="navLoginBtn">登入平台</button>
+    </div>
   </header>
 
   <section class="hero" id="top">

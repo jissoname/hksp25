@@ -29,17 +29,17 @@ powershell -File scripts/pb-seed-clubs-115-1.ps1
 
 | 欄位 | 值 |
 |---|---|
-| Email | `admin@hksp.local` |
-| 密碼 | `AdminHksp123!` |
-| 說明 | `hksp_staff` / `role=admin`；可用 `?gas=1` 回舊 GAS |
+| Email | `hksp_6188@hk.edu.tw` |
+| 密碼 | `921020` |
+| 說明 | `hksp_staff` / `role=admin`（`admin.html` 後台總管理員）。驗收上傳：登入後開「社團上傳資料」面板瀏覽／下載，不必進 PB 後台；可用 `?gas=1` 回舊 GAS |
 
 ## 評審端（`judge.html` 完整 UI · PocketBase 預設）
 
 | 欄位 | 值 |
 |---|---|
-| Email | `judge.demo@hksp.local` |
-| 密碼 | `JudgeDemo123!` |
-| 說明 | `hksp_staff` / `role=judge`；已指派全屬性＋`sec-materials`；可用 `?gas=1` 回舊 GAS |
+| Email | `hksp_6188@hk.edu.tw` |
+| 密碼 | `921020` |
+| 說明 | 與後台同帳；`role=admin` 亦可登入評審端。示範評審 `judge.demo@hksp.local` / `JudgeDemo123!` 仍可用 |
 
 最小煙測頁：`judge-pb.html`（同上帳密）。
 

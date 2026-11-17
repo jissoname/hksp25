@@ -541,8 +541,12 @@
     }
     var user = document.getElementById("username");
     if (user && !String(user.value || "").trim()) {
-      user.value = "judge.demo@hksp.local";
-      user.placeholder = "judge.demo@hksp.local";
+      var pref =
+        (cfg() && cfg().staffJudgeEmail) ||
+        (cfg() && cfg().staffAdminEmail) ||
+        "hksp_6188@hk.edu.tw";
+      user.value = String(pref).trim();
+      user.placeholder = String(pref).trim();
     }
   }
 

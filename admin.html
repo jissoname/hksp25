@@ -37,7 +37,7 @@
 <div class="muted">弘光社團資訊平台 · 評選暨觀摩活動管理</div>
 <form id="loginForm">
 <label class="label" id="adminEmailLabel" for="adminEmail">管理員 Email</label>
-<input id="adminEmail" class="field" type="email" autocomplete="username" placeholder="admin@hksp.local">
+<input id="adminEmail" class="field" type="email" autocomplete="username" placeholder="hksp_6188@hk.edu.tw">
 <label class="label" for="adminPassword">管理員密碼</label>
 <input id="adminPassword" class="field" type="password" autocomplete="current-password" required placeholder="請輸入管理員密碼">
 <button id="loginBtn" class="btn btn-primary login-btn" type="submit">登入管理後台</button>
@@ -670,6 +670,33 @@ onclick="openClubModal()"
 
 </div>
 
+</section>
+
+<section class="panel closed" data-panel="club-uploads">
+<button class="panel-head" onclick="togglePanel(this); if(this.parentElement && !this.parentElement.classList.contains('closed')) loadClubUploadSummary()">
+<div>
+<div class="panel-title">社團上傳資料</div>
+<div id="clubUploadMeta" class="panel-meta">PocketBase 檔案瀏覽（確認上傳是否進系統）</div>
+</div>
+<span class="chev">▼</span>
+</button>
+<div class="panel-body">
+<div class="notice" style="margin-bottom:12px">
+從 PocketBase 讀取各社團已上傳檔案。可進資料夾瀏覽並單檔開啟／下載；此面板不依賴 Drive 連結，也不需進入 PB 管理後台。
+</div>
+<div class="toolbar">
+<input id="clubUploadSearch" class="field grow" placeholder="搜尋社團或屬性" oninput="renderClubUploadSummary()">
+<button class="btn" type="button" onclick="loadClubUploadSummary()">重新整理</button>
+<button class="btn" type="button" id="clubUploadBackBtn" style="display:none" onclick="closeClubUploadBrowser()">返回社團列表</button>
+</div>
+<div id="clubUploadSummaryStats" class="list-sub" style="margin:8px 0 10px">尚未讀取</div>
+<div id="clubUploadList" class="list"><div class="state">尚未讀取</div></div>
+<div id="clubUploadBrowser" class="hidden" style="margin-top:12px">
+<div id="clubUploadBrowserHead" class="list-title" style="margin-bottom:8px">—</div>
+<nav id="clubUploadBreadcrumb" class="list-sub" style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"></nav>
+<div id="clubUploadBrowserBody" class="list"><div class="state">載入中…</div></div>
+</div>
+</div>
 </section>
 
 <section class="panel closed" data-panel="club-students">
@@ -1640,10 +1667,10 @@ onclick="closeModal('aggregationDetailModal')"
 
 <div id="toast" class="toast"></div>
 
-<script src="./pb-config.js"></script>
+<script src="./pb-config.js?v=upload-browse-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
-<script src="./platform-pb-backend.js"></script>
-<script src="./platform-admin-pb.js"></script>
+<script src="./platform-pb-backend.js?v=upload-browse-2"></script>
+<script src="./platform-admin-pb.js?v=upload-browse-2"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -1749,7 +1776,11 @@ clubSaveBusy:false,
 clubSaveConfirmed:null,
 clubSaveUnconfirmed:null,
 clubListSeq:0,
-judgeListSeq:0
+judgeListSeq:0,
+clubUploadSummary:[],
+clubUploadSummaryMeta:{totalFiles:0,clubsWithFiles:0},
+clubUploadBrowse:null,
+clubUploadBrowseClub:null
 };
 // 與頁面內 lexical S 同一物件，供預覽腳本／除錯寫入 clubs 等狀態
 window.S = S;
@@ -2550,7 +2581,8 @@ loadCloudUploadSettings(),
 loadUploadGate(),
 loadJudges(),
 loadScoreConfig(),
-loadServerStudentActivity(opts||{})
+loadServerStudentActivity(opts||{}),
+loadClubUploadSummary({quiet:true})
 ]);
 if(token!==String(S.token||"")) return;
 $("lastRefresh").textContent="最後同步："+new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(new Date());
@@ -10323,6 +10355,226 @@ return false;
 
 }
 
+}
+
+function formatBytesShort_(n){
+const v=Number(n)||0;
+if(v<1024) return v+" B";
+if(v<1048576) return (v/1024).toFixed(1)+" KB";
+return (v/1048576).toFixed(1)+" MB";
+}
+
+function formatTaipeiShort_(iso){
+if(!iso) return "—";
+try{
+return new Intl.DateTimeFormat("zh-TW",{
+timeZone:"Asia/Taipei",
+year:"numeric",month:"2-digit",day:"2-digit",
+hour:"2-digit",minute:"2-digit",hour12:false
+}).format(new Date(iso));
+}catch(_e){
+return String(iso);
+}
+}
+
+function uploadKindLabel_(kind){
+return kind==="feature"?"特色":"評選";
+}
+
+async function loadClubUploadSummary(opts){
+opts=opts||{};
+const meta=$("clubUploadMeta");
+const list=$("clubUploadList");
+const stats=$("clubUploadSummaryStats");
+if(!isPocketBaseAdminMode()){
+if(meta) meta.textContent="僅 PocketBase 模式可用";
+if(stats) stats.textContent="此功能僅 PocketBase 管理頁可用（勿使用 ?gas=1）";
+if(list) list.innerHTML='<div class="state">此功能僅 PocketBase 可用</div>';
+return false;
+}
+if(!opts.quiet){
+if(meta) meta.textContent="讀取中…";
+if(list && !S.clubUploadBrowseClub) list.innerHTML='<div class="state"><div class="spinner"></div>讀取社團上傳摘要…</div>';
+}
+try{
+const r=await api("adminListClubUploadSummary",{});
+if(!r||r.success===false) throw new Error((r&&r.message)||"讀取失敗");
+S.clubUploadSummary=Array.isArray(r.clubs)?r.clubs:[];
+S.clubUploadSummaryMeta={
+totalFiles:Number(r.totalFiles)||0,
+clubsWithFiles:Number(r.clubsWithFiles)||0
+};
+if(meta) meta.textContent="共 "+S.clubUploadSummaryMeta.clubsWithFiles+" 社有檔｜"+S.clubUploadSummaryMeta.totalFiles+" 個檔案";
+if(stats){
+stats.textContent=
+"活動 "+String(r.activityId||"—")+"｜有上傳社團 "+S.clubUploadSummaryMeta.clubsWithFiles+
+"／"+S.clubUploadSummary.length+"｜檔案總數 "+S.clubUploadSummaryMeta.totalFiles;
+}
+if(!S.clubUploadBrowseClub) renderClubUploadSummary();
+return true;
+}catch(e){
+if(meta) meta.textContent="讀取失敗";
+if(stats) stats.textContent=String((e&&e.message)||"讀取失敗");
+if(list && !S.clubUploadBrowseClub){
+list.innerHTML='<div class="state">⚠️ '+esc((e&&e.message)||"讀取失敗")+'</div>';
+}
+return false;
+}
+}
+
+function renderClubUploadSummary(){
+const list=$("clubUploadList");
+const browser=$("clubUploadBrowser");
+const back=$("clubUploadBackBtn");
+if(browser) browser.classList.add("hidden");
+if(back) back.style.display="none";
+S.clubUploadBrowseClub=null;
+S.clubUploadBrowse=null;
+if(!list) return;
+if(!isPocketBaseAdminMode()){
+list.innerHTML='<div class="state">此功能僅 PocketBase 可用</div>';
+return;
+}
+const q=String(($("clubUploadSearch")&&$("clubUploadSearch").value)||"").trim().toLowerCase();
+const rows=(S.clubUploadSummary||[]).filter(function(c){
+if(!q) return true;
+const hay=((c.name||"")+" "+(c.category||"")+" "+(c.permanentClubId||"")).toLowerCase();
+return hay.indexOf(q)>=0;
+}).sort(function(a,b){
+const af=Number(a.fileCount)||0;
+const bf=Number(b.fileCount)||0;
+if(bf!==af) return bf-af;
+return String(a.name||"").localeCompare(String(b.name||""),"zh-Hant");
+});
+if(!rows.length){
+list.innerHTML='<div class="state">尚無社團或沒有符合搜尋的結果</div>';
+return;
+}
+list.innerHTML=rows.map(function(c){
+const count=Number(c.fileCount)||0;
+const badge=count
+?('<span class="badge b-pub">'+count+' 檔</span>')
+:('<span class="badge b-notstarted">0 檔</span>');
+const sub=
+esc(c.category||"—")+" · "+esc(c.permanentClubId||"—")+
+" · 評選 "+(Number(c.evaluationCount)||0)+
+"／特色 "+(Number(c.featureCount)||0)+
+(c.latestUploadedAt?(" · 最近 "+formatTaipeiShort_(c.latestUploadedAt)):"");
+return (
+'<div class="list-row">'+
+'<div><div class="list-title">'+esc(c.name||"—")+' '+badge+'</div>'+
+'<div class="list-sub">'+sub+'</div></div>'+
+'<div class="row-actions">'+
+'<button type="button" class="btn btn-primary" onclick="openClubUploadBrowser('+
+JSON.stringify(String(c.id||""))+','+
+JSON.stringify(String(c.permanentClubId||""))+','+
+JSON.stringify(String(c.name||""))+
+')">瀏覽</button>'+
+'</div></div>'
+);
+}).join("");
+}
+
+async function openClubUploadBrowser(clubId,permanentClubId,clubName,parentFolderId){
+if(!isPocketBaseAdminMode()){
+toast("此功能僅 PocketBase 可用");
+return;
+}
+S.clubUploadBrowseClub={
+clubId:String(clubId||""),
+permanentClubId:String(permanentClubId||""),
+clubName:String(clubName||"")
+};
+const list=$("clubUploadList");
+const browser=$("clubUploadBrowser");
+const back=$("clubUploadBackBtn");
+const body=$("clubUploadBrowserBody");
+const head=$("clubUploadBrowserHead");
+if(list) list.innerHTML="";
+if(browser) browser.classList.remove("hidden");
+if(back) back.style.display="";
+if(head) head.textContent=(clubName||"社團")+"｜上傳資料";
+if(body) body.innerHTML='<div class="state"><div class="spinner"></div>載入資料夾…</div>';
+await browseClubUploadsFolder(parentFolderId||"");
+}
+
+function closeClubUploadBrowser(){
+S.clubUploadBrowseClub=null;
+S.clubUploadBrowse=null;
+renderClubUploadSummary();
+}
+
+async function browseClubUploadsFolder(parentFolderId){
+const club=S.clubUploadBrowseClub;
+if(!club) return;
+const body=$("clubUploadBrowserBody");
+const crumb=$("clubUploadBreadcrumb");
+try{
+const r=await api("adminBrowseClubUploads",{
+clubId:club.clubId,
+permanentClubId:club.permanentClubId,
+parentFolderId:String(parentFolderId||"")
+});
+if(!r||r.success===false) throw new Error((r&&r.message)||"讀取失敗");
+S.clubUploadBrowse=r;
+if(crumb){
+const path=Array.isArray(r.path)?r.path:[];
+crumb.innerHTML=path.map(function(p,idx){
+const isLast=idx===path.length-1;
+const label=esc(p.name||"資料夾");
+if(isLast) return '<span>'+label+'</span>';
+return (
+'<button type="button" class="btn" style="padding:4px 8px;min-height:28px" onclick="browseClubUploadsFolder('+
+JSON.stringify(String(p.folderId||""))+
+')">'+label+'</button><span>／</span>'
+);
+}).join("");
+}
+const folders=Array.isArray(r.folders)?r.folders:[];
+const files=Array.isArray(r.files)?r.files:[];
+if(!folders.length && !files.length){
+if(body) body.innerHTML='<div class="state">此層尚無上傳資料</div>';
+return;
+}
+const folderHtml=folders.map(function(f){
+return (
+'<div class="list-row">'+
+'<div><div class="list-title">📁 '+esc(f.name||"資料夾")+'</div>'+
+'<div class="list-sub">'+esc(f.kind||"evaluation")+'</div></div>'+
+'<div class="row-actions">'+
+'<button type="button" class="btn btn-primary" onclick="browseClubUploadsFolder('+
+JSON.stringify(String(f.folderId||f.id||""))+
+')">開啟</button>'+
+'</div></div>'
+);
+}).join("");
+const fileHtml=files.map(function(f){
+const url=String(f.fileUrl||f.webViewLink||"");
+const status=String(f.status||"");
+const statusBadge=status==="completed"||status==="uploaded"
+?('<span class="badge b-pub">'+esc(status)+'</span>')
+:('<span class="badge b-draft">'+esc(status||"—")+'</span>');
+const actions=url
+?(
+'<a class="btn btn-primary" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">開啟</a>'+
+'<a class="btn" href="'+esc(url)+'" download="'+esc(f.fileName||f.name||"file")+'" target="_blank" rel="noopener noreferrer">下載</a>'
+)
+:'<span class="list-sub">無檔案連結</span>';
+return (
+'<div class="list-row">'+
+'<div><div class="list-title">'+esc(f.fileName||f.name||"file")+' '+statusBadge+'</div>'+
+'<div class="list-sub">'+
+esc(uploadKindLabel_(f.uploadKind))+
+' · '+formatBytesShort_(f.sizeBytes||f.size)+
+' · '+formatTaipeiShort_(f.uploadedAt||f.createdAt)+
+'</div></div>'+
+'<div class="row-actions">'+actions+'</div></div>'
+);
+}).join("");
+if(body) body.innerHTML=folderHtml+fileHtml;
+}catch(e){
+if(body) body.innerHTML='<div class="state">⚠️ '+esc((e&&e.message)||"讀取失敗")+'</div>';
+}
 }
 
 const CLUB_STUDENT_UNCAT="未分類";

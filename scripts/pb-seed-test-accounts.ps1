@@ -57,6 +57,34 @@ if ($clubRes.totalItems -lt 1) {
   Write-Host "CLUB exists $($club.id)"
 }
 
+# --- Staff admin (admin.html · 管理／檔案下載超管) ---
+$adminEmail = 'hksp_6188@hk.edu.tw'
+$adminPassword = '921020'
+$adminFilter = [uri]::EscapeDataString("email=`"$adminEmail`"")
+$adminStaffRes = Invoke-Pb Get "/api/collections/hksp_staff/records?filter=$adminFilter&perPage=1" $null $T
+if ($adminStaffRes.totalItems -lt 1) {
+  Write-Host 'CREATE staff admin'
+  Invoke-Pb Post '/api/collections/hksp_staff/records' @{
+    email = $adminEmail
+    emailVisibility = $true
+    password = $adminPassword
+    passwordConfirm = $adminPassword
+    name = 'HKSP 總管理員'
+    role = 'admin'
+    active = $true
+  } $T | Out-Null
+} else {
+  Write-Host 'UPDATE staff admin password/role'
+  $aid = $adminStaffRes.items[0].id
+  Invoke-Pb Patch "/api/collections/hksp_staff/records/$aid" @{
+    password = $adminPassword
+    passwordConfirm = $adminPassword
+    name = 'HKSP 總管理員'
+    role = 'admin'
+    active = $true
+  } $T | Out-Null
+}
+
 # --- Judge ---
 $judgeEmail = 'judge.demo@hksp.local'
 $judgePassword = 'JudgeDemo123!'
@@ -146,6 +174,10 @@ $stuAuth = Invoke-Pb Post '/api/collections/hksp_students/auth-with-password' @{
   identity = $studentEmail
   password = $studentPassword
 }
+$adminAuth = Invoke-Pb Post '/api/collections/hksp_staff/auth-with-password' @{
+  identity = $adminEmail
+  password = $adminPassword
+}
 $judgeAuth = Invoke-Pb Post '/api/collections/hksp_staff/auth-with-password' @{
   identity = $judgeEmail
   password = $judgePassword
@@ -156,7 +188,10 @@ Write-Host '==== TEST ACCOUNTS READY ===='
 Write-Host "Student login ID : $studentId"
 Write-Host "Student password : $studentPassword"
 Write-Host "Student club     : DEMO-CLUB-001 / $($club.name)"
+Write-Host "Admin email      : $adminEmail"
+Write-Host "Admin password   : $adminPassword"
 Write-Host "Judge email      : $judgeEmail"
 Write-Host "Judge password   : $judgePassword"
 Write-Host "Verified student : $($stuAuth.record.student_id)"
+Write-Host "Verified admin   : $($adminAuth.record.email) ($($adminAuth.record.role))"
 Write-Host "Verified judge   : $($judgeAuth.record.email) ($($judgeAuth.record.role))"

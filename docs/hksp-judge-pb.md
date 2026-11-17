@@ -14,8 +14,8 @@
 
 | 角色 | Email | 密碼 |
 |---|---|---|
-| 評審 | `judge.demo@hksp.local` | `JudgeDemo123!` |
-| 管理 | `admin@hksp.local` | `AdminHksp123!` |
+| 評審／管理超管 | `hksp_6188@hk.edu.tw` | `921020` |
+| 示範評審 | `judge.demo@hksp.local` | `JudgeDemo123!` |
 
 ## 操作
 

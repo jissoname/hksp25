@@ -29,10 +29,29 @@
     return root.HKSP_PB_BACKEND || null;
   }
 
+  // Dedicated admin client + storage key. Sharing HKSP_PB_BACKEND.pb / "pocketbase_auth"
+  // races with student tabs: their authStore.clear() wipes admin mid-request via storage events.
+  var ADMIN_AUTH_STORAGE_KEY = "hksp_pb_admin_auth";
+  var adminPb = null;
+
   function pb() {
+    if (adminPb) return adminPb;
+    var url = String((cfg().url || "")).replace(/\/$/, "");
+    if (typeof root.PocketBase === "function" && url) {
+      adminPb = new root.PocketBase(url);
+      adminPb.autoCancellation(false);
+      if (adminPb.authStore && typeof adminPb.authStore.storageKey === "string") {
+        adminPb.authStore.storageKey = ADMIN_AUTH_STORAGE_KEY;
+      }
+      return adminPb;
+    }
     var b = backend();
     if (!b || !b.pb) throw new Error("PocketBase 後端尚未載入，請重新整理。");
-    return b.pb;
+    if (b.pb.authStore && typeof b.pb.authStore.storageKey === "string") {
+      b.pb.authStore.storageKey = ADMIN_AUTH_STORAGE_KEY;
+    }
+    adminPb = b.pb;
+    return adminPb;
   }
 
   function C() {
@@ -52,7 +71,7 @@
   }
 
   function staffAdminEmail() {
-    return String(cfg().staffAdminEmail || "admin@hksp.local").trim();
+    return String(cfg().staffAdminEmail || "hksp_6188@hk.edu.tw").trim();
   }
 
   function mapClub(rec) {
@@ -86,22 +105,19 @@
     var client = pb();
     var token = String(sessionToken || "").trim();
     if (!token) throw new Error("ADMIN_UNAUTHORIZED");
-    if (!client.authStore.isValid || client.authStore.token !== token) {
-      var raw = sessionStorage.getItem(SESSION_RECORD_KEY);
-      var model = null;
-      try {
-        model = raw ? JSON.parse(raw) : null;
-      } catch (_e) {
-        model = null;
-      }
-      client.authStore.save(token, model);
+    var raw = sessionStorage.getItem(SESSION_RECORD_KEY);
+    var model = null;
+    try {
+      model = raw ? JSON.parse(raw) : null;
+    } catch (_e) {
+      model = null;
     }
-    if (!client.authStore.isValid) {
-      try {
-        await client.collection(C().staff).authRefresh();
-      } catch (_e2) {
-        throw new Error("ADMIN_UNAUTHORIZED");
-      }
+    // Always re-bind token: shared PocketBase client may be cleared by other adapters.
+    client.authStore.save(token, model);
+    try {
+      await client.collection(C().staff).authRefresh();
+    } catch (_e2) {
+      throw new Error("ADMIN_UNAUTHORIZED");
     }
     var rec = client.authStore.model;
     if (!rec || (rec.role !== "admin" && rec.role !== "service") || rec.active === false) {
@@ -240,6 +256,240 @@
         return c.active !== false;
       }),
       studentQueryClubs: all
+    });
+  }
+
+  function mapAdminUploadFile(rec) {
+    var fileName = "";
+    if (rec.file) {
+      fileName = Array.isArray(rec.file) ? rec.file[0] : rec.file;
+    }
+    var fileUrl = "";
+    try {
+      if (fileName) fileUrl = pb().files.getURL(rec, fileName);
+    } catch (_e) {
+      try {
+        if (fileName) fileUrl = pb().files.getUrl(rec, fileName);
+      } catch (_e2) {
+        fileUrl = "";
+      }
+    }
+    return {
+      id: rec.id,
+      fileId: rec.id,
+      name: rec.original_name || fileName || "file",
+      fileName: rec.original_name || fileName || "file",
+      size: rec.size_bytes || 0,
+      sizeBytes: rec.size_bytes || 0,
+      mimeType: rec.mime_type || "",
+      uploadKind: rec.upload_kind || "evaluation",
+      status: rec.status || "completed",
+      folderId: rec.folder || "",
+      createdAt: rec.created || "",
+      updatedAt: rec.updated || "",
+      uploadedAt: rec.completed_at || rec.created || "",
+      fileUrl: fileUrl,
+      webViewLink: rec.drive_web_view_link || fileUrl || ""
+    };
+  }
+
+  async function resolveAdminClub(activity, data) {
+    var clubId = String((data && data.clubId) || "").trim();
+    var permanent = String((data && data.permanentClubId) || "")
+      .trim()
+      .toUpperCase();
+    if (clubId) {
+      try {
+        var byId = await pb().collection(C().clubs).getOne(clubId);
+        if (byId && byId.activity === activity.id) return byId;
+      } catch (_e) {
+        /* try permanent */
+      }
+    }
+    if (permanent) {
+      return pb()
+        .collection(C().clubs)
+        .getFirstListItem(
+          'activity="' + activity.id + '" && permanent_club_id="' + permanent + '"'
+        );
+    }
+    throw new Error("缺少社團。");
+  }
+
+  async function findClubRootFolder(activity, club) {
+    var roots = await pb().collection(C().folders).getFullList({
+      filter:
+        'activity="' +
+        activity.id +
+        '" && club="' +
+        club.id +
+        '" && trashed!=true && parent=""',
+      sort: "created"
+    });
+    if (!roots.length) {
+      var any = await pb()
+        .collection(C().folders)
+        .getList(1, 1, {
+          filter:
+            'activity="' +
+            activity.id +
+            '" && club="' +
+            club.id +
+            '" && trashed!=true',
+          sort: "created"
+        });
+      return (any.items && any.items[0]) || null;
+    }
+    if (roots.length === 1) return roots[0];
+    // Prefer a root that actually has children (skip empty duplicate roots).
+    for (var i = 0; i < roots.length; i++) {
+      var kids = await pb()
+        .collection(C().folders)
+        .getList(1, 1, {
+          filter: 'club="' + club.id + '" && trashed!=true && parent="' + roots[i].id + '"'
+        });
+      if (kids.totalItems > 0) return roots[i];
+    }
+    for (var j = 0; j < roots.length; j++) {
+      var files = await pb()
+        .collection(C().uploads)
+        .getList(1, 1, {
+          filter: 'club="' + club.id + '" && folder="' + roots[j].id + '" && status!="trashed"'
+        });
+      if (files.totalItems > 0) return roots[j];
+    }
+    return roots[0];
+  }
+
+  async function adminListClubUploadSummary() {
+    var activity = await getActivityRecord();
+    var clubs = await pb().collection(C().clubs).getFullList({
+      filter: 'activity="' + activity.id + '" && active=true',
+      sort: "category,name"
+    });
+    var uploads = await pb().collection(C().uploads).getFullList({
+      filter: 'activity="' + activity.id + '" && status!="trashed"',
+      sort: "-created"
+    });
+    var byClub = {};
+    uploads.forEach(function (u) {
+      var key = String(u.club || "");
+      if (!key) return;
+      if (!byClub[key]) {
+        byClub[key] = {
+          fileCount: 0,
+          evaluationCount: 0,
+          featureCount: 0,
+          completedCount: 0,
+          latestUploadedAt: ""
+        };
+      }
+      var row = byClub[key];
+      row.fileCount += 1;
+      if (u.upload_kind === "feature") row.featureCount += 1;
+      else row.evaluationCount += 1;
+      if (u.status === "completed" || u.status === "uploaded") row.completedCount += 1;
+      var ts = String(u.completed_at || u.created || "");
+      if (ts && (!row.latestUploadedAt || ts > row.latestUploadedAt)) {
+        row.latestUploadedAt = ts;
+      }
+    });
+    var summary = clubs.map(function (c) {
+      var mapped = mapClub(c);
+      var stats = byClub[c.id] || {
+        fileCount: 0,
+        evaluationCount: 0,
+        featureCount: 0,
+        completedCount: 0,
+        latestUploadedAt: ""
+      };
+      return Object.assign({}, mapped, stats);
+    });
+    return ok({
+      activityId: activity.activity_id || activityId(),
+      clubs: summary,
+      totalFiles: uploads.length,
+      clubsWithFiles: summary.filter(function (c) {
+        return c.fileCount > 0;
+      }).length
+    });
+  }
+
+  async function adminBrowseClubUploads(data) {
+    var activity = await getActivityRecord();
+    var club = await resolveAdminClub(activity, data || {});
+    var root = await findClubRootFolder(activity, club);
+    var parentId = String((data && data.parentFolderId) || "").trim();
+    if (!parentId) parentId = root ? root.id : "";
+
+    var folders = [];
+    var files = [];
+    var path = [
+      {
+        folderId: root ? root.id : "",
+        name: club.name || "社團根目錄",
+        depth: 0
+      }
+    ];
+
+    if (parentId) {
+      folders = await pb().collection(C().folders).getFullList({
+        filter:
+          'club="' +
+          club.id +
+          '" && trashed!=true && parent="' +
+          parentId +
+          '"',
+        sort: "name"
+      });
+      files = await pb().collection(C().uploads).getFullList({
+        filter:
+          'club="' +
+          club.id +
+          '" && folder="' +
+          parentId +
+          '" && status!="trashed"',
+        sort: "-created"
+      });
+      if (root && parentId !== root.id) {
+        try {
+          var current = await pb().collection(C().folders).getOne(parentId);
+          path.push({
+            folderId: current.id,
+            name: current.name || "資料夾",
+            depth: 1
+          });
+        } catch (_e) {
+          /* keep root-only path */
+        }
+      }
+    } else {
+      // No folder tree yet: still show club-level uploads (folder empty / unset).
+      files = await pb().collection(C().uploads).getFullList({
+        filter: 'club="' + club.id + '" && status!="trashed"',
+        sort: "-created"
+      });
+    }
+
+    return ok({
+      activityId: activity.activity_id || activityId(),
+      clubId: club.id,
+      permanentClubId: String(club.permanent_club_id || "").toUpperCase(),
+      clubName: club.name || "",
+      category: club.category || "",
+      clubFolderId: root ? root.id : "",
+      parentFolderId: parentId,
+      path: path,
+      folders: folders.map(function (f) {
+        return {
+          folderId: f.id,
+          id: f.id,
+          name: f.name,
+          kind: f.kind || "evaluation"
+        };
+      }),
+      files: files.map(mapAdminUploadFile),
+      storage: "pocketbase"
     });
   }
 
@@ -1539,6 +1789,8 @@
     adminLogin: adminLogin,
     adminLogout: adminLogout,
     adminListClubs: adminListClubs,
+    adminListClubUploadSummary: adminListClubUploadSummary,
+    adminBrowseClubUploads: adminBrowseClubUploads,
     adminAddClub: adminAddClub,
     adminUpdateClub: adminUpdateClub,
     adminDeleteClub: adminDeleteClub,
@@ -1606,7 +1858,7 @@
     document.querySelectorAll(".panel").forEach(function (panel) {
       if (
         !panel.querySelector(
-          "#clubList,#clubStudentList,#eventMeta,#cloudUploadMeta,#uploadGateStatus,#judgeList,#sectionsEditor,#progressMeta,#judgeProgressList,#aggregationMeta,#rankingMeta,#categoryRankingExcelMeta,#organizerAuditExcelMeta"
+          "#clubList,#clubStudentList,#clubUploadList,#clubUploadBrowser,#eventMeta,#cloudUploadMeta,#uploadGateStatus,#judgeList,#sectionsEditor,#progressMeta,#judgeProgressList,#aggregationMeta,#rankingMeta,#categoryRankingExcelMeta,#organizerAuditExcelMeta"
         )
       ) {
         panel.hidden = true;
@@ -1625,7 +1877,7 @@
     var subtitle = document.querySelector(".hero .sub");
     if (subtitle) {
       subtitle.textContent =
-        "社團、評審、時程、成績彙整／排名與 CSV 匯出（Drive 代傳已擱置；評審 PDF 確認單尚未接）";
+        "社團、上傳資料瀏覽、評審、時程、成績彙整／排名與 CSV 匯出（Drive 代傳已擱置）";
     }
     var emailInput = $("adminEmail");
     if (emailInput && !String(emailInput.value || "").trim()) {
