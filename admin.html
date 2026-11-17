@@ -567,23 +567,23 @@ class="btn btn-primary"
 onclick="downloadJudgeConfirmationPdf()"
 disabled
 >
-📄 下載確認表
+📄 下載 PDF
 </button>
 
 </div>
 
 <div class="export-print-hint">
-選擇評審與類別後直接下載確認表（不必預覽）。PocketBase 下載為可列印 HTML，開啟後可「另存為 PDF」；全部三表為一份檔（資料審查→實地審查→總成績）。
+選擇評審與類別後直接下載 PDF（不必預覽）。全部三表為一份 PDF（資料審查→實地審查→總成績）。
 </div>
 
 <div id="judgeExportState" class="state">
-選擇評審與類別後，可直接下載確認表。
+選擇評審與類別後，可直接下載 PDF。
 </div>
 
 <div id="judgeExportPreview" class="export-preview hidden" hidden></div>
 
 <div class="notice" style="margin-top:18px">
-<strong>多位評審一次下載 ZIP</strong>（保留上方單位老師匯出）。每位老師各一份確認表；全部三表仍在各老師自己的檔案（資料審查→實地審查→總成績）。
+<strong>多位評審一次下載 ZIP</strong>（保留上方單位老師匯出）。每位老師各一份 PDF；全部三表仍在各老師自己的 PDF（資料審查→實地審查→總成績）。
 </div>
 
 <div class="toolbar export-toolbar" style="flex-wrap:wrap;align-items:flex-start;gap:10px">
@@ -1654,7 +1654,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=upload-browse-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=upload-browse-2"></script>
-<script src="./platform-admin-pb.js?v=judge-confirm-1"></script>
+<script src="./platform-admin-pb.js?v=judge-confirm-pdf-1"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -2070,7 +2070,7 @@ S.formSyncUi="idle";
 }
 
 const JUDGE_CONFIRM_PDF_BTN_LABEL_ =
-"📄 下載確認表";
+"📄 下載 PDF";
 
 function restoreJudgeConfirmPdfBtnLabel_(
 ownerJob
@@ -8033,14 +8033,14 @@ $("judgeExportState").classList.remove(
 $("judgeExportState").textContent =
 selected
 ?
-"已選擇評審，可直接下載確認表。"
+"已選擇評審，可直接下載 PDF。"
 :
-"選擇評審與類別後，可直接下載確認表。";
+"選擇評審與類別後，可直接下載 PDF。";
 
 $("judgeExportMeta").textContent =
 selected
 ?
-"可下載確認表"
+"可下載 PDF"
 :
 "請先選擇評審";
 
@@ -8627,28 +8627,116 @@ syncJudgeConfirmationExportBusyUi_();
 
 }
 
-function utf8ToBase64Client_(text){
-return btoa(unescape(encodeURIComponent(String(text||""))));
+let html2pdfLoaderPromise_ =
+null;
+
+function ensureHtml2PdfLoaded_(){
+if(
+typeof window.html2pdf === "function"
+){
+return Promise.resolve(window.html2pdf);
+}
+if(html2pdfLoaderPromise_){
+return html2pdfLoaderPromise_;
+}
+html2pdfLoaderPromise_ =
+new Promise(function(resolve,reject){
+const existing =
+document.querySelector('script[data-hksp-html2pdf="1"]');
+if(
+existing &&
+typeof window.html2pdf === "function"
+){
+resolve(window.html2pdf);
+return;
+}
+const script =
+document.createElement("script");
+script.setAttribute("data-hksp-html2pdf","1");
+script.src =
+"https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js";
+script.async =
+true;
+script.onload =
+function(){
+if(
+typeof window.html2pdf === "function"
+){
+resolve(window.html2pdf);
+}
+else{
+reject(new Error("PDF 元件載入後無法使用"));
+}
+};
+script.onerror =
+function(){
+html2pdfLoaderPromise_ =
+null;
+reject(new Error("無法載入 PDF 產生元件，請檢查網路後重試"));
+};
+document.head.appendChild(script);
+});
+return html2pdfLoaderPromise_;
 }
 
-function buildJudgeConfirmationDocumentHtml_(data){
-const judgeName =
-judgeExportDisplayName(data && data.judge);
-return `<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(judgeName)}－評審個人評分確認表</title>
-<style>${judgeConfirmationPrintCss()}</style>
-</head>
-<body>
-${buildJudgeConfirmationSheet(data)}
-</body>
-</html>`;
+async function renderJudgeConfirmPdfBase64_(data){
+await ensureHtml2PdfLoaded_();
+const host =
+document.createElement("div");
+host.setAttribute("aria-hidden","true");
+host.style.cssText =
+"position:fixed;left:-12000px;top:0;width:1400px;background:#fff;z-index:-1;pointer-events:none;opacity:0;";
+const style =
+document.createElement("style");
+style.textContent =
+judgeConfirmationPrintCss() +
+"\n.export-sheet{width:100%;max-width:1400px;margin:0;padding:12px 16px;box-shadow:none;border:0;border-radius:0;}";
+host.appendChild(style);
+const wrap =
+document.createElement("div");
+wrap.innerHTML =
+buildJudgeConfirmationSheet(data);
+host.appendChild(wrap);
+document.body.appendChild(host);
+try{
+const target =
+wrap.querySelector(".export-sheet") || wrap;
+const dataUri =
+await window.html2pdf()
+.set({
+margin:[8,8,8,8],
+image:{type:"jpeg",quality:0.95},
+html2canvas:{
+scale:2,
+useCORS:true,
+logging:false,
+backgroundColor:"#ffffff",
+windowWidth:1400
+},
+jsPDF:{
+unit:"mm",
+format:"a4",
+orientation:"landscape"
+},
+pagebreak:{
+mode:["css","legacy"]
+}
+})
+.from(target)
+.outputPdf("datauristring");
+const comma =
+String(dataUri||"").indexOf(",");
+if(comma < 0){
+throw new Error("PDF 內容產生失敗");
+}
+return String(dataUri).slice(comma+1);
+}
+finally{
+host.remove();
+}
 }
 
-function materializeJudgeConfirmArtifact_(response){
+async function materializeJudgeConfirmArtifact_(response){
 if(!response || response.success!==true){
 return response;
 }
@@ -8660,25 +8748,25 @@ const isPdf =
 if(
 response.base64 &&
 isPdf &&
-response.delivery!=="html"
+response.delivery!=="html" &&
+response.delivery!=="client-pdf"
 ){
 return response;
 }
 if(
 response.base64 &&
 response.delivery!=="html" &&
+response.delivery!=="client-pdf" &&
 !Array.isArray(response.records) &&
 !Array.isArray(response.allRecords)
 ){
 return response;
 }
-const html =
-buildJudgeConfirmationDocumentHtml_(response);
 const base64 =
-utf8ToBase64Client_(html);
+await renderJudgeConfirmPdfBase64_(response);
 const fileName =
 String(response.fileName||"")
-.replace(/\.pdf$/i,".html") ||
+.replace(/\.html?$/i,".pdf") ||
 (
 exportSafeClientFileName_(
 EVENT_NAME +
@@ -8686,22 +8774,29 @@ EVENT_NAME +
 judgeExportDisplayName(response.judge) +
 "_" +
 judgeExportSheetKindLabel(response.sheetKind) +
-".html"
+".pdf"
 )
 );
+const finalName =
+/\.pdf$/i.test(fileName)
+?
+fileName
+:
+(fileName + ".pdf");
+const sizeBytes =
+Math.floor(String(base64).length * 0.75);
 return Object.assign({},response,{
-delivery:"html",
+delivery:"client-pdf",
 base64:base64,
-fileName:fileName,
-mimeType:"text/html;charset=utf-8",
-sizeBytes:new Blob([html],{type:"text/html;charset=utf-8"}).size
+fileName:finalName,
+mimeType:"application/pdf",
+sizeBytes:sizeBytes
 });
 }
 
 async function stampJudgeConfirmPdfPageNumbersZh_(base64){
 /*
- * 舊 GAS Sheets PDF 才需要疊中文頁碼；目前缺實作時直接原樣回傳，
- * HTML 確認表也不需再加工。
+ * 舊 GAS Sheets PDF 才需要疊中文頁碼；客戶端 html2pdf 已自帶分頁，原樣回傳。
  */
 return base64;
 }
@@ -8754,7 +8849,7 @@ try{
 
 if(button){
 button.textContent =
-"確認表產生中…";
+"PDF 產生中…";
 }
 
 $("judgeExportState").classList.remove(
@@ -8762,7 +8857,7 @@ $("judgeExportState").classList.remove(
 );
 
 $("judgeExportState").innerHTML =
-'<div class="spinner"></div>確認表產生中…請勿重複點擊。';
+'<div class="spinner"></div>PDF 產生中…請勿重複點擊。';
 
 const response =
 await api(
@@ -8791,12 +8886,12 @@ if(
 ){
 throw new Error(
 response && response.message ||
-"確認表產生失敗"
+"PDF 產生失敗"
 );
 }
 
 const artifact =
-materializeJudgeConfirmArtifact_(response);
+await materializeJudgeConfirmArtifact_(response);
 
 if(
 !artifact ||
@@ -8805,7 +8900,7 @@ if(
 !artifact.sizeBytes
 ){
 throw new Error(
-"確認表內容不完整，已取消下載"
+"PDF 內容不完整，已取消下載"
 );
 }
 
@@ -8843,7 +8938,7 @@ $("judgeExportMeta").textContent =
 `${judgeName}｜${judgeExportSheetKindLabel(frozenSheetKind)}｜${esc(artifact.fileName)}`;
 
 toast(
-"✅ 確認表已開始下載：" + artifact.fileName
+"✅ PDF 已開始下載：" + artifact.fileName
 );
 
 }
@@ -8860,13 +8955,13 @@ $("judgeExportState").classList.remove(
 );
 
 $("judgeExportState").innerHTML =
-`⚠️ ${esc(error && error.message ? error.message : "確認表產生失敗")}`;
+`⚠️ ${esc(error && error.message ? error.message : "PDF 產生失敗")}`;
 
 $("judgeExportMeta").textContent =
-"確認表下載失敗";
+"PDF 下載失敗";
 
 toast(
-"⚠️ " + (error && error.message ? error.message : "確認表產生失敗")
+"⚠️ " + (error && error.message ? error.message : "PDF 產生失敗")
 );
 
 }
@@ -9659,7 +9754,7 @@ response;
 const normalized =
 normalizedRaw && normalizedRaw.success
 ?
-materializeJudgeConfirmArtifact_(normalizedRaw)
+await materializeJudgeConfirmArtifact_(normalizedRaw)
 :
 normalizedRaw;
 
@@ -9683,7 +9778,7 @@ if(
 throw Object.assign(
 new Error(
 (normalized && normalized.message) ||
-"確認表產生失敗"
+"PDF 產生失敗"
 ),
 {
 code:(normalized && normalized.error) || "PDF_FAILED"

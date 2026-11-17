@@ -2897,15 +2897,15 @@
   async function adminJudgeConfirmationPdfExport(data) {
     var model = await buildJudgeConfirmationModel(data || {});
     if (!model || model.success !== true) return model;
-    var fileName = judgeConfirmFileName(model, ".html");
+    var fileName = judgeConfirmFileName(model, ".pdf");
     return ok(
       Object.assign({}, model, {
-        delivery: "html",
+        delivery: "client-pdf",
         fileName: fileName,
-        mimeType: "text/html;charset=utf-8",
+        mimeType: "application/pdf",
         sizeBytes: null,
         base64: null,
-        note: "PocketBase：下載可列印確認表（HTML），開啟後可另存為 PDF。"
+        note: "PocketBase：瀏覽器端產生評審個人評分確認表 PDF。"
       })
     );
   }
