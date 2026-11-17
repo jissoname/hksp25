@@ -84,25 +84,51 @@
     };
   }
 
+  function isActiveJudgeRecord(rec) {
+    return !!(
+      rec &&
+      (rec.role === "judge" || rec.role === "admin") &&
+      rec.active !== false
+    );
+  }
+
   async function ensureJudgeFromToken(sessionToken) {
     var client = pb();
     var token = String(sessionToken || "").trim();
-    if (!token) throw new Error("JUDGE_UNAUTHORIZED");
-    if (!client.authStore.isValid || client.authStore.token !== token) {
-      var raw = sessionStorage.getItem(SESSION_RECORD_KEY);
-      var model = null;
-      try {
-        model = raw ? JSON.parse(raw) : null;
-      } catch (_e) {
-        model = null;
-      }
-      client.authStore.save(token, model);
-    }
-    if (!client.authStore.isValid) {
-      await client.collection(C().staff).authRefresh();
-    }
     var rec = client.authStore.model;
-    if (!rec || (rec.role !== "judge" && rec.role !== "admin") || rec.active === false) {
+
+    // Prefer an already-valid judge session. authRefresh rotates tokens; never
+    // overwrite a good store with a stale APP.sessionToken from login time.
+    if (client.authStore.isValid && isActiveJudgeRecord(rec)) {
+      try {
+        sessionStorage.setItem(SESSION_RECORD_KEY, JSON.stringify(rec));
+      } catch (_e0) {
+        /* ignore */
+      }
+      return rec;
+    }
+
+    if (!token) throw new Error("JUDGE_UNAUTHORIZED");
+
+    var raw = sessionStorage.getItem(SESSION_RECORD_KEY);
+    var model = null;
+    try {
+      model = raw ? JSON.parse(raw) : null;
+    } catch (_e) {
+      model = null;
+    }
+    client.authStore.save(token, model);
+
+    if (!client.authStore.isValid) {
+      try {
+        await client.collection(C().staff).authRefresh();
+      } catch (_refreshErr) {
+        throw new Error("JUDGE_UNAUTHORIZED");
+      }
+    }
+
+    rec = client.authStore.model;
+    if (!isActiveJudgeRecord(rec)) {
       throw new Error("JUDGE_UNAUTHORIZED");
     }
     try {
@@ -703,7 +729,12 @@
       }
       var fn = handlers[action];
       if (!fn) return fail("PocketBase 評審端尚未實作：" + action, "UNIMPLEMENTED");
-      return await fn(payload || {});
+      var result = await fn(payload || {});
+      // Keep frontend APP.sessionToken in sync after refresh/rotation.
+      if (result && result.success !== false && pb().authStore && pb().authStore.token) {
+        result.sessionToken = pb().authStore.token;
+      }
+      return result;
     } catch (e) {
       var msg = String((e && e.message) || e || "操作失敗");
       // Only map explicit session failures — do NOT match generic "authenticate" login errors.

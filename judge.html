@@ -2969,6 +2969,20 @@ async function post(
         APP.netTimings.bgDashboard.responseAt = callRec.responseAt;
         APP.netTimings.bgDashboard.inFlight = false;
       }
+      // PocketBase may rotate the auth token on refresh; keep APP session in sync.
+      if (
+        parsed &&
+        parsed.sessionToken &&
+        APP.sessionToken &&
+        String(parsed.sessionToken) !== String(APP.sessionToken)
+      ) {
+        APP.sessionToken = String(parsed.sessionToken);
+        try {
+          syncJudgeGuardSession_();
+        } catch (_syncErr) {
+          /* ignore */
+        }
+      }
       return parsed;
     } catch (e) {
       if (actionName === "judgeScoreDashboard" && APP.netTimings.bgDashboard) {
