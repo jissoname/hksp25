@@ -573,7 +573,7 @@ disabled
 </div>
 
 <div class="export-print-hint">
-選擇評審與類別後直接下載 PDF（不必預覽）。全部三表為一份 PDF（資料審查→實地審查→總成績）。
+選擇評審與類別後直接下載 PDF（不必預覽）。版型採 B／橫式明細（橫式 A4）。全部三表為一份 PDF（資料審查→實地審查→總成績）。
 </div>
 
 <div id="judgeExportState" class="state">
@@ -8679,39 +8679,477 @@ document.head.appendChild(script);
 return html2pdfLoaderPromise_;
 }
 
+function judgeConfirmPdfFormatAt_(iso){
+try{
+return new Date(iso || Date.now()).toLocaleString(
+"zh-TW",
+{
+timeZone:"Asia/Taipei",
+hour12:false
+}
+);
+}
+catch(_e){
+return String(iso || "");
+}
+}
+
+function judgeConfirmPdfStatusText_(status,reopened){
+const value =
+String(status || "");
+if(value === "submitted") return "✅ 已正式送出";
+if(value === "reopened" || reopened === true) return "🔓 已解鎖待重送";
+if(value === "draft") return "📝 未送出（草稿）";
+if(value === "not_started") return "⚠️ 未評";
+return "⚠️ 尚未評分";
+}
+
+function judgeConfirmPdfCollectCriteria_(records){
+const order =
+[];
+const seen =
+{};
+(records || []).forEach(function(record){
+const groups =
+record && record.detail && Array.isArray(record.detail.groups)
+?
+record.detail.groups
+:
+[];
+groups.forEach(function(group){
+(group.criteria || []).forEach(function(criterion){
+const id =
+String(criterion && (criterion.id || criterion.name) || "").trim();
+const name =
+String(criterion && (criterion.name || criterion.id) || "").trim();
+if(!id || seen[id]) return;
+seen[id] =
+true;
+order.push({
+id:id,
+name:name || id
+});
+});
+});
+});
+return order;
+}
+
+function judgeConfirmPdfCriterionScore_(record,criterionId){
+const status =
+String(record && record.status || "");
+if(status === "draft" || status === "not_started") return "—";
+const groups =
+record && record.detail && Array.isArray(record.detail.groups)
+?
+record.detail.groups
+:
+[];
+for(let g=0;g<groups.length;g+=1){
+const criteria =
+groups[g].criteria || [];
+for(let c=0;c<criteria.length;c+=1){
+const item =
+criteria[c];
+const id =
+String(item && (item.id || item.name) || "").trim();
+if(id !== criterionId) continue;
+if(item.answered === false) return "—";
+if(item.score === null || item.score === undefined || item.score === "") return "—";
+return item.score;
+}
+}
+return "—";
+}
+
+function judgeConfirmPdfSectionSubtotal_(record){
+const status =
+String(record && record.status || "");
+const detail =
+(record && record.detail) || {};
+const total =
+detail.totalScore;
+if(status === "draft" || status === "not_started") return "—";
+if(status === "reopened" || record.reopened === true){
+if(total === null || total === undefined || total === "") return "前次正式分數：—";
+return "前次正式分數：" + String(total);
+}
+if(status !== "submitted") return "—";
+if(total === null || total === undefined || total === "") return "—";
+return total;
+}
+
+function judgeConfirmPdfLandscapeCss_(){
+return `
+@page{size:A4 landscape;margin:8mm}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#fff;color:#111;font-family:"Noto Sans TC","Microsoft JhengHei","Segoe UI",sans-serif}
+.jc-pdf-root{width:100%;background:#fff}
+.jc-sheet{width:100%;padding:4px 2px 10px;page-break-inside:avoid}
+.jc-sheet + .jc-sheet{page-break-before:always}
+.jc-title{color:#1B4F8C;font-size:16px;font-weight:900;margin:0 0 4px}
+.jc-meta{color:#333;font-size:11px;line-height:1.55;margin:2px 0}
+.jc-meta.muted{color:#555;font-size:10px}
+.jc-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:8px}
+.jc-table th,.jc-table td{border:1px solid #9aa8b8;padding:5px 6px;font-size:10px;vertical-align:middle;word-break:break-word}
+.jc-table th{background:#1B4F8C;color:#fff;font-weight:800;text-align:center}
+.jc-table td.num,.jc-table th.num{width:36px;text-align:center}
+.jc-table td.club{width:160px;font-weight:700}
+.jc-table td.score,.jc-table th.score{text-align:center}
+.jc-table td.status{width:110px;text-align:center;font-size:9px}
+.jc-table tbody tr:nth-child(even) td{background:#E8F1FB}
+.jc-empty{text-align:center;color:#666;padding:14px}
+.jc-foot{margin-top:10px;font-size:10px;line-height:1.6;color:#333}
+.jc-foot .sign{font-size:12px;margin-top:8px}
+.jc-foot .note{color:#444;font-size:9px}
+.jc-foot .dim{color:#666;font-size:9px}
+`;
+}
+
+function judgeConfirmPdfFooterHtml_(){
+return `
+<div class="jc-foot">
+<div class="note">說明：兩階段全部評分項目皆正式完成後才顯示個人合計；草稿分數不列入；解鎖待重送僅標「前次正式分數」；缺分不補成 0；本表為個人確認，非正式全體排名。</div>
+<div class="sign">評審簽名：____________________</div>
+<div class="sign">確認日期：____________________</div>
+<div class="sign">備註：________________________________________________</div>
+<div class="dim">確認內容僅供本人對帳參考，請依主辦單位最終公告為準。</div>
+</div>
+`;
+}
+
+function judgeConfirmPdfPadCells_(cells,colCount){
+const row =
+(cells || []).slice();
+while(row.length < colCount) row.push("");
+return row.slice(0,colCount);
+}
+
+function buildJudgeConfirmLandscapeSectionHtml_(title,model,sectionId,isFirst){
+const allRecords =
+Array.isArray(model && model.allRecords)
+?
+model.allRecords
+:
+(model && model.records) || [];
+const records =
+allRecords.filter(function(record){
+return !sectionId || String(record.sectionId || "") === sectionId;
+});
+const criteria =
+judgeConfirmPdfCollectCriteria_(records);
+const chunkSize =
+5;
+const chunks =
+[];
+if(!criteria.length){
+chunks.push([]);
+}
+else{
+for(let i=0;i<criteria.length;i+=chunkSize){
+chunks.push(criteria.slice(i,i+chunkSize));
+}
+}
+const judgeName =
+judgeExportDisplayName(model && model.judge);
+const generatedAt =
+judgeConfirmPdfFormatAt_(model && model.generatedAt);
+const sheetKindLabel =
+judgeExportSheetKindLabel(model && model.sheetKind);
+const printColCount =
+2 + chunkSize + 2;
+return chunks.map(function(chunk,chunkIndex){
+const chunkTotal =
+chunks.length;
+const partLabel =
+String(chunkIndex + 1) + "／" + String(chunkTotal);
+const contLine =
+chunkTotal > 1
+?
+(
+chunkIndex === 0
+?
+("續表關係：本表為「" + title + "」第 " + partLabel + " 部分；其餘評分項目見續表。小計含全部項目，非僅本頁可見欄。")
+:
+("續表關係：本表接續「" + title + "」第 " + partLabel + " 部分。小計含續表全部項目，非僅本頁可見欄。")
+)
+:
+"續表關係：本大項未拆續表。";
+const headers =
+["#","社團名稱"];
+for(let c=0;c<chunkSize;c+=1){
+headers.push(chunk[c] ? chunk[c].name : "");
+}
+headers.push(
+chunkTotal > 1 ? "小計（含續表全部項目）" : "小計",
+"狀態"
+);
+const bodyRows =
+[];
+if(!records.length){
+bodyRows.push(
+judgeConfirmPdfPadCells_(["—","（此表沒有可顯示的社團）"],printColCount)
+);
+}
+else{
+records.forEach(function(record,index){
+const line =
+[String(index + 1),String(record.clubName || "")];
+for(let c=0;c<chunkSize;c+=1){
+line.push(
+chunk[c]
+?
+judgeConfirmPdfCriterionScore_(record,chunk[c].id)
+:
+""
+);
+}
+line.push(judgeConfirmPdfSectionSubtotal_(record));
+line.push(
+String(
+record.statusText ||
+judgeConfirmPdfStatusText_(record.status,record.reopened)
+)
+);
+bodyRows.push(judgeConfirmPdfPadCells_(line,printColCount));
+});
+}
+const headHtml =
+headers.map(function(h,idx){
+const cls =
+idx === 0
+?
+"num"
+:
+(
+idx === 1
+?
+"club"
+:
+(
+idx >= headers.length - 1
+?
+"status"
+:
+"score"
+)
+);
+return `<th class="${cls}">${esc(h)}</th>`;
+}).join("");
+const bodyHtml =
+bodyRows.map(function(row){
+return "<tr>" + row.map(function(cell,idx){
+const cls =
+idx === 0
+?
+"num"
+:
+(
+idx === 1
+?
+"club"
+:
+(
+idx >= row.length - 1
+?
+"status"
+:
+"score"
+)
+);
+return `<td class="${cls}">${esc(cell)}</td>`;
+}).join("") + "</tr>";
+}).join("");
+const firstClass =
+(isFirst && chunkIndex === 0) ? "" : " jc-sheet-break";
+return `
+<section class="jc-sheet${firstClass}">
+<div class="jc-title">115學年度第一學期 社團評選 評審個人評分確認表</div>
+<div class="jc-meta muted">版面：B／橫式明細｜橫式 A4｜${esc(title)}${chunkTotal > 1 ? "｜續表 " + esc(partLabel) : ""}</div>
+<div class="jc-meta">評審姓名：${esc(judgeName)}｜匯出時間：${esc(generatedAt)}</div>
+<div class="jc-meta">匯出類別：${esc(sheetKindLabel)}｜評分大項：${esc(title)}</div>
+<div class="jc-meta muted">評分來源：後端正式分數（不含本機草稿；草稿欄位顯示 —）</div>
+<div class="jc-meta muted">${esc(contLine)}</div>
+<table class="jc-table">
+<thead><tr>${headHtml}</tr></thead>
+<tbody>${bodyHtml || '<tr><td class="jc-empty" colspan="' + printColCount + '">沒有資料</td></tr>'}</tbody>
+</table>
+${judgeConfirmPdfFooterHtml_()}
+</section>
+`;
+}).join("");
+}
+
+function buildJudgeConfirmLandscapeTotalHtml_(model,isFirst){
+const totals =
+Array.isArray(model && model.clubTotals)
+?
+model.clubTotals
+:
+[];
+const judgeName =
+judgeExportDisplayName(model && model.judge);
+const generatedAt =
+judgeConfirmPdfFormatAt_(model && model.generatedAt);
+const sheetKindLabel =
+judgeExportSheetKindLabel(model && model.sheetKind);
+const rows =
+totals.length
+?
+totals.map(function(row,index){
+return [
+String(index + 1),
+String(row.clubName || ""),
+(
+row.dataReviewScore === null || row.dataReviewScore === undefined
+?
+"—"
+:
+row.dataReviewScore
+),
+(
+row.fieldReviewScore === null || row.fieldReviewScore === undefined
+?
+"—"
+:
+row.fieldReviewScore
+),
+String(row.personalTotalText || "尚未完成"),
+String(row.statusText || "—")
+];
+})
+:
+[["—","（沒有可顯示的社團）","—","—","尚未完成","—"]];
+const bodyHtml =
+rows.map(function(row){
+return "<tr>" + row.map(function(cell,idx){
+const cls =
+idx === 0
+?
+"num"
+:
+(
+idx === 1
+?
+"club"
+:
+(
+idx === 5
+?
+"status"
+:
+"score"
+)
+);
+return `<td class="${cls}">${esc(cell)}</td>`;
+}).join("") + "</tr>";
+}).join("");
+return `
+<section class="jc-sheet${isFirst ? "" : " jc-sheet-break"}">
+<div class="jc-title">115學年度第一學期 社團評選 評審個人評分確認表</div>
+<div class="jc-meta muted">版面：B／橫式明細｜橫式 A4｜總成績（個人確認，非正式全體排名）</div>
+<div class="jc-meta">評審姓名：${esc(judgeName)}｜匯出時間：${esc(generatedAt)}</div>
+<div class="jc-meta">匯出類別：${esc(sheetKindLabel)}｜評分來源：後端正式分數（不含本機草稿）</div>
+<div class="jc-meta muted">說明：僅兩階段皆正式完成才顯示合計；解鎖待重送／草稿不計入本次完成小計。</div>
+<div class="jc-meta muted">續表關係：總成績單表，未拆續表。</div>
+<table class="jc-table">
+<thead>
+<tr>
+<th class="num">#</th>
+<th class="club">社團名稱</th>
+<th class="score">資料審查小計</th>
+<th class="score">實地審查小計</th>
+<th class="score">個人合計</th>
+<th class="status">狀態</th>
+</tr>
+</thead>
+<tbody>${bodyHtml}</tbody>
+</table>
+${judgeConfirmPdfFooterHtml_()}
+</section>
+`;
+}
+
+function buildJudgeConfirmLandscapePdfHtml_(data){
+const sheetKind =
+String((data && data.sheetKind) || "all");
+const parts =
+[];
+let first =
+true;
+if(sheetKind === "dataReview" || sheetKind === "all"){
+parts.push(
+buildJudgeConfirmLandscapeSectionHtml_("資料審查",data,"dataReview",first)
+);
+first =
+false;
+}
+if(sheetKind === "fieldReview" || sheetKind === "all"){
+parts.push(
+buildJudgeConfirmLandscapeSectionHtml_("實地審查",data,"fieldReview",first)
+);
+first =
+false;
+}
+if(sheetKind === "total" || sheetKind === "all"){
+parts.push(
+buildJudgeConfirmLandscapeTotalHtml_(data,first)
+);
+}
+return `
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>評審個人評分確認表</title>
+<style>
+${judgeConfirmPdfLandscapeCss_()}
+.jc-sheet-break{page-break-before:always}
+</style>
+</head>
+<body>
+<div class="jc-pdf-root">
+${parts.join("") || '<div class="jc-empty">沒有可匯出的確認表資料</div>'}
+</div>
+</body>
+</html>
+`;
+}
+
 async function renderJudgeConfirmPdfBase64_(data){
 await ensureHtml2PdfLoaded_();
-const host =
-document.createElement("div");
-host.setAttribute("aria-hidden","true");
-host.style.cssText =
-"position:fixed;left:-12000px;top:0;width:1400px;background:#fff;z-index:-1;pointer-events:none;opacity:0;";
-const style =
-document.createElement("style");
-style.textContent =
-judgeConfirmationPrintCss() +
-"\n.export-sheet{width:100%;max-width:1400px;margin:0;padding:12px 16px;box-shadow:none;border:0;border-radius:0;}";
-host.appendChild(style);
-const wrap =
-document.createElement("div");
-wrap.innerHTML =
-buildJudgeConfirmationSheet(data);
-host.appendChild(wrap);
-document.body.appendChild(host);
+const html =
+buildJudgeConfirmLandscapePdfHtml_(data);
+const iframe =
+document.createElement("iframe");
+iframe.setAttribute("aria-hidden","true");
+iframe.style.cssText =
+"position:fixed;left:0;top:0;width:1200px;height:900px;opacity:0.01;border:0;z-index:2147483646;pointer-events:none;background:#fff;";
+document.body.appendChild(iframe);
 try{
+const doc =
+iframe.contentDocument || iframe.contentWindow.document;
+doc.open();
+doc.write(html);
+doc.close();
+await new Promise(function(resolve){
+setTimeout(resolve,120);
+});
 const target =
-wrap.querySelector(".export-sheet") || wrap;
+doc.querySelector(".jc-pdf-root") || doc.body;
 const dataUri =
 await window.html2pdf()
 .set({
-margin:[8,8,8,8],
-image:{type:"jpeg",quality:0.95},
+margin:[6,6,6,6],
+image:{type:"jpeg",quality:0.98},
 html2canvas:{
 scale:2,
 useCORS:true,
 logging:false,
 backgroundColor:"#ffffff",
-windowWidth:1400
+scrollX:0,
+scrollY:0,
+windowWidth:1200
 },
 jsPDF:{
 unit:"mm",
@@ -8719,20 +9157,26 @@ format:"a4",
 orientation:"landscape"
 },
 pagebreak:{
-mode:["css","legacy"]
+mode:["css","legacy"],
+before:".jc-sheet-break"
 }
 })
 .from(target)
 .outputPdf("datauristring");
 const comma =
-String(dataUri||"").indexOf(",");
+String(dataUri || "").indexOf(",");
 if(comma < 0){
 throw new Error("PDF 內容產生失敗");
 }
-return String(dataUri).slice(comma+1);
+const base64 =
+String(dataUri).slice(comma + 1);
+if(!base64 || base64.length < 80){
+throw new Error("PDF 內容空白，已取消下載");
+}
+return base64;
 }
 finally{
-host.remove();
+iframe.remove();
 }
 }
 
