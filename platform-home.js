@@ -150,13 +150,13 @@
       {};
     var facts = window.HOME_EVENT_FACTS || {
       venueName: "毓麟館",
-      observationWindow: "16:30–16:50"
+      observationWindow: "15:30–16:00"
     };
     return {
       dataDeadline: formatDeadline(config.dataDeadline),
       formDeadline: formatDeadline(config.formDeadline),
       eventTimeRange: formatEventTimeRange(config),
-      observationWindow: facts.observationWindow || "16:30–16:50",
+      observationWindow: facts.observationWindow || "15:30–16:00",
       venueName: facts.venueName || "毓麟館"
     };
   }
@@ -266,12 +266,12 @@
   function bootstrapHomeFacts() {
     var facts = window.HOME_EVENT_FACTS || {
       venueName: "毓麟館",
-      observationWindow: "16:30–16:50"
+      observationWindow: "15:30–16:00"
     };
     var venueEl = document.getElementById("homeInfoVenue");
     var obsEl = document.getElementById("homeInfoObservation");
     if (venueEl) venueEl.textContent = facts.venueName || "毓麟館";
-    if (obsEl) obsEl.textContent = facts.observationWindow || "16:30–16:50";
+    if (obsEl) obsEl.textContent = facts.observationWindow || "15:30–16:00";
     renderAnnouncements();
   }
 

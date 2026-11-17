@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
   Create HKSP (社團評鑑) PocketBase collections.
   Usage: powershell -File scripts/pb-setup-hksp.ps1
@@ -122,7 +122,7 @@ $staff = Ensure-Collection @{
   type = 'auth'
   listRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true'
   viewRule = 'id = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.active = true && (@request.auth.role = "admin" || @request.auth.role = "service"))'
-  createRule = $null
+  createRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true'
   updateRule = 'id = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true)'
   deleteRule = $null
   fields = @(

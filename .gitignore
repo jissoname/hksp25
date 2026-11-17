@@ -6,6 +6,10 @@ backend/**/.env
 backend/**/credentials*.json
 backend/**/*service-account*.json
 
+# Hosting / local tooling
+.vercel
+node_modules/
+
 # Local PocketBase dumps (may contain PII)
 .pb-*.json
 .pb-*.txt

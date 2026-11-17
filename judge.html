@@ -2033,6 +2033,10 @@ button{
   class="toast"
 ></div>
 
+<script src="./pb-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
+<script src="./platform-pb-backend.js"></script>
+<script src="./platform-judge-pb.js"></script>
 
 <script>
 /**
@@ -2443,9 +2447,14 @@ const BACKEND_URL =
   "https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
 window.BACKEND_URL = BACKEND_URL;
 
+function isPocketBaseJudgeMode(){
+  return !!(window.HKSP_JUDGE_PB && HKSP_JUDGE_PB.enabled());
+}
 
 const SESSION_KEY =
-  "HKSP_JUDGE_SESSION";
+  isPocketBaseJudgeMode()
+    ? "HKSP_PB_JUDGE_SESSION"
+    : "HKSP_JUDGE_SESSION";
 
 
 const APP = {
@@ -2923,6 +2932,27 @@ async function post(
       responseAt: null,
       inFlight: true
     };
+  }
+
+  if (isPocketBaseJudgeMode()) {
+    try {
+      const parsed = await HKSP_JUDGE_PB.request(payload || {});
+      callRec.responseAt = Date.now();
+      callRec.bodyAt = callRec.responseAt;
+      callRec.parseMs = 0;
+      if (!APP.netTimings.calls) APP.netTimings.calls = [];
+      APP.netTimings.calls.push(callRec);
+      if (actionName === "judgeScoreDashboard" && APP.netTimings.bgDashboard) {
+        APP.netTimings.bgDashboard.responseAt = callRec.responseAt;
+        APP.netTimings.bgDashboard.inFlight = false;
+      }
+      return parsed;
+    } catch (e) {
+      if (actionName === "judgeScoreDashboard" && APP.netTimings.bgDashboard) {
+        APP.netTimings.bgDashboard.inFlight = false;
+      }
+      throw e;
+    }
   }
 
   const controller =

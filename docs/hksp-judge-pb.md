@@ -2,27 +2,35 @@
 
 ## 現況
 
-- 學生上傳主路徑：PocketBase（`pb-config.js` → `useDriveProxy: false`）
-- 評審頁：[`judge-pb.html`](../judge-pb.html)（最小可用；完整 `judge.html` 仍為舊 Firebase 原型）
-- API：`platform-pb-backend.js` 的 `judgeLogin` / `judgeListClubs` / `judgeListClubFiles` / `judgeGetScore` / `judgeSubmitScore`
+- **正式評審台**：[`judge.html`](../judge.html)（預設接 PocketBase；`?gas=1` 可回舊 GAS）
+- **最小煙測頁**：[`judge-pb.html`](../judge-pb.html)（單分＋檔案列表）
+- Adapter：[`platform-judge-pb.js`](../platform-judge-pb.js)
+- 配分表：`hksp_activities.config_json.scoreConfig`（管理端可編輯／發布）
+- 分數：`hksp_scores`（小項分數存 `answers_json.scores`；鎖定／解鎖語意在 `answers_json`）
 
 ## 測試帳
 
-見 [hksp-test-accounts.md](./hksp-test-accounts.md)（學生 `DEMO001`／評審 `judge.demo@hksp.local`）。
+見 [hksp-test-accounts.md](./hksp-test-accounts.md)
+
+| 角色 | Email | 密碼 |
+|---|---|---|
+| 評審 | `judge.demo@hksp.local` | `JudgeDemo123!` |
+| 管理 | `admin@hksp.local` | `AdminHksp123!` |
 
 ## 操作
 
-1. 本機開靜態站（與學生 `index.html` 相同 origin）
-2. 開啟 `/judge-pb.html`
-3. 登入 → 選社團 → 開檔 → 存草稿／送出分數
-4. 分數寫入 `hksp_scores`（唯一鍵：`activity + club + judge + section_id`）
+1. 本機靜態站：`http://127.0.0.1:28222/judge.html`
+2. 登入 → 選大項 → 開社團 → 填小項 → 本機草稿／正式送出（送出後鎖定）
+3. 管理員於 `admin.html` 評分進度可解鎖（`adminUnlockJudgeScore`）
 
-## 權限要點
+## 已接 PB
 
-- 評審可 **list/view** 社團上傳與資料夾，可 **create/update** 自己的分數
-- 學生清單改為社團共用（同社團成員可見全部已上傳檔）
-- Drive Apps Script 僅備援，預設不代傳
+- `judgeLogin` / `judgeLogout`
+- `judgeScoreDashboard`
+- `judgeGetScore`（回傳 `stage.criteria` + `record`）
+- `judgeSubmitScore`（`scores` map）
+- 管理：`adminGetScoreConfig` / `adminSaveScoreConfig` / `adminSetScorePhasePublished` / `adminUnlockJudgeScore` / `adminJudgeScoreProgress`
 
-## 與舊 judge.html
+## 尚未搬（管理端）
 
-舊頁依賴 Firebase callable／本地評分草稿邏輯，尚未整頁搬遷。新流程請用 `judge-pb.html` 驗證 PB 主路徑。
+- 排名彙整、評審確認單 PDF／Excel 匯出等仍隱藏

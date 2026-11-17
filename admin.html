@@ -34,7 +34,9 @@
 <h1 class="login-title">管理員後台</h1>
 <div class="muted">弘光社團資訊平台 · 評選暨觀摩活動管理</div>
 <form id="loginForm">
-<label class="label">管理員密碼</label>
+<label class="label" id="adminEmailLabel" for="adminEmail">管理員 Email</label>
+<input id="adminEmail" class="field" type="email" autocomplete="username" placeholder="admin@hksp.local">
+<label class="label" for="adminPassword">管理員密碼</label>
 <input id="adminPassword" class="field" type="password" autocomplete="current-password" required placeholder="請輸入管理員密碼">
 <button id="loginBtn" class="btn btn-primary login-btn" type="submit">登入管理後台</button>
 <div id="loginError" class="error"></div>
@@ -1636,20 +1638,28 @@ onclick="closeModal('aggregationDetailModal')"
 
 <div id="toast" class="toast"></div>
 
-<script src="./firebase-client.js"></script>
-<script src="./platform-cloud-api.js"></script>
-<script src="./platform-admin-cloud.js"></script>
+<script src="./pb-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
+<script src="./platform-pb-backend.js"></script>
+<script src="./platform-admin-pb.js"></script>
 <script>
 
+/** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
 function isFirebaseCloudMode(){
-return !!(window.HKSP_ADMIN_CLOUD && HKSP_ADMIN_CLOUD.enabled());
+return false;
+}
+
+function isPocketBaseAdminMode(){
+return !!(window.HKSP_ADMIN_PB && HKSP_ADMIN_PB.enabled());
 }
 
 const BACKEND_URL =
 "https://script.google.com/macros/s/AKfycbygg-cv817Dk8338KdcjChkMwAPjf-_sAnghtgIPfNn9GGEHveHEpjYQ7YV0gxtZct-/exec";
 
 const SESSION_KEY =
-isFirebaseCloudMode() ? "HKSP_CLOUD_ADMIN_SESSION" : "HKSP_ADMIN_SESSION";
+isPocketBaseAdminMode()
+? "HKSP_PB_ADMIN_SESSION"
+: "HKSP_ADMIN_SESSION";
 
 const EVENT_NAME =
 "115學年度第一學期全校學生社團評選暨觀摩活動";
@@ -1888,8 +1898,8 @@ setTimeout(
 
 async function post(payload){
 
-if(isFirebaseCloudMode()){
-return HKSP_ADMIN_CLOUD.request(payload);
+if(isPocketBaseAdminMode()){
+return HKSP_ADMIN_PB.request(payload);
 }
 
 const c =
@@ -2291,9 +2301,12 @@ markAdminBoot_("loginClick");
  * 登入請求只做身分驗證，不附帶表單清單。
  * 表單進度改於可操作後背景讀取。
  */
+const emailEl=$("adminEmail");
+const email=emailEl?String(emailEl.value||"").trim():"";
 const r =
 await post({
 action:"adminLogin",
+email:email || (isPocketBaseAdminMode() && window.HKSP_ADMIN_PB ? HKSP_ADMIN_PB.staffAdminEmail() : ""),
 password:p
 });
 markAdminBoot_("loginOk", {
@@ -2506,8 +2519,8 @@ markAdminBoot_("operable");
 
 if(typeof clearServerActivityForNewLogin==="function") clearServerActivityForNewLogin();
 
-if(isFirebaseCloudMode()){
-// 雲端模式：不設常駐 stamp 輪詢；表單於 refresh／面板開啟／手動／同步後載入。
+if(isPocketBaseAdminMode()||isFirebaseCloudMode()){
+// PB／雲端模式：不跑 GAS 表單常駐輪詢。
 S.formSyncWatchDisabled=true;
 }else{
 startBackgroundFormsAfterLogin_();
@@ -2524,6 +2537,23 @@ skipForms:!isFirebaseCloudMode()
 }
 
 async function refreshAllData(opts){
+
+if(isPocketBaseAdminMode()){
+const token=String(S.token||"");
+if(!token) return;
+await Promise.allSettled([
+loadClubs(),
+loadEvent(),
+loadCloudUploadSettings(),
+loadUploadGate(),
+loadJudges(),
+loadScoreConfig(),
+loadServerStudentActivity(opts||{})
+]);
+if(token!==String(S.token||"")) return;
+$("lastRefresh").textContent="最後同步："+new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(new Date());
+return;
+}
 
 if(isFirebaseCloudMode()){
 const token=String(S.token||"");
@@ -10895,7 +10925,7 @@ function clubStudentPermanentId(club){
 const id=String(
 (club&&(club.permanentClubId||club.clubId))||""
 ).trim().toUpperCase();
-return /^D\d{3,}$/.test(id)?id:"";
+return id;
 }
 
 function clubsForStudentQuery(){
@@ -13322,7 +13352,7 @@ $("eventError").textContent="尚未成功載入活動時程，禁用儲存；請
 setEventSaveEnabled_(false);
 return;
 }
-if(!S.eventScreenVersion||S.eventScreenVersion.source!=="firestore"||!S.eventScreenVersion.updateTime){
+if(!S.eventScreenVersion||!S.eventScreenVersion.updateTime||(S.eventScreenVersion.source!=="firestore"&&S.eventScreenVersion.source!=="pocketbase"&&!isPocketBaseAdminMode())){
 $("eventError").textContent="缺少時程版本，請重新讀取後再儲存。";
 return;
 }
@@ -14737,8 +14767,8 @@ if(pauseBtn) pauseBtn.disabled=!!S.uploadGateBusy;
 }
 
 async function loadUploadGate(){
-if(!isFirebaseCloudMode()){
-renderUploadGate_(null,"非 cloud 管理頁；請用 admin.html?cloud=1");
+if(!isPocketBaseAdminMode()){
+renderUploadGate_(null,"請使用 PocketBase 管理頁（預設 admin.html）");
 return;
 }
 try{
@@ -14755,7 +14785,7 @@ if($("uploadGateMeta")) $("uploadGateMeta").textContent="上傳開關：讀取�
 }
 
 async function previewUploadGateOpen(){
-if(!isFirebaseCloudMode()){ toast("請使用 admin.html?cloud=1"); return; }
+if(!isPocketBaseAdminMode()){ toast("請使用 PocketBase 管理頁（預設 admin.html）"); return; }
 try{
 const r=await api("adminPreviewUploadGateOpen");
 if(unauthorized(r)) return;
@@ -14783,7 +14813,7 @@ toast("⚠️ "+(e.message||"開放前檢查失敗"));
 }
 
 async function setUploadGateOpen(open){
-if(!isFirebaseCloudMode()){ toast("請使用 admin.html?cloud=1"); return; }
+if(!isPocketBaseAdminMode()){ toast("請使用 PocketBase 管理頁（預設 admin.html）"); return; }
 if(S.uploadGateBusy) return;
 const gate=S.uploadGate;
 if(!gate||!Number.isSafeInteger(Number(gate.version))){

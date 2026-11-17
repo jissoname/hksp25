@@ -3,7 +3,7 @@
 活動：`115-1-club-evaluation`  
 社團：`DEMO-CLUB-001`
 
-## 學生端（`index.html`）
+## 學生端（`index.html`；舊 `student.html` 已改導向至此）
 
 | 欄位 | 值 |
 |---|---|
@@ -25,13 +25,23 @@
 powershell -File scripts/pb-seed-clubs-115-1.ps1
 ```
 
-## 評審端（`judge-pb.html`）
+## 管理端（`admin.html` · PocketBase 預設）
+
+| 欄位 | 值 |
+|---|---|
+| Email | `admin@hksp.local` |
+| 密碼 | `AdminHksp123!` |
+| 說明 | `hksp_staff` / `role=admin`；可用 `?gas=1` 回舊 GAS |
+
+## 評審端（`judge.html` 完整 UI · PocketBase 預設）
 
 | 欄位 | 值 |
 |---|---|
 | Email | `judge.demo@hksp.local` |
 | 密碼 | `JudgeDemo123!` |
-| 說明 | `hksp_staff` / `role=judge` |
+| 說明 | `hksp_staff` / `role=judge`；已指派全屬性＋`sec-materials`；可用 `?gas=1` 回舊 GAS |
+
+最小煙測頁：`judge-pb.html`（同上帳密）。
 
 ## 重建
 

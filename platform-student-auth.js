@@ -1,6 +1,6 @@
 /**
  * Same-page student Auth for index.html platform card.
- * Reuses Firebase Auth + asia-east1 callables from student.html (no parallel account logic).
+ * Student auth UI: PocketBase 主路徑（舊 Firebase／student.html 已退役）。
  *
  * createStudentAccessFence / createRequireStudentAccess are exported for Node behavioral tests.
  * studentAccessRequestSeq is independent of refreshAccess's accessRequestSeq.

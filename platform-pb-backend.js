@@ -105,16 +105,30 @@
     });
   }
 
-  function openWindowFromActivity(activity) {
+  function activityConfig(activity) {
+    return activity && activity.config_json && typeof activity.config_json === "object"
+      ? activity.config_json
+      : {};
+  }
+
+  function parseTimeMs(value, fallbackMs) {
+    var ms = value ? Date.parse(String(value)) : NaN;
+    return Number.isFinite(ms) ? ms : fallbackMs;
+  }
+
+  /** kind: "evaluation" | "feature" — 特色活動可另用 config_json.featureDeadline */
+  function openWindowFromActivity(activity, kind) {
     var now = Date.now();
-    var closeAt = activity && activity.upload_close_at
-      ? Date.parse(String(activity.upload_close_at))
-      : now + 365 * 24 * 3600 * 1000;
-    if (!Number.isFinite(closeAt)) closeAt = now + 365 * 24 * 3600 * 1000;
-    var openAt = activity && activity.upload_open_at
-      ? Date.parse(String(activity.upload_open_at))
-      : now - 24 * 3600 * 1000;
-    if (!Number.isFinite(openAt)) openAt = now - 24 * 3600 * 1000;
+    var conf = activityConfig(activity);
+    var openAt = parseTimeMs(
+      activity && activity.upload_open_at,
+      now - 24 * 3600 * 1000
+    );
+    var closeRaw =
+      kind === "feature"
+        ? conf.featureDeadline || (activity && activity.upload_close_at)
+        : conf.dataDeadline || (activity && activity.upload_close_at);
+    var closeAt = parseTimeMs(closeRaw, now + 365 * 24 * 3600 * 1000);
     return {
       open: now >= openAt && now < closeAt,
       deadlineMs: closeAt,
@@ -459,7 +473,8 @@
           filter: 'club="' + ctx.club.id + '" && status!="trashed"',
           sort: "-created"
         }).then(function (rows) {
-          var win = openWindowFromActivity(ctx.activity);
+          var winEval = openWindowFromActivity(ctx.activity, "evaluation");
+          var winFeature = openWindowFromActivity(ctx.activity, "feature");
           return ok({
             activityId: ctx.activity.activity_id || cfg.activityId,
             permanentClubId: ctx.club.permanent_club_id,
@@ -468,9 +483,9 @@
             files: rows.map(mapUploadFile),
             participation: { configured: true, evaluation: true, feature: true },
             uploadWindows: {
-              serverNowMs: win.serverNowMs,
-              evaluation: win,
-              feature: win
+              serverNowMs: winEval.serverNowMs,
+              evaluation: winEval,
+              feature: winFeature
             },
             driveWriteEnabled: true,
             uploadGate: { envLive: true, open: true },
@@ -499,7 +514,8 @@
             filter: 'club="' + ctx.club.id + '" && folder="' + parentId + '" && status!="trashed"',
             sort: "-created"
           }).then(function (files) {
-            var win = openWindowFromActivity(ctx.activity);
+            var winEval = openWindowFromActivity(ctx.activity, "evaluation");
+            var winFeature = openWindowFromActivity(ctx.activity, "feature");
             return ok({
               clubFolderId: root.id,
               parentFolderId: parentId,
@@ -519,9 +535,9 @@
               uploadGate: { envLive: true, open: true },
               participation: { configured: true, evaluation: true, feature: true },
               uploadWindows: {
-                serverNowMs: win.serverNowMs,
-                evaluation: win,
-                feature: win
+                serverNowMs: winEval.serverNowMs,
+                evaluation: winEval,
+                feature: winFeature
               },
               storage: "pocketbase"
             });
@@ -816,15 +832,15 @@
     }
     if (action === "getEventConfig") {
       return getActivity().then(function (activity) {
-        var conf = (activity.config_json && typeof activity.config_json === "object")
-          ? activity.config_json
-          : {};
+        var conf = activityConfig(activity);
         var fallback = root.FALLBACK_EVENT_CONFIG || {};
         var config = Object.assign({}, fallback, conf, {
           activityId: activity.activity_id,
           title: activity.title
         });
-        if (activity.upload_close_at) config.dataDeadline = activity.upload_close_at;
+        if (!config.dataDeadline && activity.upload_close_at) {
+          config.dataDeadline = activity.upload_close_at;
+        }
         return {
           success: true,
           config: config,

@@ -1434,11 +1434,6 @@ a.feature-card:hover{
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
-<script src="./firebase-client.js"></script>
-<script src="./platform-cloud-api.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
 <script src="./platform-student-auth.js"></script>
 <script src="./platform-drive-upload.js"></script>
 <script src="./platform-home.js"></script>
@@ -1494,7 +1489,7 @@ let CLUB_DATA_LOADING_PROMISE=
 const HOME_EVENT_FACTS={
     venueName:"毓麟館",
     venueCampus:"弘光科技大學",
-    observationWindow:"16:30–16:50"
+    observationWindow:"15:30–16:00"
 };
 window.HOME_EVENT_FACTS=HOME_EVENT_FACTS;
 
@@ -1515,7 +1510,7 @@ const FAQ_DATA=[
     ],
 
     answer:
-        "🔨 <b>場地佈置時間</b><br><br>當日 <b>10:30 開始</b>，並於 <b>13:00 準時結束</b>。<br><br>請各社團務必於規定時間內完成佈置。"
+        "🔨 <b>場地佈置時間</b><br><br>當日 <b>10:30－11:50</b>。<br><br>請各社團務必於規定時間內完成佈置。"
 },
 
 {
@@ -1606,16 +1601,19 @@ const FALLBACK_EVENT_CONFIG={
         "Asia/Taipei",
 
     dataDeadline:
-        "2026-11-19T23:59:00+08:00",
+        "2026-11-22T23:59:00+08:00",
 
     formDeadline:
-        "2026-12-07T23:59:00+08:00",
+        "2026-11-22T23:59:00+08:00",
+
+    featureDeadline:
+        "2026-12-04T23:59:00+08:00",
 
     eventStart:
         "2026-12-10T10:30:00+08:00",
 
     eventEnd:
-        "2026-12-10T17:30:00+08:00"
+        "2026-12-10T16:30:00+08:00"
 
 };
 window.FALLBACK_EVENT_CONFIG=FALLBACK_EVENT_CONFIG;
@@ -1882,10 +1880,8 @@ async function callPublicBackend(
     if (window.HKSP_CS_LOCAL && HKSP_CS_LOCAL.isLocalPreview()) {
         return postBackend({ action, ...extraData });
     }
-    if (!window.HKSP_CLOUD_API) {
-        throw new Error("Firebase 首頁資料入口尚未載入，請重新整理。");
-    }
-    return HKSP_CLOUD_API.publicRequest({ action, ...extraData });
+
+    throw new Error("PocketBase 公開資料入口尚未載入，請重新整理。");
 
 }
 
@@ -3092,7 +3088,7 @@ async function showCloudPanelForStudent(){
         }
         if(!access || !access.allowed){
             appendMessage(
-                `社團專屬雲端需通過後端學生權限檢查。<br><br>${escapeHtml(access && access.message || "請先登入並完成強制改密。")}<br><br>驗證依據：Firebase UID、活動與永久 Club_ID（非公開資料）。`,
+                `社團專屬雲端需通過後端學生權限檢查。<br><br>${escapeHtml(access && access.message || "請先登入並完成強制改密。")}<br><br>驗證依據：學生帳號、活動與永久 Club_ID（非公開資料）。`,
                 "bot",
                 true
             );
@@ -3114,7 +3110,7 @@ async function showCloudPanelForStudent(){
 }
 
 async function showCloudPanel(){
-    // 相容舊呼叫：改走學生 Firebase 權限檢查
+    // 相容舊呼叫：改走學生 PocketBase 權限檢查
     return showCloudPanelForStudent();
 
     if(

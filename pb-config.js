@@ -9,13 +9,14 @@
   var api = {
     usePocketBase: true,
     url: "https://db.keson.pro",
+    /** admin.html PocketBase 管理登入預設帳（密碼不寫進前端） */
+    staffAdminEmail: "admin@hksp.local",
     /**
-     * 學生上傳主路徑：PocketBase（支援整夾／大檔，無需 GCP 計費）。
-     * Drive Apps Script 僅保留為可選鏡射，預設關閉。
+     * 正式上線：上傳主路徑 = PocketBase。
+     * Drive 代傳已擱置（非主路徑、避免 API 費用）；保持 false。
      */
     useDriveProxy: false,
-    driveProxyUrl:
-      "https://script.google.com/macros/s/AKfycby65eYQ-VR1SsocS8b6CMM-F0OEtqgaJ5kW5KvyLixVwlOipbWz-FhENAUhe7z081NFrQ/exec",
+    driveProxyUrl: "",
     activityId: ACTIVITY_ID,
     collections: {
       staff: "hksp_staff",

@@ -149,7 +149,7 @@
     if (usePocketBaseBackend()) {
       return window.HKSP_PB_BACKEND.call(name, data || {});
     }
-    return firebase.app().functions("asia-east1").httpsCallable(name)(data || {});
+    return Promise.reject(new Error("Firebase callable 已退役；請啟用 PocketBase 後端。"));
   }
 
   /** Reads: limited backoff. Writes: never auto-retry (permission / unclear outcome). */
