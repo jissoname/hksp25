@@ -243,7 +243,12 @@
     var status = e && (e.status || e.statusCode);
     var raw = e && (e.data || e.response || {});
     var fieldErrors = (raw && raw.data) || {};
-    if (status === 400 && (fieldErrors.email || fieldErrors.student_id)) return true;
+    if (
+      status === 400 &&
+      (fieldErrors.email || fieldErrors.student_id || fieldErrors.username)
+    ) {
+      return true;
+    }
     var msg = String((e && e.message) || "");
     return /not_unique|unique|Failed to create record/i.test(msg);
   }

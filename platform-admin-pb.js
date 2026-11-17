@@ -1121,7 +1121,10 @@
       var freedId = ("W" + short + stamp.slice(-10)).slice(0, 20);
       var freedEmail = ("w" + stamp.slice(-10) + short + "@stu.hksp25.invalid").slice(0, 120);
       var randPass = "Wrr" + stamp + "x!";
+      var freedUser = ("w" + short + stamp).slice(0, 100);
+      // Free username BEFORE email — leftover username often blocks re-register.
       var steps = [
+        { username: freedUser },
         { student_id: freedId },
         { email: freedEmail, emailVisibility: false },
         { password: randPass, passwordConfirm: randPass, must_change_password: true },
@@ -1132,11 +1135,10 @@
         try {
           await pb().collection(C().students).update(uid, steps[i]);
         } catch (stepErr) {
-          // username collision can block email identity on some PB versions
           if (steps[i].email) {
             try {
               await pb().collection(C().students).update(uid, {
-                username: ("w" + short + stamp).slice(0, 100),
+                username: freedUser,
                 email: freedEmail,
                 emailVisibility: false
               });
@@ -1145,11 +1147,13 @@
               /* fall through */
             }
           }
-          if (i === 0 || i === 1) {
+          // username field may not exist on older schemas
+          if (steps[i].username) continue;
+          if (i <= 2) {
             throw new Error(
-              "無法釋放學號／Email（" +
+              "無法釋放學號／Email／username（" +
                 ((stepErr && stepErr.message) || "update failed") +
-                "）。請先執行 scripts/pb-apply-admin-acl.ps1，或用 PocketBase 超管刪除該學生。"
+                "）。請到 PocketBase 超管後台刪除該學生。"
             );
           }
         }
@@ -1165,14 +1169,32 @@
           cfg().normalizeStudentId(verify.student_id) === originalId && !!originalId;
         var stillEmail =
           String(verify.email || "").trim().toLowerCase() === originalEmail && !!originalEmail;
-        if (stillId || stillEmail) {
+        var stillUser =
+          String(verify.username || "").trim().toLowerCase() === originalEmail && !!originalEmail;
+        if (stillId || stillEmail || stillUser) {
           throw new Error(
-            "帳號仍占用學號／Email，同學號尚不可重新註冊。請執行 ACL 腳本後重試，或用 PocketBase 超管刪除。"
+            "帳號仍占用學號／Email／username，同學號尚不可重新註冊。請到 PocketBase 超管後台刪除該學生。"
           );
         }
       }
       return { authDeleted: true, mode: "soft" };
     }
+  }
+
+  function studentRowMatchesId(row, normalized, email) {
+    if (!row) return false;
+    var want = String(normalized || "").toLowerCase();
+    var sid = String(row.student_id || "").trim().toLowerCase();
+    var em = String(row.email || "").trim().toLowerCase();
+    var un = String(row.username || "").trim().toLowerCase();
+    if (sid === want) return true;
+    if (em === email || un === email) return true;
+    if (un === want) return true;
+    // Soft-tombstone emails / usernames that still embed the student id.
+    if (want && (em.indexOf(want) >= 0 || un.indexOf(want) >= 0 || sid.indexOf(want) >= 0)) {
+      return true;
+    }
+    return false;
   }
 
   async function findStudentAuthByStudentId(studentId) {
@@ -1196,8 +1218,23 @@
     try {
       return await pb().collection(C().students).getFirstListItem('email="' + email + '"');
     } catch (_byEmail) {
-      return null;
+      /* continue */
     }
+    try {
+      return await pb().collection(C().students).getFirstListItem('username="' + email + '"');
+    } catch (_byUser) {
+      /* continue */
+    }
+    // Full scan: soft-deleted rows may have renamed student_id/email but kept username.
+    try {
+      var rows = await pb().collection(C().students).getFullList();
+      for (var r = 0; r < rows.length; r++) {
+        if (studentRowMatchesId(rows[r], normalized, email)) return rows[r];
+      }
+    } catch (_scanErr) {
+      /* ignore */
+    }
+    return null;
   }
 
   /** Free a leftover Auth row by student_id even when club seat list is already empty. */
@@ -1222,7 +1259,9 @@
         studentId: studentId,
         seatReleased: true,
         seatStatus: "empty",
-        message: "找不到此學號殘留帳號，可直接重新註冊。"
+        notFound: true,
+        message:
+          "後台未找到此學號的 student_id／email／username。請再試註冊；若仍顯示已有帳號，到 PocketBase → hksp_students 搜尋該學號並刪除。"
       });
     }
 
@@ -1245,23 +1284,24 @@
       );
     }
 
-    // Post-verify: original student_id/email must no longer resolve.
+    // Post-verify: original student_id/email/username must no longer resolve.
     var leftover = await findStudentAuthByStudentId(studentId);
     if (leftover && String(leftover.id) === String(uid) && destroyed.mode === "hard") {
       leftover = null;
     }
-    if (leftover) {
-      var leftId = cfg().normalizeStudentId(leftover.student_id);
-      var leftEmail = String(leftover.email || "").trim().toLowerCase();
+    if (leftover && String(leftover.id) === String(uid) && destroyed.mode === "soft") {
       var wantEmail = cfg().studentIdToAuthEmail(studentId);
-      if (leftId === studentId || leftEmail === wantEmail) {
+      if (studentRowMatchesId(leftover, studentId, wantEmail)) {
         return fail(
-          "清除後學號／Email 仍被占用（mode=" +
-            destroyed.mode +
-            "）。請執行 scripts/pb-apply-admin-acl.ps1 後重試，或用 PocketBase 超管刪除該學生。",
+          "清除後學號／Email／username 仍被占用（mode=soft）。請到 PocketBase 超管後台刪除該學生。",
           "AUTH_STILL_HELD"
         );
       }
+    } else if (leftover && String(leftover.id) !== String(uid)) {
+      return fail(
+        "仍有另一筆帳號占用此學號／Email／username。請再到後台按一次清除，或到 PocketBase 刪除。",
+        "AUTH_STILL_HELD"
+      );
     }
 
     try {
