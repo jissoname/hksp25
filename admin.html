@@ -773,6 +773,16 @@ onclick="openClubModal()"
 </div>
 <div id="clubStudentSelectionMeta" class="list-sub" style="margin:-4px 0 10px"></div>
 
+<div class="notice warnbox" style="margin:0 0 12px">
+<div style="font-weight:900;margin-bottom:6px">清除學號殘留帳號（名額已空但仍無法重註冊時）</div>
+<div class="list-sub" style="margin-bottom:8px">社團名單查不到、註冊卻顯示「此學號已有帳號」時使用。會刪除／釋放該學號 Auth，使同學號可重新註冊。</div>
+<label class="club-student-field" style="display:block;margin-bottom:8px;max-width:320px">
+<span class="mini-label">學號</span>
+<input id="clubStudentPurgeId" class="field" type="text" autocomplete="off" placeholder="例如 U112P214">
+</label>
+<button class="btn btn-danger" type="button" id="clubStudentPurgeBtn" onclick="purgeStudentByStudentId_()">清除此學號殘留帳號</button>
+</div>
+
 <div id="clubStudentState" class="state">請先選擇社團篩選條件後查詢。</div>
 <div id="clubStudentList" class="list"></div>
 <div class="row-actions" style="margin-top:8px">
@@ -12465,6 +12475,60 @@ toast(e.message||unclearMutationMessage(op,"結果不明"));
 clearClubStudentMutation("rebind",op);
 toast((e.message||"改綁失敗")+"；本次請求被拒絕，原綁定應仍保留");
 }
+}finally{
+if(op.resetSeq===clubStudentResetSeq) setClubStudentPanelLocked(false);
+}
+}
+
+async function purgeStudentByStudentId_(){
+if(clubStudentPanelLocked){
+toast("操作進行中，請稍候");
+return;
+}
+const tokenAtStart=clubStudentSessionToken();
+if(!tokenAtStart){
+toast("請重新登入後再清除");
+return;
+}
+const raw=String($("clubStudentPurgeId")?$("clubStudentPurgeId").value:"").trim();
+const studentId=String(raw||"").trim().toUpperCase();
+if(!studentId){
+toast("請輸入要清除的學號");
+return;
+}
+if(!confirm(
+"確定清除學號殘留帳號？此操作不可逆。\n\n"+
+"學號："+maskStudentIdDisplay(studentId)+"\n\n"+
+"用於：社團名額已空，但註冊仍顯示「此學號已有帳號」。\n"+
+"清除後同學號可重新註冊。"
+)) return;
+const op={
+resetSeq:++clubStudentResetSeq,
+uid:"purge:"+studentId,
+activityId:String($("clubStudentActivityId")&&$("clubStudentActivityId").value||""),
+studentId:studentId,
+token:tokenAtStart,
+clientRequestId:newClubStudentClientRequestId("purge")
+};
+setClubStudentPanelLocked(true);
+try{
+const r=await api("adminPurgeStudentByStudentId",{
+studentId:studentId,
+confirmPhrase:"RESET_WRONG_REGISTRATION",
+clientRequestId:op.clientRequestId,
+reason:"admin_purge_orphan_auth"
+});
+if(unauthorized(r)){
+invalidateClubStudentOps("logout");
+return;
+}
+if(!r||r.success!==true||r.authDeleted!==true){
+throw new Error((r&&(r.message||r.error))||"清除殘留帳號失敗");
+}
+if($("clubStudentPurgeId")) $("clubStudentPurgeId").value="";
+toast(r.message||(r.idempotent?"此學號已無殘留帳號":"已清除殘留帳號；同學號可重新註冊"));
+}catch(e){
+toast(e.message||"清除殘留帳號失敗");
 }finally{
 if(op.resetSeq===clubStudentResetSeq) setClubStudentPanelLocked(false);
 }

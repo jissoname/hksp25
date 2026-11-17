@@ -1110,33 +1110,48 @@
     var originalEmail = String(
       student.email || (originalId ? cfg().studentIdToAuthEmail(originalId) : "")
     ).trim().toLowerCase();
-    // Prefer hard delete so student_id/email are fully freed for re-registration.
+    // Prefer hard delete so student_id/email are fully freed (memberships cascade).
     try {
       await pb().collection(C().students).delete(uid);
       return { authDeleted: true, mode: "hard" };
     } catch (_delErr) {
-      // Soft-destroy must free unique student_id + email (+ username if present).
+      // Soft-destroy: free unique keys in small steps (batch updates often fail on auth).
       var stamp = String(Date.now());
-      var short = String(uid || "x").replace(/[^a-zA-Z0-9]/g, "").slice(-8) || "x";
-      var freedId = ("W" + short + stamp).slice(0, 20);
-      var freedEmail = ("wrr." + stamp + "." + short + "@stu.hksp25.invalid").slice(0, 120);
+      var short = String(uid || "x").replace(/[^a-zA-Z0-9]/g, "").slice(-6) || "x";
+      var freedId = ("W" + short + stamp.slice(-10)).slice(0, 20);
+      var freedEmail = ("w" + stamp.slice(-10) + short + "@stu.hksp25.invalid").slice(0, 120);
       var randPass = "Wrr" + stamp + "x!";
-      var patch = {
-        active: false,
-        student_id: freedId,
-        email: freedEmail,
-        password: randPass,
-        passwordConfirm: randPass,
-        must_change_password: true,
-        birth_ymd: ""
-      };
-      // PocketBase auth may keep username unique even after email change.
-      patch.username = ("wrr_" + short + stamp).slice(0, 150);
-      try {
-        await pb().collection(C().students).update(uid, patch);
-      } catch (_withUser) {
-        delete patch.username;
-        await pb().collection(C().students).update(uid, patch);
+      var steps = [
+        { student_id: freedId },
+        { email: freedEmail, emailVisibility: false },
+        { password: randPass, passwordConfirm: randPass, must_change_password: true },
+        { active: false, birth_ymd: "" }
+      ];
+      for (var i = 0; i < steps.length; i++) {
+        try {
+          await pb().collection(C().students).update(uid, steps[i]);
+        } catch (stepErr) {
+          // username collision can block email identity on some PB versions
+          if (steps[i].email) {
+            try {
+              await pb().collection(C().students).update(uid, {
+                username: ("w" + short + stamp).slice(0, 100),
+                email: freedEmail,
+                emailVisibility: false
+              });
+              continue;
+            } catch (_uErr) {
+              /* fall through */
+            }
+          }
+          if (i === 0 || i === 1) {
+            throw new Error(
+              "無法釋放學號／Email（" +
+                ((stepErr && stepErr.message) || "update failed") +
+                "）。請先執行 scripts/pb-apply-admin-acl.ps1，或用 PocketBase 超管刪除該學生。"
+            );
+          }
+        }
       }
       var verify = null;
       try {
@@ -1151,12 +1166,109 @@
           String(verify.email || "").trim().toLowerCase() === originalEmail && !!originalEmail;
         if (stillId || stillEmail) {
           throw new Error(
-            "帳號已停用，但學號／Email 未能釋放，同學號尚不可重新註冊。請用 PocketBase 超管刪除該學生列。"
+            "帳號仍占用學號／Email，同學號尚不可重新註冊。請執行 ACL 腳本後重試，或用 PocketBase 超管刪除。"
           );
         }
       }
       return { authDeleted: true, mode: "soft" };
     }
+  }
+
+  /** Free a leftover Auth row by student_id even when club seat list is already empty. */
+  async function adminPurgeStudentByStudentId(data) {
+    var studentId = cfg().normalizeStudentId((data && data.studentId) || "");
+    var clientRequestId = String((data && data.clientRequestId) || "").trim();
+    var confirmPhrase = String((data && data.confirmPhrase) || "").trim();
+    var reason = String((data && data.reason) || "purge_orphan_auth").slice(0, 200);
+    if (!studentId) return fail("需要學號。", "INVALID_STUDENT_ID");
+    if (!clientRequestId || clientRequestId.length < 8) {
+      return fail("需要可追蹤的請求編號。", "INVALID_CLIENT_REQUEST_ID");
+    }
+    if (confirmPhrase !== "RESET_WRONG_REGISTRATION") {
+      return fail("請確認輸入 RESET_WRONG_REGISTRATION。", "CONFIRM_PHRASE_REQUIRED");
+    }
+
+    var student = null;
+    try {
+      student = await pb()
+        .collection(C().students)
+        .getFirstListItem('student_id="' + studentId + '"');
+    } catch (_byId) {
+      student = null;
+    }
+    if (!student) {
+      var email = cfg().studentIdToAuthEmail(studentId);
+      try {
+        student = await pb()
+          .collection(C().students)
+          .getFirstListItem('email="' + email + '"');
+      } catch (_byEmail) {
+        student = null;
+      }
+    }
+    if (!student) {
+      return ok({
+        authDeleted: true,
+        idempotent: true,
+        studentId: studentId,
+        seatReleased: true,
+        seatStatus: "empty",
+        message: "找不到此學號殘留帳號，可直接重新註冊。"
+      });
+    }
+
+    var uid = student.id;
+    var release = await releaseMembershipsForStudent(uid);
+    if (release.stillActive > 0) {
+      return fail(
+        "無法釋放社團名額（仍有 " + release.stillActive + " 筆有效綁定）。",
+        "SEAT_RELEASE_FAILED"
+      );
+    }
+
+    var destroyed;
+    try {
+      destroyed = await destroyStudentAccountForReregister(student, studentId);
+    } catch (destroyErr) {
+      return fail(
+        (destroyErr && destroyErr.message) || "清除殘留帳號失敗。",
+        "AUTH_DESTROY_FAILED"
+      );
+    }
+
+    try {
+      await pb().collection(C().audit).create({
+        event_key: "purge_student_by_student_id",
+        event_type: "security",
+        actor_staff: pb().authStore.model && pb().authStore.model.id,
+        target_type: "hksp_students",
+        target_id: uid,
+        payload_json: {
+          studentId: studentId,
+          clientRequestId: clientRequestId,
+          reason: reason,
+          mode: destroyed.mode,
+          membershipsReleased: release.released
+        },
+        occurred_at: new Date().toISOString()
+      });
+    } catch (_auditErr) {
+      /* non-blocking */
+    }
+
+    return ok({
+      authDeleted: true,
+      idempotent: false,
+      uid: uid,
+      studentId: studentId,
+      clientRequestId: clientRequestId,
+      reason: reason,
+      mode: destroyed.mode,
+      membershipsReleased: release.released,
+      seatReleased: true,
+      seatStatus: "empty",
+      message: "已清除殘留帳號，同學號可重新註冊。"
+    });
   }
 
   async function adminResetWrongRegistration(data) {
@@ -1190,38 +1302,29 @@
     }
 
     var inv = await loadWrongRegInventory(activity, uid, studentId);
-    // Always release seats first (also cleans orphans if Auth row already gone).
-    var release = await releaseMembershipsForStudent(uid);
-    if (release.stillActive > 0) {
-      return fail(
-        "無法釋放社團名額（仍有 " +
-          release.stillActive +
-          " 筆有效綁定）。同學號尚不可重新註冊。",
-        "SEAT_RELEASE_FAILED"
-      );
-    }
-
     if (!inv.student) {
-      return ok({
-        authDeleted: true,
-        idempotent: true,
-        uid: uid,
+      // Seat list may be empty while Auth row still holds student_id — purge by id.
+      var byId = await adminPurgeStudentByStudentId({
         studentId: studentId,
-        activityId: activity.activity_id,
         clientRequestId: clientRequestId,
-        reason: reason,
-        membershipsReleased: release.released,
-        seatReleased: true,
-        seatStatus: "empty"
+        confirmPhrase: confirmPhrase,
+        reason: reason || "wrong_registration_reset_orphan"
       });
+      if (byId && byId.success) {
+        return Object.assign({}, byId, {
+          uid: byId.uid || uid,
+          activityId: activity.activity_id
+        });
+      }
+      return byId;
     }
     if (cfg().normalizeStudentId(inv.student.student_id) !== studentId) {
-      // Soft-tombstoned leftover: still try to destroy/free identifiers.
       if (!/^(W|wrr)/i.test(String(inv.student.student_id || ""))) {
         return fail("帳號學號與輸入不符。", "STUDENT_ID_MISMATCH");
       }
     }
 
+    // Destroy Auth first when possible (hard delete cascades memberships).
     var destroyed;
     try {
       destroyed = await destroyStudentAccountForReregister(inv.student, studentId);
@@ -1229,6 +1332,16 @@
       return fail(
         (destroyErr && destroyErr.message) || "刪除帳號失敗，學號可能尚未釋放。",
         "AUTH_DESTROY_FAILED"
+      );
+    }
+
+    var release = await releaseMembershipsForStudent(uid);
+    if (release.stillActive > 0) {
+      return fail(
+        "帳號已處理，但仍有 " +
+          release.stillActive +
+          " 筆有效綁定未釋放。請再試一次或檢查 memberships。",
+        "SEAT_RELEASE_FAILED"
       );
     }
 
@@ -2419,6 +2532,7 @@
     adminRebindClubStudent: adminRebindClubStudent,
     adminPreviewWrongRegistrationReset: adminPreviewWrongRegistrationReset,
     adminResetWrongRegistration: adminResetWrongRegistration,
+    adminPurgeStudentByStudentId: adminPurgeStudentByStudentId,
     getEventConfig: getEventConfig,
     adminSaveEventConfig: adminSaveEventConfig,
     adminGetCloudUploadSettings: adminGetCloudUploadSettings,
