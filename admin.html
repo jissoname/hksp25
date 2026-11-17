@@ -1654,7 +1654,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=upload-browse-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=upload-browse-2"></script>
-<script src="./platform-admin-pb.js?v=judge-confirm-pdf-1"></script>
+<script src="./platform-admin-pb.js?v=judge-progress-fix-1"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -8943,6 +8943,22 @@ ${hint ? `<div class="jc-hint">${esc(hint)}</div>` : ""}
 `;
 }
 
+function judgeConfirmPdfMatchSection_(record,sectionId,sectionTitle){
+const id =
+String((record && record.sectionId) || "");
+const name =
+String((record && record.sectionName) || "");
+if(sectionId && id === sectionId) return true;
+if(sectionTitle && name === sectionTitle) return true;
+if(sectionId === "dataReview" || sectionTitle === "資料審查"){
+return id === "dataReview" || /資料審查|數位資料/.test(name);
+}
+if(sectionId === "fieldReview" || sectionTitle === "實地審查"){
+return id === "fieldReview" || /實地審查|現場|詢答/.test(name);
+}
+return false;
+}
+
 function buildJudgeConfirmSectionPages_(model,sectionTitle,sectionId){
 const allRecords =
 Array.isArray(model && model.allRecords)
@@ -8952,7 +8968,7 @@ model.allRecords
 (model && model.records) || [];
 const records =
 allRecords.filter(function(record){
-return String(record.sectionId || "") === sectionId;
+return judgeConfirmPdfMatchSection_(record,sectionId,sectionTitle);
 });
 const criteria =
 judgeConfirmPdfCollectCriteria_(records);
@@ -9102,11 +9118,75 @@ const sheetKind =
 String((data && data.sheetKind) || "all");
 const plans =
 [];
-if(sheetKind === "dataReview" || sheetKind === "all"){
-plans.push.apply(plans,buildJudgeConfirmSectionPages_(data,"資料審查","dataReview"));
+const allRecords =
+Array.isArray(data && data.allRecords)
+?
+data.allRecords
+:
+(data && data.records) || [];
+/*
+ * 若大項 id 不是 dataReview／fieldReview，改依實際紀錄的大項展開，
+ * 避免確認表空白。
+ */
+const sectionMeta =
+[];
+const seenSection =
+{};
+allRecords.forEach(function(record){
+const id =
+String((record && record.sectionId) || "");
+if(!id || seenSection[id]) return;
+seenSection[id] =
+true;
+sectionMeta.push({
+id:id,
+name:String((record && record.sectionName) || id)
+});
+});
+function pushSectionPages(preferredTitle,preferredId){
+const hit =
+sectionMeta.find(function(s){
+return judgeConfirmPdfMatchSection_(
+{
+sectionId:s.id,
+sectionName:s.name
+},
+preferredId,
+preferredTitle
+);
+});
+if(hit){
+plans.push.apply(
+plans,
+buildJudgeConfirmSectionPages_(data,hit.name || preferredTitle,hit.id)
+);
+return true;
 }
-if(sheetKind === "fieldReview" || sheetKind === "all"){
-plans.push.apply(plans,buildJudgeConfirmSectionPages_(data,"實地審查","fieldReview"));
+plans.push.apply(
+plans,
+buildJudgeConfirmSectionPages_(data,preferredTitle,preferredId)
+);
+return false;
+}
+if(sheetKind === "dataReview"){
+pushSectionPages("資料審查","dataReview");
+}
+else if(sheetKind === "fieldReview"){
+pushSectionPages("實地審查","fieldReview");
+}
+else if(sheetKind === "all"){
+if(sectionMeta.length){
+sectionMeta.forEach(function(s){
+plans.push.apply(
+plans,
+buildJudgeConfirmSectionPages_(data,s.name,s.id)
+);
+});
+}
+else{
+pushSectionPages("資料審查","dataReview");
+pushSectionPages("實地審查","fieldReview");
+}
 }
 if(sheetKind === "total" || sheetKind === "all"){
 plans.push.apply(plans,buildJudgeConfirmTotalPages_(data));

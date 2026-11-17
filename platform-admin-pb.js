@@ -1829,7 +1829,7 @@
     var conf = activity.config_json || {};
     var scoreConfig = conf.scoreConfig || defaultScoreConfig();
     var judges = (await pb().collection(C().staff).getFullList({
-      filter: 'role="judge" && active=true',
+      filter: 'role="judge"',
       sort: "email"
     })).map(mapJudgeAdmin);
     var clubs = await pb().collection(C().clubs).getFullList({
@@ -1844,34 +1844,254 @@
       byKey[row.judge + "::" + row.club + "::" + row.section_id] = row;
     });
     var sections = publishedSectionsOf(scoreConfig);
-    var progress = judges.map(function (judge) {
-      var sectionProgress = sections.map(function (section) {
-        var rows = clubs.map(function (club) {
-          var row = byKey[judge.id + "::" + club.id + "::" + section.id];
-          var answers = (row && row.answers_json) || {};
-          var reopened = !!(answers && answers.reopened);
-          return {
-            permanentClubId: String(club.permanent_club_id || "").toUpperCase(),
-            clubName: club.name,
-            status: !row
-              ? "notStarted"
+    var totalExpected = 0;
+    var totalSubmitted = 0;
+    var totalDraft = 0;
+    var totalReopened = 0;
+    var totalNotStarted = 0;
+
+    var rows = judges.map(function (judge) {
+      var judgeSections = sections.filter(function (section) {
+        var allowed = Array.isArray(judge.scoreSectionIds) ? judge.scoreSectionIds : [];
+        if (allowed.length && allowed.indexOf(section.id) < 0) return false;
+        return true;
+      });
+      if (!judgeSections.length) judgeSections = sections.slice();
+
+      var submittedCount = 0;
+      var draftCount = 0;
+      var reopenedCount = 0;
+      var notStartedCount = 0;
+      var expected = 0;
+
+      var sectionProgress = judgeSections.map(function (section) {
+        var sectionSubmitted = 0;
+        var sectionDraft = 0;
+        var sectionReopened = 0;
+        var sectionNotStarted = 0;
+        var clubRows = clubs
+          .filter(function (club) {
+            var row = byKey[judge.id + "::" + club.id + "::" + section.id];
+            if (row) return true;
+            var allowed = Array.isArray(judge.scoreSectionIds) ? judge.scoreSectionIds : [];
+            if (allowed.length && allowed.indexOf(section.id) < 0) return false;
+            var cats = Array.isArray(judge.categories) ? judge.categories : [];
+            if (!cats.length) return true;
+            var cat = normalizeCategoryLabel(club.category);
+            var set = {};
+            cats.forEach(function (c) {
+              set[normalizeCategoryLabel(c)] = true;
+              set[String(c || "").trim()] = true;
+            });
+            return !!(set[cat] || set[String(club.category || "").trim()]);
+          })
+          .map(function (club) {
+            var row = byKey[judge.id + "::" + club.id + "::" + section.id];
+            var answers = (row && row.answers_json) || {};
+            var reopened = !!(answers && answers.reopened);
+            var status = !row
+              ? "not_started"
               : reopened
                 ? "reopened"
                 : row.status === "submitted"
                   ? "submitted"
-                  : "draft",
-            score: row ? Number(row.score) || 0 : null
-          };
-        });
+                  : "draft";
+            if (status === "submitted") {
+              sectionSubmitted += 1;
+              submittedCount += 1;
+            } else if (status === "draft") {
+              sectionDraft += 1;
+              draftCount += 1;
+            } else if (status === "reopened") {
+              sectionReopened += 1;
+              reopenedCount += 1;
+            } else {
+              sectionNotStarted += 1;
+              notStartedCount += 1;
+            }
+            expected += 1;
+            return {
+              permanentClubId: String(club.permanent_club_id || "").toUpperCase(),
+              clubName: club.name,
+              name: club.name,
+              category: club.category || "",
+              status: status,
+              hasRecord: !!row,
+              totalScore: row ? Number(row.score) || 0 : null,
+              score: row ? Number(row.score) || 0 : null,
+              submissionRevision: row ? Number(row.revision) || 1 : null,
+              updatedAt: row && row.updated ? row.updated : null,
+              submittedAt: row && row.submitted_at ? row.submitted_at : null
+            };
+          });
         return {
           sectionId: section.id,
-          sectionName: section.name,
-          clubs: rows
+          id: section.id,
+          name: section.name || section.id,
+          sectionName: section.name || section.id,
+          icon: section.icon || "📌",
+          maxScore: Number(section.maxScore) || 0,
+          submittedCount: sectionSubmitted,
+          draftCount: sectionDraft,
+          reopenedCount: sectionReopened,
+          notStartedCount: sectionNotStarted,
+          clubs: clubRows
         };
       });
-      return { judge: judge, sections: sectionProgress };
+
+      totalExpected += expected;
+      totalSubmitted += submittedCount;
+      totalDraft += draftCount;
+      totalReopened += reopenedCount;
+      totalNotStarted += notStartedCount;
+
+      return Object.assign({}, judge, {
+        judgeId: judge.id,
+        id: judge.id,
+        sections: sectionProgress,
+        summary: {
+          totalExpected: expected,
+          submittedCount: submittedCount,
+          draftCount: draftCount,
+          reopenedCount: reopenedCount,
+          notStartedCount: notStartedCount,
+          completionRate:
+            expected > 0 ? Number(((submittedCount / expected) * 100).toFixed(1)) : 0
+        }
+      });
     });
-    return ok({ progress: progress, judges: judges });
+
+    return ok({
+      judges: rows,
+      judgeCount: rows.length,
+      summary: {
+        totalExpected: totalExpected,
+        submittedCount: totalSubmitted,
+        draftCount: totalDraft,
+        reopenedCount: totalReopened,
+        notStartedCount: totalNotStarted,
+        completionRate:
+          totalExpected > 0
+            ? Number(((totalSubmitted / totalExpected) * 100).toFixed(1))
+            : 0
+      }
+    });
+  }
+
+  async function adminJudgeGetRawScore(data) {
+    var judgeId = String((data && (data.judgeId || data.id)) || "").trim();
+    var sectionId = String((data && data.sectionId) || "").trim();
+    var clubName = String((data && (data.clubName || data.club)) || "").trim();
+    var permanentClubId = String((data && data.permanentClubId) || "")
+      .trim()
+      .toUpperCase();
+    if (!judgeId || !sectionId || (!clubName && !permanentClubId)) {
+      return fail("缺少評審／大項／社團。", "RAW_SCORE_TARGET_REQUIRED");
+    }
+    var activity = await getActivityRecord();
+    var conf = activity.config_json || {};
+    var scoreConfig = conf.scoreConfig || defaultScoreConfig();
+    var section =
+      publishedSectionsOf(scoreConfig).find(function (s) {
+        return String(s.id) === sectionId;
+      }) ||
+      (scoreConfig.sections || []).find(function (s) {
+        return s && String(s.id) === sectionId;
+      });
+    if (!section) return fail("找不到評分大項。", "SECTION_NOT_FOUND");
+
+    var judgeRec;
+    try {
+      judgeRec = mapJudgeAdmin(await pb().collection(C().staff).getOne(judgeId));
+    } catch (_e) {
+      return fail("找不到評審。", "JUDGE_NOT_FOUND");
+    }
+
+    var clubFilter = 'activity="' + activity.id + '"';
+    if (permanentClubId) {
+      clubFilter += ' && permanent_club_id="' + permanentClubId + '"';
+    }
+    var clubs = await pb().collection(C().clubs).getFullList({
+      filter: clubFilter,
+      sort: "name"
+    });
+    var club =
+      clubs.find(function (c) {
+        if (permanentClubId && String(c.permanent_club_id || "").toUpperCase() === permanentClubId) {
+          return true;
+        }
+        return String(c.name || "").trim() === clubName;
+      }) || null;
+    if (!club && clubName) {
+      clubs = await pb().collection(C().clubs).getFullList({
+        filter: 'activity="' + activity.id + '"',
+        sort: "name"
+      });
+      club =
+        clubs.find(function (c) {
+          return String(c.name || "").trim() === clubName;
+        }) || null;
+    }
+    if (!club) return fail("找不到社團。", "CLUB_NOT_FOUND");
+
+    var scoreRes = await pb().collection(C().scores).getList(1, 1, {
+      filter:
+        'activity="' +
+        activity.id +
+        '" && club="' +
+        club.id +
+        '" && judge="' +
+        judgeId +
+        '" && section_id="' +
+        sectionId +
+        '"'
+    });
+    var row = scoreRes.totalItems ? scoreRes.items[0] : null;
+    var answers = (row && row.answers_json) || {};
+    var reopened = !!(answers && answers.reopened);
+    var status = !row
+      ? "not_started"
+      : reopened
+        ? "reopened"
+        : row.status === "submitted"
+          ? "submitted"
+          : "draft";
+    var detail = buildJudgeConfirmDetail(section, row);
+    return ok({
+      judge: {
+        id: judgeRec.id,
+        judgeId: judgeRec.id,
+        displayName: judgeRec.displayName || judgeRec.name || "",
+        name: judgeRec.name || "",
+        username: judgeRec.username || judgeRec.email || ""
+      },
+      club: {
+        id: club.id,
+        name: club.name,
+        clubName: club.name,
+        permanentClubId: String(club.permanent_club_id || "").toUpperCase(),
+        category: club.category || ""
+      },
+      section: {
+        id: section.id,
+        sectionId: section.id,
+        name: section.name || section.id,
+        icon: section.icon || "📌",
+        maxScore: Number(section.maxScore) || 0
+      },
+      status: status,
+      statusText: judgeConfirmStatusText(status, reopened),
+      locked: status === "submitted",
+      reopened: reopened,
+      hasRecord: !!row,
+      staleDraft: false,
+      submissionRevision: row ? Number(row.revision) || 1 : null,
+      submittedAt: row && row.submitted_at ? row.submitted_at : null,
+      updatedAt: row && row.updated ? row.updated : null,
+      unlockedAt: answers.unlockedAt || null,
+      detail: detail,
+      totalScore: row ? Number(row.score) || 0 : null
+    });
   }
 
   function judgeAssignNotes(data, prevNotes) {
@@ -2614,10 +2834,35 @@
 
   function buildJudgeConfirmClubTotals(records) {
     var byClub = {};
+    var orderedSectionIds = [];
     (records || []).forEach(function (record) {
       if (!record) return;
       var sectionId = String(record.sectionId || "");
-      if (sectionId !== "dataReview" && sectionId !== "fieldReview") return;
+      if (!sectionId) return;
+      if (orderedSectionIds.indexOf(sectionId) < 0) orderedSectionIds.push(sectionId);
+    });
+    var dataId =
+      orderedSectionIds.indexOf("dataReview") >= 0
+        ? "dataReview"
+        : orderedSectionIds[0] || "dataReview";
+    var fieldId =
+      orderedSectionIds.indexOf("fieldReview") >= 0
+        ? "fieldReview"
+        : orderedSectionIds[1] || orderedSectionIds[0] || "fieldReview";
+    (records || []).forEach(function (record) {
+      if (!record) return;
+      var sectionId = String(record.sectionId || "");
+      var slot =
+        sectionId === dataId || /資料審查|數位資料|資料/.test(String(record.sectionName || ""))
+          ? "dataReview"
+          : sectionId === fieldId || /實地審查|現場|詢答|實地/.test(String(record.sectionName || ""))
+            ? "fieldReview"
+            : "";
+      if (!slot) {
+        if (sectionId === orderedSectionIds[0]) slot = "dataReview";
+        else if (sectionId === orderedSectionIds[1]) slot = "fieldReview";
+      }
+      if (!slot) return;
       var key =
         String(record.permanentClubId || "").trim() ||
         "name:" + String(record.clubName || "");
@@ -2630,7 +2875,7 @@
           fieldReview: null
         };
       }
-      byClub[key][sectionId] = record;
+      byClub[key][slot] = record;
     });
     return Object.keys(byClub).map(function (key) {
       var row = byClub[key];
@@ -2756,11 +3001,48 @@
     };
   }
 
-  function filterJudgeConfirmRecordsBySheetKind(records, sheetKind) {
+  function resolveConfirmSectionId(sections, kind) {
+    var list = Array.isArray(sections) ? sections : [];
+    if (kind === "dataReview") {
+      var byId = list.find(function (s) {
+        return String(s.id) === "dataReview";
+      });
+      if (byId) return byId.id;
+      var byName = list.find(function (s) {
+        return /資料審查|數位資料|資料/.test(String(s.name || ""));
+      });
+      if (byName) return byName.id;
+      return list[0] ? list[0].id : "";
+    }
+    if (kind === "fieldReview") {
+      var byId2 = list.find(function (s) {
+        return String(s.id) === "fieldReview";
+      });
+      if (byId2) return byId2.id;
+      var byName2 = list.find(function (s) {
+        return /實地審查|現場|詢答|實地/.test(String(s.name || ""));
+      });
+      if (byName2) return byName2.id;
+      return list[1] ? list[1].id : list[0] ? list[0].id : "";
+    }
+    return "";
+  }
+
+  function filterJudgeConfirmRecordsBySheetKind(records, sheetKind, sections) {
     var list = Array.isArray(records) ? records : [];
     if (sheetKind === "dataReview" || sheetKind === "fieldReview") {
+      var sectionId = resolveConfirmSectionId(sections, sheetKind);
       return list.filter(function (record) {
-        return String(record && record.sectionId || "") === sheetKind;
+        var id = String((record && record.sectionId) || "");
+        if (sectionId && id === sectionId) return true;
+        if (id === sheetKind) return true;
+        if (sheetKind === "dataReview" && /資料審查|數位資料|資料/.test(String(record.sectionName || ""))) {
+          return true;
+        }
+        if (sheetKind === "fieldReview" && /實地審查|現場|詢答|實地/.test(String(record.sectionName || ""))) {
+          return true;
+        }
+        return false;
       });
     }
     if (sheetKind === "total") return [];
@@ -2808,8 +3090,11 @@
     var records = [];
     sections.forEach(function (section) {
       ctx.clubs.forEach(function (club) {
-        if (!judgeCoversClub(judge, club, section.id)) return;
         var row = ctx.byKey[judge.id + "::" + club.id + "::" + section.id] || null;
+        /*
+         * 有實際評分紀錄一定列入；其餘仍依指派範圍列出未評佔位。
+         */
+        if (!row && !judgeCoversClub(judge, club, section.id)) return;
         records.push(buildJudgeConfirmRecord(judge, section, club, row));
       });
     });
@@ -2821,7 +3106,7 @@
     });
 
     var clubTotals = buildJudgeConfirmClubTotals(records);
-    var filteredRecords = filterJudgeConfirmRecordsBySheetKind(records, sheetKind);
+    var filteredRecords = filterJudgeConfirmRecordsBySheetKind(records, sheetKind, sections);
     var submittedCount = records.filter(function (r) {
       return r.status === "submitted";
     }).length;
@@ -3042,6 +3327,7 @@
     adminSetScorePhasePublished: adminSetScorePhasePublished,
     adminUnlockJudgeScore: adminUnlockJudgeScore,
     adminJudgeScoreProgress: adminJudgeScoreProgress,
+    adminJudgeGetRawScore: adminJudgeGetRawScore,
     adminScoreAggregationSummary: adminScoreAggregationSummary,
     adminScoreAggregation: adminScoreAggregation,
     adminRanking: adminRanking,
