@@ -907,7 +907,7 @@ button{
 
 .score-modal{
   width:min(
-    760px,
+    1120px,
     100%
   );
 
@@ -970,6 +970,225 @@ button{
   padding:16px 19px;
 
   overflow:auto
+}
+
+.score-modal-body{
+  display:flex;
+  flex-direction:column;
+
+  gap:10px;
+
+  min-height:0;
+
+  overflow:hidden;
+
+  padding-bottom:12px
+}
+
+.score-mobile-tabs{
+  display:none;
+
+  gap:8px
+}
+
+.score-mobile-tabs .btn{
+  flex:1
+}
+
+.score-mobile-tabs .btn.is-active{
+  border-color:#98b8ef;
+
+  background:#eef4ff;
+
+  color:#174b88;
+
+  font-weight:850
+}
+
+.score-split{
+  display:grid;
+
+  grid-template-columns:
+    minmax(0,1.05fr)
+    minmax(0,.95fr);
+
+  gap:12px;
+
+  min-height:0;
+
+  flex:1;
+
+  overflow:hidden
+}
+
+.score-materials-pane,
+.score-form-pane{
+  min-height:0;
+
+  overflow:auto;
+
+  border:1px solid var(--border);
+
+  border-radius:12px;
+
+  background:#fcfcfd
+}
+
+.score-materials-pane{
+  display:flex;
+
+  flex-direction:column;
+
+  padding:10px
+}
+
+.score-form-pane{
+  padding:12px
+}
+
+.materials-toolbar{
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:8px;
+
+  margin-bottom:8px
+}
+
+.materials-title{
+  font-size:12px;
+
+  font-weight:900;
+
+  color:#174b88
+}
+
+.materials-hint{
+  color:var(--muted);
+
+  font-size:10px;
+
+  line-height:1.5;
+
+  margin-bottom:8px
+}
+
+.materials-browser{
+  display:grid;
+
+  grid-template-columns:
+    minmax(140px,.9fr)
+    minmax(0,1.3fr);
+
+  gap:8px;
+
+  min-height:280px;
+
+  flex:1;
+
+  min-width:0
+}
+
+.materials-tree{
+  overflow:auto;
+
+  border:1px solid var(--border);
+
+  border-radius:10px;
+
+  background:#fff;
+
+  padding:8px;
+
+  min-height:0
+}
+
+.materials-preview{
+  overflow:hidden;
+
+  border:1px solid var(--border);
+
+  border-radius:10px;
+
+  background:#fff;
+
+  min-height:0;
+
+  display:flex;
+
+  flex-direction:column
+}
+
+.materials-preview-frame{
+  width:100%;
+
+  flex:1;
+
+  min-height:260px;
+
+  border:0;
+
+  background:#f8fafc
+}
+
+.materials-folder{
+  margin:0 0 6px
+}
+
+.materials-folder > summary{
+  cursor:pointer;
+
+  font-size:12px;
+
+  font-weight:850;
+
+  color:#344054;
+
+  list-style:none
+}
+
+.materials-folder > summary::-webkit-details-marker{
+  display:none
+}
+
+.materials-file-btn{
+  display:block;
+
+  width:100%;
+
+  text-align:left;
+
+  border:0;
+
+  background:transparent;
+
+  border-radius:8px;
+
+  padding:7px 8px;
+
+  font-size:11px;
+
+  color:#1d2939;
+
+  cursor:pointer
+}
+
+.materials-file-btn:hover,
+.materials-file-btn.is-active{
+  background:#eef4ff;
+
+  color:#174b88
+}
+
+.materials-empty{
+  color:var(--muted);
+
+  font-size:11px;
+
+  padding:10px
 }
 
 .score-banner{
@@ -1375,7 +1594,45 @@ button{
   }
 
   .score-modal{
-    max-height:96vh
+    max-height:96vh;
+
+    width:100%
+  }
+
+  .score-mobile-tabs{
+    display:flex
+  }
+
+  .score-split{
+    grid-template-columns:minmax(0,1fr)
+  }
+
+  .score-materials-pane,
+  .score-form-pane{
+    display:none;
+
+    max-height:none;
+
+    min-height:52vh
+  }
+
+  .score-split[data-mobile-tab="materials"] .score-materials-pane,
+  .score-split[data-mobile-tab="score"] .score-form-pane{
+    display:flex
+  }
+
+  .score-split[data-mobile-tab="score"] .score-form-pane{
+    display:block
+  }
+
+  .materials-browser{
+    grid-template-columns:minmax(0,1fr);
+
+    min-height:240px
+  }
+
+  .materials-preview-frame{
+    min-height:220px
   }
 
 }
@@ -1872,53 +2129,146 @@ button{
   </div>
 
 
-  <div class="modal-body">
+  <div class="modal-body score-modal-body">
 
     <div
-      id="scoreBanner"
-      class="score-banner"
+      class="score-mobile-tabs"
+      id="scoreMobileTabs"
     >
-      -
+
+      <button
+        type="button"
+        class="btn is-active"
+        id="scoreTabMaterialsBtn"
+        onclick="switchScoreMobileTab_('materials')"
+      >
+        資料
+      </button>
+
+      <button
+        type="button"
+        class="btn"
+        id="scoreTabScoreBtn"
+        onclick="switchScoreMobileTab_('score')"
+      >
+        評分
+      </button>
+
     </div>
 
+    <div
+      class="score-split"
+      id="scoreSplit"
+      data-mobile-tab="score"
+    >
 
-    <div class="score-total-box">
+      <aside
+        class="score-materials-pane"
+        id="scoreMaterialsPane"
+      >
 
-      <div>
+        <div class="materials-toolbar">
 
-        <div class="score-total-label">
-          目前總分
+          <div class="materials-title">
+            社團評選資料（唯讀）
+          </div>
+
+          <button
+            type="button"
+            class="btn"
+            id="materialsReloadBtn"
+            onclick="reloadScoreMaterials_()"
+          >
+            重新載入
+          </button>
+
         </div>
 
         <div
-          id="answerProgress"
-          class="modal-sub"
+          id="materialsHint"
+          class="materials-hint"
         >
-          0 / 0 項已填
+          評選截止後可閱覽 PDF；不含特色資料，亦無法上傳或修改檔案。
         </div>
 
-      </div>
+        <div class="materials-browser">
 
-      <div
-        id="liveTotal"
-        class="score-total-value"
+          <div
+            id="materialsTree"
+            class="materials-tree"
+          >
+            <div class="materials-empty">
+              尚未載入資料
+            </div>
+          </div>
+
+          <div
+            id="materialsPreview"
+            class="materials-preview"
+          >
+            <div class="materials-empty">
+              選擇左側 PDF 後可於此預覽
+            </div>
+          </div>
+
+        </div>
+
+      </aside>
+
+      <section
+        class="score-form-pane"
+        id="scoreFormPane"
       >
-        0 / 0
-      </div>
+
+        <div
+          id="scoreBanner"
+          class="score-banner"
+        >
+          -
+        </div>
+
+
+        <div class="score-total-box">
+
+          <div>
+
+            <div class="score-total-label">
+              目前總分
+            </div>
+
+            <div
+              id="answerProgress"
+              class="modal-sub"
+            >
+              0 / 0 項已填
+            </div>
+
+          </div>
+
+          <div
+            id="liveTotal"
+            class="score-total-value"
+          >
+            0 / 0
+          </div>
+
+        </div>
+
+
+        <div
+          id="criteriaList"
+          class="criteria-list"
+        ></div>
+
+
+        <div
+          id="scoreError"
+          class="modal-error"
+        ></div>
+
+      </section>
 
     </div>
-
-
-    <div
-      id="criteriaList"
-      class="criteria-list"
-    ></div>
-
-
-    <div
-      id="scoreError"
-      class="modal-error"
-    ></div>
 
   </div>
 
@@ -2038,7 +2388,7 @@ button{
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
-<script src="./platform-judge-pb.js?v=score-persist-4"></script>
+<script src="./platform-judge-pb.js?v=materials-readonly-1"></script>
 
 <script>
 /**
@@ -7867,6 +8217,15 @@ async function openScore(
     renderScoreModal();
 
 
+    loadScoreMaterials_({
+      permanentClubId: permanentClubId,
+      clubName: clubName,
+      materialsAccess:
+        displayResult &&
+        displayResult.materialsAccess
+    });
+
+
     syncSubmitHoldUi_();
 
 
@@ -7963,6 +8322,730 @@ async function openScore(
     }
 
   }
+
+}
+
+
+function switchScoreMobileTab_(
+  tab
+) {
+
+  const next =
+    tab ===
+    "materials"
+      ? "materials"
+      : "score";
+
+
+  const split =
+    byId(
+      "scoreSplit"
+    );
+
+
+  if (
+    split
+  ) {
+
+    split.setAttribute(
+      "data-mobile-tab",
+      next
+    );
+
+  }
+
+
+  const materialsBtn =
+    byId(
+      "scoreTabMaterialsBtn"
+    );
+
+
+  const scoreBtn =
+    byId(
+      "scoreTabScoreBtn"
+    );
+
+
+  if (
+    materialsBtn
+  ) {
+
+    materialsBtn.classList.toggle(
+      "is-active",
+      next ===
+        "materials"
+    );
+
+  }
+
+
+  if (
+    scoreBtn
+  ) {
+
+    scoreBtn.classList.toggle(
+      "is-active",
+      next ===
+        "score"
+    );
+
+  }
+
+}
+
+
+function materialsFileLabel_(
+  file
+) {
+
+  if (
+    !file
+  ) {
+
+    return "檔案";
+  }
+
+
+  return String(
+    file.name ||
+    file.fileName ||
+    "檔案"
+  );
+
+}
+
+
+function isPdfMaterialsFile_(
+  file
+) {
+
+  if (
+    !file
+  ) {
+
+    return false;
+  }
+
+
+  const mime =
+    String(
+      file.mimeType ||
+      ""
+    )
+    .toLowerCase();
+
+
+  const name =
+    materialsFileLabel_(
+      file
+    )
+    .toLowerCase();
+
+
+  return (
+    mime.indexOf(
+      "pdf"
+    ) >=
+      0
+
+    ||
+
+    /\.pdf$/i.test(
+      name
+    )
+  );
+
+}
+
+
+function renderMaterialsTreeHtml_(
+  nodes,
+  depth
+) {
+
+  const level =
+    Number(
+      depth
+    ) ||
+    0;
+
+
+  return (nodes || [])
+    .map(
+      function (
+        node
+      ) {
+
+        const filesHtml =
+          (node.files || [])
+            .map(
+              function (
+                file
+              ) {
+
+                const active =
+                  APP.materialsState &&
+                  APP.materialsState.selectedFileId ===
+                    file.id
+                    ? " is-active"
+                    : "";
+
+
+                return `
+                <button
+                  type="button"
+                  class="materials-file-btn${active}"
+                  onclick="selectScoreMaterialsFile_('${encodeURIComponent(file.id)}')"
+                >
+                  ${escapeHtml(materialsFileLabel_(file))}
+                </button>
+                `;
+
+              }
+            )
+            .join("");
+
+
+        const childrenHtml =
+          renderMaterialsTreeHtml_(
+            node.children ||
+            [],
+            level +
+            1
+          );
+
+
+        return `
+        <details class="materials-folder" open>
+          <summary>${escapeHtml(node.name || "資料夾")}</summary>
+          ${filesHtml || '<div class="materials-empty">此資料夾尚無已完成 PDF</div>'}
+          ${childrenHtml}
+        </details>
+        `;
+
+      }
+    )
+    .join("");
+
+}
+
+
+function renderScoreMaterialsPane_() {
+
+  const treeBox =
+    byId(
+      "materialsTree"
+    );
+
+
+  const preview =
+    byId(
+      "materialsPreview"
+    );
+
+
+  const hint =
+    byId(
+      "materialsHint"
+    );
+
+
+  const state =
+    APP.materialsState ||
+    {};
+
+
+  if (
+    hint
+  ) {
+
+    hint.textContent =
+      state.hint ||
+      "評選截止後可閱覽 PDF；不含特色資料，亦無法上傳或修改檔案。";
+
+  }
+
+
+  if (
+    !treeBox ||
+    !preview
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    state.loading
+  ) {
+
+    treeBox.innerHTML =
+      '<div class="materials-empty">正在載入評選資料...</div>';
+
+
+    preview.innerHTML =
+      '<div class="materials-empty">載入中</div>';
+
+
+    return;
+
+  }
+
+
+  if (
+    state.error
+  ) {
+
+    treeBox.innerHTML =
+      `<div class="materials-empty">${escapeHtml(state.error)}</div>`;
+
+
+    preview.innerHTML =
+      '<div class="materials-empty">無法預覽</div>';
+
+
+    return;
+
+  }
+
+
+  if (
+    state.closed
+  ) {
+
+    treeBox.innerHTML =
+      `<div class="materials-empty">${escapeHtml(state.hint || "評選截止後才可閱覽。")}</div>`;
+
+
+    preview.innerHTML =
+      '<div class="materials-empty">尚未開放閱覽</div>';
+
+
+    return;
+
+  }
+
+
+  const orphanHtml =
+    (state.orphanFiles || [])
+      .map(
+        function (
+          file
+        ) {
+
+          const active =
+            state.selectedFileId ===
+            file.id
+              ? " is-active"
+              : "";
+
+
+          return `
+          <button
+            type="button"
+            class="materials-file-btn${active}"
+            onclick="selectScoreMaterialsFile_('${encodeURIComponent(file.id)}')"
+          >
+            ${escapeHtml(materialsFileLabel_(file))}
+          </button>
+          `;
+
+        }
+      )
+      .join("");
+
+
+  const treeHtml =
+    renderMaterialsTreeHtml_(
+      state.tree ||
+      [],
+      0
+    );
+
+
+  if (
+    !treeHtml &&
+    !orphanHtml
+  ) {
+
+    treeBox.innerHTML =
+      '<div class="materials-empty">此社團尚無可閱覽的評選檔案</div>';
+
+  }
+
+  else {
+
+    treeBox.innerHTML =
+
+      (orphanHtml
+        ? `<div class="materials-folder"><summary>未分類檔案</summary>${orphanHtml}</div>`
+        : "")
+
+      +
+
+      treeHtml;
+
+  }
+
+
+  const selected =
+    (state.files || [])
+      .find(
+        function (
+          file
+        ) {
+
+          return file.id ===
+            state.selectedFileId;
+
+        }
+      );
+
+
+  if (
+    !selected ||
+    !selected.fileUrl
+  ) {
+
+    preview.innerHTML =
+      '<div class="materials-empty">選擇左側檔案後可於此預覽</div>';
+
+
+    return;
+
+  }
+
+
+  if (
+    isPdfMaterialsFile_(
+      selected
+    )
+  ) {
+
+    preview.innerHTML =
+      `<iframe class="materials-preview-frame" title="PDF 預覽" src="${escapeHtml(selected.fileUrl)}#toolbar=1"></iframe>`;
+
+  }
+
+  else {
+
+    preview.innerHTML =
+      `<div class="materials-empty">此檔案非 PDF，請<a href="${escapeHtml(selected.fileUrl)}" target="_blank" rel="noopener noreferrer">開新分頁檢視</a>（仍為唯讀）。</div>`;
+
+  }
+
+}
+
+
+function selectScoreMaterialsFile_(
+  encodedId
+) {
+
+  if (
+    !APP.materialsState
+  ) {
+
+    return;
+
+  }
+
+
+  APP.materialsState.selectedFileId =
+    decodeURIComponent(
+      encodedId ||
+      ""
+    );
+
+
+  renderScoreMaterialsPane_();
+
+}
+
+
+async function loadScoreMaterials_(
+  opts
+) {
+
+  const permanentClubId =
+    String(
+      (
+        opts &&
+        opts.permanentClubId
+      ) ||
+      ""
+    )
+    .trim();
+
+
+  const clubName =
+    String(
+      (
+        opts &&
+        opts.clubName
+      ) ||
+      ""
+    )
+    .trim();
+
+
+  const access =
+    (
+      opts &&
+      opts.materialsAccess
+    ) ||
+    null;
+
+
+  APP.materialsState =
+  {
+    loading: true,
+    error: "",
+    closed: false,
+    hint: "",
+    tree: [],
+    orphanFiles: [],
+    files: [],
+    selectedFileId: ""
+  };
+
+
+  switchScoreMobileTab_(
+    "score"
+  );
+
+
+  renderScoreMaterialsPane_();
+
+
+  if (
+    access &&
+    access.canBrowse !==
+      true
+  ) {
+
+    APP.materialsState.loading =
+      false;
+
+
+    APP.materialsState.closed =
+      true;
+
+
+    APP.materialsState.hint =
+      access.message ||
+      (
+        access.allowedByCategory ===
+        false
+          ? "此社團不在您被分配的屬性範圍內。"
+          : "評選截止後才可閱覽社團評選資料。"
+      );
+
+
+    renderScoreMaterialsPane_();
+
+
+    return;
+
+  }
+
+
+  try {
+
+    const result =
+      await judgeApi(
+        "judgeBrowseClubMaterials",
+        {
+          permanentClubId:
+            permanentClubId ||
+            undefined,
+          clubName:
+            clubName ||
+            undefined
+        }
+      );
+
+
+    if (
+      isUnauthorized(
+        result
+      )
+    ) {
+
+      APP.materialsState.loading =
+        false;
+
+
+      APP.materialsState.error =
+        "登入已失效，請重新登入。";
+
+
+      renderScoreMaterialsPane_();
+
+
+      return;
+
+    }
+
+
+    if (
+      !result ||
+      result.success !==
+        true
+    ) {
+
+      APP.materialsState.loading =
+        false;
+
+
+      const code =
+        String(
+          result &&
+          result.error ||
+          ""
+        );
+
+
+      if (
+        code ===
+          "BEFORE_DEADLINE" ||
+        code ===
+          "NO_DEADLINE" ||
+        code ===
+          "JUDGE_CLUB_FORBIDDEN"
+      ) {
+
+        APP.materialsState.closed =
+          true;
+
+
+        APP.materialsState.hint =
+          (
+            result &&
+            result.message
+          ) ||
+          "目前無法閱覽評選資料。";
+
+      }
+
+      else {
+
+        APP.materialsState.error =
+          (
+            result &&
+            result.message
+          ) ||
+          "無法載入評選資料。";
+
+      }
+
+
+      renderScoreMaterialsPane_();
+
+
+      return;
+
+    }
+
+
+    const files =
+      Array.isArray(
+        result.files
+      )
+        ? result.files
+        : [];
+
+
+    const firstPdf =
+      files.find(
+        isPdfMaterialsFile_
+      ) ||
+      files[0] ||
+      null;
+
+
+    APP.materialsState =
+    {
+      loading: false,
+      error: "",
+      closed: false,
+      hint:
+        (
+          result.materialsAccess &&
+          result.materialsAccess.message
+        ) ||
+        "評選資料為唯讀；重新載入可取得學生最新繳交版本。",
+      tree:
+        Array.isArray(
+          result.tree
+        )
+          ? result.tree
+          : [],
+      orphanFiles:
+        Array.isArray(
+          result.orphanFiles
+        )
+          ? result.orphanFiles
+          : [],
+      files: files,
+      selectedFileId:
+        firstPdf
+          ? firstPdf.id
+          : ""
+    };
+
+
+    renderScoreMaterialsPane_();
+
+  }
+
+  catch (
+    errorObject
+  ) {
+
+    APP.materialsState.loading =
+      false;
+
+
+    APP.materialsState.error =
+      errorObject &&
+      errorObject.message
+        ? errorObject.message
+        : "無法載入評選資料。";
+
+
+    renderScoreMaterialsPane_();
+
+  }
+
+}
+
+
+function reloadScoreMaterials_() {
+
+  const context =
+    APP.scoreContext;
+
+
+  if (
+    !context
+  ) {
+
+    return;
+
+  }
+
+
+  loadScoreMaterials_({
+    permanentClubId:
+      context.permanentClubId,
+    clubName:
+      context.clubName,
+    materialsAccess:
+      context.result &&
+      context.result.materialsAccess
+  });
 
 }
 
@@ -10699,6 +11782,11 @@ function closeScoreModal(
 
   APP.scoreContext =
     null;
+
+
+  APP.materialsState =
+    null;
+
 
   byId("scoreSubmitRecheckBtn").style.display = "none";
 

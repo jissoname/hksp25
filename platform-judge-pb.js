@@ -308,6 +308,237 @@
     throw new Error("缺少社團。");
   }
 
+  function judgeMayReadClubCategory(judge, club) {
+    if (!judge || !club) return false;
+    var cats = Array.isArray(judge.categories) ? judge.categories : [];
+    // 與 dashboard 一致：未指定屬性時不依屬性過濾（仍須通過截止／登入核對）。
+    if (!cats.length) return true;
+    var clubRaw = String(club.category || "").trim();
+    var clubKey = normalizeCategoryKey(clubRaw);
+    for (var i = 0; i < cats.length; i++) {
+      var raw = String(cats[i] || "").trim();
+      if (!raw) continue;
+      if (raw === clubRaw) return true;
+      if (normalizeCategoryKey(raw) === clubKey) return true;
+      if (normalizeCategoryKey(raw) === clubRaw) return true;
+      if (raw === clubKey) return true;
+    }
+    return false;
+  }
+
+  /**
+   * 評選資料唯讀窗口：評選截止（dataDeadline／upload_close_at）起開放；
+   * 補交期間不關閉閱讀。不使用特色截止時間。
+   */
+  function evaluationMaterialsReadWindow(activity) {
+    var conf = (activity && activity.config_json) || {};
+    var deadlineRaw = conf.dataDeadline || (activity && activity.upload_close_at) || "";
+    var deadlineMs = Date.parse(String(deadlineRaw));
+    var now = Date.now();
+    if (!Number.isFinite(deadlineMs)) {
+      return {
+        open: false,
+        reason: "NO_DEADLINE",
+        message: "尚未設定評選截止時間，暫不開放評選資料閱覽。",
+        deadlineAt: null,
+        serverNow: new Date(now).toISOString()
+      };
+    }
+    var open = now >= deadlineMs;
+    return {
+      open: open,
+      reason: open ? "OK" : "BEFORE_DEADLINE",
+      message: open
+        ? "評選截止後可閱覽社團評選資料（唯讀）。"
+        : "評選截止後才可閱覽社團評選資料。",
+      deadlineAt: new Date(deadlineMs).toISOString(),
+      serverNow: new Date(now).toISOString()
+    };
+  }
+
+  function isEvaluationFolderRow(folder) {
+    if (!folder || folder.trashed === true) return false;
+    var kind = String(folder.kind || "evaluation").trim().toLowerCase();
+    return kind !== "feature";
+  }
+
+  function isJudgeReadableUploadRow(row) {
+    if (!row) return false;
+    var status = String(row.status || "").trim().toLowerCase();
+    if (status !== "completed") return false;
+    var kind = String(row.upload_kind || "evaluation").trim().toLowerCase();
+    if (kind === "feature") return false;
+    var fileName = "";
+    if (row.file) fileName = Array.isArray(row.file) ? row.file[0] : row.file;
+    return !!fileName;
+  }
+
+  function mapJudgeUploadFile(rec) {
+    var fileName = "";
+    if (rec.file) {
+      fileName = Array.isArray(rec.file) ? rec.file[0] : rec.file;
+    }
+    var fileUrl = "";
+    try {
+      if (fileName) fileUrl = pb().files.getURL(rec, fileName);
+    } catch (_e) {
+      try {
+        if (fileName) fileUrl = pb().files.getUrl(rec, fileName);
+      } catch (_e2) {
+        fileUrl = "";
+      }
+    }
+    return {
+      id: rec.id,
+      fileId: rec.id,
+      folderId: relationId(rec.folder) || "",
+      name: rec.original_name || fileName || "file",
+      fileName: rec.original_name || fileName || "file",
+      size: Number(rec.size_bytes) || 0,
+      sizeBytes: Number(rec.size_bytes) || 0,
+      mimeType: rec.mime_type || "",
+      uploadKind: rec.upload_kind || "evaluation",
+      status: rec.status || "completed",
+      createdAt: rec.created || "",
+      updatedAt: rec.updated || "",
+      uploadedAt: rec.completed_at || rec.created || "",
+      fileUrl: fileUrl,
+      webViewLink: fileUrl || ""
+    };
+  }
+
+  function buildMaterialsTree(folders, files) {
+    var byParent = {};
+    folders.forEach(function (f) {
+      var parentId = relationId(f.parent) || "";
+      if (!byParent[parentId]) byParent[parentId] = [];
+      byParent[parentId].push(f);
+    });
+    Object.keys(byParent).forEach(function (key) {
+      byParent[key].sort(function (a, b) {
+        return String(a.name || "").localeCompare(String(b.name || ""), "zh-Hant");
+      });
+    });
+    var filesByFolder = {};
+    files.forEach(function (file) {
+      var folderId = String(file.folderId || "");
+      if (!filesByFolder[folderId]) filesByFolder[folderId] = [];
+      filesByFolder[folderId].push(file);
+    });
+    Object.keys(filesByFolder).forEach(function (key) {
+      filesByFolder[key].sort(function (a, b) {
+        return String(b.uploadedAt || "").localeCompare(String(a.uploadedAt || ""));
+      });
+    });
+    function walk(parentId) {
+      return (byParent[parentId] || []).map(function (folder) {
+        return {
+          id: folder.id,
+          name: folder.name || "資料夾",
+          kind: folder.kind || "evaluation",
+          parentId: relationId(folder.parent) || "",
+          files: filesByFolder[folder.id] || [],
+          children: walk(folder.id)
+        };
+      });
+    }
+    var roots = walk("");
+    var orphanFiles = filesByFolder[""] || [];
+    return {
+      roots: roots,
+      orphanFiles: orphanFiles
+    };
+  }
+
+  async function assertJudgeMayBrowseClub(judgeRec, activity, club) {
+    var judge = mapJudge(judgeRec);
+    if (!judgeMayReadClubCategory(judge, club)) {
+      return fail(
+        "此社團不在您被分配的社團屬性範圍內。",
+        "JUDGE_CLUB_FORBIDDEN"
+      );
+    }
+    var access = evaluationMaterialsReadWindow(activity);
+    if (!access.open) {
+      return fail(access.message, access.reason || "MATERIALS_CLOSED");
+    }
+    return ok({ judge: judge, materialsAccess: access });
+  }
+
+  /**
+   * 評審唯讀：依屬性分配核對後，回傳該社全部評選資料夾／已完成 PDF（不含特色）。
+   */
+  async function judgeBrowseClubMaterials(data) {
+    var judgeRec = pb().authStore.model;
+    if (!isActiveJudgeRecord(judgeRec)) {
+      return fail("評審登入已失效，請重新登入。", "JUDGE_UNAUTHORIZED");
+    }
+    var activity = await getActivity();
+    var club;
+    try {
+      club = await findClub(activity, data && data.permanentClubId, data && data.clubName);
+    } catch (clubErr) {
+      return fail((clubErr && clubErr.message) || "找不到社團。", "CLUB_NOT_FOUND");
+    }
+    if (club.active === false) {
+      return fail("此社團目前未啟用。", "CLUB_INACTIVE");
+    }
+    var gate = await assertJudgeMayBrowseClub(judgeRec, activity, club);
+    if (!gate || gate.success === false) return gate;
+
+    var folderRows = await pb().collection(C().folders).getFullList({
+      filter: 'activity="' + activity.id + '" && club="' + club.id + '" && trashed!=true',
+      sort: "name"
+    });
+    folderRows = folderRows.filter(isEvaluationFolderRow);
+
+    var uploadRows = await pb().collection(C().uploads).getFullList({
+      filter: 'club="' + club.id + '" && status="completed"',
+      sort: "-completed_at,-created"
+    });
+    uploadRows = uploadRows.filter(isJudgeReadableUploadRow);
+
+    // 僅保留落在評選資料夾內（或未掛夾）的檔案；排除掛在特色夾下的 completed 列。
+    var evaluationFolderIds = {};
+    folderRows.forEach(function (f) {
+      evaluationFolderIds[f.id] = true;
+    });
+    var mappedFiles = [];
+    uploadRows.forEach(function (row) {
+      var folderId = relationId(row.folder);
+      if (folderId && !evaluationFolderIds[folderId]) return;
+      mappedFiles.push(mapJudgeUploadFile(row));
+    });
+
+    var tree = buildMaterialsTree(folderRows, mappedFiles);
+    return ok({
+      activityId: activity.activity_id || activityId(),
+      club: {
+        id: club.id,
+        name: club.name,
+        clubName: club.name,
+        permanentClubId: String(club.permanent_club_id || "").toUpperCase(),
+        category: club.category || ""
+      },
+      permanentClubId: String(club.permanent_club_id || "").toUpperCase(),
+      materialsAccess: gate.materialsAccess,
+      readOnly: true,
+      folders: folderRows.map(function (f) {
+        return {
+          id: f.id,
+          folderId: f.id,
+          name: f.name || "資料夾",
+          kind: f.kind || "evaluation",
+          parentId: relationId(f.parent) || ""
+        };
+      }),
+      files: mappedFiles,
+      tree: tree.roots,
+      orphanFiles: tree.orphanFiles,
+      storage: "pocketbase"
+    });
+  }
+
   async function judgeLogin(data) {
     var username = String((data && (data.username || data.email)) || "").trim();
     var password = String((data && data.password) || "");
@@ -598,6 +829,9 @@
     var record = recordFromRow(row, club, section, scoreConfig);
     var answers = answersMeta(row);
     var locked = !!(record && record.locked);
+    var materialsAccess = evaluationMaterialsReadWindow(activity);
+    var judge = mapJudge(judgeRec);
+    var mayReadCategory = judgeMayReadClubCategory(judge, club);
     return ok({
       stage: stage,
       section: stage,
@@ -612,7 +846,11 @@
       locked: locked,
       reopened: !!(record && record.reopened),
       scores: record ? record.scores : {},
-      unlockedAt: answers.unlockedAt || null
+      unlockedAt: answers.unlockedAt || null,
+      materialsAccess: Object.assign({}, materialsAccess, {
+        allowedByCategory: mayReadCategory,
+        canBrowse: !!(materialsAccess.open && mayReadCategory)
+      })
     });
   }
 
@@ -854,7 +1092,8 @@
     judgeLogout: judgeLogout,
     judgeScoreDashboard: judgeScoreDashboard,
     judgeGetScore: judgeGetScore,
-    judgeSubmitScore: judgeSubmitScore
+    judgeSubmitScore: judgeSubmitScore,
+    judgeBrowseClubMaterials: judgeBrowseClubMaterials
   };
 
   async function request(payload) {
