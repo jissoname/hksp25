@@ -558,17 +558,8 @@ disabled
 <option value="dataReview">資料審查</option>
 <option value="fieldReview">實地審查</option>
 <option value="total">總成績</option>
-<option value="all">全部三表</option>
+<option value="all" selected>全部三表</option>
 </select>
-
-<button
-id="judgeExportPreviewBtn"
-class="btn"
-onclick="previewJudgeConfirmation()"
-disabled
->
-👁️ 預覽（可選）
-</button>
 
 <button
 id="judgeExportPdfBtn"
@@ -576,23 +567,23 @@ class="btn btn-primary"
 onclick="downloadJudgeConfirmationPdf()"
 disabled
 >
-📄 下載 PDF
+📄 下載確認表
 </button>
 
 </div>
 
 <div class="export-print-hint">
-選擇評審與類別後可直接「下載 PDF」，不必先預覽。版型採 B／橫式明細（橫式 A4）。全部三表為一份 PDF（資料審查→實地審查→總成績）。
+選擇評審與類別後直接下載確認表（不必預覽）。PocketBase 下載為可列印 HTML，開啟後可「另存為 PDF」；全部三表為一份檔（資料審查→實地審查→總成績）。
 </div>
 
 <div id="judgeExportState" class="state">
-選擇評審與類別後，可直接下載 PDF；預覽僅供畫面上檢視。
+選擇評審與類別後，可直接下載確認表。
 </div>
 
-<div id="judgeExportPreview" class="export-preview hidden"></div>
+<div id="judgeExportPreview" class="export-preview hidden" hidden></div>
 
 <div class="notice" style="margin-top:18px">
-<strong>多位評審一次下載 ZIP</strong>（保留上方單位老師匯出）。每位老師各一份 PDF；全部三表仍在各老師自己的 PDF（資料審查→實地審查→總成績）。
+<strong>多位評審一次下載 ZIP</strong>（保留上方單位老師匯出）。每位老師各一份確認表；全部三表仍在各老師自己的檔案（資料審查→實地審查→總成績）。
 </div>
 
 <div class="toolbar export-toolbar" style="flex-wrap:wrap;align-items:flex-start;gap:10px">
@@ -1663,7 +1654,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=upload-browse-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=upload-browse-2"></script>
-<script src="./platform-admin-pb.js?v=upload-browse-2"></script>
+<script src="./platform-admin-pb.js?v=judge-confirm-1"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -2079,7 +2070,7 @@ S.formSyncUi="idle";
 }
 
 const JUDGE_CONFIRM_PDF_BTN_LABEL_ =
-"📄 下載 PDF";
+"📄 下載確認表";
 
 function restoreJudgeConfirmPdfBtnLabel_(
 ownerJob
@@ -2213,9 +2204,6 @@ $("judgeExportJudge").value;
 const pdfBtn =
 $("judgeExportPdfBtn");
 
-const previewBtn =
-$("judgeExportPreviewBtn");
-
 const select =
 $("judgeExportJudge");
 
@@ -2224,11 +2212,6 @@ $("judgeExportSheetKind");
 
 if(pdfBtn){
 pdfBtn.disabled =
-!!busy || !selected;
-}
-
-if(previewBtn){
-previewBtn.disabled =
 !!busy || !selected;
 }
 
@@ -8050,14 +8033,14 @@ $("judgeExportState").classList.remove(
 $("judgeExportState").textContent =
 selected
 ?
-"已選擇評審，可直接下載 PDF，或按預覽於畫面上檢視。"
+"已選擇評審，可直接下載確認表。"
 :
-"選擇評審與類別後，可直接下載 PDF。";
+"選擇評審與類別後，可直接下載確認表。";
 
 $("judgeExportMeta").textContent =
 selected
 ?
-"可下載 PDF"
+"可下載確認表"
 :
 "請先選擇評審";
 
@@ -8644,6 +8627,85 @@ syncJudgeConfirmationExportBusyUi_();
 
 }
 
+function utf8ToBase64Client_(text){
+return btoa(unescape(encodeURIComponent(String(text||""))));
+}
+
+function buildJudgeConfirmationDocumentHtml_(data){
+const judgeName =
+judgeExportDisplayName(data && data.judge);
+return `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(judgeName)}－評審個人評分確認表</title>
+<style>${judgeConfirmationPrintCss()}</style>
+</head>
+<body>
+${buildJudgeConfirmationSheet(data)}
+</body>
+</html>`;
+}
+
+function materializeJudgeConfirmArtifact_(response){
+if(!response || response.success!==true){
+return response;
+}
+const mime =
+String(response.mimeType||"");
+const isPdf =
+/application\/pdf/i.test(mime) ||
+/\.pdf$/i.test(String(response.fileName||""));
+if(
+response.base64 &&
+isPdf &&
+response.delivery!=="html"
+){
+return response;
+}
+if(
+response.base64 &&
+response.delivery!=="html" &&
+!Array.isArray(response.records) &&
+!Array.isArray(response.allRecords)
+){
+return response;
+}
+const html =
+buildJudgeConfirmationDocumentHtml_(response);
+const base64 =
+utf8ToBase64Client_(html);
+const fileName =
+String(response.fileName||"")
+.replace(/\.pdf$/i,".html") ||
+(
+exportSafeClientFileName_(
+EVENT_NAME +
+"_評審個人評分確認表_" +
+judgeExportDisplayName(response.judge) +
+"_" +
+judgeExportSheetKindLabel(response.sheetKind) +
+".html"
+)
+);
+return Object.assign({},response,{
+delivery:"html",
+base64:base64,
+fileName:fileName,
+mimeType:"text/html;charset=utf-8",
+sizeBytes:new Blob([html],{type:"text/html;charset=utf-8"}).size
+});
+}
+
+async function stampJudgeConfirmPdfPageNumbersZh_(base64){
+/*
+ * 舊 GAS Sheets PDF 才需要疊中文頁碼；目前缺實作時直接原樣回傳，
+ * HTML 確認表也不需再加工。
+ */
+return base64;
+}
+
 async function downloadJudgeConfirmationPdf(){
 
 if(
@@ -8692,7 +8754,7 @@ try{
 
 if(button){
 button.textContent =
-"PDF 產生中…";
+"確認表產生中…";
 }
 
 $("judgeExportState").classList.remove(
@@ -8700,7 +8762,7 @@ $("judgeExportState").classList.remove(
 );
 
 $("judgeExportState").innerHTML =
-'<div class="spinner"></div>PDF 產生中…請勿重複點擊。';
+'<div class="spinner"></div>確認表產生中…請勿重複點擊。';
 
 const response =
 await api(
@@ -8729,29 +8791,32 @@ if(
 ){
 throw new Error(
 response && response.message ||
-"PDF 產生失敗"
+"確認表產生失敗"
 );
 }
+
+const artifact =
+materializeJudgeConfirmArtifact_(response);
 
 if(
-!response.base64 ||
-!response.fileName ||
-!response.sizeBytes
+!artifact ||
+!artifact.base64 ||
+!artifact.fileName ||
+!artifact.sizeBytes
 ){
 throw new Error(
-"PDF 內容不完整，已取消下載"
+"確認表內容不完整，已取消下載"
 );
 }
 
-/*
- * 頁碼必須在管理員按下載當下寫入檔案內容。
- * 後端 Sheets 匯出已含連續頁腳（pagenumbers=true）；
- * 此處再疊「第N頁／共M頁」後才觸發瀏覽器下載，不做送審後另加工。
- */
 const stampedBase64 =
+/pdf/i.test(String(artifact.mimeType||""))
+?
 await stampJudgeConfirmPdfPageNumbersZh_(
-response.base64
-);
+artifact.base64
+)
+:
+artifact.base64;
 
 if(
 !judgeConfirmExportJobLive_(job)
@@ -8761,8 +8826,8 @@ return;
 
 downloadBase64Artifact(
 stampedBase64,
-response.mimeType || "application/pdf",
-response.fileName
+artifact.mimeType || "text/html;charset=utf-8",
+artifact.fileName
 );
 
 $("judgeExportState").classList.add(
@@ -8771,14 +8836,14 @@ $("judgeExportState").classList.add(
 
 const judgeName =
 judgeExportDisplayName(
-response.judge
+artifact.judge || response.judge
 );
 
 $("judgeExportMeta").textContent =
-`${judgeName}｜${judgeExportSheetKindLabel(frozenSheetKind)}｜${esc(response.fileName)}`;
+`${judgeName}｜${judgeExportSheetKindLabel(frozenSheetKind)}｜${esc(artifact.fileName)}`;
 
 toast(
-"✅ PDF 已開始下載：" + response.fileName
+"✅ 確認表已開始下載：" + artifact.fileName
 );
 
 }
@@ -8795,13 +8860,13 @@ $("judgeExportState").classList.remove(
 );
 
 $("judgeExportState").innerHTML =
-`⚠️ ${esc(error && error.message ? error.message : "PDF 產生失敗")}`;
+`⚠️ ${esc(error && error.message ? error.message : "確認表產生失敗")}`;
 
 $("judgeExportMeta").textContent =
-"PDF 下載失敗";
+"確認表下載失敗";
 
 toast(
-"⚠️ " + (error && error.message ? error.message : "PDF 產生失敗")
+"⚠️ " + (error && error.message ? error.message : "確認表產生失敗")
 );
 
 }
@@ -9565,7 +9630,7 @@ true;
 break;
 }
 
-const normalized =
+const normalizedRaw =
 options.useBatchEndpoint &&
 response &&
 Array.isArray(response.results) &&
@@ -9591,6 +9656,13 @@ message:response.results[0].message
 :
 response;
 
+const normalized =
+normalizedRaw && normalizedRaw.success
+?
+materializeJudgeConfirmArtifact_(normalizedRaw)
+:
+normalizedRaw;
+
 if(
 normalized &&
 normalized.tempTrash
@@ -9611,7 +9683,7 @@ if(
 throw Object.assign(
 new Error(
 (normalized && normalized.message) ||
-"PDF 產生失敗"
+"確認表產生失敗"
 ),
 {
 code:(normalized && normalized.error) || "PDF_FAILED"
@@ -9620,9 +9692,13 @@ code:(normalized && normalized.error) || "PDF_FAILED"
 }
 
 const stampedBase64 =
+/pdf/i.test(String(normalized.mimeType||""))
+?
 await stampJudgeConfirmPdfPageNumbersZh_(
 normalized.base64
-);
+)
+:
+normalized.base64;
 
 if(
 !judgeConfirmExportJobLive_(job)

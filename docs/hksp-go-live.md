@@ -9,7 +9,7 @@
 | Drive 代傳／Secret Manager | **不做**（已擱置） |
 | 隱私權政策 | `privacy.html` 改為正式開放文案 |
 | 成績彙整／排名 | PocketBase 管理端已接；匯出為 CSV |
-| 評審確認單 PDF | **尚未**接 PB（面板隱藏） |
+| 評審確認單 | PocketBase 已接：直接下載確認表（HTML，可另存 PDF）；無預覽 |
 | 觀摩時段顯示 | 統一 `15:30–16:00`（對齊活動 `scheduleNote`） |
 
 ## 前端公開 vs 密鑰
