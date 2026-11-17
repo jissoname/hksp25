@@ -1,12 +1,9 @@
 /**
- * Platform homepage chrome + CS dock + same-page announcements for index.html.
+ * Platform homepage chrome + same-page announcements for index.html.
  */
 (function () {
   "use strict";
 
-  var fab = document.getElementById("csFab");
-  var panel = document.getElementById("csPanel");
-  var closeBtn = document.getElementById("csClose");
   var newsListEl = document.getElementById("homeNewsList");
   var newsAllBtn = document.getElementById("btnNewsAll");
   var showAllNews = false;
@@ -59,42 +56,6 @@
     }
   ];
 
-  function openCs(optionalTag) {
-    if (!panel) return;
-    panel.classList.add("open");
-    panel.setAttribute("aria-hidden", "false");
-    // 標記開啟狀態以隱藏 FAB；不鎖 body 捲動、不加全頁遮罩
-    document.body.classList.add("cs-open");
-    if (fab) fab.setAttribute("aria-expanded", "true");
-    if (optionalTag && typeof window.clickQuickTag === "function") {
-      setTimeout(function () {
-        window.clickQuickTag(optionalTag);
-      }, 80);
-    }
-  }
-
-  function closeCs() {
-    if (!panel) return;
-    panel.classList.remove("open");
-    panel.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("cs-open");
-    if (fab) fab.setAttribute("aria-expanded", "false");
-  }
-
-  function toggleCs() {
-    if (panel && panel.classList.contains("open")) closeCs();
-    else openCs();
-  }
-
-  if (fab) fab.addEventListener("click", function () { toggleCs(); });
-  if (closeBtn) closeBtn.addEventListener("click", closeCs);
-
-  document.querySelectorAll("[data-cs-tag]").forEach(function (el) {
-    el.addEventListener("click", function () {
-      openCs(el.getAttribute("data-cs-tag"));
-    });
-  });
-
   function openAccountAssist() {
     var pb = window.HKSP_PB_CONFIG;
     if (pb && pb.usePocketBase && typeof pb.openForgotPasswordAssist === "function") {
@@ -106,7 +67,11 @@
       client.openForgotPasswordAssist();
       return;
     }
-    openCs("聯絡帳號協助");
+    window.open(
+      "https://www.instagram.com/bs_kai_0102/",
+      "_blank",
+      "noopener,noreferrer"
+    );
   }
 
   document.querySelectorAll("[data-home-action]").forEach(function (el) {
@@ -319,8 +284,6 @@
   var announcementSnapshot = null;
 
   window.HKSP_PLATFORM_HOME = {
-    openCs: openCs,
-    closeCs: closeCs,
     refreshAnnouncementBodies: refreshAnnouncementBodies,
     renderAnnouncements: renderAnnouncements,
     /** Test-only: append temporary items; always pair with __restoreAnnouncementsForTest. */

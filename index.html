@@ -512,8 +512,6 @@ html,body{
   background:var(--hk-bg);overflow-x:hidden;overflow-y:auto;
   font-family:var(--font-sans);color:var(--hk-ink);-webkit-text-size-adjust:100%
 }
-/* 客服開啟時仍可捲動首頁，不鎖畫面、無全頁遮罩 */
-body.cs-open{overflow-x:hidden;overflow-y:auto}
 .platform{
   min-height:100vh;position:relative;
   background:
@@ -1067,65 +1065,11 @@ a.feature-card:hover{
 .news-item[hidden],.news-item-body[hidden]{display:none !important}
 .platform-footer{
   display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  padding:18px clamp(16px,4vw,40px) 110px;color:var(--hk-muted);font-size:.9rem;
+  padding:18px clamp(16px,4vw,40px) 28px;color:var(--hk-muted);font-size:.9rem;
   border-top:1px solid rgba(30,58,95,.08);background:rgba(255,255,255,.65)
 }
 .platform-footer a,.platform-footer button{color:var(--hk-accent);text-decoration:none}
 
-/* 浮動客服：不蓋住首屏登入區；無遮罩；開啟時隱藏 FAB */
-.cs-fab{
-  position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));
-  z-index:60;border:0;border-radius:999px;padding:12px 18px;cursor:pointer;
-  background:var(--hk-navy);color:#fff;font:inherit;font-weight:700;
-  box-shadow:0 12px 28px rgba(30,58,95,.28);display:inline-flex;align-items:center;gap:8px
-}
-body.cs-open .cs-fab{display:none}
-.cs-panel{
-  position:fixed;
-  right:max(16px,env(safe-area-inset-right));
-  bottom:max(16px,env(safe-area-inset-bottom));
-  z-index:70;width:min(380px,calc(100vw - 32px));
-  height:min(560px,calc(100dvh - 32px - env(safe-area-inset-top)));
-  max-height:calc(100dvh - 32px - env(safe-area-inset-top));
-  border-radius:18px;overflow:hidden;background:#fff;
-  border:1px solid rgba(30,58,95,.14);
-  box-shadow:0 18px 44px rgba(20,35,55,.22);display:none;flex-direction:column;
-  /* 桌機靠右下，避免擋住左側主文與登入卡中心 */
-}
-.cs-panel.open{display:flex}
-.cs-panel-bar{
-  flex:0 0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
-  padding:14px 14px 12px;background:var(--hk-navy);color:#fff
-}
-.cs-panel-bar .title{font-weight:800;font-size:16px;line-height:1.2}
-.cs-panel-bar .subtitle{margin-top:4px;font-size:12px;opacity:.9;font-weight:500;line-height:1.4}
-.cs-panel-bar .close{
-  border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:10px;
-  width:36px;height:36px;cursor:pointer;font-size:20px;line-height:1;flex:0 0 auto
-}
-.cs-panel .chat-container{flex:1;min-height:0;height:auto;display:flex;flex-direction:column;overflow:hidden}
-.cs-panel .chat-header{display:none!important}
-.cs-panel .chat-messages{
-  flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:14px;background:#f4f7fb
-}
-.cs-panel .quick-tags-container,
-.cs-panel .cs-more-panel{display:none!important}
-.cs-panel .chat-input-area{
-  flex:0 0 auto;padding:10px 10px calc(10px + env(safe-area-inset-bottom));
-  background:#fff;border-top:1px solid #e6edf5;gap:8px
-}
-.cs-panel .send-btn{background:var(--hk-navy);border-radius:12px}
-.cs-panel .message.bot{border-radius:14px;border:1px solid #e6edf5}
-.cs-panel .message.user{background:var(--hk-navy);box-shadow:0 2px 5px rgba(30,58,95,.18)}
-.cs-panel .event-announcement{
-  margin-top:10px;border:1px solid #d7e3f0;border-radius:14px;background:#fff;padding:12px
-}
-.cs-backdrop{display:none!important}
-.cs-panel .action-btn.action-primary{
-  background:var(--hk-navy);border-color:var(--hk-navy);color:#fff;border-radius:10px
-}
-.cs-panel a{color:var(--hk-accent);word-break:break-word}
 @media(max-width:960px){
   .hero{grid-template-columns:1fr;gap:22px}
   .hero-countdown{order:1}
@@ -1144,14 +1088,6 @@ body.cs-open .cs-fab{display:none}
   .auth-card .links{flex-direction:column;align-items:stretch}
   .auth-card .links button{width:100%}
   .news-list.news-list-expanded{max-height:min(360px,55vh)}
-  .cs-panel{
-    right:max(10px,env(safe-area-inset-right));
-    left:max(10px,env(safe-area-inset-left));
-    width:auto;
-    bottom:max(10px,env(safe-area-inset-bottom));
-    height:min(70dvh,calc(100dvh - 20px - env(safe-area-inset-top)));
-    border-radius:16px
-  }
 }
 
 </style>
@@ -1495,84 +1431,6 @@ body.cs-open .cs-fab{display:none}
   </footer>
 </div>
 
-<button type="button" class="cs-fab" id="csFab" aria-expanded="false">
-  <span>💬 智能客服</span>
-</button>
-
-<div class="cs-panel" id="csPanel" aria-hidden="true">
-  <div class="cs-panel-bar">
-    <div>
-      <div class="title">智能客服</div>
-      <div class="subtitle">社團評選與觀摩活動小幫手</div>
-    </div>
-    <button type="button" class="close" id="csClose" aria-label="關閉客服">×</button>
-  </div>
-
-<div class="chat-container">
-
-<header class="chat-header">
-    <div class="header-title">
-        ✦ 社團評選暨觀摩活動 智能客服 ✦
-    </div>
-
-    <div
-        id="identityChip"
-        class="identity-chip"
-    >
-        客服就緒
-    </div>
-</header>
-
-
-<main
-    id="chatMessages"
-    class="chat-messages"
->
-
-<div class="message bot">
-
-哈囉！我是社團評選與觀摩活動小幫手。<br>
-可直接輸入問題；活動時間／地點、觀摩資訊、相關表單與公告已放在首頁主畫面。
-
-<div class="event-announcement">
-    <div class="event-announcement-title">活動重要時程</div>
-    <div id="eventAnnouncementContent" data-event-announcement>正在讀取活動倒數...</div>
-    <div id="eventAnnouncementRetry" class="mini-note event-announcement-retry" style="display:none;margin-top:8px">
-      時程載入失敗，目前顯示預設時程。<button type="button" class="action-btn action-primary" onclick="loadEventAnnouncement()">重試</button>
-    </div>
-</div>
-
-</div>
-
-</main>
-
-
-<form
-    class="chat-input-area"
-    onsubmit="handleFormSubmit(event)"
->
-
-<input
-    id="userInput"
-    class="chat-input"
-    type="text"
-    placeholder="請輸入您的問題..."
-    autocomplete="off"
->
-
-<button
-    type="submit"
-    class="send-btn"
->
-    發送
-</button>
-
-</form>
-
-</div>
-</div><!-- /cs-panel -->
-
-<script src="./cs-local-fixture.js"></script>
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
@@ -1632,7 +1490,7 @@ let CLUB_DATA_LOADING_PROMISE=
    FAQ
    ============================================================ */
 
-/* 首頁資訊卡與客服共用（勿另寫一份觀摩／場地字串） */
+/* 首頁資訊卡共用（勿另寫一份觀摩／場地字串） */
 const HOME_EVENT_FACTS={
     venueName:"毓麟館",
     venueCampus:"弘光科技大學",
@@ -2545,6 +2403,10 @@ function appendMessage(
         document.getElementById(
             "chatMessages"
         );
+
+    if(!container){
+        return;
+    }
 
 
     const message=
