@@ -137,6 +137,129 @@
       .getFirstListItem('activity_id="' + activityId() + '"');
   }
 
+  async function getActivityByActivityId(id) {
+    var aid = String(id || "").trim();
+    if (!aid) throw new Error("缺少活動編號。");
+    return pb()
+      .collection(C().activities)
+      .getFirstListItem('activity_id="' + aid.replace(/"/g, '\\"') + '"');
+  }
+
+  /**
+   * admin.html 社團帳號查詢會先打 adminReadActivityHandover 取 activeActivityId。
+   * PB 主路徑以 activities.activity_id（或 config_json.activeActivityId）為準。
+   */
+  async function resolveActiveActivity() {
+    var configured = String(activityId() || "").trim();
+    var primary = await getActivityRecord();
+    var conf =
+      primary && primary.config_json && typeof primary.config_json === "object"
+        ? primary.config_json
+        : {};
+    var activeId = String(conf.activeActivityId || primary.activity_id || configured).trim();
+    if (activeId && activeId !== String(primary.activity_id || "")) {
+      try {
+        var other = await getActivityByActivityId(activeId);
+        return { activity: other, activeActivityId: activeId, conf: conf, primary: primary };
+      } catch (_e) {
+        /* fall back to primary */
+      }
+    }
+    return {
+      activity: primary,
+      activeActivityId: String(primary.activity_id || configured),
+      conf: conf,
+      primary: primary
+    };
+  }
+
+  async function adminReadActivityHandover() {
+    var resolved = await resolveActiveActivity();
+    return ok({
+      activeActivityId: resolved.activeActivityId,
+      sourceActivityId: resolved.activeActivityId,
+      inProgress: false,
+      handoverOpId: null,
+      activityVersion: String(
+        (resolved.activity && resolved.activity.updated) || new Date().toISOString()
+      )
+    });
+  }
+
+  async function adminPreviewActivityHandover(data) {
+    var resolved = await resolveActiveActivity();
+    var targetId = String((data && data.targetActivityId) || "").trim();
+    if (!targetId) return fail("請填寫目標活動編號。");
+    if (targetId === resolved.activeActivityId) {
+      return fail("目標活動與目前活動相同。");
+    }
+    try {
+      await getActivityByActivityId(targetId);
+    } catch (_e) {
+      return fail("找不到目標活動「" + targetId + "」。請先建立該活動後再交接。");
+    }
+    var mems = await pb().collection(C().memberships).getFullList({
+      filter: 'activity="' + resolved.activity.id + '" && status="active"'
+    });
+    var byClub = {};
+    mems.forEach(function (m) {
+      var key = m.club || "";
+      if (!byClub[key]) byClub[key] = 0;
+      byClub[key] += 1;
+    });
+    var clubs = Object.keys(byClub).map(function (clubId) {
+      return {
+        clubId: clubId,
+        activeMemberships: byClub[clubId],
+        seatStatus: "occupied",
+        activeQueryGrants: 0
+      };
+    });
+    return ok({
+      activeActivityId: resolved.activeActivityId,
+      sourceActivityId: resolved.activeActivityId,
+      targetActivityId: targetId,
+      inProgress: false,
+      previewVersion: "pb-" + Date.now(),
+      activityVersion: String(resolved.activity.updated || ""),
+      clubs: clubs
+    });
+  }
+
+  async function adminExecuteActivityHandover(data) {
+    var resolved = await resolveActiveActivity();
+    var expected = String((data && data.expectedSourceActivityId) || "").trim();
+    var targetId = String((data && data.targetActivityId) || "").trim();
+    if (expected && expected !== resolved.activeActivityId) {
+      return fail("目前活動已變更，請重新預覽後再執行。");
+    }
+    if (!targetId) return fail("缺少目標活動。");
+    var target;
+    try {
+      target = await getActivityByActivityId(targetId);
+    } catch (_e) {
+      return fail("找不到目標活動「" + targetId + "」。");
+    }
+    // PB：僅切換 config 上記錄的目前活動；不撤名額、不搬檔（與舊 GAS 交接不同）。
+    var primary = resolved.primary || resolved.activity;
+    var conf =
+      primary.config_json && typeof primary.config_json === "object"
+        ? Object.assign({}, primary.config_json)
+        : {};
+    conf.activeActivityId = target.activity_id;
+    conf.activeActivityUpdatedAt = new Date().toISOString();
+    await pb().collection(C().activities).update(primary.id, { config_json: conf });
+    return ok({
+      status: "completed",
+      idempotent: false,
+      activeActivityId: target.activity_id,
+      sourceActivityId: resolved.activeActivityId,
+      targetActivityId: target.activity_id,
+      handoverOpId: (data && data.handoverOpId) || null,
+      note: "PocketBase 僅切換目前活動標記；不會撤除來源名額或搬移上傳檔。"
+    });
+  }
+
   function eventConfigFromActivity(activity) {
     var conf =
       activity && activity.config_json && typeof activity.config_json === "object"
@@ -555,7 +678,17 @@
   }
 
   async function adminListClubStudents(data) {
-    var activity = await getActivityRecord();
+    var requestedActivityId = String((data && data.activityId) || "").trim();
+    var activity;
+    if (requestedActivityId) {
+      try {
+        activity = await getActivityByActivityId(requestedActivityId);
+      } catch (_e) {
+        return fail("找不到活動「" + requestedActivityId + "」。", "ACTIVITY_NOT_FOUND");
+      }
+    } else {
+      activity = (await resolveActiveActivity()).activity;
+    }
     var scope = String(data.clubScope || "all");
     var permanent = String(data.permanentClubId || "").trim().toUpperCase();
     var category = String(data.category || "").trim();
@@ -1917,6 +2050,9 @@
   var handlers = {
     adminLogin: adminLogin,
     adminLogout: adminLogout,
+    adminReadActivityHandover: adminReadActivityHandover,
+    adminPreviewActivityHandover: adminPreviewActivityHandover,
+    adminExecuteActivityHandover: adminExecuteActivityHandover,
     adminListClubs: adminListClubs,
     adminListClubUploadSummary: adminListClubUploadSummary,
     adminBrowseClubUploads: adminBrowseClubUploads,
