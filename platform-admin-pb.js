@@ -1174,6 +1174,31 @@
     }
   }
 
+  async function findStudentAuthByStudentId(studentId) {
+    var normalized = cfg().normalizeStudentId(studentId);
+    if (!normalized) return null;
+    var email = cfg().studentIdToAuthEmail(normalized);
+    var candidates = [normalized, normalized.toLowerCase(), String(studentId || "").trim()];
+    var seen = Object.create(null);
+    for (var i = 0; i < candidates.length; i++) {
+      var id = candidates[i];
+      if (!id || seen[id]) continue;
+      seen[id] = true;
+      try {
+        return await pb()
+          .collection(C().students)
+          .getFirstListItem('student_id="' + id + '"');
+      } catch (_byId) {
+        /* try next */
+      }
+    }
+    try {
+      return await pb().collection(C().students).getFirstListItem('email="' + email + '"');
+    } catch (_byEmail) {
+      return null;
+    }
+  }
+
   /** Free a leftover Auth row by student_id even when club seat list is already empty. */
   async function adminPurgeStudentByStudentId(data) {
     var studentId = cfg().normalizeStudentId((data && data.studentId) || "");
@@ -1188,24 +1213,7 @@
       return fail("請確認輸入 RESET_WRONG_REGISTRATION。", "CONFIRM_PHRASE_REQUIRED");
     }
 
-    var student = null;
-    try {
-      student = await pb()
-        .collection(C().students)
-        .getFirstListItem('student_id="' + studentId + '"');
-    } catch (_byId) {
-      student = null;
-    }
-    if (!student) {
-      var email = cfg().studentIdToAuthEmail(studentId);
-      try {
-        student = await pb()
-          .collection(C().students)
-          .getFirstListItem('email="' + email + '"');
-      } catch (_byEmail) {
-        student = null;
-      }
-    }
+    var student = await findStudentAuthByStudentId(studentId);
     if (!student) {
       return ok({
         authDeleted: true,
@@ -1234,6 +1242,25 @@
         (destroyErr && destroyErr.message) || "清除殘留帳號失敗。",
         "AUTH_DESTROY_FAILED"
       );
+    }
+
+    // Post-verify: original student_id/email must no longer resolve.
+    var leftover = await findStudentAuthByStudentId(studentId);
+    if (leftover && String(leftover.id) === String(uid) && destroyed.mode === "hard") {
+      leftover = null;
+    }
+    if (leftover) {
+      var leftId = cfg().normalizeStudentId(leftover.student_id);
+      var leftEmail = String(leftover.email || "").trim().toLowerCase();
+      var wantEmail = cfg().studentIdToAuthEmail(studentId);
+      if (leftId === studentId || leftEmail === wantEmail) {
+        return fail(
+          "清除後學號／Email 仍被占用（mode=" +
+            destroyed.mode +
+            "）。請執行 scripts/pb-apply-admin-acl.ps1 後重試，或用 PocketBase 超管刪除該學生。",
+          "AUTH_STILL_HELD"
+        );
+      }
     }
 
     try {
@@ -1267,7 +1294,10 @@
       membershipsReleased: release.released,
       seatReleased: true,
       seatStatus: "empty",
-      message: "已清除殘留帳號，同學號可重新註冊。"
+      message:
+        destroyed.mode === "hard"
+          ? "已硬刪殘留帳號，同學號可重新註冊。"
+          : "已釋放學號／Email（軟刪），同學號可重新註冊。"
     });
   }
 
