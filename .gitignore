@@ -5,6 +5,7 @@
 backend/**/.env
 backend/**/credentials*.json
 backend/**/*service-account*.json
+.deploy-secrets/
 
 # Hosting / local tooling
 .vercel
@@ -14,9 +15,44 @@ node_modules/
 .pb-*.json
 .pb-*.txt
 
+# Local tooling / caches
+.tools/
+.vercel/
+*.log
+*.pid
+
+# Obsolete local stages / worktrees / packs (PB-first cleanup)
+_wt_*/
+_review_*/
+_review_verify_*/
+_pack_*/
+_tmp_*/
+_sha_*/
+_judge_*/
+_main_*/
+_vercel_*/
+_firebase_*/
+
+# Legacy Firebase / GAS local leftovers (not part of PB tip workflow)
+functions/
+firebase.json
+.firebaserc
+firestore.rules
+firestore.indexes.json
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Delivery zips / checksum dumps at repo root
+*.zip
+DELIVERY_SHA256*.txt
+HKSP_*.zip.sha256.txt
+
 # OS / editor
 .DS_Store
 Thumbs.db
 *.swp
 .idea/
 .vscode/
+*.bak
+.gitignore.local-untracked.bak-*
