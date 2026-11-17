@@ -291,11 +291,11 @@ if ($folders) {
 $uploads = Ensure-Collection @{
   name = 'hksp_uploads'
   type = 'base'
-  listRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && student = @request.auth.id)'
-  viewRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && student = @request.auth.id)'
+  listRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && (student = @request.auth.id || (@collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active")))'
+  viewRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && (student = @request.auth.id || (@collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active")))'
   createRule = '@request.auth.collectionName = "hksp_students" && student = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true)'
-  updateRule = '@request.auth.collectionName = "hksp_students" && student = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.active = true)'
-  deleteRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && student = @request.auth.id)'
+  updateRule = '@request.auth.collectionName = "hksp_students" && (student = @request.auth.id || (@collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active")) || (@request.auth.collectionName = "hksp_staff" && @request.auth.active = true)'
+  deleteRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && (student = @request.auth.id || (@collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active")))'
   fields = @(
     (RelationField 'activity' $activities.id $true 1 $false)
     (RelationField 'club' $clubs.id $true 1 $false)

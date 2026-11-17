@@ -33,7 +33,7 @@
 | `hksp_clubs` | active 公開，或任一 active staff | **admin** | **admin** | **admin** |
 | `hksp_memberships` | staff 或本人學生 | 學生自綁或 **admin** | **admin** | **admin** |
 | `hksp_folders` | 已登入者 | admin 或學生 | admin 或學生 | admin 或學生 |
-| `hksp_uploads` | staff 或本人學生 | 學生本人或 **admin** | 學生本人或任一 active staff | admin 或本人學生 |
+| `hksp_uploads` | staff 或**同社有效成員**（含上傳者） | 學生本人或 **admin** | 同社有效成員或任一 active staff | **admin** 或同社有效成員 |
 | `hksp_scores` | admin／judge／service | admin／judge | admin／judge | **admin** |
 | `hksp_audit_events` | admin／service | 任一已登入者可寫事件 | 不可改 | 不可刪 |
 

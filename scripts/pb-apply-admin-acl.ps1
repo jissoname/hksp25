@@ -1,4 +1,4 @@
-# Apply / refresh HKSP collection API rules for staff admin ACL.
+﻿# Apply / refresh HKSP collection API rules for staff admin ACL.
 # Requires PocketBase _superusers creds in repo-root .env (PB_ADMIN_*).
 # Idempotent: only patches list/view/create/update/delete rules.
 $ErrorActionPreference = 'Stop'
@@ -47,6 +47,9 @@ $Admin = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "a
 $JudgeOrAdmin = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true && (@request.auth.role = "admin" || @request.auth.role = "judge")'
 $AdminJudgeService = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true && (@request.auth.role = "admin" || @request.auth.role = "judge" || @request.auth.role = "service")'
 $AdminOrService = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true && (@request.auth.role = "admin" || @request.auth.role = "service")'
+# Club workspace: any active member of the upload's club may list/view/update/delete
+# (not only the original uploader). Owner alone is too strict for shared 評選 folders.
+$ClubMateUpload = '@request.auth.collectionName = "hksp_students" && (student = @request.auth.id || (@collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active"))'
 
 # Keep in sync with scripts/pb-setup-hksp.ps1 and docs/hksp-admin-acl.md
 $Acl = @{
@@ -93,11 +96,11 @@ $Acl = @{
     deleteRule = "$Admin || @request.auth.collectionName = `"hksp_students`""
   }
   hksp_uploads = @{
-    listRule   = "$Staff || (@request.auth.collectionName = `"hksp_students`" && student = @request.auth.id)"
-    viewRule   = "$Staff || (@request.auth.collectionName = `"hksp_students`" && student = @request.auth.id)"
+    listRule   = "$Staff || ($ClubMateUpload)"
+    viewRule   = "$Staff || ($ClubMateUpload)"
     createRule = "@request.auth.collectionName = `"hksp_students`" && student = @request.auth.id || ($Admin)"
-    updateRule = "@request.auth.collectionName = `"hksp_students`" && student = @request.auth.id || ($Staff)"
-    deleteRule = "$Admin || (@request.auth.collectionName = `"hksp_students`" && student = @request.auth.id)"
+    updateRule = "($ClubMateUpload) || ($Staff)"
+    deleteRule = "$Admin || ($ClubMateUpload)"
   }
   hksp_scores = @{
     listRule   = $AdminJudgeService
