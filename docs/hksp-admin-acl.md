@@ -28,7 +28,7 @@
 | Collection | list / view | create | update | delete |
 |---|---|---|---|---|
 | `hksp_staff` | 已登入且 active 的 staff 可 list；view 限本人，或 admin／service | **僅 A 層**（`null`） | 本人，或 admin | **僅 A 層**（`null`） |
-| `hksp_students` | 本人／staff／**生日 query 核對** | 公開自助註冊（`""`） | 本人／admin／**生日 body 核對** | **admin 或本人**（註冊可自動清除殘留後重建） |
+| `hksp_students` | 本人或任一 active staff | 公開自助註冊（`""`） | 本人或 admin | **admin 或本人**（硬刪釋放學號；殘留用後台清除） |
 | `hksp_activities` | active 公開，或任一 active staff | **admin** | **admin** | **admin** |
 | `hksp_clubs` | active 公開，或任一 active staff | **admin** | **admin** | **admin** |
 | `hksp_memberships` | staff 或本人學生 | 學生自綁或 **admin** | **admin** | **admin** |
