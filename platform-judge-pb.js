@@ -257,30 +257,47 @@
     var username = String((data && (data.username || data.email)) || "").trim();
     var password = String((data && data.password) || "");
     if (!username || !password) return fail("請輸入評審帳號與密碼。");
-    var email = username.indexOf("@") >= 0 ? username : username + "@hksp.local";
-    try {
-      var auth = await pb().collection(C().staff).authWithPassword(email, password);
-      var rec = auth.record;
-      if (rec.active === false) {
-        pb().authStore.clear();
-        return fail("評審帳號已停用。");
-      }
-      if (rec.role !== "judge" && rec.role !== "admin") {
-        pb().authStore.clear();
-        return fail("此帳號沒有評審權限。", "FORBIDDEN");
-      }
-      sessionStorage.setItem(SESSION_RECORD_KEY, JSON.stringify(rec));
-      var judge = mapJudge(rec);
-      var dashboard = await buildDashboard(rec);
-      return ok({
-        sessionToken: auth.token,
-        expiresAt: null,
-        judge: judge,
-        dashboard: dashboard
-      });
-    } catch (e) {
-      return fail((e && e.message) || "登入失敗，請確認帳號與密碼。");
+    // Prefer explicit email; bare names become name@hksp.local (admin 新增評審時的慣例).
+    var identities = [];
+    if (username.indexOf("@") >= 0) {
+      identities.push(username);
+    } else {
+      identities.push(username + "@hksp.local");
+      identities.push(username);
     }
+    var lastErr = null;
+    for (var i = 0; i < identities.length; i++) {
+      try {
+        var auth = await pb().collection(C().staff).authWithPassword(identities[i], password);
+        var rec = auth.record;
+        if (rec.active === false) {
+          pb().authStore.clear();
+          return fail("評審帳號已停用。");
+        }
+        if (rec.role !== "judge" && rec.role !== "admin") {
+          pb().authStore.clear();
+          return fail("此帳號沒有評審權限。", "FORBIDDEN");
+        }
+        sessionStorage.setItem(SESSION_RECORD_KEY, JSON.stringify(rec));
+        var judge = mapJudge(rec);
+        var dashboard = await buildDashboard(rec);
+        return ok({
+          sessionToken: auth.token,
+          expiresAt: null,
+          judge: judge,
+          dashboard: dashboard
+        });
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    var emsg = String((lastErr && lastErr.message) || "");
+    if (/Failed to authenticate|invalid|wrong/i.test(emsg)) {
+      return fail(
+        "登入失敗，請確認帳號與密碼。帳號請填 Email（或後台建立時的 xxx@hksp.local），不是顯示名稱「測試一」。"
+      );
+    }
+    return fail(emsg || "登入失敗，請確認帳號與密碼。");
   }
 
   async function judgeLogout() {
@@ -532,17 +549,19 @@
       revision: revision,
       submitted_at: submittedAt
     };
-    // Refresh auth before write — stale token often surfaces as generic create failures.
+    // Best-effort refresh; do not kick out if refresh fails but token still valid.
     try {
       await pb().collection(C().staff).authRefresh();
-      judgeRec = pb().authStore.model || judgeRec;
-      payload.judge = judgeRec.id;
-      if (payload.answers_json) payload.answers_json.judgeId = judgeRec.id;
     } catch (_refreshErr) {
+      /* keep existing authStore */
+    }
+    judgeRec = pb().authStore.model || judgeRec;
+    if (!judgeRec || !judgeRec.id || !pb().authStore.isValid) {
       return fail("評審登入已失效，請重新登入。", "JUDGE_UNAUTHORIZED");
     }
+    payload.judge = judgeRec.id;
+    if (payload.answers_json) payload.answers_json.judgeId = judgeRec.id;
     if (
-      !judgeRec ||
       (judgeRec.role !== "judge" && judgeRec.role !== "admin") ||
       judgeRec.active === false
     ) {
@@ -687,7 +706,12 @@
       return await fn(payload || {});
     } catch (e) {
       var msg = String((e && e.message) || e || "操作失敗");
-      if (msg === "JUDGE_UNAUTHORIZED" || /unauth|auth/i.test(msg)) {
+      // Only map explicit session failures — do NOT match generic "authenticate" login errors.
+      if (
+        msg === "JUDGE_UNAUTHORIZED" ||
+        /^JUDGE_UNAUTHORIZED\b/i.test(msg) ||
+        /登入已失效|session.*(expired|invalid)/i.test(msg)
+      ) {
         return fail("評審登入已失效，請重新登入。", "JUDGE_UNAUTHORIZED");
       }
       return fail(msg);
