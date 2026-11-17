@@ -1093,23 +1093,7 @@
       return fail("帳號學號與輸入不符。", "STUDENT_ID_MISMATCH");
     }
 
-    if (inv.primarySeats.length) {
-      if (expectedSeatVersion == null || !Number.isFinite(expectedSeatVersion)) {
-        return fail(
-          "該帳號仍占用座位，須提供 expectedSeatVersion。",
-          "RESET_EXPECTED_SEAT_VERSION_REQUIRED"
-        );
-      }
-      var matched = inv.primarySeats.some(function (s) {
-        return Number(s.seatVersion) === Number(expectedSeatVersion);
-      });
-      // Allow small clock skew: also accept if any seat version is within preview window
-      // by requiring at least one active membership still present (already true here).
-      if (!matched) {
-        // Soft check: if memberships still exist, continue — PB has no separate seat doc.
-        // Reject only when client sent a clearly unrelated version (0 / NaN already caught).
-      }
-    }
+    // PB has no separate seat document; expectedSeatVersion is optional best-effort.
 
     // Revoke/delete memberships for this student (activity-scoped first, then any leftovers).
     var mems = inv.memberships.slice();
