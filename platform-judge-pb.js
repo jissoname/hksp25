@@ -492,11 +492,27 @@
     });
     folderRows = folderRows.filter(isEvaluationFolderRow);
 
-    var uploadRows = await pb().collection(C().uploads).getFullList({
-      filter: 'club="' + club.id + '" && status="completed"',
-      sort: "-created"
-    });
-    uploadRows = uploadRows.filter(isJudgeReadableUploadRow);
+    async function listCompletedUploads_() {
+      var rows = await pb().collection(C().uploads).getFullList({
+        filter: 'club="' + club.id + '" && status="completed"',
+        sort: "-created"
+      });
+      return rows.filter(isJudgeReadableUploadRow);
+    }
+
+    // 與 openScore 背景 dashboard 並行時，偶發 auth 空窗會讓 uploads listRule
+    // 回 200 + 空陣列（資料夾規則較寬仍看得到夾），造成「有夾無檔」。
+    var uploadRows = await listCompletedUploads_();
+    if (!uploadRows.length && folderRows.length) {
+      try {
+        await ensureJudgeFromToken(
+          (data && data.sessionToken) || (pb().authStore && pb().authStore.token) || ""
+        );
+      } catch (_reauthErr) {
+        /* ignore; retry below may still fail clearly */
+      }
+      uploadRows = await listCompletedUploads_();
+    }
 
     // 僅保留落在評選資料夾內（或未掛夾）的檔案；排除掛在特色夾下的 completed 列。
     var evaluationFolderIds = {};

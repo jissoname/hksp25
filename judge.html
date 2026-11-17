@@ -2388,7 +2388,7 @@ button{
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
-<script src="./platform-judge-pb.js?v=materials-readonly-2"></script>
+<script src="./platform-judge-pb.js?v=materials-readonly-3"></script>
 
 <script>
 /**
@@ -8217,12 +8217,15 @@ async function openScore(
     renderScoreModal();
 
 
-    loadScoreMaterials_({
+    // 等資料載完再結束 critical op，避免 finally 立刻 flush dashboard
+    // 與 browse uploads 搶同一條 auth（出現有資料夾、無 PDF）。
+    await loadScoreMaterials_({
       permanentClubId: permanentClubId,
       clubName: clubName,
       materialsAccess:
         displayResult &&
-        displayResult.materialsAccess
+        displayResult.materialsAccess,
+      preferScoreTab: true
     });
 
 
@@ -8790,6 +8793,18 @@ async function loadScoreMaterials_(
     .trim();
 
 
+  const loadSeq =
+    Number(
+      APP.materialsLoadSeq ||
+      0
+    ) +
+    1;
+
+
+  APP.materialsLoadSeq =
+    loadSeq;
+
+
   APP.materialsState =
   {
     loading: true,
@@ -8803,9 +8818,17 @@ async function loadScoreMaterials_(
   };
 
 
-  switchScoreMobileTab_(
-    "score"
-  );
+  if (
+    opts &&
+    opts.preferScoreTab ===
+      true
+  ) {
+
+    switchScoreMobileTab_(
+      "score"
+    );
+
+  }
 
 
   renderScoreMaterialsPane_();
@@ -8830,6 +8853,16 @@ async function loadScoreMaterials_(
             undefined
         }
       );
+
+
+    if (
+      loadSeq !==
+      APP.materialsLoadSeq
+    ) {
+
+      return;
+
+    }
 
 
     if (
@@ -8951,17 +8984,28 @@ async function loadScoreMaterials_(
     }
 
 
+    const baseHint =
+      (
+        result.materialsAccess &&
+        result.materialsAccess.message
+      ) ||
+      "評選資料為唯讀；重新載入可取得學生最新繳交版本。";
+
+
     APP.materialsState =
     {
       loading: false,
       error: "",
       closed: false,
       hint:
+        baseHint +
         (
-          result.materialsAccess &&
-          result.materialsAccess.message
-        ) ||
-        "評選資料為唯讀；重新載入可取得學生最新繳交版本。",
+          files.length
+            ? "（已載入 " +
+              files.length +
+              " 個檔案）"
+            : "（此社目前沒有已完成 PDF，可按重新載入再試）"
+        ),
       tree:
         Array.isArray(
           result.tree
@@ -8989,6 +9033,16 @@ async function loadScoreMaterials_(
   catch (
     errorObject
   ) {
+
+    if (
+      loadSeq !==
+      APP.materialsLoadSeq
+    ) {
+
+      return;
+
+    }
+
 
     APP.materialsState.loading =
       false;
