@@ -356,6 +356,103 @@
     });
   }
 
+  function createStudentAndBind(activity, club, studentId, email, birth, opId, permanentClubId) {
+    return pb.collection(C.students).create({
+      email: email,
+      emailVisibility: false,
+      password: birth,
+      passwordConfirm: birth,
+      student_id: studentId,
+      birth_ymd: birth,
+      name: studentId,
+      must_change_password: true,
+      active: true,
+      failed_login_count: 0,
+      registered_at: new Date().toISOString()
+    }).then(function (student) {
+      return pb.collection(C.students).authWithPassword(email, birth).then(function () {
+        return ensureStudentMembership(
+          activity, club, student, opId, studentId, permanentClubId
+        );
+      });
+    });
+  }
+
+  /**
+   * Leftover Auth after admin delete/unbind: auto clear with birthday proof, then fresh register.
+   * Requires ACL birth query/body rules + self-delete (scripts/pb-apply-admin-acl.ps1).
+   */
+  function autoClearExistingAndRegister(
+    activity,
+    club,
+    studentId,
+    email,
+    birth,
+    opId,
+    permanentClubId
+  ) {
+    function recreateFresh() {
+      pb.authStore.clear();
+      return createStudentAndBind(
+        activity, club, studentId, email, birth, opId, permanentClubId
+      );
+    }
+
+    function clearAuthenticatedStudent(student) {
+      if (!student || !student.id) {
+        return Promise.reject(err("RECLAIM_FAILED", "找不到可清除的舊帳號。"));
+      }
+      // Hard self-delete cascades memberships; then create a clean account.
+      return pb.collection(C.students).delete(student.id).then(function () {
+        return recreateFresh();
+      }).catch(function () {
+        // Fallback: keep Auth, just (re)bind club seat.
+        return ensureStudentMembership(
+          activity, club, student, opId, studentId, permanentClubId
+        ).then(function (result) {
+          if (result && result.data) result.data.reclaimed = true;
+          return result;
+        });
+      });
+    }
+
+    function authThenClear() {
+      return pb.collection(C.students).authWithPassword(email, birth).then(function () {
+        return clearAuthenticatedStudent(currentRecord() || pb.authStore.model);
+      });
+    }
+
+    function birthProofResetThenClear() {
+      return pb.collection(C.students).getFirstListItem(
+        'student_id="' + studentId + '" || email="' + email + '"',
+        { birth: birth }
+      ).then(function (row) {
+        return pb.collection(C.students).update(row.id, {
+          password: birth,
+          passwordConfirm: birth,
+          birth_ymd: birth,
+          active: true,
+          must_change_password: true,
+          student_id: studentId,
+          email: email,
+          emailVisibility: false
+        }).then(function () {
+          return authThenClear();
+        });
+      });
+    }
+
+    return authThenClear().catch(function () {
+      return birthProofResetThenClear().catch(function () {
+        throw err(
+          "EXISTING_AUTH_REQUIRES_LOGIN",
+          "此學號已有帳號，且無法以生日自動清除。請確認生日正確，或請管理員清除殘留帳號。",
+          { code: "EXISTING_AUTH_REQUIRES_LOGIN", opId: opId }
+        );
+      });
+    });
+  }
+
   function registerClubStudent(data) {
     var permanentClubId = String((data && data.permanentClubId) || "").trim();
     var studentId = cfg.normalizeStudentId(data && data.studentId);
@@ -378,32 +475,12 @@
           );
         }
 
-        // Guest registration: create auth user (birthday = initial password).
-        // Guest cannot list others' student rows, so uniqueness is detected via create conflict.
-        return pb.collection(C.students).create({
-          email: email,
-          emailVisibility: false,
-          password: birth,
-          passwordConfirm: birth,
-          student_id: studentId,
-          birth_ymd: birth,
-          name: studentId,
-          must_change_password: true,
-          active: true,
-          failed_login_count: 0,
-          registered_at: new Date().toISOString()
-        }).then(function (student) {
-          return pb.collection(C.students).authWithPassword(email, birth).then(function () {
-            return ensureStudentMembership(
-              activity, club, student, opId, studentId, permanentClubId
-            );
-          });
-        }).catch(function (e) {
+        return createStudentAndBind(
+          activity, club, studentId, email, birth, opId, permanentClubId
+        ).catch(function (e) {
           if (isUniqueConflict(e)) {
-            throw err(
-              "EXISTING_AUTH_REQUIRES_LOGIN",
-              "此學號已有帳號。請先登入後完成本活動註冊。",
-              { code: "EXISTING_AUTH_REQUIRES_LOGIN", opId: opId }
+            return autoClearExistingAndRegister(
+              activity, club, studentId, email, birth, opId, permanentClubId
             );
           }
           throw err("REGISTER_FAILED", (e && e.message) || "註冊失敗，請稍後再試。");

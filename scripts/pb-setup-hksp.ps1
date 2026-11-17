@@ -140,11 +140,11 @@ $staff = Ensure-Collection @{
 $students = Ensure-Collection @{
   name = 'hksp_students'
   type = 'auth'
-  listRule = 'id = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.active = true)'
-  viewRule = 'id = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.active = true)'
+  listRule = 'id = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.active = true) || (birth_ymd != "" && @request.query.birth != "" && birth_ymd = @request.query.birth)'
+  viewRule = 'id = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.active = true) || (birth_ymd != "" && @request.query.birth != "" && birth_ymd = @request.query.birth)'
   createRule = ''   # public self-registration
-  updateRule = 'id = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true)'
-  deleteRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true'
+  updateRule = 'id = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true) || (birth_ymd != "" && @request.data.birth_ymd != "" && birth_ymd = @request.data.birth_ymd)'
+  deleteRule = '(@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true) || id = @request.auth.id'
   fields = @(
     (TextField 'student_id' $true 20)
     (TextField 'name' $false 80)

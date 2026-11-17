@@ -1125,7 +1125,8 @@
         { student_id: freedId },
         { email: freedEmail, emailVisibility: false },
         { password: randPass, passwordConfirm: randPass, must_change_password: true },
-        { active: false, birth_ymd: "" }
+        // Keep birth_ymd so register-time birthday proof can still auto-clear leftovers.
+        { active: false }
       ];
       for (var i = 0; i < steps.length; i++) {
         try {

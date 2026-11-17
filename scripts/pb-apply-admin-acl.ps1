@@ -50,6 +50,9 @@ $AdminOrService = '@request.auth.collectionName = "hksp_staff" && @request.auth.
 # Club workspace: any active member of the upload's club may list/view/update/delete
 # (not only the original uploader). Owner alone is too strict for shared 評選 folders.
 $ClubMateUpload = '@request.auth.collectionName = "hksp_students" && (student = @request.auth.id || (@collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active"))'
+# birth query/body proof lets register auto-clear leftover Auth without admin UI.
+$StudentBirthQuery = 'birth_ymd != "" && @request.query.birth != "" && birth_ymd = @request.query.birth'
+$StudentBirthBody = 'birth_ymd != "" && @request.data.birth_ymd != "" && birth_ymd = @request.data.birth_ymd'
 
 # Keep in sync with scripts/pb-setup-hksp.ps1 and docs/hksp-admin-acl.md
 $Acl = @{
@@ -61,12 +64,12 @@ $Acl = @{
     deleteRule = $null
   }
   hksp_students = @{
-    listRule   = "id = @request.auth.id || ($Staff)"
-    viewRule   = "id = @request.auth.id || ($Staff)"
+    listRule   = "id = @request.auth.id || ($Staff) || ($StudentBirthQuery)"
+    viewRule   = "id = @request.auth.id || ($Staff) || ($StudentBirthQuery)"
     createRule = ''
-    updateRule = "id = @request.auth.id || ($Admin)"
-    # Admin hard-delete frees student_id/email so the same ID can re-register.
-    deleteRule = $Admin
+    updateRule = "id = @request.auth.id || ($Admin) || ($StudentBirthBody)"
+    # Admin hard-delete, or self-delete after birthday reclaim (clean re-register).
+    deleteRule = "$Admin || id = @request.auth.id"
   }
   hksp_activities = @{
     listRule   = "active = true || ($Staff)"

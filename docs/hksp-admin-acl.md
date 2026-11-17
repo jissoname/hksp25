@@ -28,7 +28,7 @@
 | Collection | list / view | create | update | delete |
 |---|---|---|---|---|
 | `hksp_staff` | 已登入且 active 的 staff 可 list；view 限本人，或 admin／service | **僅 A 層**（`null`） | 本人，或 admin | **僅 A 層**（`null`） |
-| `hksp_students` | 本人或任一 active staff | 公開自助註冊（`""`） | 本人或 admin | **admin**（硬刪以便同學號重註冊；A 層仍可刪） |
+| `hksp_students` | 本人／staff／**生日 query 核對** | 公開自助註冊（`""`） | 本人／admin／**生日 body 核對** | **admin 或本人**（註冊可自動清除殘留後重建） |
 | `hksp_activities` | active 公開，或任一 active staff | **admin** | **admin** | **admin** |
 | `hksp_clubs` | active 公開，或任一 active staff | **admin** | **admin** | **admin** |
 | `hksp_memberships` | staff 或本人學生 | 學生自綁或 **admin** | **admin** | **admin** |
@@ -45,6 +45,6 @@
 ## 建立順序
 
 1. 填 `.env` 的 `PB_ADMIN_*`（A 層；若已有 token 可只填 `PB_ADMIN_TOKEN`）
-2. 執行 `powershell -File scripts/pb-apply-admin-acl.ps1`（寫入／校正權限）
+2. 執行 `powershell -File scripts/pb-apply-admin-acl.ps1`（寫入／校正權限；含學生生日自動清除殘留）
 3. 填 `HKSP_STAFF_ADMIN_EMAIL`／`HKSP_STAFF_ADMIN_PASSWORD`（B 層）
 4. 執行 `powershell -File scripts/pb-seed-staff-admin.ps1`（建立或更新業務超管）
