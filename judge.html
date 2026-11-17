@@ -2388,7 +2388,7 @@ button{
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
-<script src="./platform-judge-pb.js?v=materials-readonly-3"></script>
+<script src="./platform-judge-pb.js?v=status-sync-1"></script>
 
 <script>
 /**
@@ -4271,7 +4271,69 @@ function mergeDashboardPreserveRecentSubmitted_(
             );
 
 
+          /*
+           * 不可把已送出／草稿／待重送降成未開始。
+           * catchup 若因 auth 空窗拿到空 scores，會整表變未開始；
+           * 120 秒 guard 過期後舊邏輯擋不住，點進去卻仍是已送出。
+           */
           if (
+            club.status ===
+              "notStarted" &&
+            prevClub &&
+            (
+              prevClub.status ===
+                "submitted" ||
+              prevClub.status ===
+                "reopened" ||
+              prevClub.status ===
+                "draft"
+            )
+          ) {
+
+            club.status =
+              prevClub.status;
+
+
+            club.locked =
+              prevClub.status ===
+              "submitted";
+
+
+            club.reopened =
+              prevClub.status ===
+              "reopened";
+
+
+            club.statusPending =
+              false;
+
+
+            if (
+              club.totalScore ==
+                null &&
+              prevClub.totalScore !=
+                null
+            ) {
+
+              club.totalScore =
+                prevClub.totalScore;
+
+            }
+
+
+            if (
+              !club.submittedAt &&
+              prevClub.submittedAt
+            ) {
+
+              club.submittedAt =
+                prevClub.submittedAt;
+
+            }
+
+          }
+
+          else if (
             club.status !==
               "submitted" &&
             club.status !==
@@ -8212,6 +8274,39 @@ async function openScore(
         choice.reason
 
     };
+
+
+    // 清單若被空 scores catchup 蓋成未開始，點進已送出評分時立刻回寫清單。
+    if (
+      displayResult &&
+      (
+        displayResult.locked ===
+          true ||
+        (
+          displayResult.record &&
+          String(
+            displayResult.record.status ||
+            ""
+          ) ===
+            "submitted"
+        )
+      )
+    ) {
+
+      rememberRecentSubmitGuard_(
+        sectionId,
+        clubName,
+        permanentClubId
+      );
+
+
+      markClubSubmittedLocally_(
+        sectionId,
+        clubName,
+        permanentClubId
+      );
+
+    }
 
 
     renderScoreModal();

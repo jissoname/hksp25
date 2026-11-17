@@ -274,7 +274,7 @@
       permanentClubId: String(club.permanent_club_id || "").toUpperCase(),
       sectionId: section.id,
       scores: scores,
-      totalScore: Number(row.score) || 0,
+      totalScore: Number(row.total_score != null ? row.total_score : row.score) || 0,
       comment: row.comment || "",
       status: reopened ? "reopened" : row.status || "draft",
       locked: locked,
@@ -642,21 +642,38 @@
         return !!(catSet[normalizeCategoryKey(raw)] || catSet[raw]);
       });
     }
-    var myScores = await pb().collection(C().scores).getFullList({
-      filter: 'activity="' + activity.id + '" && judge="' + judgeRec.id + '"'
-    });
-    // Fallback: activity 條件偶發對不到時，仍用 judge 撈回自己的分數。
+    async function listMyScores_() {
+      var rows = await pb().collection(C().scores).getFullList({
+        filter: 'activity="' + activity.id + '" && judge="' + judgeRec.id + '"'
+      });
+      // Fallback: activity 條件偶發對不到時，仍用 judge 撈回自己的分數。
+      if (!rows.length) {
+        try {
+          rows = await pb().collection(C().scores).getFullList({
+            filter: 'judge="' + judgeRec.id + '"'
+          });
+          rows = rows.filter(function (row) {
+            return relationId(row.activity) === String(activity.id);
+          });
+        } catch (_eScores) {
+          rows = [];
+        }
+      }
+      return rows;
+    }
+
+    var myScores = await listMyScores_();
+    // 與 materials 相同：並行請求偶發 auth 空窗會讓 listRule 回 200 空陣列，
+    // dashboard 就會把已送出顯示成未開始；重試一次把真實分數撈回。
     if (!myScores.length) {
       try {
-        myScores = await pb().collection(C().scores).getFullList({
-          filter: 'judge="' + judgeRec.id + '"'
-        });
-        myScores = myScores.filter(function (row) {
-          return relationId(row.activity) === String(activity.id);
-        });
-      } catch (_eScores) {
-        myScores = [];
+        await ensureJudgeFromToken(
+          (pb().authStore && pb().authStore.token) || ""
+        );
+      } catch (_reauthScores) {
+        /* ignore */
       }
+      myScores = await listMyScores_();
     }
     var scoreMap = {};
     function putScoreKeys(row, sectionKey) {
@@ -777,7 +794,9 @@
           status: status,
           reopened: reopened,
           locked: status === "submitted",
-          totalScore: row ? Number(row.score) || 0 : null,
+          totalScore: row
+            ? Number(row.total_score != null ? row.total_score : row.score) || 0
+            : null,
           updatedAt: row ? row.updated : null,
           submittedAt: row && row.submitted_at ? row.submitted_at : null
         };
