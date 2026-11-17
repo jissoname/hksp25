@@ -12526,7 +12526,14 @@ if(!r||r.success!==true||r.authDeleted!==true){
 throw new Error((r&&(r.message||r.error))||"清除殘留帳號失敗");
 }
 if($("clubStudentPurgeId")) $("clubStudentPurgeId").value="";
-toast(r.message||(r.idempotent?"此學號已無殘留帳號":"已清除殘留帳號；同學號可重新註冊"));
+toast(
+  r.message||
+  (r.idempotent
+    ?"此學號已無殘留帳號"
+    :(r.mode==="hard"
+      ?"已硬刪殘留帳號（學號／Email 已移除）；可重新註冊"
+      :"已清除殘留帳號並釋放學號／Email；可重新註冊"))
+);
 }catch(e){
 toast(e.message||"清除殘留帳號失敗");
 }finally{
@@ -12614,7 +12621,13 @@ throw new Error(msg+"（勿盲目重送）");
 }
 clearClubStudentMutation("wrong_reg",op);
 acceptedOk=true;
-toast(r.idempotent?"帳號已先前刪除（防重送）":"已刪除帳號並釋放社團名額；同學號可重新註冊");
+toast(
+  r.idempotent
+    ?"帳號已先前刪除（防重送）"
+    :(r.mode==="hard"
+      ?"已硬刪帳號（學號／Email 已移除）並釋放名額；可重新註冊"
+      :"已刪除帳號並釋放學號／Email／名額；可重新註冊")
+);
 await loadClubStudents({
 allowDuringReset:true,
 activityId:op.activityId,

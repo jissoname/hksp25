@@ -1110,72 +1110,86 @@
     var originalEmail = String(
       student.email || (originalId ? cfg().studentIdToAuthEmail(originalId) : "")
     ).trim().toLowerCase();
-    // Prefer hard delete so student_id/email are fully freed (memberships cascade).
+
+    function identifiersStillHeld(row) {
+      if (!row) return false;
+      var sid = cfg().normalizeStudentId(row.student_id);
+      var em = String(row.email || "").trim().toLowerCase();
+      var un = String(row.username || "").trim().toLowerCase();
+      if (originalId && sid === originalId) return true;
+      if (originalEmail && (em === originalEmail || un === originalEmail)) return true;
+      return false;
+    }
+
+    // Prefer hard delete so student_id + email are fully removed (ACL now allows admin).
     try {
       await pb().collection(C().students).delete(uid);
+      try {
+        await pb().collection(C().students).getOne(uid);
+        throw new Error("硬刪後帳號仍存在。");
+      } catch (goneErr) {
+        if (/硬刪後帳號仍存在/.test(String(goneErr && goneErr.message))) throw goneErr;
+        // getOne failed → record gone (expected)
+      }
       return { authDeleted: true, mode: "hard" };
-    } catch (_delErr) {
-      // Soft-destroy: free unique keys in small steps (batch updates often fail on auth).
+    } catch (delErr) {
+      if (/硬刪後帳號仍存在/.test(String(delErr && delErr.message))) throw delErr;
+
+      // Soft fallback: MUST free email first (blocks re-register), then student_id.
       var stamp = String(Date.now());
       var short = String(uid || "x").replace(/[^a-zA-Z0-9]/g, "").slice(-6) || "x";
       var freedId = ("W" + short + stamp.slice(-10)).slice(0, 20);
       var freedEmail = ("w" + stamp.slice(-10) + short + "@stu.hksp25.invalid").slice(0, 120);
-      var randPass = "Wrr" + stamp + "x!";
       var freedUser = ("w" + short + stamp).slice(0, 100);
-      // Free username BEFORE email — leftover username often blocks re-register.
-      var steps = [
-        { username: freedUser },
-        { student_id: freedId },
-        { email: freedEmail, emailVisibility: false },
-        { password: randPass, passwordConfirm: randPass, must_change_password: true },
-        // Keep birth_ymd so register-time birthday proof can still auto-clear leftovers.
-        { active: false }
-      ];
-      for (var i = 0; i < steps.length; i++) {
-        try {
-          await pb().collection(C().students).update(uid, steps[i]);
-        } catch (stepErr) {
-          if (steps[i].email) {
-            try {
-              await pb().collection(C().students).update(uid, {
-                username: freedUser,
-                email: freedEmail,
-                emailVisibility: false
-              });
-              continue;
-            } catch (_uErr) {
-              /* fall through */
-            }
-          }
-          // username field may not exist on older schemas
-          if (steps[i].username) continue;
-          if (i <= 2) {
-            throw new Error(
-              "無法釋放學號／Email／username（" +
-                ((stepErr && stepErr.message) || "update failed") +
-                "）。請到 PocketBase 超管後台刪除該學生。"
-            );
-          }
-        }
+      var randPass = "Wrr" + stamp + "x!";
+
+      async function mustUpdate(patch, label) {
+        await pb().collection(C().students).update(uid, patch);
+        var after = await pb().collection(C().students).getOne(uid);
+        return after;
       }
-      var verify = null;
+
+      var after;
       try {
-        verify = await pb().collection(C().students).getOne(uid);
-      } catch (_vErr) {
-        verify = null;
-      }
-      if (verify) {
-        var stillId =
-          cfg().normalizeStudentId(verify.student_id) === originalId && !!originalId;
-        var stillEmail =
-          String(verify.email || "").trim().toLowerCase() === originalEmail && !!originalEmail;
-        var stillUser =
-          String(verify.username || "").trim().toLowerCase() === originalEmail && !!originalEmail;
-        if (stillId || stillEmail || stillUser) {
-          throw new Error(
-            "帳號仍占用學號／Email／username，同學號尚不可重新註冊。請到 PocketBase 超管後台刪除該學生。"
-          );
+        // Email first — historical bug left student_id renamed but email still held.
+        after = await mustUpdate(
+          { email: freedEmail, emailVisibility: false, username: freedUser },
+          "email"
+        );
+        if (String(after.email || "").trim().toLowerCase() === originalEmail) {
+          throw new Error("Email 未能釋放。");
         }
+        after = await mustUpdate({ student_id: freedId }, "student_id");
+        if (cfg().normalizeStudentId(after.student_id) === originalId) {
+          throw new Error("學號未能釋放。");
+        }
+        try {
+          after = await mustUpdate(
+            {
+              password: randPass,
+              passwordConfirm: randPass,
+              must_change_password: true,
+              active: false
+            },
+            "lock"
+          );
+        } catch (_lockErr) {
+          // Non-fatal if identifiers already freed.
+          after = await pb().collection(C().students).getOne(uid);
+        }
+      } catch (softErr) {
+        throw new Error(
+          "無法刪除／釋放學號與 Email（" +
+            ((softErr && softErr.message) || "update failed") +
+            "）。硬刪也失敗：" +
+            ((delErr && delErr.message) || "delete failed")
+        );
+      }
+
+      if (identifiersStillHeld(after)) {
+        throw new Error(
+          "刪除後學號／Email 仍被占用。請到 PocketBase 超管後台刪除該學生列。"
+        );
       }
       return { authDeleted: true, mode: "soft" };
     }
