@@ -1,0 +1,13 @@
+---
+description: User authorized direct git commits on this repo
+alwaysApply: true
+---
+
+# Direct commits authorized
+
+The repo owner approved **direct commits** without waiting for per-commit confirmation.
+
+- When a task produces ready local changes, create the git commit in the same turn (follow the normal commit protocol: status/diff/log, stage, commit, verify).
+- Do **not** commit secrets (`.env`, `.deploy-secrets`, credentials, tokens).
+- Do **not** push unless the user asks to push (or an existing standing push rule applies).
+- Do **not** amend pushed commits or update git config.
