@@ -50,9 +50,10 @@ $AdminOrService = '@request.auth.collectionName = "hksp_staff" && @request.auth.
 # Club workspace: any active member of the upload's club may list/view/update/delete
 # (not only the original uploader). Owner alone is too strict for shared 評選 folders.
 $ClubMateUpload = '@request.auth.collectionName = "hksp_students" && (student = @request.auth.id || (@collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active"))'
-# birth query/body proof lets register auto-clear leftover Auth without admin UI.
-$StudentBirthQuery = 'birth_ymd != "" && @request.query.birth != "" && birth_ymd = @request.query.birth'
-$StudentBirthBody = 'birth_ymd != "" && @request.data.birth_ymd != "" && birth_ymd = @request.data.birth_ymd'
+# Birth proof for register auto-clear. Do NOT put @request.data./@request.query. on the
+# left of comparisons — PocketBase rejects that as invalid left operand.
+$StudentBirthQuery = 'birth_ymd != "" && birth_ymd = @request.query.birth'
+$StudentBirthBody = 'birth_ymd != "" && birth_ymd = @request.data.birth_ymd'
 
 # Keep in sync with scripts/pb-setup-hksp.ps1 and docs/hksp-admin-acl.md
 $Acl = @{
@@ -127,6 +128,7 @@ $byName = @{}
 foreach ($c in $cols.items) { $byName[$c.name] = $c }
 
 $updated = 0
+$failed = @()
 $missing = @()
 foreach ($name in ($Acl.Keys | Sort-Object)) {
   if (-not $byName.ContainsKey($name)) {
@@ -136,15 +138,31 @@ foreach ($name in ($Acl.Keys | Sort-Object)) {
   }
   $id = $byName[$name].id
   $body = $Acl[$name]
-  Invoke-Pb Patch "/api/collections/$id" $body $Token | Out-Null
-  Write-Host "ACL_OK $name"
-  $updated++
+  try {
+    Invoke-Pb Patch "/api/collections/$id" $body $Token | Out-Null
+    Write-Host "ACL_OK $name"
+    $updated++
+  } catch {
+    $failed += $name
+    $errText = $_.Exception.Message
+    try {
+      $resp = $_.ErrorDetails.Message
+      if ($resp) { $errText = $resp }
+    } catch { }
+    Write-Host "ACL_FAIL $name : $errText"
+  }
 }
 
 Write-Host ''
 Write-Host "UPDATED=$updated"
 if ($missing.Count -gt 0) {
   Write-Host ("MISSING=" + ($missing -join ','))
+}
+if ($failed.Count -gt 0) {
+  Write-Host ("FAILED=" + ($failed -join ','))
+  throw 'Some ACL patches failed; see ACL_FAIL lines above'
+}
+if ($missing.Count -gt 0) {
   throw 'Some collections missing; run pb-setup-hksp-rest.ps1 first'
 }
 Write-Host 'DONE admin ACL applied'
