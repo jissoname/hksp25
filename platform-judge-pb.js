@@ -532,17 +532,105 @@
       revision: revision,
       submitted_at: submittedAt
     };
+    // Refresh auth before write — stale token often surfaces as generic create failures.
+    try {
+      await pb().collection(C().staff).authRefresh();
+      judgeRec = pb().authStore.model || judgeRec;
+      payload.judge = judgeRec.id;
+      if (payload.answers_json) payload.answers_json.judgeId = judgeRec.id;
+    } catch (_refreshErr) {
+      return fail("評審登入已失效，請重新登入。", "JUDGE_UNAUTHORIZED");
+    }
+    if (
+      !judgeRec ||
+      (judgeRec.role !== "judge" && judgeRec.role !== "admin") ||
+      judgeRec.active === false
+    ) {
+      return fail("此帳號沒有評分寫入權限。", "JUDGE_SCORE_SECTION_FORBIDDEN");
+    }
+
+    function writeErrorDetail(writeErr) {
+      var status = writeErr && (writeErr.status || writeErr.statusCode);
+      var raw = (writeErr && (writeErr.data || writeErr.response)) || {};
+      var fieldErrors = raw.data || {};
+      var fields = Object.keys(fieldErrors)
+        .map(function (k) {
+          var fe = fieldErrors[k];
+          return k + ":" + String((fe && (fe.message || fe.code)) || fe || "");
+        })
+        .filter(Boolean)
+        .join("; ");
+      var wmsg = String((writeErr && writeErr.message) || writeErr || "寫入分數失敗");
+      return {
+        status: status,
+        wmsg: wmsg,
+        fields: fields,
+        raw: raw
+      };
+    }
+
+    function isPermissionWriteError(detail) {
+      if (detail.status === 403) return true;
+      var blob = (detail.wmsg + " " + detail.fields).toLowerCase();
+      // Do NOT match generic "Failed to create record" — that is usually validation/unique.
+      return /forbidden|permission|only superusers|didn't match.*rule|does not match.*rule/.test(
+        blob
+      );
+    }
+
+    function isUniqueWriteError(detail) {
+      if (detail.status !== 400) return false;
+      var blob = JSON.stringify(detail.raw || {}) + " " + detail.wmsg;
+      return /unique|not_unique/i.test(blob);
+    }
+
     var row;
     try {
       row = prev
         ? await pb().collection(C().scores).update(prev.id, payload)
         : await pb().collection(C().scores).create(payload);
     } catch (writeErr) {
-      var wmsg = String((writeErr && writeErr.message) || writeErr || "寫入分數失敗");
-      if (/403|forbidden|only.*request|failed to|permission/i.test(wmsg)) {
-        return fail("沒有權限寫入評分，請重新登入後再試。", "JUDGE_SCORE_SECTION_FORBIDDEN");
+      var detail = writeErrorDetail(writeErr);
+      if (isPermissionWriteError(detail)) {
+        return fail(
+          "沒有權限寫入評分（請確認帳號 role=judge／admin 且 active，並已套用 hksp_scores ACL）。",
+          "JUDGE_SCORE_SECTION_FORBIDDEN"
+        );
       }
-      return fail(wmsg, "SCORE_INPUT_INVALID");
+      // Race / list miss: record exists → update instead of create.
+      if (!prev && isUniqueWriteError(detail)) {
+        try {
+          var again = await pb().collection(C().scores).getList(1, 1, {
+            filter:
+              'activity="' +
+              activity.id +
+              '" && club="' +
+              club.id +
+              '" && judge="' +
+              judgeRec.id +
+              '" && section_id="' +
+              sectionId +
+              '"'
+          });
+          if (again.totalItems > 0) {
+            payload.revision = Number(again.items[0].revision || 1) + 1;
+            row = await pb().collection(C().scores).update(again.items[0].id, payload);
+          } else {
+            throw writeErr;
+          }
+        } catch (retryErr) {
+          var d2 = writeErrorDetail(retryErr);
+          return fail(
+            d2.wmsg + (d2.fields ? "（" + d2.fields + "）" : ""),
+            "SCORE_INPUT_INVALID"
+          );
+        }
+      } else {
+        return fail(
+          detail.wmsg + (detail.fields ? "（" + detail.fields + "）" : ""),
+          "SCORE_INPUT_INVALID"
+        );
+      }
     }
     var record = recordFromRow(row, club, section, scoreConfig);
     if (!record || record.locked !== true) {
