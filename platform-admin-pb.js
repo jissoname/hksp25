@@ -718,6 +718,11 @@
         .map(function (m) {
           var stu = (m.expand && m.expand.student) || null;
           if (!stu) return null;
+          if (stu.active === false) return null;
+          var sid = String(stu.student_id || "");
+          if (/^W[a-zA-Z0-9]+$/.test(sid) || /__WRR__/i.test(sid) || /^wrr/i.test(sid)) {
+            return null;
+          }
           var row = mapStudent(stu);
           row.permanentClubId = String(club.permanent_club_id || "").toUpperCase();
           row.membershipId = m.id;
@@ -1053,27 +1058,103 @@
     });
   }
 
+  async function releaseMembershipsForStudent(uid) {
+    var mems = [];
+    try {
+      mems = await pb().collection(C().memberships).getFullList({
+        filter: 'student="' + uid + '"'
+      });
+    } catch (_listErr) {
+      mems = [];
+    }
+    var released = 0;
+    var failed = [];
+    for (var i = 0; i < mems.length; i++) {
+      var mem = mems[i];
+      var okRelease = false;
+      try {
+        await pb().collection(C().memberships).delete(mem.id);
+        okRelease = true;
+      } catch (_mDel) {
+        try {
+          await pb().collection(C().memberships).update(mem.id, {
+            status: "revoked",
+            can_upload: false
+          });
+          okRelease = true;
+        } catch (_mUp) {
+          failed.push(mem.id);
+        }
+      }
+      if (okRelease) released += 1;
+    }
+    var stillActive = [];
+    try {
+      stillActive = await pb().collection(C().memberships).getFullList({
+        filter: 'student="' + uid + '" && status="active"'
+      });
+    } catch (_recheckErr) {
+      stillActive = [];
+    }
+    return {
+      found: mems.length,
+      released: released,
+      failedIds: failed,
+      stillActive: stillActive.length
+    };
+  }
+
   async function destroyStudentAccountForReregister(student, studentId) {
     var uid = student.id;
-    // Prefer hard delete; if ACL blocks, soft-destroy to free unique student_id/email.
+    var originalId = cfg().normalizeStudentId(studentId || student.student_id || "");
+    var originalEmail = String(
+      student.email || (originalId ? cfg().studentIdToAuthEmail(originalId) : "")
+    ).trim().toLowerCase();
+    // Prefer hard delete so student_id/email are fully freed for re-registration.
     try {
       await pb().collection(C().students).delete(uid);
       return { authDeleted: true, mode: "hard" };
     } catch (_delErr) {
+      // Soft-destroy must free unique student_id + email (+ username if present).
       var stamp = String(Date.now());
-      var freedId = String(studentId || student.student_id || "STU") + "__WRR__" + stamp;
-      var freedEmail =
-        "deleted+wrr." + stamp + "." + String(student.email || cfg().studentIdToAuthEmail(studentId));
+      var short = String(uid || "x").replace(/[^a-zA-Z0-9]/g, "").slice(-8) || "x";
+      var freedId = ("W" + short + stamp).slice(0, 20);
+      var freedEmail = ("wrr." + stamp + "." + short + "@stu.hksp25.invalid").slice(0, 120);
       var randPass = "Wrr" + stamp + "x!";
-      await pb().collection(C().students).update(uid, {
+      var patch = {
         active: false,
-        student_id: freedId.slice(0, 20),
-        email: freedEmail.slice(0, 120),
+        student_id: freedId,
+        email: freedEmail,
         password: randPass,
         passwordConfirm: randPass,
         must_change_password: true,
         birth_ymd: ""
-      });
+      };
+      // PocketBase auth may keep username unique even after email change.
+      patch.username = ("wrr_" + short + stamp).slice(0, 150);
+      try {
+        await pb().collection(C().students).update(uid, patch);
+      } catch (_withUser) {
+        delete patch.username;
+        await pb().collection(C().students).update(uid, patch);
+      }
+      var verify = null;
+      try {
+        verify = await pb().collection(C().students).getOne(uid);
+      } catch (_vErr) {
+        verify = null;
+      }
+      if (verify) {
+        var stillId =
+          cfg().normalizeStudentId(verify.student_id) === originalId && !!originalId;
+        var stillEmail =
+          String(verify.email || "").trim().toLowerCase() === originalEmail && !!originalEmail;
+        if (stillId || stillEmail) {
+          throw new Error(
+            "帳號已停用，但學號／Email 未能釋放，同學號尚不可重新註冊。請用 PocketBase 超管刪除該學生列。"
+          );
+        }
+      }
       return { authDeleted: true, mode: "soft" };
     }
   }
@@ -1109,8 +1190,18 @@
     }
 
     var inv = await loadWrongRegInventory(activity, uid, studentId);
+    // Always release seats first (also cleans orphans if Auth row already gone).
+    var release = await releaseMembershipsForStudent(uid);
+    if (release.stillActive > 0) {
+      return fail(
+        "無法釋放社團名額（仍有 " +
+          release.stillActive +
+          " 筆有效綁定）。同學號尚不可重新註冊。",
+        "SEAT_RELEASE_FAILED"
+      );
+    }
+
     if (!inv.student) {
-      // Already gone → treat as idempotent success for same request shape.
       return ok({
         authDeleted: true,
         idempotent: true,
@@ -1118,33 +1209,28 @@
         studentId: studentId,
         activityId: activity.activity_id,
         clientRequestId: clientRequestId,
-        reason: reason
+        reason: reason,
+        membershipsReleased: release.released,
+        seatReleased: true,
+        seatStatus: "empty"
       });
     }
     if (cfg().normalizeStudentId(inv.student.student_id) !== studentId) {
-      return fail("帳號學號與輸入不符。", "STUDENT_ID_MISMATCH");
-    }
-
-    // PB has no separate seat document; expectedSeatVersion is optional best-effort.
-
-    // Revoke/delete memberships for this student (activity-scoped first, then any leftovers).
-    var mems = inv.memberships.slice();
-    for (var i = 0; i < mems.length; i++) {
-      try {
-        await pb().collection(C().memberships).delete(mems[i].id);
-      } catch (_mDel) {
-        try {
-          await pb().collection(C().memberships).update(mems[i].id, {
-            status: "revoked",
-            can_upload: false
-          });
-        } catch (_mUp) {
-          /* continue */
-        }
+      // Soft-tombstoned leftover: still try to destroy/free identifiers.
+      if (!/^(W|wrr)/i.test(String(inv.student.student_id || ""))) {
+        return fail("帳號學號與輸入不符。", "STUDENT_ID_MISMATCH");
       }
     }
 
-    var destroyed = await destroyStudentAccountForReregister(inv.student, studentId);
+    var destroyed;
+    try {
+      destroyed = await destroyStudentAccountForReregister(inv.student, studentId);
+    } catch (destroyErr) {
+      return fail(
+        (destroyErr && destroyErr.message) || "刪除帳號失敗，學號可能尚未釋放。",
+        "AUTH_DESTROY_FAILED"
+      );
+    }
 
     try {
       await pb().collection(C().audit).create({
@@ -1159,7 +1245,7 @@
           clientRequestId: clientRequestId,
           reason: reason,
           mode: destroyed.mode,
-          membershipsReleased: mems.length
+          membershipsReleased: release.released
         },
         occurred_at: new Date().toISOString()
       });
@@ -1176,7 +1262,7 @@
       clientRequestId: clientRequestId,
       reason: reason,
       mode: destroyed.mode,
-      membershipsReleased: mems.length,
+      membershipsReleased: release.released,
       seatReleased: true,
       seatStatus: "empty"
     });

@@ -65,7 +65,8 @@ $Acl = @{
     viewRule   = "id = @request.auth.id || ($Staff)"
     createRule = ''
     updateRule = "id = @request.auth.id || ($Admin)"
-    deleteRule = $null
+    # Admin hard-delete frees student_id/email so the same ID can re-register.
+    deleteRule = $Admin
   }
   hksp_activities = @{
     listRule   = "active = true || ($Staff)"

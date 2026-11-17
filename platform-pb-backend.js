@@ -200,14 +200,16 @@
           sort: "name"
         }),
         pb.collection(C.memberships).getFullList({
-          filter: 'activity="' + activity.id + '" && status="active"'
+          filter: 'activity="' + activity.id + '" && status="active"',
+          expand: "student"
         })
       ]).then(function (pair) {
         var clubs = pair[0] || [];
         var mems = pair[1] || [];
         var occupied = Object.create(null);
         mems.forEach(function (m) {
-          if (m && m.club) occupied[String(m.club)] = true;
+          if (!m || !m.club) return;
+          if (membershipOccupiesSeat(m, "")) occupied[String(m.club)] = true;
         });
         var mapped = clubs.map(function (club) {
           var taken = !!occupied[String(club.id)];
@@ -246,14 +248,30 @@
     return /not_unique|unique|Failed to create record/i.test(msg);
   }
 
+  function membershipOccupiesSeat(m, studentRecordId) {
+    if (!m || m.status !== "active") return false;
+    if (String(m.student) === String(studentRecordId)) return false;
+    var stu = (m.expand && m.expand.student) || null;
+    if (stu) {
+      if (stu.active === false) return false;
+      var sid = String(stu.student_id || "");
+      // Soft-tombstoned rows from wrong-registration delete must not block seats.
+      if (/^W[a-zA-Z0-9]+$/.test(sid) || /__WRR__/i.test(sid) || /^wrr/i.test(sid)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /** One active membership per club. Same student may keep/reclaim their own seat. */
   function assertClubSeatAvailable(activity, club, studentRecordId) {
     return pb.collection(C.memberships).getFullList({
       filter:
-        'activity="' + activity.id + '" && club="' + club.id + '" && status="active"'
+        'activity="' + activity.id + '" && club="' + club.id + '" && status="active"',
+      expand: "student"
     }).then(function (mems) {
       var others = (mems || []).filter(function (m) {
-        return String(m.student) !== String(studentRecordId);
+        return membershipOccupiesSeat(m, studentRecordId);
       });
       if (others.length) {
         throw err(

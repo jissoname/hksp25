@@ -144,7 +144,7 @@ $students = Ensure-Collection @{
   viewRule = 'id = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.active = true)'
   createRule = ''   # public self-registration
   updateRule = 'id = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true)'
-  deleteRule = $null
+  deleteRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true'
   fields = @(
     (TextField 'student_id' $true 20)
     (TextField 'name' $false 80)
