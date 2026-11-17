@@ -398,13 +398,100 @@
     var myScores = await pb().collection(C().scores).getFullList({
       filter: 'activity="' + activity.id + '" && judge="' + judgeRec.id + '"'
     });
+    // Fallback: activity 條件偶發對不到時，仍用 judge 撈回自己的分數。
+    if (!myScores.length) {
+      try {
+        myScores = await pb().collection(C().scores).getFullList({
+          filter: 'judge="' + judgeRec.id + '"'
+        });
+        myScores = myScores.filter(function (row) {
+          return relationId(row.activity) === String(activity.id);
+        });
+      } catch (_eScores) {
+        myScores = [];
+      }
+    }
     var scoreMap = {};
+    function putScoreKeys(row, sectionKey) {
+      var sid = String(sectionKey || "").trim();
+      if (!sid || !row) return;
+      var answers = answersMeta(row);
+      var clubKey = relationId(row.club);
+      if (clubKey) scoreMap[clubKey + "::" + sid] = row;
+      var permanent = String(answers.permanentClubId || "").trim().toUpperCase();
+      if (permanent) scoreMap["P:" + permanent + "::" + sid] = row;
+      var clubName = String(answers.clubName || "").trim();
+      if (clubName) scoreMap["N:" + clubName + "::" + sid] = row;
+    }
+    myScores.forEach(function (row) {
+      var answers = answersMeta(row);
+      var sectionKey = String(
+        row.section_id || answers.sectionId || ""
+      ).trim();
+      if (!sectionKey) return;
+      putScoreKeys(row, sectionKey);
+      // Legacy aliases: dataReview / fieldReview ↔ custom section ids stored by name path.
+      if (sectionKey === "dataReview" || /資料審查|數位資料/.test(String(answers.sectionName || ""))) {
+        putScoreKeys(row, "dataReview");
+      }
+      if (sectionKey === "fieldReview" || /實地審查|現場|詢答/.test(String(answers.sectionName || ""))) {
+        putScoreKeys(row, "fieldReview");
+      }
+    });
+    // Also index by club name from the clubs table when answers_json omitted clubName.
+    var clubById = {};
+    clubs.forEach(function (c) {
+      if (c && c.id) clubById[String(c.id)] = c;
+    });
     myScores.forEach(function (row) {
       var clubKey = relationId(row.club);
-      var sectionKey = String(row.section_id || (row.answers_json && row.answers_json.sectionId) || "");
-      if (!clubKey || !sectionKey) return;
-      scoreMap[clubKey + "::" + sectionKey] = row;
+      var club = clubById[clubKey];
+      if (!club) return;
+      var sectionKey = String(
+        row.section_id || (row.answers_json && row.answers_json.sectionId) || ""
+      ).trim();
+      if (!sectionKey) return;
+      scoreMap[club.id + "::" + sectionKey] = row;
+      var permanent = String(club.permanent_club_id || "").trim().toUpperCase();
+      if (permanent) scoreMap["P:" + permanent + "::" + sectionKey] = row;
+      var clubName = String(club.name || "").trim();
+      if (clubName) scoreMap["N:" + clubName + "::" + sectionKey] = row;
     });
+    function sectionKind(sectionId, sectionName) {
+      var sid = String(sectionId || "").trim();
+      var name = String(sectionName || "").trim();
+      if (sid === "dataReview" || /資料審查|數位資料/.test(name)) return "dataReview";
+      if (sid === "fieldReview" || /實地審查|現場|詢答/.test(name)) return "fieldReview";
+      return sid;
+    }
+    // Remap legacy / renamed section ids onto current published section ids.
+    sections.forEach(function (section) {
+      var liveId = String(section.id || "").trim();
+      if (!liveId) return;
+      var kind = sectionKind(liveId, section.name);
+      myScores.forEach(function (row) {
+        var answers = answersMeta(row);
+        var stored = String(row.section_id || answers.sectionId || "").trim();
+        if (!stored) return;
+        var storedKind = sectionKind(stored, answers.sectionName || "");
+        if (stored === liveId || (kind && storedKind && kind === storedKind)) {
+          putScoreKeys(row, liveId);
+        }
+      });
+    });
+    function findScoreRow(club, sectionId, section) {
+      if (!club) return null;
+      var sid = String(sectionId || (section && section.id) || "").trim();
+      if (!sid) return null;
+      return (
+        scoreMap[club.id + "::" + sid] ||
+        scoreMap[
+          "P:" + String(club.permanent_club_id || "").trim().toUpperCase() + "::" + sid
+        ] ||
+        scoreMap["N:" + String(club.name || "").trim() + "::" + sid] ||
+        null
+      );
+    }
     var stages = {};
     var sectionList = [];
     sections.forEach(function (section) {
@@ -414,18 +501,20 @@
       var reopenedCount = 0;
       var notStartedCount = 0;
       var clubRows = clubs.map(function (club) {
-        var row = scoreMap[club.id + "::" + section.id] || null;
+        var row = findScoreRow(club, section.id, section);
         var answers = answersMeta(row);
         var reopened = !!(row && answers.reopened === true);
         var status = "notStarted";
         if (row) {
+          var rowStatus = String(row.status || "").trim().toLowerCase();
+          var lockedFlag = answers.locked === true;
           if (reopened) {
             status = "reopened";
             reopenedCount += 1;
-          } else if (row.status === "submitted") {
+          } else if (rowStatus === "submitted" || lockedFlag) {
             status = "submitted";
             submittedCount += 1;
-          } else if (row.status === "draft") {
+          } else if (rowStatus === "draft") {
             status = "draft";
             draftCount += 1;
           } else {

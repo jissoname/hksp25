@@ -2038,7 +2038,7 @@ button{
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
-<script src="./platform-judge-pb.js?v=score-persist-2"></script>
+<script src="./platform-judge-pb.js?v=score-persist-4"></script>
 
 <script>
 /**
@@ -3572,19 +3572,491 @@ async function handleLogin(
 
 
 
+function rememberRecentSubmitGuard_(
+  sectionId,
+  clubName,
+  permanentClubId
+) {
+
+  if (
+    !APP.recentSubmitGuards_
+  ) {
+
+    APP.recentSubmitGuards_ =
+      {};
+
+  }
+
+
+  const keys =
+    [];
+
+
+  const sid =
+    String(
+      sectionId ||
+      ""
+    )
+    .trim();
+
+
+  const name =
+    String(
+      clubName ||
+      ""
+    )
+    .trim();
+
+
+  const permanent =
+    String(
+      permanentClubId ||
+      ""
+    )
+    .trim()
+    .toUpperCase();
+
+
+  if (
+    sid &&
+    permanent
+  ) {
+
+    keys.push(
+      sid +
+      "::P:" +
+      permanent
+    );
+
+  }
+
+
+  if (
+    sid &&
+    name
+  ) {
+
+    keys.push(
+      sid +
+      "::N:" +
+      name
+    );
+
+  }
+
+
+  const now =
+    Date.now();
+
+
+  keys.forEach(
+    function (
+      key
+    ) {
+
+      APP.recentSubmitGuards_[
+        key
+      ] =
+        now;
+
+    }
+  );
+
+}
+
+
+function hasRecentSubmitGuard_(
+  sectionId,
+  clubName,
+  permanentClubId
+) {
+
+  const guards =
+    APP.recentSubmitGuards_ ||
+    {};
+
+
+  const sid =
+    String(
+      sectionId ||
+      ""
+    )
+    .trim();
+
+
+  const name =
+    String(
+      clubName ||
+      ""
+    )
+    .trim();
+
+
+  const permanent =
+    String(
+      permanentClubId ||
+      ""
+    )
+    .trim()
+    .toUpperCase();
+
+
+  const now =
+    Date.now();
+
+
+  const keys =
+    [];
+
+
+  if (
+    sid &&
+    permanent
+  ) {
+
+    keys.push(
+      sid +
+      "::P:" +
+      permanent
+    );
+
+  }
+
+
+  if (
+    sid &&
+    name
+  ) {
+
+    keys.push(
+      sid +
+      "::N:" +
+      name
+    );
+
+  }
+
+
+  for (
+    let i = 0;
+    i < keys.length;
+    i += 1
+  ) {
+
+    const stamp =
+      Number(
+        guards[
+          keys[i]
+        ] ||
+        0
+      );
+
+
+    if (
+      stamp &&
+      now -
+        stamp <
+        120000
+    ) {
+
+      return true;
+
+    }
+
+  }
+
+
+  return false;
+
+}
+
+
+function mergeDashboardPreserveRecentSubmitted_(
+  incoming
+) {
+
+  const prev =
+    APP.dashboard;
+
+
+  if (
+    !incoming ||
+    !incoming.stages ||
+    !prev ||
+    !prev.stages
+  ) {
+
+    return incoming;
+
+  }
+
+
+  Object.keys(
+    incoming.stages
+  )
+  .forEach(
+    function (
+      sectionId
+    ) {
+
+      const nextStage =
+        incoming.stages[
+          sectionId
+        ];
+
+
+      const prevStage =
+        prev.stages[
+          sectionId
+        ];
+
+
+      if (
+        !nextStage ||
+        !prevStage ||
+        !Array.isArray(
+          nextStage.clubs
+        ) ||
+        !Array.isArray(
+          prevStage.clubs
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      let submittedCount =
+        0;
+
+
+      let draftCount =
+        0;
+
+
+      let reopenedCount =
+        0;
+
+
+      let notStartedCount =
+        0;
+
+
+      nextStage.clubs.forEach(
+        function (
+          club
+        ) {
+
+          if (
+            !club
+          ) {
+
+            return;
+
+          }
+
+
+          const name =
+            String(
+              club.clubName ||
+              club.name ||
+              ""
+            )
+            .trim();
+
+
+          const permanent =
+            String(
+              club.permanentClubId ||
+              ""
+            )
+            .trim()
+            .toUpperCase();
+
+
+          const prevClub =
+            prevStage.clubs.find(
+              function (
+                row
+              ) {
+
+                const rowName =
+                  String(
+                    row.clubName ||
+                    row.name ||
+                    ""
+                  )
+                  .trim();
+
+
+                const rowPermanent =
+                  String(
+                    row.permanentClubId ||
+                    ""
+                  )
+                  .trim()
+                  .toUpperCase();
+
+
+                return (
+                  (
+                    permanent &&
+                    rowPermanent &&
+                    permanent ===
+                      rowPermanent
+                  )
+
+                  ||
+
+                  (
+                    name &&
+                    rowName &&
+                    name ===
+                      rowName
+                  )
+                );
+
+              }
+            );
+
+
+          if (
+            club.status !==
+              "submitted" &&
+            club.status !==
+              "reopened" &&
+            club.status !==
+              "draft" &&
+            prevClub &&
+            prevClub.status ===
+              "submitted" &&
+            hasRecentSubmitGuard_(
+              sectionId,
+              name,
+              permanent
+            )
+          ) {
+
+            club.status =
+              "submitted";
+
+
+            club.locked =
+              true;
+
+
+            club.reopened =
+              false;
+
+
+            club.statusPending =
+              false;
+
+
+            if (
+              club.totalScore ==
+                null &&
+              prevClub.totalScore !=
+                null
+            ) {
+
+              club.totalScore =
+                prevClub.totalScore;
+
+            }
+
+          }
+
+
+          if (
+            club.status ===
+            "submitted"
+          ) {
+
+            submittedCount +=
+              1;
+
+          }
+
+          else if (
+            club.status ===
+            "reopened"
+          ) {
+
+            reopenedCount +=
+              1;
+
+          }
+
+          else if (
+            club.status ===
+            "draft"
+          ) {
+
+            draftCount +=
+              1;
+
+          }
+
+          else {
+
+            notStartedCount +=
+              1;
+
+          }
+
+        }
+      );
+
+
+      nextStage.submittedCount =
+        submittedCount;
+
+
+      nextStage.draftCount =
+        draftCount;
+
+
+      nextStage.reopenedCount =
+        reopenedCount;
+
+
+      nextStage.notStartedCount =
+        notStartedCount;
+
+
+      nextStage.totalClubs =
+        nextStage.clubs.length;
+
+    }
+  );
+
+
+  return incoming;
+
+}
+
+
 function applyDashboardPayload_(
   dashboard
 ) {
 
+  const merged =
+    mergeDashboardPreserveRecentSubmitted_(
+      dashboard
+    );
+
+
   APP.dashboard =
-    dashboard;
+    merged;
 
 
   try {
 
     const stages =
-      dashboard &&
-      dashboard.stages;
+      merged &&
+      merged.stages;
 
 
     if (
@@ -3636,11 +4108,12 @@ function applyDashboardPayload_(
 
 
   if (
-    dashboard.judge
+    merged &&
+    merged.judge
   ) {
 
     APP.judge =
-      dashboard.judge;
+      merged.judge;
 
   }
 
@@ -6424,6 +6897,10 @@ function markClubSubmittedLocally_(
       false;
 
 
+    club.locked =
+      true;
+
+
     return true;
 
   }
@@ -6451,6 +6928,92 @@ function markClubSubmittedLocally_(
           patchClub
         );
 
+
+      let submittedCount =
+        0;
+
+
+      let draftCount =
+        0;
+
+
+      let reopenedCount =
+        0;
+
+
+      let notStartedCount =
+        0;
+
+
+      stage.clubs.forEach(
+        function (
+          club
+        ) {
+
+          if (
+            club.status ===
+            "submitted"
+          ) {
+
+            submittedCount +=
+              1;
+
+          }
+
+          else if (
+            club.status ===
+            "reopened"
+          ) {
+
+            reopenedCount +=
+              1;
+
+          }
+
+          else if (
+            club.status ===
+            "draft"
+          ) {
+
+            draftCount +=
+              1;
+
+          }
+
+          else {
+
+            notStartedCount +=
+              1;
+
+          }
+
+        }
+      );
+
+
+      stage.submittedCount =
+        submittedCount;
+
+
+      stage.draftCount =
+        draftCount;
+
+
+      stage.reopenedCount =
+        reopenedCount;
+
+
+      stage.notStartedCount =
+        notStartedCount;
+
+
+      stage.totalClubs =
+        stage.clubs.length;
+
+
+      stage.statusPending =
+        false;
+
     }
 
 
@@ -6461,6 +7024,15 @@ function markClubSubmittedLocally_(
 
 
     if (
+      typeof renderDashboard ===
+      "function"
+    ) {
+
+      renderDashboard();
+
+    }
+
+    else if (
       typeof filterAndRenderClubs ===
       "function"
     ) {
@@ -9521,6 +10093,13 @@ function finishSubmitSuccess_(
   }
 
 
+  rememberRecentSubmitGuard_(
+    context.sectionId,
+    context.clubName,
+    context.permanentClubId
+  );
+
+
   markClubSubmittedLocally_(
     context.sectionId,
     context.clubName,
@@ -9533,8 +10112,11 @@ function finishSubmitSuccess_(
   );
 
 
+  /*
+   * 稍後再抓進度：避免送分當下重整把本機「已送出」蓋回未開始。
+   */
   scheduleJudgeDashboardStatusCatchup_(
-    0
+    800
   );
 
 }
