@@ -124,22 +124,34 @@
     return conf.scoreConfig && typeof conf.scoreConfig === "object" ? conf.scoreConfig : null;
   }
 
-  function publishedSections(scoreConfig, allowedIds) {
-    var sections = (scoreConfig && Array.isArray(scoreConfig.sections) ? scoreConfig.sections : []).filter(
+  function scoringSections(scoreConfig, allowedIds, requirePublished) {
+    var all = (scoreConfig && Array.isArray(scoreConfig.sections) ? scoreConfig.sections : []).filter(
       function (s) {
-        return s && s.enabled !== false && s.published === true && s.scoringMode !== "manual";
+        return s && s.enabled !== false && s.scoringMode !== "manual";
       }
     );
+    var sections = requirePublished
+      ? all.filter(function (s) {
+          return s.published === true;
+        })
+      : all.slice();
+    // 若尚未標記 published，仍允許使用已啟用大項（避免送分／管理端雙雙空白）
+    if (requirePublished && !sections.length) sections = all.slice();
     if (Array.isArray(allowedIds) && allowedIds.length) {
       var set = {};
       allowedIds.forEach(function (id) {
         set[String(id)] = true;
       });
-      sections = sections.filter(function (s) {
+      var filtered = sections.filter(function (s) {
         return set[String(s.id)];
       });
+      if (filtered.length) sections = filtered;
     }
     return sections;
+  }
+
+  function publishedSections(scoreConfig, allowedIds) {
+    return scoringSections(scoreConfig, allowedIds, true);
   }
 
   function flattenCriteria(section) {
@@ -433,24 +445,45 @@
 
   async function judgeSubmitScore(data) {
     var judgeRec = pb().authStore.model;
+    if (!judgeRec || !judgeRec.id) {
+      return fail("評審登入已失效，請重新登入。", "JUDGE_UNAUTHORIZED");
+    }
     var activity = await getActivity();
     var scoreConfig = scoreConfigOf(activity);
-    if (!scoreConfig) return fail("尚未設定評分機制。");
+    if (!scoreConfig) {
+      return fail("尚未設定評分機制。請先在管理後台建立並發布配分表。", "SCORE_SECTION_REQUIRED");
+    }
     var sectionId = String((data && (data.sectionId || data.stageKey)) || "").trim();
+    if (!sectionId) return fail("缺少評分大項。", "SCORE_SECTION_REQUIRED");
     var section = (scoreConfig.sections || []).find(function (s) {
       return String(s.id) === sectionId;
     });
-    if (!section) return fail("找不到評分大項。");
-    var club = await findClub(activity, data.permanentClubId, data.clubName);
+    if (!section || section.enabled === false) {
+      return fail("找不到評分大項。", "SCORE_SECTION_NOT_FOUND");
+    }
+    var club;
+    try {
+      club = await findClub(activity, data.permanentClubId, data.clubName);
+    } catch (clubErr) {
+      return fail((clubErr && clubErr.message) || "找不到社團。", "CLUB_NOT_FOUND");
+    }
     var scores = (data && data.scores) || {};
     var criteria = flattenCriteria(section);
+    if (!criteria.length) {
+      return fail("此大項目前沒有可評分的小項。", "SCORE_SECTION_REQUIRED");
+    }
     var total = 0;
     for (var i = 0; i < criteria.length; i++) {
       var c = criteria[i];
       var v = Number(scores[c.id]);
-      if (!Number.isFinite(v)) return fail("請完成所有評分小項。");
+      if (!Number.isFinite(v)) {
+        return fail("請完成所有評分小項。", "SCORE_INCOMPLETE");
+      }
       if (v < 0 || v > Number(c.maxScore)) {
-        return fail("「" + c.name + "」分數超出範圍（0–" + c.maxScore + "）。");
+        return fail(
+          "「" + c.name + "」分數超出範圍（0–" + c.maxScore + "）。",
+          "SCORE_INPUT_INVALID"
+        );
       }
       total += v;
     }
@@ -469,11 +502,12 @@
     var prev = existing.totalItems > 0 ? existing.items[0] : null;
     var prevAnswers = answersMeta(prev);
     if (prev && prev.status === "submitted" && prevAnswers.reopened !== true) {
-      return fail("此筆已鎖定，無法再次送出。請請管理員解鎖。", "SCORE_LOCKED");
+      return fail("此筆已鎖定，無法再次送出。請請管理員解鎖。", "JUDGE_SCORE_LOCKED");
     }
     var configRevision = Number(scoreConfig.revision) || 1;
     var signature = ruleSignatureOf(section, configRevision);
     var revision = prev ? Number(prev.revision || 1) + 1 : 1;
+    var submittedAt = new Date().toISOString();
     var payload = {
       activity: activity.id,
       club: club.id,
@@ -487,21 +521,61 @@
         reopened: false,
         unlockedAt: null,
         configRevision: configRevision,
-        ruleSignature: signature
+        ruleSignature: signature,
+        submittedAt: submittedAt,
+        judgeId: judgeRec.id,
+        permanentClubId: String(club.permanent_club_id || "").toUpperCase(),
+        clubName: club.name || "",
+        sectionId: sectionId
       },
       status: "submitted",
       revision: revision,
-      submitted_at: new Date().toISOString()
+      submitted_at: submittedAt
     };
-    var row = prev
-      ? await pb().collection(C().scores).update(prev.id, payload)
-      : await pb().collection(C().scores).create(payload);
+    var row;
+    try {
+      row = prev
+        ? await pb().collection(C().scores).update(prev.id, payload)
+        : await pb().collection(C().scores).create(payload);
+    } catch (writeErr) {
+      var wmsg = String((writeErr && writeErr.message) || writeErr || "寫入分數失敗");
+      if (/403|forbidden|only.*request|failed to|permission/i.test(wmsg)) {
+        return fail("沒有權限寫入評分，請重新登入後再試。", "JUDGE_SCORE_SECTION_FORBIDDEN");
+      }
+      return fail(wmsg, "SCORE_INPUT_INVALID");
+    }
     var record = recordFromRow(row, club, section, scoreConfig);
+    if (!record || record.locked !== true) {
+      // 保險：若回讀語意異常，仍以本次 payload 組成成功結果，避免前端誤入 confirming
+      record = {
+        id: row.id,
+        clubName: club.name,
+        permanentClubId: String(club.permanent_club_id || "").toUpperCase(),
+        sectionId: sectionId,
+        scores: scores,
+        totalScore: total,
+        comment: payload.comment,
+        status: "submitted",
+        locked: true,
+        reopened: false,
+        unlockedAt: null,
+        submissionRevision: revision,
+        configRevision: configRevision,
+        ruleSignature: signature,
+        submittedAt: submittedAt,
+        updatedAt: row.updated || submittedAt
+      };
+    }
     return ok({
+      success: true,
       record: record,
       locked: true,
+      reopened: false,
       submissionRevision: revision,
-      scores: scores
+      scores: scores,
+      permanentClubId: record.permanentClubId,
+      clubName: club.name,
+      sectionId: sectionId
     });
   }
 

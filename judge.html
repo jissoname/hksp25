@@ -2073,6 +2073,7 @@ button{
     "SCORE_SECTION_REQUIRED",
     "SCORE_SECTION_NOT_FOUND",
     "SCORE_SECTION_NOT_PUBLISHED",
+    "SCORE_LOCKED",
     "JUDGE_SCORE_LOCKED",
     "JUDGE_CLUB_FORBIDDEN",
     "JUDGE_SCORE_SECTION_FORBIDDEN",
@@ -2080,7 +2081,10 @@ button{
     "JUDGE_ID_REQUIRED",
     "JUDGE_NOT_FOUND",
     "CLUB_NAME_REQUIRED",
-    "CLUB_NOT_FOUND"
+    "CLUB_NOT_FOUND",
+    "PB_JUDGE_ERROR",
+    "FORBIDDEN",
+    "UNIMPLEMENTED"
   ];
 
   function isFiniteScoreNumber(value) {
@@ -2304,6 +2308,23 @@ button{
           apply: false,
           clearSession: false,
           allowRetry: false,
+          definiteFailure: true,
+          message: result.message || "正式送出失敗"
+        };
+      }
+      // PocketBase adapter returns a definite business payload (no ambiguous network write).
+      // Any success:false here must surface as rejected, not "confirming".
+      if (
+        result &&
+        result.success === false &&
+        typeof isPocketBaseJudgeMode === "function" &&
+        isPocketBaseJudgeMode()
+      ) {
+        return {
+          kind: "rejected",
+          apply: false,
+          clearSession: false,
+          allowRetry: true,
           definiteFailure: true,
           message: result.message || "正式送出失敗"
         };

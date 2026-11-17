@@ -1049,9 +1049,7 @@
     scores.forEach(function (row) {
       byKey[row.judge + "::" + row.club + "::" + row.section_id] = row;
     });
-    var sections = (scoreConfig.sections || []).filter(function (s) {
-      return s && s.published === true;
-    });
+    var sections = publishedSectionsOf(scoreConfig);
     var progress = judges.map(function (judge) {
       var sectionProgress = sections.map(function (section) {
         var rows = clubs.map(function (club) {
@@ -1250,9 +1248,25 @@
   }
 
   function publishedSectionsOf(scoreConfig) {
-    return (scoreConfig.sections || []).filter(function (s) {
-      return s && s.enabled !== false && s.published === true;
+    var all = (scoreConfig.sections || []).filter(function (s) {
+      return s && s.enabled !== false && s.scoringMode !== "manual";
     });
+    var published = all.filter(function (s) {
+      return s.published === true;
+    });
+    // 尚未標記 published 時，管理端仍要用啟用中的大項接收／彙整評審分數
+    return published.length ? published : all;
+  }
+
+  function normalizeCategoryLabel(raw) {
+    var key = String(raw || "").trim();
+    if (!key) return "";
+    try {
+      if (cfg().mapClubCategory) return String(cfg().mapClubCategory(key) || key).trim();
+    } catch (_e) {
+      /* ignore */
+    }
+    return key;
   }
 
   function judgeCoversClub(judge, club, sectionId) {
@@ -1261,8 +1275,13 @@
     if (sections.length && sections.indexOf(sectionId) < 0) return false;
     var cats = Array.isArray(judge.categories) ? judge.categories : [];
     if (!cats.length) return true;
-    var cat = String(club.category || "").trim();
-    return cats.indexOf(cat) >= 0;
+    var cat = normalizeCategoryLabel(club.category);
+    var set = {};
+    cats.forEach(function (c) {
+      set[normalizeCategoryLabel(c)] = true;
+      set[String(c || "").trim()] = true;
+    });
+    return !!(set[cat] || set[String(club.category || "").trim()]);
   }
 
   function scoreBucket(maxScore) {
