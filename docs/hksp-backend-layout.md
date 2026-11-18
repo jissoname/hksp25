@@ -23,7 +23,7 @@ flowchart TB
 |---|---|---|
 | PocketBase | 身分、資格、資料夾樹 meta、上傳檔、分數 | **主路徑**：`hksp_*` + `file`（整夾／大檔） |
 | Drive Proxy / GAS | 可選鏡射到校方 Drive | 已通測；預設 `useDriveProxy=false` |
-| 前端 | 學生 `index.html`；評審 `judge-pb.html` | 學生＋評審最小頁已接 PB |
+| 前端 | 學生 `index.html`；評審 `judge.html`；管理 `admin.html` | 正式頁皆已接 PB（`judge-pb.html` 僅煙測） |
 
 ## 資料流（最終上傳）
 
@@ -64,10 +64,10 @@ flowchart TB
 2. ~~持有帳 OAuth + proxy／GAS 真上傳~~（已通）  
 3. ~~PB 改為上傳主路徑（無 GCP 計費也可整夾）~~  
 4. ~~評審最小頁讀檔／打分（`judge-pb.html`）~~  
-5. **接下來**：正式校方 Drive 持有帳（若要鏡射）；完整 `judge.html`／`admin.html` 搬遷
+5. ~~完整 `judge.html`／`admin.html` 搬遷至 PocketBase~~  
+6. **可選**：正式校方 Drive 持有帳鏡射（預設仍關閉）
 
 ## 不在本布局
 
-- 舊 `judge.html`／`admin.html` 全站搬遷  
 - 讓學生 OAuth Google  
 - 用 Drive 當帳號／分數資料庫  

@@ -40,8 +40,8 @@
 
 ## 前端／API
 
-- 評審頁 `judge.html`（煙測頁 `judge-pb.html`）：允許 `role=judge` **或** `admin` 登入評審流程。
-- 管理頁 `admin.html` 已接 PocketBase；學生上傳受總開關＋評選／特色各自截止約束。
+- 正式評審頁 `judge.html`（可選煙測頁 `judge-pb.html`）：允許 `role=judge` **或** `admin` 登入評審流程。
+- 正式管理頁 `admin.html` 已接 PocketBase（僅 `role=admin`）；學生上傳受總開關＋評選／特色各自截止約束。
 
 ## 建立順序
 

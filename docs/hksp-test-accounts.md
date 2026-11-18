@@ -41,7 +41,7 @@ powershell -File scripts/pb-seed-clubs-115-1.ps1
 | 密碼 | `921020` |
 | 說明 | 與後台同帳；`role=admin` 亦可登入評審端。示範評審 `judge.demo@hksp.local` / `JudgeDemo123!` 仍可用 |
 
-最小煙測頁：`judge-pb.html`（同上帳密）。
+正式入口請用 `judge.html`。可選煙測頁：`judge-pb.html`（同上帳密）。
 
 ## 業務超管（`hksp_staff` / `role=admin`）
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>學生上傳驗收｜mode=off</title>
+<title>學生上傳驗收｜PocketBase</title>
 <link rel="icon" href="./bg-logo.png" type="image/png">
 <link rel="apple-touch-icon" href="./bg-logo.png">
 <style>
@@ -55,16 +55,26 @@ a.btn.secondary { background: #44586d; }
 <body>
 <main>
   <p class="brand">弘光社團資訊平台</p>
-  <p class="lead">學生上傳驗收導引（mode=<strong>off</strong>）。本頁<strong>不顯示</strong>特定學號／UID／繳交快照；私人狀態僅在登入後由工作區後端回傳。不索取密碼、不匯出 token。</p>
+  <p class="lead">學生上傳驗收導引（PocketBase 主路徑）。本頁<strong>不顯示</strong>特定學號／UID／繳交快照；私人狀態僅在登入後由工作區後端回傳。不索取密碼、不匯出 token。</p>
 
   <section class="panel">
-    <h2>量測原則（必讀）</h2>
+    <h2>現行規則（必讀）</h2>
+    <ul>
+      <li>上傳主路徑為 <strong>PocketBase</strong>（<code>useDriveProxy=false</code>）；校方 Drive 代傳預設關閉。</li>
+      <li>總開關 <code>uploadGate</code>、評選截止 <code>dataDeadline</code>、特色截止 <code>featureDeadline</code> 各自獨立；未開放或已截止時應拒寫。</li>
+      <li>社團須具備對應<strong>參與資格</strong>（評選／特色／兩項）；未參加項目不可上傳。</li>
+      <li><strong>評選資料僅 PDF</strong>；特色依後端規則。目的資料夾須屬本社且 kind 相符；同名完成檔需確認才覆寫。</li>
+      <li>帳號卡住請走「忘記密碼／帳號協助」或管理員錯誤註冊清除；勿依賴已停用的自動清理／改密復原。</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>量測原則</h2>
     <ul>
       <li>登入、評選／特色<strong>實際切換</strong>、重新整理、閒置 10 分鐘：一律在 <strong>index.html 工作區分頁</strong>以 Network／CDP（及必要後端日誌）量測。</li>
       <li>開啟下方「工作區（含量測）」後，該頁會載入 <code>platform-accept-measure.js</code>（僅 <code>hkspMeasure=1</code>）。</li>
       <li><strong>不可</strong>用本驗收導引頁「自己沒發請求」推論工作區零請求。</li>
-      <li>業務請求＝callable／portal；預檢 OPTIONS、JS／CSS／字型等靜態資源分開計。</li>
-      <li>Firestore 文件讀取：實測與估算分開標示；API 次數 ≠ 文件讀取。</li>
+      <li>業務請求＝ PocketBase API／callable；預檢 OPTIONS、JS／CSS／字型等靜態資源分開計。</li>
     </ul>
   </section>
 
@@ -72,12 +82,13 @@ a.btn.secondary { background: #44586d; }
     <h2>總召步驟</h2>
     <ol>
       <li>開啟工作區 → 用<strong>原帳號</strong>登入（勿因曾見未登入畫面而解綁／重綁）。</li>
-      <li>mode=off：應見尚未開放上傳；分類可唯讀瀏覽；建立／上傳應拒寫。</li>
-      <li>實際點選評選 ↔ 特色（含返回項目選擇），在 Network 看 list／portal 是否重打。</li>
+      <li>閘門關閉或已截止：應見不可上傳；分類可唯讀瀏覽；建立／上傳應拒寫。</li>
+      <li>閘門開放且社團有參與資格：評選僅 PDF 可完成；非 PDF 應被拒。</li>
+      <li>實際點選評選 ↔ 特色（含返回項目選擇），在 Network 看 list／access 是否重打。</li>
       <li>硬重新整理後再看握手／list；閒置 10 分鐘保持<strong>工作區分頁</strong>開啟。</li>
       <li>主控台可執行 <code>__HKSP_MEASURE.summary()</code>／閒置前後對照（僅工作區量測列）。</li>
     </ol>
-    <p class="warn">未登入時本頁與工作區皆不展示特定學生私人資料。受控 live 見內部方案檔；未允許前維持 off。</p>
+    <p class="warn">未登入時本頁與工作區皆不展示特定學生私人資料。</p>
     <div class="actions">
       <a class="btn" id="wsMain" href="./index.html?_v=measure&amp;hkspMeasure=1">開啟工作區（含量測）</a>
       <a class="btn secondary" id="wsAlt" href="#">備用站工作區</a>

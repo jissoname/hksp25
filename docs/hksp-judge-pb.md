@@ -2,8 +2,8 @@
 
 ## 現況
 
-- **正式評審台**：[`judge.html`](../judge.html)（預設接 PocketBase；`?gas=1` 可回舊 GAS）
-- **最小煙測頁**：[`judge-pb.html`](../judge-pb.html)（單分＋檔案列表）
+- **正式評審台**：[`judge.html`](../judge.html)（預設接 PocketBase；`?gas=1` 可回舊 GAS）— 主路徑
+- **最小煙測頁**：[`judge-pb.html`](../judge-pb.html)（單分＋檔案列表）— 可選，非正式入口
 - Adapter：[`platform-judge-pb.js`](../platform-judge-pb.js)
 - 配分表：`hksp_activities.config_json.scoreConfig`（管理端可編輯／發布）
 - 分數：`hksp_scores`（小項分數存 `answers_json.scores`；鎖定／解鎖語意在 `answers_json`）
