@@ -1152,16 +1152,158 @@ button{
   flex-direction:column
 }
 
+.materials-preview-bar{
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:8px;
+
+  flex-wrap:wrap;
+
+  padding:8px 10px;
+
+  border-bottom:1px solid var(--border);
+
+  background:#f8fafc
+}
+
+.materials-preview-name{
+  flex:1;
+
+  min-width:0;
+
+  font-size:11px;
+
+  font-weight:850;
+
+  color:#174b88;
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap
+}
+
+.materials-preview-actions{
+  display:flex;
+
+  gap:6px;
+
+  flex-wrap:wrap
+}
+
+.materials-preview-actions .btn{
+  padding:5px 9px;
+
+  font-size:11px
+}
+
 .materials-preview-frame{
   width:100%;
 
   flex:1;
 
-  min-height:260px;
+  min-height:320px;
 
   border:0;
 
   background:#f8fafc
+}
+
+.score-split[data-view-mode="materials"] .materials-preview-frame{
+  min-height:420px
+}
+
+.materials-lightbox{
+  position:fixed;
+
+  inset:0;
+
+  z-index:12000;
+
+  display:none;
+
+  align-items:stretch;
+
+  justify-content:center;
+
+  padding:18px;
+
+  background:rgba(15,23,42,.62);
+
+  cursor:pointer
+}
+
+.materials-lightbox.is-open{
+  display:flex
+}
+
+.materials-lightbox-panel{
+  width:min(1120px,100%);
+
+  height:100%;
+
+  max-height:calc(100vh - 36px);
+
+  background:#fff;
+
+  border-radius:14px;
+
+  overflow:hidden;
+
+  display:flex;
+
+  flex-direction:column;
+
+  border:1px solid var(--border);
+
+  cursor:default
+}
+
+.materials-lightbox-head{
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:10px;
+
+  padding:10px 12px;
+
+  border-bottom:1px solid var(--border);
+
+  background:#f8fafc
+}
+
+.materials-lightbox-title{
+  font-size:13px;
+
+  font-weight:900;
+
+  color:#174b88;
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap
+}
+
+.materials-lightbox-frame{
+  flex:1;
+
+  width:100%;
+
+  border:0;
+
+  background:#f8fafc;
+
+  min-height:0
 }
 
 .materials-folder{
@@ -2446,7 +2588,7 @@ button{
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
-<script src="./platform-judge-pb.js?v=materials-view-1"></script>
+<script src="./platform-judge-pb.js?v=materials-view-2"></script>
 
 <script>
 /**
@@ -3272,20 +3414,44 @@ function bindEvents() {
 
         if (
 
-          event.key ===
+          event.key !==
           "Escape"
 
-          &&
+          ||
 
-          !APP.busy
+          APP.busy
 
         ) {
 
-          closeSubmitConfirm();
-
-          closeScoreModal();
+          return;
 
         }
+
+
+        const lightbox =
+          byId(
+            "materialsLightbox"
+          );
+
+
+        if (
+          lightbox &&
+          lightbox.classList.contains(
+            "is-open"
+          )
+        ) {
+
+          closeMaterialsLightbox_();
+
+
+          return;
+
+        }
+
+
+        closeSubmitConfirm();
+
+        closeScoreModal();
 
       }
 
@@ -9452,10 +9618,187 @@ function renderScoreMaterialsPane_() {
   ) {
 
     preview.innerHTML =
-      '<div class="materials-empty">選擇左側檔案後可於此預覽</div>';
+      '<div class="materials-empty">選擇左側檔案後可於此預覽；可再按「放大預覽」全螢幕檢視。</div>';
 
 
     return;
+
+  }
+
+
+  const fileLabel =
+    escapeHtml(
+      materialsFileLabel_(
+        selected
+      )
+    );
+
+
+  const safeUrl =
+    escapeHtml(
+      selected.fileUrl
+    );
+
+
+  const previewBar =
+    `<div class="materials-preview-bar">
+      <div class="materials-preview-name" title="${fileLabel}">${fileLabel}</div>
+      <div class="materials-preview-actions">
+        <button
+          type="button"
+          class="btn btn-primary"
+          onclick="openMaterialsLightbox_()"
+        >
+          放大預覽
+        </button>
+        <a
+          class="btn"
+          href="${safeUrl}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          開新分頁
+        </a>
+      </div>
+    </div>`;
+
+
+  if (
+    isPdfMaterialsFile_(
+      selected
+    )
+  ) {
+
+    preview.innerHTML =
+      previewBar +
+      `<iframe class="materials-preview-frame" title="PDF 預覽" src="${safeUrl}#toolbar=1"></iframe>`;
+
+  }
+
+  else {
+
+    preview.innerHTML =
+      previewBar +
+      `<div class="materials-empty">此檔案非 PDF，請用「開新分頁」檢視（仍為唯讀）。</div>`;
+
+  }
+
+}
+
+
+function selectedMaterialsFile_() {
+
+  const state =
+    APP.materialsState;
+
+
+  if (
+    !state ||
+    !state.selectedFileId
+  ) {
+
+    return null;
+
+  }
+
+
+  return (state.files || [])
+    .find(
+      function (
+        file
+      ) {
+
+        return file.id ===
+          state.selectedFileId;
+
+      }
+    ) ||
+    null;
+
+}
+
+
+function openMaterialsLightbox_() {
+
+  const selected =
+    selectedMaterialsFile_();
+
+
+  if (
+    !selected ||
+    !selected.fileUrl
+  ) {
+
+    toast(
+      "請先選擇左側檔案再放大預覽"
+    );
+
+
+    return;
+
+  }
+
+
+  const box =
+    byId(
+      "materialsLightbox"
+    );
+
+
+  const frame =
+    byId(
+      "materialsLightboxFrame"
+    );
+
+
+  const title =
+    byId(
+      "materialsLightboxTitle"
+    );
+
+
+  const openTab =
+    byId(
+      "materialsLightboxOpenTab"
+    );
+
+
+  if (
+    !box ||
+    !frame
+  ) {
+
+    window.open(
+      selected.fileUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+
+    return;
+
+  }
+
+
+  if (
+    title
+  ) {
+
+    title.textContent =
+      materialsFileLabel_(
+        selected
+      ) ||
+      "PDF 放大預覽";
+
+  }
+
+
+  if (
+    openTab
+  ) {
+
+    openTab.href =
+      selected.fileUrl;
 
   }
 
@@ -9466,15 +9809,90 @@ function renderScoreMaterialsPane_() {
     )
   ) {
 
-    preview.innerHTML =
-      `<iframe class="materials-preview-frame" title="PDF 預覽" src="${escapeHtml(selected.fileUrl)}#toolbar=1"></iframe>`;
+    frame.src =
+      selected.fileUrl +
+      "#toolbar=1";
+
+
+    frame.style.display =
+      "";
 
   }
 
   else {
 
-    preview.innerHTML =
-      `<div class="materials-empty">此檔案非 PDF，請<a href="${escapeHtml(selected.fileUrl)}" target="_blank" rel="noopener noreferrer">開新分頁檢視</a>（仍為唯讀）。</div>`;
+    frame.removeAttribute(
+      "src"
+    );
+
+
+    frame.style.display =
+      "none";
+
+
+    window.open(
+      selected.fileUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+
+    return;
+
+  }
+
+
+  box.classList.add(
+    "is-open"
+  );
+
+
+  box.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+}
+
+
+function closeMaterialsLightbox_() {
+
+  const box =
+    byId(
+      "materialsLightbox"
+    );
+
+
+  const frame =
+    byId(
+      "materialsLightboxFrame"
+    );
+
+
+  if (
+    frame
+  ) {
+
+    frame.removeAttribute(
+      "src"
+    );
+
+  }
+
+
+  if (
+    box
+  ) {
+
+    box.classList.remove(
+      "is-open"
+    );
+
+
+    box.setAttribute(
+      "aria-hidden",
+      "true"
+    );
 
   }
 
@@ -12744,6 +13162,9 @@ function closeScoreModal(
     null;
 
 
+  closeMaterialsLightbox_();
+
+
   setScoreModalViewMode_(
     "score"
   );
@@ -13058,6 +13479,52 @@ function toast(
 }
 
 </script>
+
+<div
+  id="materialsLightbox"
+  class="materials-lightbox"
+  aria-hidden="true"
+  onclick="if(event.target===this)closeMaterialsLightbox_()"
+>
+  <div
+    class="materials-lightbox-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="materialsLightboxTitle"
+  >
+    <div class="materials-lightbox-head">
+      <div
+        id="materialsLightboxTitle"
+        class="materials-lightbox-title"
+      >
+        PDF 放大預覽
+      </div>
+      <div class="materials-preview-actions">
+        <a
+          id="materialsLightboxOpenTab"
+          class="btn"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          開新分頁
+        </a>
+        <button
+          type="button"
+          class="btn"
+          onclick="closeMaterialsLightbox_()"
+        >
+          關閉
+        </button>
+      </div>
+    </div>
+    <iframe
+      id="materialsLightboxFrame"
+      class="materials-lightbox-frame"
+      title="PDF 放大預覽"
+    ></iframe>
+  </div>
+</div>
 
 </body>
 </html>
