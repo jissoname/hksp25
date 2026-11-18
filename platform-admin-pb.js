@@ -297,8 +297,7 @@
         deadlineAt: deadline || null,
         makeupDeadlineAt: makeup.deadlineAt || null,
         makeupClubIds: Array.isArray(makeup.clubIds) ? makeup.clubIds : [],
-        version: Number(makeup.version || conf[key + "Version"] || 1) || 1,
-        url: kind === "feature" ? conf.featureFolderUrl || "" : ""
+        version: Number(makeup.version || conf[key + "Version"] || 1) || 1
       };
     }
     return {
@@ -314,7 +313,7 @@
         statusLabel: gate.open !== false ? "開放上傳" : "暫停上傳",
         envPriority: "PocketBase 主路徑（無 Drive 代傳費用）",
         folderOpsNote: "檔案存於 PocketBase。",
-        pauseEffectNote: "暫停時前端上傳窗口會關閉。"
+        pauseEffectNote: "暫停時評選／特色皆不可寫；開放後再依各截止時間分別判斷。"
       }
     };
   }
@@ -1594,7 +1593,10 @@
     var activity = await getActivityRecord();
     var conf = Object.assign({}, activity.config_json || {});
     if (data.deadlineAt) conf.featureDeadline = data.deadlineAt;
-    if (data.url != null) conf.featureFolderUrl = String(data.url || "");
+    // Drive 共用夾已非主路徑；不再從後台寫入 featureFolderUrl。
+    if (Object.prototype.hasOwnProperty.call(conf, "featureFolderUrl")) {
+      delete conf.featureFolderUrl;
+    }
     conf.featureMakeup = {
       deadlineAt: data.makeupDeadlineAt || null,
       clubIds: Array.isArray(data.makeupClubIds) ? data.makeupClubIds : [],

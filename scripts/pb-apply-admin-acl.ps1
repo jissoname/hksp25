@@ -50,6 +50,12 @@ $AdminOrService = '@request.auth.collectionName = "hksp_staff" && @request.auth.
 # Club workspace: any active member of the upload's club may list/view/update/delete
 # (not only the original uploader). Owner alone is too strict for shared 評選 folders.
 $ClubMateUpload = '@request.auth.collectionName = "hksp_students" && (student = @request.auth.id || (@collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active"))'
+# Folder access: staff, or active member of that folder's club (no cross-club browse).
+$ClubMateFolder = '@request.auth.collectionName = "hksp_students" && @collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active"'
+# Upload create: must be self + active member of target club (blocks arbitrary club writes).
+$ClubMateUploadCreate = '@request.auth.collectionName = "hksp_students" && student = @request.auth.id && @request.body.student = @request.auth.id && @collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= @request.body.club && @collection.hksp_memberships.status = "active"'
+# Folder create: same club membership gate via request body.
+$ClubMateFolderCreate = '@request.auth.collectionName = "hksp_students" && @collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= @request.body.club && @collection.hksp_memberships.status = "active"'
 # Keep in sync with scripts/pb-setup-hksp.ps1 and docs/hksp-admin-acl.md
 # Note: do not use @request.data.birth_ymd / @request.query.birth here — this PB
 # build rejects those operands on hksp_students auth rules.
@@ -88,21 +94,22 @@ $Acl = @{
   hksp_memberships = @{
     listRule   = "$Staff || (@request.auth.collectionName = `"hksp_students`" && student = @request.auth.id)"
     viewRule   = "$Staff || (@request.auth.collectionName = `"hksp_students`" && student = @request.auth.id)"
-    createRule = "@request.auth.collectionName = `"hksp_students`" && student = @request.auth.id || ($Admin)"
+    # 學生只能幫「自己」建座位；不可偽造 student 欄掛到別人。座位唯一由 DB index 守。
+    createRule = "$Admin || (@request.auth.collectionName = `"hksp_students`" && student = @request.auth.id && @request.body.student = @request.auth.id)"
     updateRule = $Admin
     deleteRule = $Admin
   }
   hksp_folders = @{
-    listRule   = '@request.auth.id != ""'
-    viewRule   = '@request.auth.id != ""'
-    createRule = "$Admin || @request.auth.collectionName = `"hksp_students`""
-    updateRule = "$Admin || @request.auth.collectionName = `"hksp_students`""
-    deleteRule = "$Admin || @request.auth.collectionName = `"hksp_students`""
+    listRule   = "$Staff || ($ClubMateFolder)"
+    viewRule   = "$Staff || ($ClubMateFolder)"
+    createRule = "$Admin || ($ClubMateFolderCreate)"
+    updateRule = "$Admin || ($ClubMateFolder)"
+    deleteRule = "$Admin || ($ClubMateFolder)"
   }
   hksp_uploads = @{
     listRule   = "$Staff || ($ClubMateUpload)"
     viewRule   = "$Staff || ($ClubMateUpload)"
-    createRule = "@request.auth.collectionName = `"hksp_students`" && student = @request.auth.id || ($Admin)"
+    createRule = "$Admin || ($ClubMateUploadCreate)"
     updateRule = "($ClubMateUpload) || ($Staff)"
     deleteRule = "$Admin || ($ClubMateUpload)"
   }

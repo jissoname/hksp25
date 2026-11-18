@@ -3285,7 +3285,7 @@
     return base + (Date.now() - listedAtLocalMs);
   }
 
-  /** Mirror server inspect: open only while nowMs < deadlineMs (到達當下即關). */
+  /** Mirror server inspect: gate + deadline/makeup (到達截止當下即關). */
   function evaluateWindowLocally(win, nowMs) {
     if (!win) {
       return {
@@ -3296,6 +3296,13 @@
     }
     if (win.code === "UPLOAD_WINDOW_NOT_CONFIGURED") {
       return { open: false, code: win.code, message: win.message };
+    }
+    if (win.gateOpen === false || win.code === "UPLOAD_GATE_PAUSED") {
+      return {
+        open: false,
+        code: "UPLOAD_GATE_PAUSED",
+        message: win.message || "管理員已暫停上傳。"
+      };
     }
     var deadlineMs = win.deadlineMs != null ? Number(win.deadlineMs) : NaN;
     if (!Number.isFinite(deadlineMs) && win.deadlineAt) {

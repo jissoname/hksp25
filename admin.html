@@ -1135,7 +1135,7 @@ oninput="renderClouds()"
 <div class="list-title">學生上傳開放／暫停</div>
 <div id="uploadGateStatus" class="list-sub">目前狀態：尚未讀取</div>
 <div id="uploadGateUpdated" class="list-sub">最後更新：—</div>
-<div id="uploadGateEffect" class="list-sub">環境 off 時管理開關無法開放寫入；與資料夾配對暫停互相獨立。</div>
+<div id="uploadGateEffect" class="list-sub">總開關暫停時評選／特色皆不可寫入；開放時再依下方各截止時間分別判斷。</div>
 <div class="toolbar" style="margin-top:10px;gap:8px;flex-wrap:wrap">
 <button class="btn btn-primary" type="button" id="uploadGateOpenBtn" onclick="setUploadGateOpen(true)">開放上傳</button>
 <button class="btn" type="button" id="uploadGatePauseBtn" onclick="setUploadGateOpen(false)">暫停上傳</button>
@@ -1222,15 +1222,9 @@ class="field"
 placeholder="例如 D023"
 >
 
-<label class="label">
-特色共用 Drive 資料夾
-</label>
-
-<input
-id="featureFolderUrl"
-class="field"
-placeholder="https://drive.google.com/drive/folders/..."
->
+<div class="notice" style="margin:10px 0 12px">
+評選與特色截止各自獨立；學生端依此處設定卡住上傳。檔案存 PocketBase，不再使用共用 Drive 資料夾。
+</div>
 
 <button
 class="btn btn-primary"
@@ -1683,8 +1677,8 @@ onclick="closeModal('aggregationDetailModal')"
 
 <script src="./pb-config.js?v=upload-browse-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
-<script src="./platform-pb-backend.js?v=upload-browse-2"></script>
-<script src="./platform-admin-pb.js?v=feature-download-panel-1"></script>
+<script src="./platform-pb-backend.js?v=upload-gate-acl-1"></script>
+<script src="./platform-admin-pb.js?v=upload-gate-acl-1"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -16169,7 +16163,6 @@ $("evalMakeupClubs").value=(S.cloudUploadSettings.evaluation.makeupClubIds||[]).
 $("featureUploadDeadline").value=toTaiwanLocalInputValue(S.cloudUploadSettings.feature.deadlineAt);
 $("featureMakeupDeadline").value=toTaiwanLocalInputValue(S.cloudUploadSettings.feature.makeupDeadlineAt);
 $("featureMakeupClubs").value=(S.cloudUploadSettings.feature.makeupClubIds||[]).join(",");
-$("featureFolderUrl").value=S.cloudUploadSettings.feature.url||"";
 $("cloudUploadMeta").textContent=
 "評選 v"+(S.cloudUploadSettings.evaluation.version||0)+
 "｜特色 v"+(S.cloudUploadSettings.feature.version||0);
@@ -16372,7 +16365,6 @@ const r=await api("adminSaveFeatureUploadSettings",{
 deadlineAt:deadlineAt,
 makeupDeadlineAt:makeupDeadlineAt,
 makeupClubIds:parseClubIdList($("featureMakeupClubs").value),
-url:$("featureFolderUrl").value.trim(),
 expectedVersion:(S.cloudUploadSettings.feature&&S.cloudUploadSettings.feature.version)||0
 });
 if(unauthorized(r)) return;

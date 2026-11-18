@@ -113,27 +113,113 @@
 
   function parseTimeMs(value, fallbackMs) {
     var ms = value ? Date.parse(String(value)) : NaN;
-    return Number.isFinite(ms) ? ms : fallbackMs;
+    if (Number.isFinite(ms)) return ms;
+    return fallbackMs === undefined ? NaN : fallbackMs;
   }
 
-  /** kind: "evaluation" | "feature" — 特色活動可另用 config_json.featureDeadline */
-  function openWindowFromActivity(activity, kind) {
+  function masterUploadGateOpen(activity) {
+    var conf = activityConfig(activity);
+    var gate = conf.uploadGate || {};
+    return gate.open !== false;
+  }
+
+  /**
+   * kind: "evaluation" | "feature"
+   * 以管理後台「評選／特色上傳設定」為準：
+   * - 總開關 uploadGate.open 必須為開
+   * - 評選看 dataDeadline；特色看 featureDeadline（可不同）
+   * - 補交：社團在 makeupClubIds 且未過 makeupDeadline 仍可寫
+   * club 可選（有 permanent_club_id 才判斷補交資格）
+   */
+  function openWindowFromActivity(activity, kind, club) {
     var now = Date.now();
     var conf = activityConfig(activity);
+    var gateOpen = masterUploadGateOpen(activity);
+    var key = kind === "feature" ? "feature" : "evaluation";
     var openAt = parseTimeMs(
       activity && activity.upload_open_at,
       now - 24 * 3600 * 1000
     );
     var closeRaw =
       kind === "feature"
-        ? conf.featureDeadline || (activity && activity.upload_close_at)
-        : conf.dataDeadline || (activity && activity.upload_close_at);
-    var closeAt = parseTimeMs(closeRaw, now + 365 * 24 * 3600 * 1000);
+        ? conf.featureDeadline || ""
+        : conf.dataDeadline || (activity && activity.upload_close_at) || "";
+    var hasDeadline = !!(closeRaw && String(closeRaw).trim());
+    var closeAt = parseTimeMs(closeRaw, NaN);
+    var makeup = conf[key + "Makeup"] || {};
+    var makeupDeadlineAt = makeup.deadlineAt || null;
+    var makeupClubIds = Array.isArray(makeup.clubIds) ? makeup.clubIds : [];
+    var permanent = String(
+      (club && (club.permanent_club_id || club.permanentClubId)) || ""
+    )
+      .trim()
+      .toUpperCase();
+    var makeupEligible = !!(
+      permanent &&
+      makeupClubIds.some(function (id) {
+        return String(id || "").trim().toUpperCase() === permanent;
+      })
+    );
+    var makeupMs = parseTimeMs(makeupDeadlineAt, NaN);
+
+    var withinPrimary =
+      gateOpen &&
+      now >= openAt &&
+      Number.isFinite(closeAt) &&
+      now < closeAt;
+    var withinMakeup =
+      gateOpen &&
+      makeupEligible &&
+      Number.isFinite(makeupMs) &&
+      now < makeupMs;
+    // 未設截止但總開關開：仍允許（只靠管理員暫停鈕）
+    var withinGateOnly = gateOpen && !hasDeadline && !Number.isFinite(closeAt);
+
+    var open = !!(withinPrimary || withinMakeup || withinGateOnly);
+    var code = null;
+    var message = null;
+    if (!open) {
+      if (!gateOpen) {
+        code = "UPLOAD_GATE_PAUSED";
+        message = "管理員已暫停上傳。";
+      } else {
+        code = "UPLOAD_WINDOW_CLOSED";
+        message = "此項目已截止，目前僅可檢視既有資料。";
+      }
+    }
+
     return {
-      open: now >= openAt && now < closeAt,
-      deadlineMs: closeAt,
-      deadlineAt: new Date(closeAt).toISOString(),
+      open: open,
+      deadlineMs: Number.isFinite(closeAt) ? closeAt : null,
+      deadlineAt: Number.isFinite(closeAt) ? new Date(closeAt).toISOString() : null,
+      makeupDeadlineMs: Number.isFinite(makeupMs) ? makeupMs : null,
+      makeupDeadlineAt: makeupDeadlineAt || null,
+      makeupEligible: makeupEligible,
+      gateOpen: gateOpen,
+      code: code,
+      message: message,
       serverNowMs: now
+    };
+  }
+
+  function buildUploadAccessFields(activity, club) {
+    var winEval = openWindowFromActivity(activity, "evaluation", club);
+    var winFeature = openWindowFromActivity(activity, "feature", club);
+    var gateOpen = masterUploadGateOpen(activity);
+    return {
+      driveWriteEnabled: !!(winEval.open || winFeature.open),
+      uploadGate: {
+        envLive: true,
+        open: gateOpen,
+        writesAllowed: !!(winEval.open || winFeature.open),
+        evaluationOpen: !!winEval.open,
+        featureOpen: !!winFeature.open
+      },
+      uploadWindows: {
+        serverNowMs: winEval.serverNowMs,
+        evaluation: winEval,
+        feature: winFeature
+      }
     };
   }
 
@@ -640,8 +726,7 @@
           filter: 'club="' + ctx.club.id + '" && status!="trashed"',
           sort: "-created"
         }).then(function (rows) {
-          var winEval = openWindowFromActivity(ctx.activity, "evaluation");
-          var winFeature = openWindowFromActivity(ctx.activity, "feature");
+          var access = buildUploadAccessFields(ctx.activity, ctx.club);
           return ok({
             activityId: ctx.activity.activity_id || cfg.activityId,
             permanentClubId: ctx.club.permanent_club_id,
@@ -649,13 +734,9 @@
             clubFolderId: root.id,
             files: rows.map(mapUploadFile),
             participation: { configured: true, evaluation: true, feature: true },
-            uploadWindows: {
-              serverNowMs: winEval.serverNowMs,
-              evaluation: winEval,
-              feature: winFeature
-            },
-            driveWriteEnabled: true,
-            uploadGate: { envLive: true, open: true },
+            uploadWindows: access.uploadWindows,
+            driveWriteEnabled: access.driveWriteEnabled,
+            uploadGate: access.uploadGate,
             storage: "pocketbase"
           });
         });
@@ -681,8 +762,7 @@
             filter: 'club="' + ctx.club.id + '" && folder="' + parentId + '" && status!="trashed"',
             sort: "-created"
           }).then(function (files) {
-            var winEval = openWindowFromActivity(ctx.activity, "evaluation");
-            var winFeature = openWindowFromActivity(ctx.activity, "feature");
+            var access = buildUploadAccessFields(ctx.activity, ctx.club);
             return ok({
               clubFolderId: root.id,
               parentFolderId: parentId,
@@ -698,14 +778,10 @@
                 };
               }),
               files: files.map(mapUploadFile),
-              driveWriteEnabled: true,
-              uploadGate: { envLive: true, open: true },
+              driveWriteEnabled: access.driveWriteEnabled,
+              uploadGate: access.uploadGate,
               participation: { configured: true, evaluation: true, feature: true },
-              uploadWindows: {
-                serverNowMs: winEval.serverNowMs,
-                evaluation: winEval,
-                feature: winFeature
-              },
+              uploadWindows: access.uploadWindows,
               storage: "pocketbase"
             });
           });
@@ -716,6 +792,7 @@
 
   function createClubEvaluationFolder(data) {
     return contextFromAuth().then(function (ctx) {
+      assertWriteWindowOpen(ctx, "evaluation");
       return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid).then(function (root) {
         var name = String((data && data.name) || "").trim();
         if (!name) throw err("INVALID_INPUT", "請輸入資料夾名稱。");
@@ -793,7 +870,8 @@
     var fileId = String((data && data.fileId) || "").trim();
     if (!fileId) return Promise.reject(err("INVALID_INPUT", "缺少檔案。"));
     return contextFromAuth().then(function (ctx) {
-      return assertClubOwnedUpload(ctx, fileId).then(function () {
+      return assertClubOwnedUpload(ctx, fileId).then(function (row) {
+        assertWriteWindowOpen(ctx, writeKindFromUpload(row));
         return pb.collection(C.uploads).delete(fileId).then(function () {
           return ok({ deleted: true, permanent: true, fileId: fileId });
         });
@@ -811,6 +889,7 @@
     var folderId = String((data && data.folderId) || "").trim();
     if (!folderId) return Promise.reject(err("INVALID_INPUT", "缺少資料夾。"));
     return contextFromAuth().then(function (ctx) {
+      assertWriteWindowOpen(ctx, "evaluation");
       return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid).then(function (root) {
         return permanentlyDeleteFolderTree(ctx, folderId, root.id).then(function () {
           return ok({ deleted: true, permanent: true, folderId: folderId });
@@ -839,9 +918,16 @@
   }
 
   function assertWriteWindowOpen(ctx, kind) {
-    var win = openWindowFromActivity(ctx.activity, kind === "feature" ? "feature" : "evaluation");
+    var win = openWindowFromActivity(
+      ctx.activity,
+      kind === "feature" ? "feature" : "evaluation",
+      ctx.club
+    );
     if (!win.open) {
-      throw err("UPLOAD_WINDOW_CLOSED", "繳交已截止，目前為唯讀，無法重新命名／移動／複製。");
+      throw err(
+        win.code || "UPLOAD_WINDOW_CLOSED",
+        win.message || "繳交已截止或已暫停，目前為唯讀，無法上傳／修改。"
+      );
     }
     return win;
   }
@@ -1277,37 +1363,41 @@
       });
     }
     return contextFromAuth().then(function (ctx) {
+      var kind = (data && data.uploadKind) === "feature" ? "feature" : "evaluation";
+      assertWriteWindowOpen(ctx, kind);
       return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid).then(function (root) {
         var attempt = String((data && data.clientAttemptId) || "");
         if (!attempt) throw err("INVALID_INPUT", "缺少上傳識別。");
-        var kind = (data && data.uploadKind) === "feature" ? "feature" : "evaluation";
         var dest = String((data && data.destinationFolderId) || "").trim() || root.id;
-        return pb.collection(C.uploads).getList(1, 1, {
-          filter: 'client_attempt_id="' + attempt + '"'
-        }).then(function (existing) {
-          if (existing.totalItems > 0) {
-            var row = existing.items[0];
-            if (row.status === "completed") {
-              return ok({ alreadyComplete: true, status: "completed", files: [mapUploadFile(row)] });
+        return assertDestinationFolder(ctx, dest, root.id).then(function (destFolder) {
+          var safeDest = destFolder && destFolder.id ? destFolder.id : dest;
+          return pb.collection(C.uploads).getList(1, 1, {
+            filter: 'client_attempt_id="' + attempt + '"'
+          }).then(function (existing) {
+            if (existing.totalItems > 0) {
+              var row = existing.items[0];
+              if (row.status === "completed") {
+                return ok({ alreadyComplete: true, status: "completed", files: [mapUploadFile(row)] });
+              }
             }
-          }
-          pendingUploads[attempt] = {
-            activityId: ctx.activity.id,
-            clubId: ctx.club.id,
-            studentId: ctx.user.uid,
-            folderId: dest,
-            uploadKind: kind,
-            fileName: String((data && data.fileName) || "file"),
-            size: Number((data && data.size) || 0),
-            mimeType: String((data && data.mimeType) || "")
-          };
-          return ok({
-            status: "ready",
-            pbDirectUpload: true,
-            clientAttemptId: attempt,
-            fileName: pendingUploads[attempt].fileName,
-            destinationFolderId: dest,
-            uploadUrl: "pb://direct/" + attempt
+            pendingUploads[attempt] = {
+              activityId: ctx.activity.id,
+              clubId: ctx.club.id,
+              studentId: ctx.user.uid,
+              folderId: safeDest,
+              uploadKind: kind,
+              fileName: String((data && data.fileName) || "file"),
+              size: Number((data && data.size) || 0),
+              mimeType: String((data && data.mimeType) || "")
+            };
+            return ok({
+              status: "ready",
+              pbDirectUpload: true,
+              clientAttemptId: attempt,
+              fileName: pendingUploads[attempt].fileName,
+              destinationFolderId: safeDest,
+              uploadUrl: "pb://direct/" + attempt
+            });
           });
         });
       });
@@ -1388,29 +1478,36 @@
         ? "原始檔即 PDF，可直接預覽。"
         : "尚未接轉檔服務；評審端僅能下載原檔。"
     };
-    var formPb = new FormData();
-    formPb.append("activity", meta.activityId || meta.activity);
-    formPb.append("club", meta.clubId || meta.club);
-    formPb.append("folder", meta.folderId || meta.destinationFolderId || "");
-    formPb.append("student", meta.studentId || meta.student);
-    formPb.append("client_attempt_id", attempt);
-    formPb.append("upload_kind", uploadKind);
-    formPb.append("original_name", originalName);
-    formPb.append("mime_type", mimeType);
-    formPb.append("size_bytes", String(file.size || meta.size || 0));
-    formPb.append("status", "completed");
-    formPb.append("completed_at", new Date().toISOString());
-    formPb.append("meta_json", JSON.stringify(convertMeta));
-    formPb.append("file", file, file.name || "upload.bin");
 
-    return pb.collection(C.uploads).create(formPb).then(function (rec) {
-      delete pendingUploads[attempt];
-      return listClubDriveUploads().then(function (listed) {
-        return {
-          alreadyComplete: false,
-          files: (listed.data && listed.data.files) || [mapUploadFile(rec)],
-          file: mapUploadFile(rec)
-        };
+    return contextFromAuth().then(function (ctx) {
+      assertWriteWindowOpen(ctx, uploadKind);
+      if (String(meta.clubId || "") && String(meta.clubId) !== String(ctx.club.id)) {
+        throw err("FORBIDDEN", "上傳目標社團與目前登入社團不符。");
+      }
+      var formPb = new FormData();
+      formPb.append("activity", meta.activityId || meta.activity || ctx.activity.id);
+      formPb.append("club", meta.clubId || meta.club || ctx.club.id);
+      formPb.append("folder", meta.folderId || meta.destinationFolderId || "");
+      formPb.append("student", meta.studentId || meta.student || ctx.user.uid);
+      formPb.append("client_attempt_id", attempt);
+      formPb.append("upload_kind", uploadKind);
+      formPb.append("original_name", originalName);
+      formPb.append("mime_type", mimeType);
+      formPb.append("size_bytes", String(file.size || meta.size || 0));
+      formPb.append("status", "completed");
+      formPb.append("completed_at", new Date().toISOString());
+      formPb.append("meta_json", JSON.stringify(convertMeta));
+      formPb.append("file", file, file.name || "upload.bin");
+
+      return pb.collection(C.uploads).create(formPb).then(function (rec) {
+        delete pendingUploads[attempt];
+        return listClubDriveUploads().then(function (listed) {
+          return {
+            alreadyComplete: false,
+            files: (listed.data && listed.data.files) || [mapUploadFile(rec)],
+            file: mapUploadFile(rec)
+          };
+        });
       });
     });
   }

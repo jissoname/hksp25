@@ -221,7 +221,7 @@ $memberships = Ensure-Collection @{
   type = 'base'
   listRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && student = @request.auth.id)'
   viewRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && student = @request.auth.id)'
-  createRule = '@request.auth.collectionName = "hksp_students" && student = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true)'
+  createRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && student = @request.auth.id && @request.body.student = @request.auth.id)'
   updateRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true'
   deleteRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true'
   fields = @(
@@ -245,11 +245,11 @@ $memberships = Ensure-Collection @{
 $folders = Ensure-Collection @{
   name = 'hksp_folders'
   type = 'base'
-  listRule = '@request.auth.id != ""'
-  viewRule = '@request.auth.id != ""'
-  createRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true || @request.auth.collectionName = "hksp_students"'
-  updateRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true || @request.auth.collectionName = "hksp_students"'
-  deleteRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true || @request.auth.collectionName = "hksp_students"'
+  listRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && @collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active")'
+  viewRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && @collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active")'
+  createRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && @collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= @request.body.club && @collection.hksp_memberships.status = "active")'
+  updateRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && @collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active")'
+  deleteRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && @collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active")'
   fields = @(
     (RelationField 'activity' $activities.id $true 1 $false)
     (RelationField 'club' $clubs.id $true 1 $false)
@@ -295,7 +295,7 @@ $uploads = Ensure-Collection @{
   type = 'base'
   listRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && (student = @request.auth.id || (@collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active")))'
   viewRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && (student = @request.auth.id || (@collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active")))'
-  createRule = '@request.auth.collectionName = "hksp_students" && student = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true)'
+  createRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && student = @request.auth.id && @request.body.student = @request.auth.id && @collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= @request.body.club && @collection.hksp_memberships.status = "active")'
   updateRule = '@request.auth.collectionName = "hksp_students" && (student = @request.auth.id || (@collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active")) || (@request.auth.collectionName = "hksp_staff" && @request.auth.active = true)'
   deleteRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true || (@request.auth.collectionName = "hksp_students" && (student = @request.auth.id || (@collection.hksp_memberships.student ?= @request.auth.id && @collection.hksp_memberships.club ?= club && @collection.hksp_memberships.status = "active")))'
   fields = @(

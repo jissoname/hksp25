@@ -32,16 +32,16 @@
 | `hksp_students` | 本人或任一 active staff | 公開自助註冊（`""`） | 本人或 admin | **admin 或本人**（硬刪釋放學號；殘留用後台清除） |
 | `hksp_activities` | active 公開，或任一 active staff | **admin** | **admin** | **admin** |
 | `hksp_clubs` | active 公開，或任一 active staff | **admin** | **admin** | **admin** |
-| `hksp_memberships` | staff 或本人學生 | 學生自綁或 **admin** | **admin** | **admin** |
-| `hksp_folders` | 已登入者 | admin 或學生 | admin 或學生 | admin 或學生 |
-| `hksp_uploads` | staff 或**同社有效成員**（含上傳者） | 學生本人或 **admin** | 同社有效成員或任一 active staff | **admin** 或同社有效成員 |
+| `hksp_memberships` | staff 或本人學生 | 學生自綁（`student` 必須＝本人）或 **admin** | **admin** | **admin** |
+| `hksp_folders` | staff 或**該夾所屬社團的有效成員** | admin 或同社有效成員 | admin 或同社有效成員 | admin 或同社有效成員 |
+| `hksp_uploads` | staff 或**同社有效成員**（含上傳者） | 學生本人且**同社有效成員**，或 **admin** | 同社有效成員或任一 active staff | **admin** 或同社有效成員 |
 | `hksp_scores` | admin／judge／service | admin／judge | admin／judge | **admin** |
 | `hksp_audit_events` | admin／service | 任一已登入者可寫事件 | 不可改 | 不可刪 |
 
 ## 前端／API
 
-- 評審頁 `judge-pb.html`：`platform-pb-backend.js` 允許 `role=judge` **或** `admin` 登入評審流程。
-- 完整 `admin.html` 尚未遷到 PB；業務超管先以 API／Admin UI／後續管理頁操作。
+- 評審頁 `judge.html`（煙測頁 `judge-pb.html`）：允許 `role=judge` **或** `admin` 登入評審流程。
+- 管理頁 `admin.html` 已接 PocketBase；學生上傳受總開關＋評選／特色各自截止約束。
 
 ## 建立順序
 
