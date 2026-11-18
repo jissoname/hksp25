@@ -11,7 +11,8 @@
 | B. 業務超管 | `hksp_staff` + `role=admin` + `active=true` | 前台／API 管理社團、學生、活動、上傳稽核 | `HKSP_STAFF_ADMIN_EMAIL` / `HKSP_STAFF_ADMIN_PASSWORD` |
 
 - A 繞過 API rules，**不要**放進前端。
-- B 完全受下列 API rules 約束；首筆 B 帳須由 A（或 Admin UI）建立（`hksp_staff.createRule = null`）。
+- B 完全受下列 API rules 約束；首筆 B 帳（`role=admin`）須由 A 層 seed。
+- 業務超管可透過管理後台新增 `judge`／`service` 帳（`hksp_staff.createRule` 允許 admin 建立這兩種角色）。
 
 ## 角色對照
 
@@ -27,7 +28,7 @@
 
 | Collection | list / view | create | update | delete |
 |---|---|---|---|---|
-| `hksp_staff` | 已登入且 active 的 staff 可 list；view 限本人，或 admin／service | **僅 A 層**（`null`） | 本人，或 admin | **僅 A 層**（`null`） |
+| `hksp_staff` | 已登入且 active 的 staff 可 list；view 限本人，或 admin／service | **admin**（僅可建 `judge`／`service`） | 本人，或 admin | **僅 A 層**（`null`） |
 | `hksp_students` | 本人或任一 active staff | 公開自助註冊（`""`） | 本人或 admin | **admin 或本人**（硬刪釋放學號；殘留用後台清除） |
 | `hksp_activities` | active 公開，或任一 active staff | **admin** | **admin** | **admin** |
 | `hksp_clubs` | active 公開，或任一 active staff | **admin** | **admin** | **admin** |

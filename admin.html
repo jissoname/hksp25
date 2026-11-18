@@ -1320,7 +1320,7 @@ placeholder="至少 3 個字元"
 id="judgePassword"
 class="field"
 type="password"
-placeholder="至少 6 個字元"
+placeholder="至少 8 個字元"
 >
 
 </div>
@@ -1654,7 +1654,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=upload-browse-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=upload-browse-2"></script>
-<script src="./platform-admin-pb.js?v=rank-xlsx-1"></script>
+<script src="./platform-admin-pb.js?v=judge-create-acl-1"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -5122,7 +5122,7 @@ encoded
 
 const p =
 prompt(
-"請輸入新密碼（至少 6 個字元）"
+"請輸入新密碼（至少 8 個字元）"
 );
 
 if(

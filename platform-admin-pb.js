@@ -2131,6 +2131,24 @@
     };
   }
 
+  function staffWriteErrorMessage_(error, fallback) {
+    var base = String((error && error.message) || fallback || "操作失敗");
+    var raw = (error && (error.data || error.response || {})) || {};
+    var fieldErrors = raw.data || {};
+    var fields = Object.keys(fieldErrors)
+      .map(function (key) {
+        var fe = fieldErrors[key];
+        return key + ":" + String((fe && (fe.message || fe.code)) || fe || "");
+      })
+      .filter(Boolean)
+      .join("; ");
+    if (/only superusers|didn't match.*rule|does not match.*rule|forbidden|permission/i.test(base + " " + fields)) {
+      return "沒有權限新增評審（請確認已套用 hksp_staff create ACL，且登入帳號為 active admin）。";
+    }
+    if (fields) return base + "（" + fields + "）";
+    return base;
+  }
+
   async function adminAddJudge(data) {
     var email = String(data.email || data.username || "")
       .trim()
@@ -2138,7 +2156,10 @@
     if (email && email.indexOf("@") < 0) email = email + "@hksp.local";
     var password = String(data.password || "");
     var name = String(data.displayName || data.name || "").trim() || email;
-    if (!email || !password) return fail("請填寫評審 Email 與密碼。");
+    if (!email || !password) return fail("請填寫評審帳號與密碼。");
+    if (password.length < 8) {
+      return fail("初始密碼至少 8 個字元。", "JUDGE_PASSWORD_TOO_SHORT");
+    }
     try {
       var created = await pb().collection(C().staff).create({
         email: email,
@@ -2152,7 +2173,7 @@
       });
       return ok({ judge: mapJudgeAdmin(created) });
     } catch (e) {
-      return fail((e && e.message) || "新增評審失敗。");
+      return fail(staffWriteErrorMessage_(e, "新增評審失敗。"), "JUDGE_CREATE_FAILED");
     }
   }
 

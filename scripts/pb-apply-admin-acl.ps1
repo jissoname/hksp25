@@ -57,7 +57,9 @@ $Acl = @{
   hksp_staff = @{
     listRule   = $Staff
     viewRule   = "id = @request.auth.id || ($Staff && (@request.auth.role = `"admin`" || @request.auth.role = `"service`"))"
-    createRule = $null
+    # 業務超管可新增評審／服務帳；首筆 admin 仍須由 A 層 seed。
+    # 限制 body.role，避免前台 admin 自我複製更高權限帳。
+    createRule = "$Admin && (@request.body.role = `"judge`" || @request.body.role = `"service`")"
     updateRule = "id = @request.auth.id || ($Admin)"
     deleteRule = $null
   }

@@ -122,7 +122,7 @@ $staff = Ensure-Collection @{
   type = 'auth'
   listRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.active = true'
   viewRule = 'id = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.active = true && (@request.auth.role = "admin" || @request.auth.role = "service"))'
-  createRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true'
+  createRule = '@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true && (@request.body.role = "judge" || @request.body.role = "service")'
   updateRule = 'id = @request.auth.id || (@request.auth.collectionName = "hksp_staff" && @request.auth.role = "admin" && @request.auth.active = true)'
   deleteRule = $null
   fields = @(
