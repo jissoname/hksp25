@@ -363,6 +363,12 @@
     return !!fileName;
   }
 
+  function isPdfUploadMeta_(name, mime) {
+    var m = String(mime || "").toLowerCase();
+    var n = String(name || "").toLowerCase();
+    return m.indexOf("pdf") >= 0 || /\.pdf$/i.test(n);
+  }
+
   function mapJudgeUploadFile(rec) {
     var fileName = "";
     if (rec.file) {
@@ -378,22 +384,45 @@
         fileUrl = "";
       }
     }
+    var displayName = rec.original_name || fileName || "file";
+    var mimeType = rec.mime_type || "";
+    var meta =
+      rec.meta_json && typeof rec.meta_json === "object" ? rec.meta_json : {};
+    var isPdf = isPdfUploadMeta_(displayName, mimeType);
+    var convertStatus = String(meta.convertStatus || "").trim();
+    if (!convertStatus) {
+      convertStatus = isPdf ? "ready" : "unsupported";
+    }
+    var previewReady =
+      meta.previewReady === true ||
+      (meta.previewReady !== false && convertStatus === "ready" && isPdf);
+    var previewUrl = "";
+    if (previewReady && isPdf) {
+      previewUrl = String(meta.previewUrl || fileUrl || "");
+    } else if (meta.previewUrl && convertStatus === "ready") {
+      previewUrl = String(meta.previewUrl || "");
+      previewReady = !!previewUrl;
+    }
     return {
       id: rec.id,
       fileId: rec.id,
       folderId: relationId(rec.folder) || "",
-      name: rec.original_name || fileName || "file",
-      fileName: rec.original_name || fileName || "file",
+      name: displayName,
+      fileName: displayName,
       size: Number(rec.size_bytes) || 0,
       sizeBytes: Number(rec.size_bytes) || 0,
-      mimeType: rec.mime_type || "",
+      mimeType: mimeType,
       uploadKind: rec.upload_kind || "evaluation",
       status: rec.status || "completed",
       createdAt: rec.created || "",
       updatedAt: rec.updated || "",
       uploadedAt: rec.completed_at || rec.created || "",
       fileUrl: fileUrl,
-      webViewLink: fileUrl || ""
+      webViewLink: fileUrl || "",
+      convertStatus: convertStatus,
+      previewReady: previewReady,
+      previewUrl: previewUrl,
+      convertNote: String(meta.convertNote || "")
     };
   }
 
@@ -456,7 +485,8 @@
   }
 
   /**
-   * 評審唯讀：依屬性分配核對後，回傳該社全部評選資料夾／已完成 PDF（不含特色）。
+   * 評審唯讀：依屬性分配核對後，回傳該社全部評選資料夾／已完成檔案（不含特色）。
+   * PDF 可預覽；非 PDF 帶 convertStatus，前端走下載原檔備援（尚無轉檔服務）。
    */
   async function judgeBrowseClubMaterials(data) {
     var judgeRec = pb().authStore.model;

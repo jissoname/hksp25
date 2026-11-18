@@ -1366,18 +1366,41 @@
         });
       });
     }
+    var uploadKind = String(meta.uploadKind || "evaluation").trim() || "evaluation";
+    var originalName = String(file.name || meta.fileName || "file");
+    var mimeType = String(file.type || meta.mimeType || "application/octet-stream");
+    var isPdf =
+      mimeType.toLowerCase().indexOf("pdf") >= 0 || /\.pdf$/i.test(originalName);
+    // 評選資料：評審預覽僅穩支援 PDF；尚無轉檔服務時拒絕 Word／PPT。
+    if (uploadKind === "evaluation" && !isPdf) {
+      return Promise.reject(
+        err(
+          "EVAL_PDF_REQUIRED",
+          "評選資料請上傳 PDF。Word／PPT 目前無法自動轉檔預覽，請先轉成 PDF 再交。"
+        )
+      );
+    }
+    var convertMeta = {
+      convertStatus: isPdf ? "ready" : "unsupported",
+      previewReady: !!isPdf,
+      convertEngine: "none",
+      convertNote: isPdf
+        ? "原始檔即 PDF，可直接預覽。"
+        : "尚未接轉檔服務；評審端僅能下載原檔。"
+    };
     var formPb = new FormData();
     formPb.append("activity", meta.activityId || meta.activity);
     formPb.append("club", meta.clubId || meta.club);
     formPb.append("folder", meta.folderId || meta.destinationFolderId || "");
     formPb.append("student", meta.studentId || meta.student);
     formPb.append("client_attempt_id", attempt);
-    formPb.append("upload_kind", meta.uploadKind || "evaluation");
-    formPb.append("original_name", file.name || meta.fileName || "file");
-    formPb.append("mime_type", file.type || meta.mimeType || "application/octet-stream");
+    formPb.append("upload_kind", uploadKind);
+    formPb.append("original_name", originalName);
+    formPb.append("mime_type", mimeType);
     formPb.append("size_bytes", String(file.size || meta.size || 0));
     formPb.append("status", "completed");
     formPb.append("completed_at", new Date().toISOString());
+    formPb.append("meta_json", JSON.stringify(convertMeta));
     formPb.append("file", file, file.name || "upload.bin");
 
     return pb.collection(C.uploads).create(formPb).then(function (rec) {

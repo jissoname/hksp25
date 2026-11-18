@@ -292,9 +292,9 @@
       token.uid === boundUid;
   }
 
-  function acceptForKind(_kind) {
-    // 評選／特色皆開放常見辦公與影音格式；空白字串表示瀏覽器不預先過濾。
-    return "";
+  function acceptForKind(kind) {
+    // 評選：評審預覽僅穩支援 PDF；已告知社團請交 PDF。特色仍不強制。
+    return kind === "evaluation" ? ".pdf,application/pdf" : "";
   }
 
   function fileExtLabel(name) {
@@ -302,10 +302,17 @@
     return m ? m[1].toUpperCase() : "檔";
   }
 
+  function isPdfUploadFile_(file) {
+    if (!file) return false;
+    var mime = String(file.type || "").toLowerCase();
+    var name = String(file.name || "").toLowerCase();
+    return mime.indexOf("pdf") >= 0 || /\.pdf$/i.test(name);
+  }
+
   function hintForKind(kind) {
     return kind === "feature"
       ? "特色：每社一檔，可上傳各類檔案。Drive 檔名會自動加上社團全名底線前綴。"
-      : "評選：可多檔或整夾上傳各類檔案。同名須確認後才取代。";
+      : "評選：請上傳 PDF（評審可直接預覽）。Word／PPT 目前無法自動轉檔預覽，請改轉成 PDF 再交。";
   }
 
   function setEvalFolderStatus(text, kind) {
@@ -2243,13 +2250,17 @@
         rejected.push(name + "（檔案過大）");
         return;
       }
+      if (!isPdfUploadFile_(file)) {
+        rejected.push(name + "（評選僅收 PDF）");
+        return;
+      }
       files.push(file);
     });
     if (!files.length) {
       setEvalFolderStatus(
         rejected.length
-          ? "沒有可上傳的檔案。略過：" + rejected.slice(0, 5).join("、")
-          : "此資料夾沒有可上傳的檔案。",
+          ? "沒有可上傳的 PDF。略過：" + rejected.slice(0, 5).join("、")
+          : "此資料夾沒有可上傳的 PDF。",
         "warn"
       );
       return;
@@ -3185,12 +3196,20 @@
         rejected.push((name || "（未命名）") + "（檔案過大）");
         return;
       }
+      if (activeKind === "evaluation" && !isPdfUploadFile_(file)) {
+        rejected.push((name || "（未命名）") + "（評選僅收 PDF，請先轉成 PDF）");
+        return;
+      }
       files.push(file);
     });
     if (!files.length) {
       setStatus(
         rejected.length
-          ? "沒有可上傳的檔案。略過：" + rejected.slice(0, 5).join("、")
+          ? (
+              activeKind === "evaluation"
+                ? "沒有可上傳的 PDF。略過：" + rejected.slice(0, 5).join("、")
+                : "沒有可上傳的檔案。略過：" + rejected.slice(0, 5).join("、")
+            )
           : "沒有可上傳的檔案。",
         "warn"
       );
