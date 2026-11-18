@@ -555,19 +555,52 @@
     });
   }
 
+  function normalizeJudgeLoginIdentity(raw) {
+    var value = String(raw || "").trim();
+    if (!value) return "";
+    try {
+      value = value.normalize("NFKC");
+    } catch (_normErr) {
+      /* ignore older runtimes */
+    }
+    // fullwidth ＠ → @
+    value = value.replace(/\uFF20/g, "@");
+    return value.replace(/\s+/g, "");
+  }
+
+  function judgeLoginIdentities(username) {
+    var raw = normalizeJudgeLoginIdentity(username);
+    var out = [];
+    function add(id) {
+      var v = String(id || "").trim();
+      if (!v) return;
+      if (out.indexOf(v) >= 0) return;
+      out.push(v);
+    }
+    if (!raw) return out;
+    if (raw.indexOf("@") >= 0) {
+      add(raw);
+      // Domain side only: keep local-part as typed (Chinese emails are case-stable).
+      var at = raw.lastIndexOf("@");
+      if (at > 0) {
+        add(raw.slice(0, at) + "@" + raw.slice(at + 1).toLowerCase());
+      }
+    } else {
+      // 後台新增慣例：帳號可填「測試一」→ 測試一@hksp.local
+      add(raw + "@hksp.local");
+      add(raw);
+    }
+    return out;
+  }
+
   async function judgeLogin(data) {
-    var username = String((data && (data.username || data.email)) || "").trim();
+    var username = normalizeJudgeLoginIdentity(
+      (data && (data.username || data.email)) || ""
+    );
     var password = String((data && data.password) || "");
     if (!username || !password) return fail("請輸入評審帳號與密碼。");
-    // Prefer explicit email; bare names become name@hksp.local (admin 新增評審時的慣例).
-    var identities = [];
-    if (username.indexOf("@") >= 0) {
-      identities.push(username);
-    } else {
-      identities.push(username + "@hksp.local");
-      identities.push(username);
-    }
-    var lastErr = null;
+    var identities = judgeLoginIdentities(username);
+    var lastAuthErr = null;
     for (var i = 0; i < identities.length; i++) {
       try {
         var auth = await pb().collection(C().staff).authWithPassword(identities[i], password);
@@ -580,9 +613,22 @@
           pb().authStore.clear();
           return fail("此帳號沒有評審權限。", "FORBIDDEN");
         }
-        sessionStorage.setItem(SESSION_RECORD_KEY, JSON.stringify(rec));
+        // Auth already succeeded — do not try other identities if dashboard fails,
+        // otherwise a later auth miss overwrites the real error as「帳密錯誤」.
+        try {
+          sessionStorage.setItem(SESSION_RECORD_KEY, JSON.stringify(rec));
+        } catch (_sessErr) {
+          /* ignore */
+        }
         var judge = mapJudge(rec);
-        var dashboard = await buildDashboard(rec);
+        var dashboard;
+        try {
+          dashboard = await buildDashboard(rec);
+        } catch (dashErr) {
+          return fail(
+            (dashErr && dashErr.message) || "登入成功，但無法載入評審清單，請重新整理再試。"
+          );
+        }
         return ok({
           sessionToken: auth.token,
           expiresAt: null,
@@ -590,13 +636,13 @@
           dashboard: dashboard
         });
       } catch (e) {
-        lastErr = e;
+        lastAuthErr = e;
       }
     }
-    var emsg = String((lastErr && lastErr.message) || "");
+    var emsg = String((lastAuthErr && lastAuthErr.message) || "");
     if (/Failed to authenticate|invalid|wrong/i.test(emsg)) {
       return fail(
-        "登入失敗，請確認帳號與密碼。帳號請填 Email（或後台建立時的 xxx@hksp.local），不是顯示名稱「測試一」。"
+        "登入失敗，請確認帳號與密碼。帳號請填評審 Email（例如 測試一@hksp.local）；也可只填 @ 前面的帳號（測試一）。不要填顯示名稱（例如資料庫 name 欄的「測試」）。"
       );
     }
     return fail(emsg || "登入失敗，請確認帳號與密碼。");
@@ -1168,13 +1214,11 @@
       hint.textContent = "PocketBase 評審登入";
     }
     var user = document.getElementById("username");
-    if (user && !String(user.value || "").trim()) {
-      var pref =
-        (cfg() && cfg().staffJudgeEmail) ||
-        (cfg() && cfg().staffAdminEmail) ||
-        "hksp_6188@hk.edu.tw";
-      user.value = String(pref).trim();
-      user.placeholder = String(pref).trim();
+    if (user) {
+      // Do not prefill a wrong admin email into the judge login box.
+      if (!String(user.placeholder || "").trim() || /hk\.edu\.tw/i.test(String(user.placeholder || ""))) {
+        user.placeholder = "測試一@hksp.local 或 測試一";
+      }
     }
   }
 

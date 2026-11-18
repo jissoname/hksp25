@@ -1678,10 +1678,13 @@ button{
           class="field"
           type="text"
           autocomplete="username"
-          maxlength="40"
-          placeholder="請輸入評審帳號"
+          maxlength="120"
+          placeholder="測試一@hksp.local 或 測試一"
           required
         >
+        <div class="muted" style="margin-top:6px;font-size:11px;line-height:1.5">
+          請用評審 Email。後台建立的 xxx@hksp.local 也可只填 xxx；不要填顯示名稱。
+        </div>
 
       </div>
 
@@ -2388,7 +2391,7 @@ button{
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
-<script src="./platform-judge-pb.js?v=status-sync-1"></script>
+<script src="./platform-judge-pb.js?v=login-fix-1"></script>
 
 <script>
 /**
