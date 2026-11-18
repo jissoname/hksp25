@@ -2142,8 +2142,12 @@
       })
       .filter(Boolean)
       .join("; ");
-    if (/only superusers|didn't match.*rule|does not match.*rule|forbidden|permission/i.test(base + " " + fields)) {
+    var blob = (base + " " + fields).toLowerCase();
+    if (/only superusers|didn't match.*rule|does not match.*rule|forbidden|permission/i.test(blob)) {
       return "沒有權限新增評審（請確認已套用 hksp_staff create ACL，且登入帳號為 active admin）。";
+    }
+    if (/email:.*unique|validation_not_unique|value must be unique/i.test(blob)) {
+      return "此登入帳號已被使用（不可與管理帳或其他評審重複），請改用另一個帳號。";
     }
     if (fields) return base + "（" + fields + "）";
     return base;

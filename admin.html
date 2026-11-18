@@ -1307,8 +1307,12 @@ placeholder="例如：王老師"
 <input
 id="judgeUsername"
 class="field"
-placeholder="至少 3 個字元"
+placeholder="例如：council01（不可與管理帳或其他評審重複）"
 >
+
+<div class="sub" style="margin-top:4px">
+每位評審要用不同登入帳號；不要填管理後台同一個 Email。
+</div>
 
 <div id="judgePasswordWrap">
 
@@ -1654,7 +1658,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=upload-browse-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=upload-browse-2"></script>
-<script src="./platform-admin-pb.js?v=judge-create-acl-1"></script>
+<script src="./platform-admin-pb.js?v=judge-email-unique-1"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
