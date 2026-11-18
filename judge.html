@@ -2388,7 +2388,7 @@ button{
             id="materialsHint"
             class="materials-hint"
           >
-          可閱覽評選 PDF（唯讀）；不含特色資料，亦無法上傳或修改檔案。
+          可閱覽評選資料（唯讀）；PDF 可預覽，其他格式可下載原檔。不含特色資料，亦無法上傳或修改。
           </div>
 
         <div class="materials-browser">
@@ -2407,7 +2407,7 @@ button{
             class="materials-preview"
           >
             <div class="materials-empty">
-              選擇左側 PDF 後可於此預覽
+              選擇左側檔案後可於此預覽
             </div>
           </div>
 
@@ -10533,6 +10533,196 @@ function isPdfMaterialsFile_(
 }
 
 
+/** 右側可內嵌預覽：目前僅 PDF；之後轉檔成功也可走同一路徑。 */
+function canInlinePreviewMaterialsFile_(
+  file
+) {
+
+  if (
+    !file
+  ) {
+
+    return false;
+
+  }
+
+
+  if (
+    file.previewReady ===
+      false ||
+    file.convertStatus ===
+      "failed"
+  ) {
+
+    return false;
+
+  }
+
+
+  if (
+    file.previewUrl &&
+    /\.pdf(\?|$)/i.test(
+      String(
+        file.previewUrl
+      )
+    )
+  ) {
+
+    return true;
+
+  }
+
+
+  return isPdfMaterialsFile_(
+    file
+  );
+
+}
+
+
+function materialsOriginalFileUrl_(
+  file
+) {
+
+  if (
+    !file
+  ) {
+
+    return "";
+
+  }
+
+
+  return String(
+    file.fileUrl ||
+    file.webViewLink ||
+    file.downloadUrl ||
+    ""
+  )
+  .trim();
+
+}
+
+
+function downloadMaterialsOriginal_(
+  encodedFileId
+) {
+
+  const fileId =
+    decodeURIComponent(
+      String(
+        encodedFileId ||
+        ""
+      )
+    );
+
+
+  const state =
+    APP.materialsState ||
+    {};
+
+
+  const file =
+    (state.files || [])
+      .find(
+        function (
+          row
+        ) {
+
+          return String(
+            row.id ||
+            ""
+          ) ===
+            fileId;
+
+        }
+      ) ||
+    selectedMaterialsFile_();
+
+
+  const url =
+    materialsOriginalFileUrl_(
+      file
+    );
+
+
+  if (
+    !url
+  ) {
+
+    toast(
+      "找不到原檔下載網址"
+    );
+
+
+    return;
+
+  }
+
+
+  try {
+
+    const a =
+      document.createElement(
+        "a"
+      );
+
+
+    a.href =
+      url;
+
+
+    a.target =
+      "_blank";
+
+
+    a.rel =
+      "noopener noreferrer";
+
+
+    const label =
+      materialsFileLabel_(
+        file
+      );
+
+
+    if (
+      label
+    ) {
+
+      a.download =
+        label;
+
+    }
+
+
+    document.body.appendChild(
+      a
+    );
+
+
+    a.click();
+
+
+    a.remove();
+
+  }
+
+  catch (
+    _openErr
+  ) {
+
+    window.open(
+      url,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+  }
+
+}
+
+
 function renderMaterialsTreeHtml_(
   nodes,
   depth
@@ -10593,7 +10783,7 @@ function renderMaterialsTreeHtml_(
         return `
         <details class="materials-folder" open>
           <summary>${escapeHtml(node.name || "資料夾")}</summary>
-          ${filesHtml || '<div class="materials-empty">此資料夾尚無已完成 PDF</div>'}
+          ${filesHtml || '<div class="materials-empty">此資料夾尚無已完成檔案</div>'}
           ${childrenHtml}
         </details>
         `;
@@ -10636,7 +10826,7 @@ function renderScoreMaterialsPane_() {
 
     hint.textContent =
       state.hint ||
-      "可閱覽評選 PDF（唯讀）；不含特色資料，亦無法上傳或修改檔案。";
+      "可閱覽評選資料（唯讀）；PDF 可預覽，其他格式可下載原檔。不含特色資料，亦無法上傳或修改。";
 
   }
 
@@ -10800,14 +10990,25 @@ function renderScoreMaterialsPane_() {
     );
 
 
-  const safeUrl =
+  const canInline =
+    canInlinePreviewMaterialsFile_(
+      selected
+    );
+
+
+  const previewSrc =
     escapeHtml(
-      selected.fileUrl
+      String(
+        selected.previewUrl ||
+        selected.fileUrl ||
+        ""
+      )
     );
 
 
   const previewBar =
-    `<div class="materials-preview-bar">
+    canInline
+      ? `<div class="materials-preview-bar">
       <div class="materials-preview-name" title="${fileLabel}">${fileLabel}</div>
       <div class="materials-preview-actions">
         <button
@@ -10818,18 +11019,29 @@ function renderScoreMaterialsPane_() {
           放大預覽
         </button>
       </div>
+    </div>`
+      : `<div class="materials-preview-bar">
+      <div class="materials-preview-name" title="${fileLabel}">${fileLabel}</div>
+      <div class="materials-preview-actions">
+        <button
+          type="button"
+          class="btn btn-primary"
+          onclick="downloadMaterialsOriginal_('${encodeURIComponent(selected.id)}')"
+        >
+          下載原檔
+        </button>
+      </div>
     </div>`;
 
 
   if (
-    isPdfMaterialsFile_(
-      selected
-    )
+    canInline &&
+    previewSrc
   ) {
 
     preview.innerHTML =
       previewBar +
-      `<iframe class="materials-preview-frame" title="PDF 預覽" src="${safeUrl}#toolbar=1"></iframe>`;
+      `<iframe class="materials-preview-frame" title="檔案預覽" src="${previewSrc}#toolbar=1"></iframe>`;
 
   }
 
@@ -10837,7 +11049,7 @@ function renderScoreMaterialsPane_() {
 
     preview.innerHTML =
       previewBar +
-      `<div class="materials-empty">此檔案非 PDF，目前僅支援 PDF 預覽與放大檢視。</div>`;
+      `<div class="materials-empty">無法轉成預覽<br><span class="materials-hint">請改下載原檔，於本機開啟檢視。</span></div>`;
 
   }
 
@@ -10944,13 +11156,21 @@ function openMaterialsLightbox_() {
 
 
   if (
-    !isPdfMaterialsFile_(
+    !canInlinePreviewMaterialsFile_(
       selected
     )
   ) {
 
     toast(
-      "此檔案非 PDF，無法放大預覽"
+      "無法轉成預覽，請改下載原檔"
+    );
+
+
+    downloadMaterialsOriginal_(
+      encodeURIComponent(
+        selected.id ||
+        ""
+      )
     );
 
 
@@ -10960,7 +11180,11 @@ function openMaterialsLightbox_() {
 
 
   frame.src =
-    selected.fileUrl +
+    String(
+      selected.previewUrl ||
+      selected.fileUrl ||
+      ""
+    ) +
     "#toolbar=1";
 
 
@@ -11418,7 +11642,7 @@ async function loadScoreMaterials_(
               files.length +
               " 個檔案）"
             : foldersHint
-              ? "（此社目前沒有已完成 PDF，可按重新載入再試）"
+              ? "（此社目前沒有已完成檔案，可按重新載入再試）"
               : "（尚無可閱覽資料，可按重新載入再試）"
         ),
       tree:
