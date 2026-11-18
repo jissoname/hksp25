@@ -202,18 +202,71 @@
     };
   }
 
+  /**
+   * 社團參與項目：存於 clubs.meta_json.participation
+   * evaluation | feature | both；未設定時為相容舊資料暫開兩者（configured:false）。
+   */
+  function participationFromClub(club) {
+    var meta =
+      club && club.meta_json && typeof club.meta_json === "object" ? club.meta_json : {};
+    var raw = String(meta.participation || "").trim().toLowerCase();
+    if (raw === "evaluation" || raw === "eval") {
+      return { configured: true, evaluation: true, feature: false, value: "evaluation" };
+    }
+    if (raw === "feature") {
+      return { configured: true, evaluation: false, feature: true, value: "feature" };
+    }
+    if (raw === "both" || raw === "all") {
+      return { configured: true, evaluation: true, feature: true, value: "both" };
+    }
+    if (raw === "none" || raw === "off" || raw === "neither") {
+      return { configured: true, evaluation: false, feature: false, value: "none" };
+    }
+    // 尚未設定：暫不鎖死既有社團（避免全校突然不能交），但標記未設定。
+    return { configured: false, evaluation: true, feature: true, value: "" };
+  }
+
+  function assertParticipationAllows(ctx, kind) {
+    var part = participationFromClub(ctx.club);
+    var wantFeature = kind === "feature";
+    var allowed = wantFeature ? part.feature : part.evaluation;
+    if (!allowed) {
+      throw err(
+        "PARTICIPATION_DENIED",
+        wantFeature
+          ? "此社團未參加特色上傳。"
+          : "此社團未參加評選上傳。"
+      );
+    }
+    return part;
+  }
+
   function buildUploadAccessFields(activity, club) {
+    var part = participationFromClub(club);
     var winEval = openWindowFromActivity(activity, "evaluation", club);
     var winFeature = openWindowFromActivity(activity, "feature", club);
+    if (!part.evaluation) winEval = Object.assign({}, winEval, {
+      open: false,
+      code: "PARTICIPATION_DENIED",
+      message: "此社團未參加評選上傳。"
+    });
+    if (!part.feature) winFeature = Object.assign({}, winFeature, {
+      open: false,
+      code: "PARTICIPATION_DENIED",
+      message: "此社團未參加特色上傳。"
+    });
     var gateOpen = masterUploadGateOpen(activity);
+    var evalWritable = !!(part.evaluation && winEval.open);
+    var featureWritable = !!(part.feature && winFeature.open);
     return {
-      driveWriteEnabled: !!(winEval.open || winFeature.open),
+      participation: part,
+      driveWriteEnabled: !!(evalWritable || featureWritable),
       uploadGate: {
         envLive: true,
         open: gateOpen,
-        writesAllowed: !!(winEval.open || winFeature.open),
-        evaluationOpen: !!winEval.open,
-        featureOpen: !!winFeature.open
+        writesAllowed: !!(evalWritable || featureWritable),
+        evaluationOpen: evalWritable,
+        featureOpen: featureWritable
       },
       uploadWindows: {
         serverNowMs: winEval.serverNowMs,
@@ -733,7 +786,7 @@
             clubName: ctx.club.name,
             clubFolderId: root.id,
             files: rows.map(mapUploadFile),
-            participation: { configured: true, evaluation: true, feature: true },
+            participation: access.participation,
             uploadWindows: access.uploadWindows,
             driveWriteEnabled: access.driveWriteEnabled,
             uploadGate: access.uploadGate,
@@ -780,7 +833,7 @@
               files: files.map(mapUploadFile),
               driveWriteEnabled: access.driveWriteEnabled,
               uploadGate: access.uploadGate,
-              participation: { configured: true, evaluation: true, feature: true },
+              participation: access.participation,
               uploadWindows: access.uploadWindows,
               storage: "pocketbase"
             });
@@ -1364,6 +1417,7 @@
     }
     return contextFromAuth().then(function (ctx) {
       var kind = (data && data.uploadKind) === "feature" ? "feature" : "evaluation";
+      assertParticipationAllows(ctx, kind);
       assertWriteWindowOpen(ctx, kind);
       return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid).then(function (root) {
         var attempt = String((data && data.clientAttemptId) || "");
@@ -1480,6 +1534,7 @@
     };
 
     return contextFromAuth().then(function (ctx) {
+      assertParticipationAllows(ctx, uploadKind);
       assertWriteWindowOpen(ctx, uploadKind);
       if (String(meta.clubId || "") && String(meta.clubId) !== String(ctx.club.id)) {
         throw err("FORBIDDEN", "上傳目標社團與目前登入社團不符。");

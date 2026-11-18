@@ -190,17 +190,17 @@
           return s.published === true;
         })
       : all.slice();
-    // 若尚未標記 published，仍允許使用已啟用大項（避免送分／管理端雙雙空白）
-    if (requirePublished && !sections.length) sections = all.slice();
-    if (Array.isArray(allowedIds) && allowedIds.length) {
+    // allowedIds === []：空指派＝不能評任何大項（不可退回全部）。
+    // allowedIds == null：不依指派過濾（管理／內部用）。
+    if (Array.isArray(allowedIds)) {
+      if (!allowedIds.length) return [];
       var set = {};
       allowedIds.forEach(function (id) {
         set[String(id)] = true;
       });
-      var filtered = sections.filter(function (s) {
+      sections = sections.filter(function (s) {
         return set[String(s.id)];
       });
-      if (filtered.length) sections = filtered;
     }
     return sections;
   }
@@ -311,8 +311,8 @@
   function judgeMayReadClubCategory(judge, club) {
     if (!judge || !club) return false;
     var cats = Array.isArray(judge.categories) ? judge.categories : [];
-    // 與 dashboard 一致：未指定屬性時不依屬性過濾（仍須通過截止／登入核對）。
-    if (!cats.length) return true;
+    // 空指派＝不能評／不能閱覽任何社團屬性。
+    if (!cats.length) return false;
     var clubRaw = String(club.category || "").trim();
     var clubKey = normalizeCategoryKey(clubRaw);
     for (var i = 0; i < cats.length; i++) {
@@ -324,6 +324,15 @@
       if (raw === clubKey) return true;
     }
     return false;
+  }
+
+  function judgeMayScoreSection(judge, sectionId) {
+    var allowed = Array.isArray(judge && judge.scoreSectionIds) ? judge.scoreSectionIds : [];
+    if (!allowed.length) return false;
+    var sid = String(sectionId || "").trim();
+    return allowed.some(function (id) {
+      return String(id) === sid;
+    });
   }
 
   /**
@@ -697,15 +706,14 @@
       return fail("尚未設定評分機制（scoreConfig）。請先在管理後台建立並發布配分表。");
     }
     var judge = mapJudge(judgeRec);
-    var sections = publishedSections(scoreConfig, judge.scoreSectionIds);
-    if (!sections.length) {
-      sections = publishedSections(scoreConfig, null);
-    }
-    var clubs = await pb().collection(C().clubs).getFullList({
-      filter: 'activity="' + activity.id + '" && active=true',
-      sort: "category,name"
-    });
-    if (judge.categories && judge.categories.length) {
+    // 空 scoreSectionIds／categories＝不能評（不再退回全部大項／全部社團）。
+    var sections = publishedSections(scoreConfig, judge.scoreSectionIds || []);
+    var clubs = [];
+    if (Array.isArray(judge.categories) && judge.categories.length) {
+      clubs = await pb().collection(C().clubs).getFullList({
+        filter: 'activity="' + activity.id + '" && active=true',
+        sort: "category,name"
+      });
       var catSet = {};
       judge.categories.forEach(function (c) {
         catSet[normalizeCategoryKey(c)] = true;
@@ -998,11 +1006,28 @@
     if (!section || section.enabled === false) {
       return fail("找不到評分大項。", "SCORE_SECTION_NOT_FOUND");
     }
+    var judge = mapJudge(judgeRec);
+    if (!judgeMayScoreSection(judge, sectionId)) {
+      return fail(
+        "此帳號未被指派此評分大項，無法送出。",
+        "JUDGE_SCORE_SECTION_FORBIDDEN"
+      );
+    }
     var club;
     try {
       club = await findClub(activity, data.permanentClubId, data.clubName);
     } catch (clubErr) {
       return fail((clubErr && clubErr.message) || "找不到社團。", "CLUB_NOT_FOUND");
+    }
+    if (!judgeMayReadClubCategory(judge, club)) {
+      return fail(
+        "此帳號未被指派此社團屬性，無法送出。",
+        "JUDGE_SCORE_SECTION_FORBIDDEN"
+      );
+    }
+    var published = publishedSections(scoreConfig, [sectionId]);
+    if (!published.length) {
+      return fail("此評分大項尚未開放評分。", "SCORE_SECTION_NOT_FOUND");
     }
     var scores = (data && data.scores) || {};
     var criteria = flattenCriteria(section);

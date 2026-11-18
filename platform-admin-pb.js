@@ -74,7 +74,18 @@
     return String(cfg().staffAdminEmail || "hksp_6188@hk.edu.tw").trim();
   }
 
+  function participationLabelOf(value) {
+    var raw = String(value || "").trim().toLowerCase();
+    if (raw === "evaluation" || raw === "eval") return "評選";
+    if (raw === "feature") return "特色";
+    if (raw === "both" || raw === "all") return "兩項皆參加";
+    if (raw === "none" || raw === "off") return "不參加";
+    return "未設定";
+  }
+
   function mapClub(rec) {
+    var meta = rec && rec.meta_json && typeof rec.meta_json === "object" ? rec.meta_json : {};
+    var participation = String(meta.participation || "").trim();
     return {
       id: rec.id,
       permanentClubId: String(rec.permanent_club_id || "").toUpperCase(),
@@ -83,10 +94,40 @@
       category: rec.category || "",
       active: rec.active !== false,
       driveFolderId: rec.drive_folder_id || "",
-      version: Number(rec.meta_json && rec.meta_json.version) || 1,
+      participation: participation,
+      cloudParticipation: participation,
+      participationLabel: participationLabelOf(participation),
+      version: Number(meta.version) || 1,
       updated: rec.updated || "",
       created: rec.created || ""
     };
+  }
+
+  function assertExpectedUpdateTime(activity, data) {
+    var expected = String((data && data.expectedUpdateTime) || "").trim();
+    if (!expected) return null;
+    var current = String((activity && activity.updated) || "").trim();
+    if (current && expected !== current) {
+      return fail(
+        "設定已被其他人更新，請重新讀取後再儲存。",
+        "EVALUATION_CONFLICT"
+      );
+    }
+    return null;
+  }
+
+  function assertExpectedNumericVersion(currentVersion, expectedVersion, label) {
+    if (expectedVersion == null || expectedVersion === "") return null;
+    var cur = Number(currentVersion || 1) || 1;
+    var exp = Number(expectedVersion);
+    if (!Number.isFinite(exp)) return null;
+    if (exp !== cur) {
+      return fail(
+        (label || "設定") + "已被其他人更新，請重新讀取後再儲存。",
+        "EVALUATION_CONFLICT"
+      );
+    }
+    return null;
   }
 
   function mapStudent(rec) {
@@ -761,6 +802,89 @@
     } catch (e) {
       return fail((e && e.message) || "更新社團失敗。");
     }
+  }
+
+  async function adminSetClubCloudParticipation(data) {
+    var activity = await getActivityRecord();
+    var permanent = String(data.permanentClubId || data.clubId || "").trim().toUpperCase();
+    var participation = String(data.participation || "").trim().toLowerCase();
+    if (!permanent) return fail("缺少社團編號。");
+    if (
+      participation &&
+      participation !== "evaluation" &&
+      participation !== "feature" &&
+      participation !== "both" &&
+      participation !== "none"
+    ) {
+      return fail("參與項目無效（請選評選／特色／兩項皆參加）。");
+    }
+    try {
+      var club = await pb()
+        .collection(C().clubs)
+        .getFirstListItem(
+          'activity="' + activity.id + '" && permanent_club_id="' + permanent + '"'
+        );
+      var meta =
+        club.meta_json && typeof club.meta_json === "object"
+          ? Object.assign({}, club.meta_json)
+          : {};
+      if (participation) meta.participation = participation;
+      else delete meta.participation;
+      meta.version = Number(meta.version || 1) + 1;
+      var updated = await pb().collection(C().clubs).update(club.id, { meta_json: meta });
+      var mapped = mapClub(updated);
+      return ok({
+        club: mapped,
+        permanentClubId: mapped.permanentClubId,
+        participation: mapped.participation,
+        participationLabel: mapped.participationLabel,
+        folderEnsure: { skipped: true, reason: "pocketbase-primary" }
+      });
+    } catch (e) {
+      return fail((e && e.message) || "儲存參與項目失敗。");
+    }
+  }
+
+  async function adminListClubCloudRows(data) {
+    var activity = await getActivityRecord();
+    var clubs = await pb().collection(C().clubs).getFullList({
+      filter: 'activity="' + activity.id + '" && active=true',
+      sort: "category,name"
+    });
+    var requested = Array.isArray(data && data.clubs) ? data.clubs : [];
+    var want = {};
+    requested.forEach(function (c) {
+      var id = String((c && (c.permanentClubId || c.clubId)) || "")
+        .trim()
+        .toUpperCase();
+      if (id) want[id] = true;
+    });
+    var rows = clubs
+      .map(function (c) {
+        var mapped = mapClub(c);
+        return {
+          permanentClubId: mapped.permanentClubId,
+          clubName: mapped.name,
+          name: mapped.name,
+          category: mapped.category,
+          participation: mapped.participation || "",
+          participationLabel: mapped.participationLabel,
+          evaluationFolderConfigured: !!c.drive_folder_id,
+          evaluationFolderUrl: "",
+          folderEnsureLabel: "PocketBase 主路徑",
+          canRetryFolderEnsure: false,
+          folderEnsureError: ""
+        };
+      })
+      .filter(function (row) {
+        if (!Object.keys(want).length) return true;
+        return !!want[row.permanentClubId];
+      });
+    return ok({
+      clubs: rows,
+      source: "pocketbase",
+      updateTime: String(activity.updated || new Date().toISOString())
+    });
   }
 
   async function adminDeleteClub(data) {
@@ -1540,6 +1664,8 @@
 
   async function adminSaveEventConfig(data) {
     var activity = await getActivityRecord();
+    var conflict = assertExpectedUpdateTime(activity, data);
+    if (conflict) return conflict;
     var conf = Object.assign({}, activity.config_json || {});
     ["dataDeadline", "formDeadline", "featureDeadline", "eventStart", "eventEnd"].forEach(
       function (key) {
@@ -1572,6 +1698,12 @@
   async function adminSaveEvaluationUploadSettings(data) {
     var activity = await getActivityRecord();
     var conf = Object.assign({}, activity.config_json || {});
+    var verConflict = assertExpectedNumericVersion(
+      conf.evaluationVersion || 1,
+      data.expectedVersion,
+      "評選上傳設定"
+    );
+    if (verConflict) return verConflict;
     if (data.deadlineAt) conf.dataDeadline = data.deadlineAt;
     conf.evaluationMakeup = {
       deadlineAt: data.makeupDeadlineAt || null,
@@ -1592,6 +1724,12 @@
   async function adminSaveFeatureUploadSettings(data) {
     var activity = await getActivityRecord();
     var conf = Object.assign({}, activity.config_json || {});
+    var verConflict = assertExpectedNumericVersion(
+      conf.featureVersion || 1,
+      data.expectedVersion,
+      "特色上傳設定"
+    );
+    if (verConflict) return verConflict;
     if (data.deadlineAt) conf.featureDeadline = data.deadlineAt;
     // Drive 共用夾已非主路徑；不再從後台寫入 featureFolderUrl。
     if (Object.prototype.hasOwnProperty.call(conf, "featureFolderUrl")) {
@@ -1622,6 +1760,12 @@
     var activity = await getActivityRecord();
     var conf = Object.assign({}, activity.config_json || {});
     var prev = conf.uploadGate || { open: true, version: 1 };
+    var verConflict = assertExpectedNumericVersion(
+      prev.version || 1,
+      data.expectedVersion,
+      "上傳開關"
+    );
+    if (verConflict) return verConflict;
     conf.uploadGate = {
       open: data.open !== false && data.open !== "false",
       version: Number(prev.version || 1) + 1,
@@ -1812,6 +1956,8 @@
 
   async function adminSaveScoreConfig(data) {
     var activity = await getActivityRecord();
+    var conflict = assertExpectedUpdateTime(activity, data);
+    if (conflict) return conflict;
     var conf = Object.assign({}, activity.config_json || {});
     var next = data.config || data.scoreConfig || null;
     if (!next || typeof next !== "object") return fail("缺少配分表內容。");
@@ -1841,6 +1987,8 @@
 
   async function adminSetScorePhasePublished(data) {
     var activity = await getActivityRecord();
+    var conflict = assertExpectedUpdateTime(activity, data);
+    if (conflict) return conflict;
     var conf = Object.assign({}, activity.config_json || {});
     var scoreConfig = Object.assign({}, conf.scoreConfig || defaultScoreConfig());
     var sectionId = String(data.sectionId || data.id || "").trim();
@@ -1903,9 +2051,37 @@
     var row = res.items[0];
     var answers =
       row.answers_json && typeof row.answers_json === "object" ? Object.assign({}, row.answers_json) : {};
+    var unlockedAt = new Date().toISOString();
+    var unlockReason = String(data.reason || data.unlockReason || "").trim();
+    var conf = activity.config_json || {};
+    var scoreConfig = conf.scoreConfig || {};
+    var section =
+      (scoreConfig.sections || []).find(function (s) {
+        return String(s.id) === sectionId;
+      }) || null;
+    var history = Array.isArray(answers.history) ? answers.history.slice() : [];
+    history.push({
+      submissionRevision: Number(row.revision || 1) || 1,
+      totalScore: Number(row.score != null ? row.score : row.total_score) || 0,
+      scores: answers.scores && typeof answers.scores === "object" ? answers.scores : {},
+      comment: String(row.comment || ""),
+      submittedAt: answers.submittedAt || row.submitted_at || row.updated || "",
+      unlockedAt: unlockedAt,
+      unlockReason: unlockReason,
+      capturedAt: unlockedAt,
+      sectionSnapshot: section
+        ? {
+            id: section.id,
+            name: section.name || "",
+            groups: Array.isArray(section.groups) ? section.groups : []
+          }
+        : null
+    });
+    answers.history = history;
     answers.reopened = true;
     answers.locked = false;
-    answers.unlockedAt = new Date().toISOString();
+    answers.unlockedAt = unlockedAt;
+    if (unlockReason) answers.unlockReason = unlockReason;
     var updated = await pb().collection(C().scores).update(row.id, {
       answers_json: answers,
       status: "draft"
@@ -1913,7 +2089,68 @@
     return ok({
       id: updated.id,
       reopened: true,
-      unlockedAt: answers.unlockedAt
+      unlockedAt: unlockedAt,
+      historyCount: history.length
+    });
+  }
+
+  async function adminGetJudgeScoreHistory(data) {
+    var activity = await getActivityRecord();
+    var judgeId = String(data.judgeId || data.judge || "").trim();
+    var sectionId = String(data.sectionId || "").trim();
+    var permanent = String(data.permanentClubId || "").trim().toUpperCase();
+    var clubName = String(data.clubName || "").trim();
+    if (!judgeId || !sectionId) return fail("缺少評審或評分大項。");
+    var club;
+    try {
+      if (permanent) {
+        club = await pb()
+          .collection(C().clubs)
+          .getFirstListItem(
+            'activity="' + activity.id + '" && permanent_club_id="' + permanent + '"'
+          );
+      } else if (clubName) {
+        club = await pb()
+          .collection(C().clubs)
+          .getFirstListItem(
+            'activity="' + activity.id + '" && name="' + clubName.replace(/"/g, '\\"') + '"'
+          );
+      } else {
+        return fail("缺少社團。");
+      }
+    } catch (_e) {
+      return fail("找不到社團。");
+    }
+    var res = await pb().collection(C().scores).getList(1, 1, {
+      filter:
+        'activity="' +
+        activity.id +
+        '" && club="' +
+        club.id +
+        '" && judge="' +
+        judgeId +
+        '" && section_id="' +
+        sectionId +
+        '"'
+    });
+    if (!res.totalItems) {
+      return ok({ history: [], historyCount: 0 });
+    }
+    var answers =
+      res.items[0].answers_json && typeof res.items[0].answers_json === "object"
+        ? res.items[0].answers_json
+        : {};
+    var history = Array.isArray(answers.history) ? answers.history.slice() : [];
+    return ok({
+      history: history,
+      historyCount: history.length,
+      current: {
+        status: res.items[0].status || "",
+        totalScore: Number(res.items[0].score != null ? res.items[0].score : 0) || 0,
+        reopened: answers.reopened === true,
+        locked: answers.locked === true,
+        unlockedAt: answers.unlockedAt || null
+      }
     });
   }
 
@@ -1949,12 +2186,13 @@
     var totalNotStarted = 0;
 
     var rows = judges.map(function (judge) {
-      var judgeSections = sections.filter(function (section) {
-        var allowed = Array.isArray(judge.scoreSectionIds) ? judge.scoreSectionIds : [];
-        if (allowed.length && allowed.indexOf(section.id) < 0) return false;
-        return true;
-      });
-      if (!judgeSections.length) judgeSections = sections.slice();
+      var allowedSections = Array.isArray(judge.scoreSectionIds) ? judge.scoreSectionIds : [];
+      // 空指派＝不能評任何大項（不再退回全部）。
+      var judgeSections = !allowedSections.length
+        ? []
+        : sections.filter(function (section) {
+            return allowedSections.indexOf(section.id) >= 0;
+          });
 
       var submittedCount = 0;
       var draftCount = 0;
@@ -1971,10 +2209,8 @@
           .filter(function (club) {
             var row = byKey[judge.id + "::" + club.id + "::" + section.id];
             if (row) return true;
-            var allowed = Array.isArray(judge.scoreSectionIds) ? judge.scoreSectionIds : [];
-            if (allowed.length && allowed.indexOf(section.id) < 0) return false;
             var cats = Array.isArray(judge.categories) ? judge.categories : [];
-            if (!cats.length) return true;
+            if (!cats.length) return false;
             var cat = normalizeCategoryLabel(club.category);
             var set = {};
             cats.forEach(function (c) {
@@ -2187,6 +2423,7 @@
       submittedAt: row && row.submitted_at ? row.submitted_at : null,
       updatedAt: row && row.updated ? row.updated : null,
       unlockedAt: answers.unlockedAt || null,
+      historyCount: Array.isArray(answers.history) ? answers.history.length : 0,
       detail: detail,
       totalScore: row ? Number(row.score) || 0 : null
     });
@@ -2805,6 +3042,8 @@
 
   async function adminSaveRankingConfig(data) {
     var activity = await getActivityRecord();
+    var conflict = assertExpectedUpdateTime(activity, data);
+    if (conflict) return conflict;
     var conf = Object.assign({}, activity.config_json || {});
     var next = data.config || data.rankingConfig || null;
     if (!next || typeof next !== "object") return fail("缺少排名規則。");
@@ -3666,6 +3905,8 @@
     adminAddClub: adminAddClub,
     adminUpdateClub: adminUpdateClub,
     adminDeleteClub: adminDeleteClub,
+    adminSetClubCloudParticipation: adminSetClubCloudParticipation,
+    adminListClubCloudRows: adminListClubCloudRows,
     adminListClubStudents: adminListClubStudents,
     adminEnrollClubStudentBirth: adminEnrollClubStudentBirth,
     adminResetClubStudentPassword: adminResetClubStudentPassword,
@@ -3692,6 +3933,7 @@
     adminSaveScoreConfig: adminSaveScoreConfig,
     adminSetScorePhasePublished: adminSetScorePhasePublished,
     adminUnlockJudgeScore: adminUnlockJudgeScore,
+    adminGetJudgeScoreHistory: adminGetJudgeScoreHistory,
     adminJudgeScoreProgress: adminJudgeScoreProgress,
     adminJudgeGetRawScore: adminJudgeGetRawScore,
     adminScoreAggregationSummary: adminScoreAggregationSummary,
