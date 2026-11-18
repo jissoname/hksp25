@@ -258,12 +258,12 @@
     if (String(m.student) === String(studentRecordId)) return false;
     var stu = (m.expand && m.expand.student) || null;
     if (stu) {
-      if (stu.active === false) return false;
       var sid = String(stu.student_id || "");
       // Soft-tombstoned rows from wrong-registration delete must not block seats.
       if (/^W[a-zA-Z0-9]+$/.test(sid) || /__WRR__/i.test(sid) || /^wrr/i.test(sid)) {
         return false;
       }
+      // Policy A: inactive Auth still holds the seat until the account is deleted.
     }
     return true;
   }
@@ -356,6 +356,19 @@
                 throw seatErr;
               });
             });
+        }).catch(function (createErr) {
+          // DB unique (activity, club) WHERE status=active blocks concurrent double seats.
+          if (isUniqueConflict(createErr)) {
+            throw err(
+              "SEAT_TAKEN",
+              "此社團名額已被占用，每個社團僅能註冊一個帳號。",
+              {
+                code: "SEAT_TAKEN",
+                permanentClubId: permanentClubId || (club && club.permanent_club_id) || ""
+              }
+            );
+          }
+          throw createErr;
         });
       });
     });

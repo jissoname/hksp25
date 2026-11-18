@@ -732,10 +732,12 @@
         })
         .filter(Boolean);
       var primary = students[0] || null;
+      if (primary) primary.isPrimary = true;
       var seatVersion = mems.reduce(function (max, m) {
         var t = Date.parse(String(m.updated || m.created || ""));
         return Number.isFinite(t) && t > max ? t : max;
       }, 0);
+      var seatUsed = primary ? 1 : 0;
       groups.push({
         activityId: activity.activity_id,
         permanentClubId: String(club.permanent_club_id || "").toUpperCase(),
@@ -744,6 +746,9 @@
         active: club.active !== false,
         clubDisabled: club.active === false,
         seatStatus: primary ? "occupied" : "empty",
+        seatQuota: 1,
+        seatUsed: seatUsed,
+        seatLabel: seatUsed + "/1",
         primaryUid: primary ? primary.uid : null,
         seatVersion: seatVersion || Date.now(),
         registeredCount: students.length,
@@ -811,28 +816,65 @@
       filter:
         'activity="' + activity.id + '" && club="' + club.id + '" && student="' + student.id + '"'
     });
-    if (existing.totalItems === 0) {
-      await pb().collection(C().memberships).create({
-        activity: activity.id,
-        club: club.id,
-        student: student.id,
-        role: "member",
-        status: "active",
-        can_upload: true,
-        bound_at: new Date().toISOString()
-      });
-    } else {
-      await pb().collection(C().memberships).update(existing.items[0].id, {
-        status: "active",
-        can_upload: true
-      });
+    try {
+      if (existing.totalItems === 0) {
+        await pb().collection(C().memberships).create({
+          activity: activity.id,
+          club: club.id,
+          student: student.id,
+          role: "member",
+          status: "active",
+          can_upload: true,
+          bound_at: new Date().toISOString()
+        });
+      } else {
+        await pb().collection(C().memberships).update(existing.items[0].id, {
+          status: "active",
+          can_upload: true
+        });
+      }
+    } catch (seatCreateErr) {
+      var seatMsg = String((seatCreateErr && seatCreateErr.message) || "");
+      if (/unique|not_unique|idx_hksp_membership_one_active_seat/i.test(seatMsg)) {
+        return fail("此社團名額已被占用，每個社團僅能有一個帳號。", "TARGET_SEAT_OCCUPIED");
+      }
+      throw seatCreateErr;
+    }
+    // Race guard: another active seat may have landed between check and write.
+    var afterHolders = await pb().collection(C().memberships).getFullList({
+      filter:
+        'activity="' + activity.id + '" && club="' + club.id + '" && status="active"'
+    });
+    var extras = afterHolders.filter(function (m) {
+      return String(m.student) !== String(student.id);
+    });
+    if (extras.length) {
+      try {
+        var mine = afterHolders.find(function (m) {
+          return String(m.student) === String(student.id);
+        });
+        if (mine) {
+          await pb().collection(C().memberships).delete(mine.id).catch(function () {
+            return pb().collection(C().memberships).update(mine.id, {
+              status: "revoked",
+              can_upload: false
+            });
+          });
+        }
+      } catch (_roll) {
+        /* ignore */
+      }
+      return fail("此社團名額已被占用，每個社團僅能有一個帳號。", "TARGET_SEAT_OCCUPIED");
     }
     return ok({
       studentId: studentId,
       uid: student.id,
       permanentClubId: permanent,
       mustChangePassword: !!student.must_change_password,
-      seatStatus: "occupied"
+      seatStatus: "occupied",
+      seatQuota: 1,
+      seatUsed: 1,
+      seatLabel: "1/1"
     });
   }
 
@@ -853,103 +895,20 @@
     }
   }
 
-  async function adminUnbindClubStudent(data) {
-    var activity = await getActivityRecord();
-    var permanent = String(data.permanentClubId || "").trim().toUpperCase();
-    var uid = String(data.uid || "").trim();
-    if (!permanent || !uid) return fail("缺少社團或學生。");
-    try {
-      var club = await pb()
-        .collection(C().clubs)
-        .getFirstListItem('activity="' + activity.id + '" && permanent_club_id="' + permanent + '"');
-      var mem = await pb()
-        .collection(C().memberships)
-        .getFirstListItem(
-          'activity="' + activity.id + '" && club="' + club.id + '" && student="' + uid + '"'
-        );
-      await pb().collection(C().memberships).update(mem.id, {
-        status: "revoked",
-        can_upload: false
-      });
-      return ok({
-        uid: uid,
-        permanentClubId: permanent,
-        seatReleased: true,
-        seatStatus: "empty"
-      });
-    } catch (e) {
-      return fail((e && e.message) || "解除綁定失敗。");
-    }
+  async function adminUnbindClubStudent(_data) {
+    // Policy A: only「刪除帳號」releases seat + account. Unbind is disabled.
+    return fail(
+      "已停用解除綁定。名額與帳號僅能透過「刪除帳號」一併釋放。",
+      "UNBIND_DISABLED"
+    );
   }
 
-  async function adminRebindClubStudent(data) {
-    var activity = await getActivityRecord();
-    var fromId = String(data.fromPermanentClubId || data.permanentClubId || "").trim().toUpperCase();
-    var toId = String(data.toPermanentClubId || "").trim().toUpperCase();
-    var uid = String(data.uid || "").trim();
-    if (!fromId || !toId || !uid) return fail("缺少改綁參數。");
-    try {
-      var fromClub = await pb()
-        .collection(C().clubs)
-        .getFirstListItem('activity="' + activity.id + '" && permanent_club_id="' + fromId + '"');
-      var toClub = await pb()
-        .collection(C().clubs)
-        .getFirstListItem(
-          'activity="' + activity.id + '" && permanent_club_id="' + toId + '" && active=true'
-        );
-      var targetHolders = await pb().collection(C().memberships).getFullList({
-        filter:
-          'activity="' + activity.id + '" && club="' + toClub.id + '" && status="active"'
-      });
-      var targetTaken = targetHolders.some(function (m) {
-        return String(m.student) !== String(uid);
-      });
-      if (targetTaken) {
-        return fail("目標社團名額已被占用，每個社團僅能有一個帳號。", "TARGET_SEAT_OCCUPIED");
-      }
-      try {
-        var oldMem = await pb()
-          .collection(C().memberships)
-          .getFirstListItem(
-            'activity="' + activity.id + '" && club="' + fromClub.id + '" && student="' + uid + '"'
-          );
-        await pb().collection(C().memberships).update(oldMem.id, {
-          status: "revoked",
-          can_upload: false
-        });
-      } catch (_e) {
-        /* ignore missing old membership */
-      }
-      var existing = await pb().collection(C().memberships).getList(1, 1, {
-        filter:
-          'activity="' + activity.id + '" && club="' + toClub.id + '" && student="' + uid + '"'
-      });
-      if (existing.totalItems > 0) {
-        await pb().collection(C().memberships).update(existing.items[0].id, {
-          status: "active",
-          can_upload: true
-        });
-      } else {
-        await pb().collection(C().memberships).create({
-          activity: activity.id,
-          club: toClub.id,
-          student: uid,
-          role: "member",
-          status: "active",
-          can_upload: true,
-          bound_at: new Date().toISOString()
-        });
-      }
-      return ok({
-        uid: uid,
-        fromPermanentClubId: fromId,
-        toPermanentClubId: toId,
-        seatReleasedFrom: fromId,
-        seatOccupiedTo: toId
-      });
-    } catch (e) {
-      return fail((e && e.message) || "改綁失敗。");
-    }
+  async function adminRebindClubStudent(_data) {
+    // Policy A: rebind would free the source seat without deleting the account.
+    return fail(
+      "已停用改綁社團。名額與帳號僅能透過「刪除帳號」一併釋放；若選錯社請刪除後重新註冊。",
+      "REBIND_DISABLED"
+    );
   }
 
   async function loadWrongRegInventory(activity, uid, studentId) {
@@ -1054,7 +1013,7 @@
         driveUploadRecordsCounted: inv.uploadCount
       },
       distinctionFromUnbind:
-        "解綁保留 Auth／帳號／密碼並釋放名額；錯誤註冊重設會刪除 Auth 與帳號，使同學號可重新註冊。"
+        "解除綁定／改綁已停用。僅「刪除帳號」會刪除 Auth／帳號並釋放名額，同學號可重新註冊。"
     });
   }
 

@@ -237,6 +237,8 @@ $memberships = Ensure-Collection @{
   )
   indexes = @(
     'CREATE UNIQUE INDEX idx_hksp_membership_unique ON hksp_memberships (activity, student)'
+    # Policy A: at most one active seat per club (revoked rows do not block).
+    "CREATE UNIQUE INDEX idx_hksp_membership_one_active_seat ON hksp_memberships (activity, club) WHERE status = 'active'"
   )
 }
 

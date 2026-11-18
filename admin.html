@@ -707,7 +707,7 @@ onclick="openClubModal()"
 
 <div class="notice warnbox">
 依伺服器目前活動，或明確指定的歷史活動查詢學生。社團篩選與活動範圍分開：可查全部社團、指定屬性的全部社團，或單一社團。結果依社團分組；未註冊也列出；停用社團會標示。不可讀取生日／密碼／權杖。不搬移既有雲端檔案。
-<div style="margin-top:8px"><b>A. 解除綁定</b>：釋放原社團名額；帳號／學號／密碼保留，登入後可重選社團。<b>B. 刪除帳號</b>：學號填錯時用；按一次並確認後即刪除 Auth／帳號，同學號可重新註冊；不刪評分／上傳檔。兩者不可混用。</div>
+<div style="margin-top:8px"><b>名額規則</b>：每個社團固定 1 個名額、只能註冊 1 個帳號。<b>解除綁定／改綁已停用</b>。只有「刪除帳號」會一併釋放帳號與名額；同學號可重新註冊；不刪評分／上傳檔。</div>
 </div>
 
 <div class="notice" id="activityHandoverBox">
@@ -1654,7 +1654,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=upload-browse-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=upload-browse-2"></script>
-<script src="./platform-admin-pb.js?v=judge-sections-fix-2"></script>
+<script src="./platform-admin-pb.js?v=seat-lock-1"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -11518,7 +11518,7 @@ const head=
 `<div class="list-row" style="background:#f7f7f7">
 <div>
 <div class="list-title">${esc(group.clubName||rowClubId)} ${disabledMark}</div>
-<div class="list-sub">Club_ID ${esc(rowClubId)}｜屬性 ${esc(group.category||"-")}｜註冊 ${Number(group.registeredCount||0)}｜名額 ${esc(group.seatStatus||"open")}｜seatVersion ${rowSeatVersion!=null?rowSeatVersion:"-"}</div>
+<div class="list-sub">Club_ID ${esc(rowClubId)}｜屬性 ${esc(group.category||"-")}｜註冊 ${Number(group.registeredCount||0)}｜名額 ${esc(group.seatLabel||((group.seatStatus==="occupied"||group.primaryUid)?"1/1":"0/1"))}（${esc(group.seatStatus==="occupied"||group.primaryUid?"已占用":"空缺")}）｜seatVersion ${rowSeatVersion!=null?rowSeatVersion:"-"}</div>
 </div>
 </div>`;
 const students=Array.isArray(group.students)?group.students:[];
@@ -11536,8 +11536,6 @@ const stuClubId=String(stu.permanentClubId||rowClubId).trim().toUpperCase();
 const stuSeatVersion=stu.seatVersion!=null?Number(stu.seatVersion):(rowSeatVersion);
 const unknown=stu.authUnknown?`<div class="list-sub">${esc(stu.authNotice||"先前的密碼更新結果還不能確定，暫時不能再改密碼。")}</div>`:"";
 const recoverBtn=stu.authUnknown?`<button class="btn" data-cs-mutate type="button" onclick='recoverClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.authHolderOpId||""))},${JSON.stringify(Number(stu.authSecurityGeneration))})'>檢查密碼鎖定</button>`:"";
-const unbindBtn=stu.isPrimary?`<button class="btn" data-cs-mutate type="button" onclick='unbindClubStudent(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))},${JSON.stringify(stuSeatVersion)},${JSON.stringify(String(group.clubName||stuClubId))})'>解除綁定</button>`:"";
-const rebindBtn=stu.isPrimary?`<button class="btn" data-cs-mutate type="button" onclick='rebindClubStudent(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))},${JSON.stringify(stuSeatVersion)},${JSON.stringify(String(group.clubName||stuClubId))})'>改綁社團</button>`:"";
 const wrongRegBtn=stu.uid&&stu.studentId?`<button class="btn btn-danger" data-cs-mutate type="button" onclick='deleteWrongRegistrationDirect_(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))},${JSON.stringify(stuSeatVersion)},${JSON.stringify(String(group.clubName||stuClubId))})'>刪除帳號</button>`:"";
 return `<div class="list-row">
 <div>
@@ -11549,8 +11547,6 @@ ${unknown}
 <button class="btn" data-cs-mutate type="button" onclick='openClubStudentEnrollBirth(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))})'>補登生日</button>
 ${recoverBtn}
 <button class="btn btn-danger" data-cs-mutate type="button" onclick='resetClubStudentPassword(${JSON.stringify(String(stu.uid||""))},${JSON.stringify(stuActivityId)},${JSON.stringify(stuClubId)},${JSON.stringify(String(stu.studentId||""))})'>重設密碼</button>
-${unbindBtn}
-${rebindBtn}
 ${wrongRegBtn}
 </div>
 </div>`;
@@ -13021,6 +13017,10 @@ clubSel.disabled=clubStudentClubScope()!=="single"||!cat.value;
 }
 
 async function unbindClubStudent(uid,activityId,permanentClubId,studentId,seatVersion,clubName){
+toast("已停用解除綁定。名額與帳號僅能透過「刪除帳號」一併釋放。");
+return;
+/* legacy path retained but unreachable */
+void uid;void activityId;void permanentClubId;void studentId;void seatVersion;void clubName;
 if(clubStudentPanelLocked){
 toast("操作進行中，請稍候");
 return;
@@ -13155,6 +13155,10 @@ if(op.resetSeq===clubStudentResetSeq) setClubStudentPanelLocked(false);
 }
 
 async function rebindClubStudent(uid,activityId,fromPermanentClubId,studentId,seatVersion,fromClubName){
+toast("已停用改綁社團。名額與帳號僅能透過「刪除帳號」一併釋放；若選錯社請刪除後重新註冊。");
+return;
+/* legacy path retained but unreachable */
+void uid;void activityId;void fromPermanentClubId;void studentId;void seatVersion;void fromClubName;
 if(clubStudentPanelLocked){
 toast("操作進行中，請稍候");
 return;
