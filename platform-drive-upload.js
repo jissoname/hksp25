@@ -100,7 +100,6 @@
     createClubEvaluationFolder: true,
     trashClubEvaluationFile: true,
     moveClubEvaluationFile: true,
-    copyClubEvaluationFile: true,
     renameClubEvaluationFile: true,
     renameClubEvaluationFolder: true,
     trashClubEvaluationFolder: true,
@@ -730,12 +729,6 @@
     if (!bar) return;
     var show = browserViewMode === "browse" && items.length > 0 && uploadWriteAllowed;
     bar.classList.toggle("hidden", !show);
-    var copyBtn = $("btnDriveBatchCopy");
-    if (copyBtn) {
-      var hasFolder = items.some(function (item) { return item.kind === "folder"; });
-      copyBtn.disabled = hasFolder || !items.length;
-      copyBtn.title = hasFolder ? "批次複製僅支援檔案（不含整夾）" : "";
-    }
   }
 
   function currentPathFolderIds(data) {
@@ -1421,7 +1414,6 @@
         ? (itemKind === "folder" ? "確認永久刪除資料夾" : "確認永久刪除")
         : (itemKind === "folder" ? "確認刪除資料夾（移入垃圾桶）" : "確認刪除（移入垃圾桶）"),
       move: "確認移動",
-      copy: "確認複製",
       rename: "確認重新命名",
       restore: "確認還原"
     };
@@ -1477,8 +1469,6 @@
         addLine(itemKind === "folder"
           ? "移動資料夾會保留同一 folderId 與子項識別。"
           : "移動會保留同一 fileId，並更新位置與相關紀錄。");
-      } else if (action.kind === "copy") {
-        addLine("複製會產生新 fileId；僅在後端驗證並登錄成功後才更新有效繳交。");
       }
     }
     if (action.batchItems && action.batchItems.length > 1) {
@@ -1517,11 +1507,10 @@
         (state.batchItems && state.batchItems.length
           ? (state.batchItems.length + " 個項目")
           : "項目");
-      hint.textContent =
-        (state.kind === "move" ? "移動「" : "複製「") + label + "」：請進入目的資料夾後按確認。";
+      hint.textContent = "移動「" + label + "」：請進入目的資料夾後按確認。";
     }
     if (confirmBtn) {
-      confirmBtn.textContent = state.kind === "copy" ? "複製到這裡" : "移動到這裡";
+      confirmBtn.textContent = "移動到這裡";
       confirmBtn.disabled = false;
     }
     if (upBtn) upBtn.disabled = !!atRoot;
@@ -1723,18 +1712,6 @@
         fromPath: browsePathLabel
       });
     });
-    if (!isFolder) {
-      addItem("複製至…", "", function () {
-        openFolderPicker({
-          kind: "copy",
-          itemKind: "file",
-          fileId: item.id,
-          fileName: item.name,
-          parentFolderId: item.parentFolderId,
-          fromPath: browsePathLabel
-        });
-      });
-    }
   }
 
   function buildItemActionMenu(item) {
@@ -1785,7 +1762,7 @@
           "application/x-hksp-drive-file",
           JSON.stringify(dragFilePayload)
         );
-        event.dataTransfer.effectAllowed = "copyMove";
+        event.dataTransfer.effectAllowed = "move";
       } catch (_error) {}
     });
     el.addEventListener("dragend", function () {
@@ -1816,7 +1793,7 @@
       if (!dragFilePayload || !uploadWriteAllowed) return;
       event.preventDefault();
       try {
-        event.dataTransfer.dropEffect = event.shiftKey ? "copy" : "move";
+        event.dataTransfer.dropEffect = "move";
       } catch (_error) {}
       el.classList.add("is-drop-target");
     });
@@ -1833,7 +1810,6 @@
         setEvalFolderStatus("檔案已在此資料夾。", "warn");
         return;
       }
-      var kind = event.shiftKey ? "copy" : "move";
       var clubName =
         (serverCtx && serverCtx.clubName) ||
         (lastBrowseSnapshot && lastBrowseSnapshot.clubName) ||
@@ -1843,7 +1819,7 @@
           ? clubName
           : (browsePathLabel ? browsePathLabel + " / " : "") + String(folderName || folderId);
       showFileActionConfirm({
-        kind: kind,
+        kind: "move",
         fileId: payload.fileId,
         fileName: payload.name,
         parentFolderId: payload.parentFolderId,
@@ -2390,22 +2366,6 @@
     });
   }
 
-  function requestBatchCopy() {
-    var items = selectedItemList().filter(function (item) { return item.kind === "file"; });
-    if (!items.length) {
-      setEvalFolderStatus("批次複製僅支援檔案。", "warn");
-      return;
-    }
-    openFolderPicker({
-      kind: "copy",
-      itemKind: "batch",
-      fileName: items.length + " 個檔案",
-      parentFolderId: currentBrowseParentId(),
-      fromPath: browsePathLabel,
-      batchItems: items
-    });
-  }
-
   function callableAndBodyForAction(action) {
     var itemKind = action.itemKind || (action.folderId ? "folder" : "file");
     var kind = action.kind;
@@ -2435,16 +2395,6 @@
         return { name: "trashClubEvaluationFolder", body: { folderId: action.folderId } };
       }
       return { name: "trashClubEvaluationFile", body: { fileId: action.fileId } };
-    }
-    if (kind === "copy") {
-      return {
-        name: "copyClubEvaluationFile",
-        body: {
-          fileId: action.fileId,
-          destinationFolderId: action.destinationFolderId,
-          confirmReplace: !!action.confirmReplace
-        }
-      };
     }
     if (kind === "move") {
       if (itemKind === "folder") {
@@ -2553,10 +2503,6 @@
         fromPath: action.fromPath,
         confirmReplace: !!action.confirmReplace
       };
-      if (action.kind === "copy" && step.itemKind === "folder") {
-        fail += 1;
-        return next(index + 1);
-      }
       setEvalFolderStatus(
         "批次處理中（" + (index + 1) + "/" + items.length + "）：" + (item.name || item.id),
         "warn"
@@ -2646,21 +2592,13 @@
     var okMsg =
       action.kind === "trash"
         ? (isPbPrimary() ? "已永久刪除。" : "已移入垃圾桶。")
-        : action.kind === "copy"
-          ? "已複製。"
-          : action.kind === "restore"
-            ? "已還原。"
-            : action.kind === "rename"
-              ? "已重新命名。"
-              : "已移動。";
+        : action.kind === "restore"
+          ? "已還原。"
+          : action.kind === "rename"
+            ? "已重新命名。"
+            : "已移動。";
     runSingleFileOp(action).then(function (outcome) {
       if (!outcome || outcome.replaceRequired) return;
-      if (action.kind === "copy") {
-        var data = outcome.data || {};
-        okMsg = data.registeredAsSubmission
-          ? "已複製並登錄有效繳交。"
-          : "已複製；未登錄檔不會因此變成有效繳交。";
-      }
       if (action.kind === "restore" && outcome.data && outcome.data.reactivatedSubmission) {
         okMsg = "已還原，並解除先前因刪除而 superseded 的繳交。";
       } else if (action.kind === "restore") {
@@ -3878,7 +3816,6 @@
     var viewTrash = $("btnDriveViewTrash");
     var batchTrash = $("btnDriveBatchTrash");
     var batchMove = $("btnDriveBatchMove");
-    var batchCopy = $("btnDriveBatchCopy");
     var batchClear = $("btnDriveBatchClear");
     var toastClose = $("btnDriveToastClose");
     var dropzone = $("driveDropzone");
@@ -4132,10 +4069,6 @@
     if (batchMove && !batchMove.dataset.bound) {
       batchMove.dataset.bound = "1";
       batchMove.addEventListener("click", requestBatchMove);
-    }
-    if (batchCopy && !batchCopy.dataset.bound) {
-      batchCopy.dataset.bound = "1";
-      batchCopy.addEventListener("click", requestBatchCopy);
     }
     if (batchClear && !batchClear.dataset.bound) {
       batchClear.dataset.bound = "1";

@@ -953,40 +953,6 @@
     });
   }
 
-  function fetchUploadBlob(row) {
-    var fileName = "";
-    if (row.file) fileName = Array.isArray(row.file) ? row.file[0] : row.file;
-    if (!fileName) throw err("FILE_MISSING", "此筆上傳沒有可複製的檔案內容。");
-    var url = "";
-    try {
-      url = pb.files.getURL(row, fileName);
-    } catch (_e1) {
-      try {
-        url = pb.files.getUrl(row, fileName);
-      } catch (_e2) {
-        url = "";
-      }
-    }
-    if (!url) throw err("FILE_URL_FAILED", "無法取得檔案網址。");
-    var headers = {};
-    if (pb.authStore && pb.authStore.token) {
-      headers.Authorization = "Bearer " + pb.authStore.token;
-    }
-    return fetch(url, { headers: headers }).then(function (res) {
-      if (!res.ok) throw err("FILE_FETCH_FAILED", "讀取來源檔失敗，無法複製。");
-      return res.blob();
-    }).then(function (blob) {
-      var displayName = row.original_name || fileName || "file";
-      var mime = row.mime_type || blob.type || "application/octet-stream";
-      try {
-        return new File([blob], displayName, { type: mime });
-      } catch (_fileErr) {
-        blob.name = displayName;
-        return blob;
-      }
-    });
-  }
-
   function renameClubEvaluationFile(data) {
     var fileId = String((data && data.fileId) || "").trim();
     var nextName = String((data && (data.name || data.fileName)) || "").trim();
@@ -1199,72 +1165,6 @@
                     });
                   });
               });
-            });
-          });
-        });
-      });
-    });
-  }
-
-  function copyClubEvaluationFile(data) {
-    var fileId = String((data && data.fileId) || "").trim();
-    var destinationFolderId = String((data && data.destinationFolderId) || "").trim();
-    var confirmReplace = !!(data && data.confirmReplace === true);
-    if (!fileId) return Promise.reject(err("INVALID_INPUT", "缺少檔案。"));
-    if (!destinationFolderId) return Promise.reject(err("INVALID_INPUT", "缺少目的地資料夾。"));
-    return contextFromAuth().then(function (ctx) {
-      return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid).then(function (root) {
-        return assertClubOwnedUpload(ctx, fileId).then(function (row) {
-          assertWriteWindowOpen(ctx, writeKindFromUpload(row));
-          return assertDestinationFolder(ctx, destinationFolderId, root.id).then(function (dest) {
-            var toFolderId = dest.id;
-            var displayName = row.original_name || "file";
-            return listUploadsByNameInFolder(ctx, toFolderId, displayName, null).then(function (conflicts) {
-              if (conflicts.length && !confirmReplace) {
-                return conflictConfirmPayload(conflicts, "copy");
-              }
-              var chain = conflicts.length && confirmReplace
-                ? deleteConflictUploads(conflicts)
-                : Promise.resolve();
-              return chain
-                .then(function () {
-                  return fetchUploadBlob(row);
-                })
-                .then(function (fileObj) {
-                  var attempt =
-                    "copy_" +
-                    String(fileId) +
-                    "_" +
-                    String(Date.now()) +
-                    "_" +
-                    Math.random().toString(36).slice(2, 10);
-                  var formPb = new FormData();
-                  formPb.append("activity", ctx.activity.id);
-                  formPb.append("club", ctx.club.id);
-                  formPb.append("folder", toFolderId);
-                  formPb.append("student", ctx.user.uid);
-                  formPb.append("client_attempt_id", attempt);
-                  formPb.append("upload_kind", row.upload_kind || "evaluation");
-                  formPb.append("original_name", displayName);
-                  formPb.append("mime_type", row.mime_type || fileObj.type || "application/octet-stream");
-                  formPb.append("size_bytes", String(fileObj.size || row.size_bytes || 0));
-                  formPb.append("status", "completed");
-                  formPb.append("completed_at", new Date().toISOString());
-                  formPb.append("file", fileObj, displayName);
-                  return pb.collection(C.uploads).create(formPb);
-                })
-                .then(function (created) {
-                  return clubFilesPayload(ctx).then(function (files) {
-                    return ok({
-                      action: "copy",
-                      fileId: created.id,
-                      sourceFileId: fileId,
-                      fileName: displayName,
-                      toFolderId: toFolderId,
-                      files: files
-                    });
-                  });
-                });
             });
           });
         });
@@ -1754,7 +1654,6 @@
     renameClubEvaluationFolder: renameClubEvaluationFolder,
     moveClubEvaluationFile: moveClubEvaluationFile,
     moveClubEvaluationFolder: moveClubEvaluationFolder,
-    copyClubEvaluationFile: copyClubEvaluationFile,
     listClubEvaluationTrash: listClubEvaluationTrash,
     restoreClubEvaluationItem: restoreClubEvaluationItem,
     prepareClubDriveUpload: prepareClubDriveUpload,
