@@ -598,11 +598,21 @@ function createRequireStudentAccess(deps) {
     });
   }
 
-  function showRetryCleanup(show) {
+  function showRetryCleanup(_show) {
+    // M7A：半殘「清理未完成註冊」入口永久隱藏，改走協助窗口／管理員清除。
     var btn = $("btnRetryCleanup");
     if (!btn) return;
-    btn.style.display = show ? "inline" : "none";
-    btn.classList.toggle("hidden", !show);
+    btn.style.display = "none";
+    btn.classList.add("hidden");
+  }
+
+  function hideReconcileRetry() {
+    var btn = $("btnRetryReconcile");
+    if (btn) btn.classList.add("hidden");
+  }
+
+  function assistAccountMessage() {
+    return "請改用「忘記密碼／帳號協助窗口」，或請管理員使用錯誤註冊清除。";
   }
 
   function bind(id, evt, fn) {
@@ -713,18 +723,15 @@ function createRequireStudentAccess(deps) {
           $("loginStudentId").value = studentId;
           showTab("login");
           setStatus(
-            "此學號已有帳號。請先以目前密碼登入後，系統會自動完成本活動註冊（不會再用生日自動建檔）。",
+            "此學號已有帳號。請先以目前密碼登入後，系統會自動完成本活動註冊。若無法登入，" +
+              assistAccountMessage(),
             "warn"
           );
-          showRetryCleanup(!!(pendingClientRequestId && pendingOpId));
+          showRetryCleanup(false);
           return;
         }
-        showRetryCleanup(!!(pendingClientRequestId && pendingOpId));
-        setStatus(
-          safeError(error) +
-            (pendingClientRequestId ? "\n可按下方清理後以新請求重試。" : ""),
-          "error"
-        );
+        showRetryCleanup(false);
+        setStatus(safeError(error) + "\n" + assistAccountMessage(), "error");
       })
       .then(function () {
         setBusy(false);
@@ -732,25 +739,10 @@ function createRequireStudentAccess(deps) {
   });
 
   bind("btnRetryCleanup", "click", function () {
-    if (!pendingClientRequestId || !pendingOpId || busy) return;
-    setBusy(true);
-    setStatus("正在清理本操作占用的名額／暫存帳號…", "warn");
-    call("cleanupClubStudentRegistrationOp", {
-      opId: pendingOpId,
-      clientRequestId: pendingClientRequestId
-    })
-      .then(function () {
-        pendingClientRequestId = null;
-        pendingOpId = null;
-        showRetryCleanup(false);
-        setStatus("已清理未完成註冊。請再次註冊（將使用新的請求編號）。", "ok");
-      })
-      .catch(function (error) {
-        setStatus(safeError(error), "error");
-      })
-      .then(function () {
-        setBusy(false);
-      });
+    showRetryCleanup(false);
+    setStatus(assistAccountMessage(), "warn");
+    var forgot = $("linkToForgot");
+    if (forgot) forgot.click();
   });
 
   bind("btnLogin", "click", function () {
@@ -787,31 +779,13 @@ function createRequireStudentAccess(deps) {
   });
 
   function tryReconcilePassword() {
-    if (!lastNewPasswordForReconcile) {
-      setStatus("沒有可復原的改密狀態，請重新輸入新密碼後再試。", "warn");
-      return Promise.resolve();
-    }
-    var btn = $("btnRetryReconcile");
-    if (btn) btn.classList.remove("hidden");
-    return call("reconcileClubStudentPasswordChange", {
-      newPassword: lastNewPasswordForReconcile
-    })
-      .then(function () {
-        lastNewPasswordForReconcile = null;
-        if (btn) btn.classList.add("hidden");
-        setStatus("改密狀態已復原。請以新密碼重新登入。", "ok");
-        return auth.signOut().then(function () {
-          setShell("auth");
-          showTab("login");
-        });
-      })
-      .catch(function (err2) {
-        if (btn) btn.classList.remove("hidden");
-        setStatus(
-          "復原失敗：" + safeError(err2) + "\n可按「改密狀態復原重試」。",
-          "error"
-        );
-      });
+    // M7A：不再呼叫假成功的 reconcile；引導協助窗口。
+    hideReconcileRetry();
+    setStatus(
+      "改密狀態自動復原已停用。" + assistAccountMessage(),
+      "warn"
+    );
+    return Promise.resolve();
   }
 
   bind("btnChangePassword", "click", function () {
@@ -867,8 +841,13 @@ function createRequireStudentAccess(deps) {
             showTab("login");
           });
         }
-        if (code === "PASSWORD_STATE_UPDATE_FAILED" && lastNewPasswordForReconcile) {
-          return tryReconcilePassword();
+        if (code === "PASSWORD_STATE_UPDATE_FAILED") {
+          hideReconcileRetry();
+          setStatus(
+            "改密未完成。" + assistAccountMessage(),
+            "warn"
+          );
+          return;
         }
         setStatus(safeError(error), "error");
       })
@@ -878,12 +857,15 @@ function createRequireStudentAccess(deps) {
   });
 
   bind("btnRetryReconcile", "click", function () {
-    if (busy) return;
-    setBusy(true);
-    tryReconcilePassword().then(function () {
-      setBusy(false);
-    });
+    hideReconcileRetry();
+    setStatus(assistAccountMessage(), "warn");
+    var forgot = $("linkToForgot");
+    if (forgot) forgot.click();
   });
+
+  // M7A：進頁即隱藏半殘入口
+  showRetryCleanup(false);
+  hideReconcileRetry();
 
   bind("btnReloginForPassword", "click", function () {
     auth.signOut().then(function () {

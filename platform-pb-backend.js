@@ -276,17 +276,26 @@
     };
   }
 
-  function ensureRootFolder(activity, club, studentId) {
+  function ensureRootFolder(activity, club, studentId, kind) {
+    var folderKind = kind === "feature" ? "feature" : "evaluation";
     var filter =
-      'activity="' + activity.id + '" && club="' + club.id +
-      '" && kind="evaluation" && trashed!=true && parent=""';
+      'activity="' +
+      activity.id +
+      '" && club="' +
+      club.id +
+      '" && kind="' +
+      folderKind +
+      '" && trashed!=true && parent=""';
     return pb.collection(C.folders).getList(1, 1, { filter: filter }).then(function (res) {
       if (res.items && res.items[0]) return res.items[0];
       return pb.collection(C.folders).create({
         activity: activity.id,
         club: club.id,
-        name: club.name || "社團評選資料夾",
-        kind: "evaluation",
+        name:
+          folderKind === "feature"
+            ? (club.name || "社團") + " 特色成果"
+            : club.name || "社團評選資料夾",
+        kind: folderKind,
         trashed: false,
         created_by_student: studentId || ""
       });
@@ -746,11 +755,23 @@
   }
 
   function cleanupClubStudentRegistrationOp() {
-    return Promise.resolve(ok({ cleaned: true }));
+    // M7A：半殘入口停用；請走忘記密碼協助窗口或管理員「錯誤註冊清除」。
+    return Promise.reject(
+      err(
+        "CLEANUP_DISABLED",
+        "自動清理未完成註冊已停用。請改用「忘記密碼／帳號協助窗口」，或請管理員使用錯誤註冊清除。"
+      )
+    );
   }
 
   function reconcileClubStudentPasswordChange() {
-    return Promise.resolve(ok({ reconciled: true }));
+    // M7A：半殘入口停用；改密失敗請重登或以協助窗口處理。
+    return Promise.reject(
+      err(
+        "RECONCILE_DISABLED",
+        "改密狀態自動復原已停用。請以新密碼重新登入，或透過帳號協助窗口／管理員處理。"
+      )
+    );
   }
 
   function contextFromAuth() {
@@ -1092,14 +1113,28 @@
     return step(startFolderId);
   }
 
-  function assertDestinationFolder(ctx, destinationFolderId, rootId) {
+  function assertDestinationFolder(ctx, destinationFolderId, rootId, expectedKind) {
+    var wantKind = expectedKind === "feature" ? "feature" : "evaluation";
     var destId = String(destinationFolderId || "").trim() || rootId;
     if (String(destId) === String(rootId)) {
-      return Promise.resolve({ id: rootId, name: ctx.club.name || "社團評選資料夾", kind: "evaluation" });
+      return Promise.resolve({
+        id: rootId,
+        name:
+          wantKind === "feature"
+            ? (ctx.club.name || "社團") + " 特色成果"
+            : ctx.club.name || "社團評選資料夾",
+        kind: wantKind
+      });
     }
     return pb.collection(C.folders).getOne(destId).then(function (row) {
       if (!row || String(row.club) !== String(ctx.club.id) || row.trashed === true) {
         throw err("NOT_FOUND", "找不到目的地資料夾，或它不屬於目前社團。");
+      }
+      if (writeKindFromFolder(row) !== wantKind) {
+        throw err(
+          "FOLDER_KIND_MISMATCH",
+          "目的資料夾類型與此上傳項目不符（評選／特色請分開）。"
+        );
       }
       return row;
     });
@@ -1203,7 +1238,12 @@
         return assertClubOwnedUpload(ctx, fileId).then(function (row) {
           assertWriteWindowOpen(ctx, writeKindFromUpload(row));
           var fromFolderId = relationIdLocal(row.folder);
-          return assertDestinationFolder(ctx, destinationFolderId, root.id).then(function (dest) {
+          return assertDestinationFolder(
+            ctx,
+            destinationFolderId,
+            root.id,
+            writeKindFromUpload(row)
+          ).then(function (dest) {
             var toFolderId = dest.id;
             if (String(fromFolderId) === String(toFolderId)) {
               return clubFilesPayload(ctx).then(function (files) {
@@ -1267,7 +1307,12 @@
             if (cyclic) {
               throw err("INVALID_INPUT", "不能把資料夾移動到自己的子資料夾內。");
             }
-            return assertDestinationFolder(ctx, destinationFolderId, root.id).then(function (dest) {
+            return assertDestinationFolder(
+              ctx,
+              destinationFolderId,
+              root.id,
+              writeKindFromFolder(folder)
+            ).then(function (dest) {
               var fromParent = relationIdLocal(folder.parent) || root.id;
               var toParent = dest.id;
               if (String(fromParent) === String(toParent)) {
@@ -1417,40 +1462,57 @@
     }
     return contextFromAuth().then(function (ctx) {
       var kind = (data && data.uploadKind) === "feature" ? "feature" : "evaluation";
+      var confirmReplace = !!(data && data.confirmReplace === true);
       assertParticipationAllows(ctx, kind);
       assertWriteWindowOpen(ctx, kind);
-      return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid).then(function (root) {
+      return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid, kind).then(function (root) {
         var attempt = String((data && data.clientAttemptId) || "");
         if (!attempt) throw err("INVALID_INPUT", "缺少上傳識別。");
         var dest = String((data && data.destinationFolderId) || "").trim() || root.id;
-        return assertDestinationFolder(ctx, dest, root.id).then(function (destFolder) {
+        return assertDestinationFolder(ctx, dest, root.id, kind).then(function (destFolder) {
           var safeDest = destFolder && destFolder.id ? destFolder.id : dest;
+          var fileName = String((data && data.fileName) || "file");
           return pb.collection(C.uploads).getList(1, 1, {
             filter: 'client_attempt_id="' + attempt + '"'
           }).then(function (existing) {
             if (existing.totalItems > 0) {
               var row = existing.items[0];
-              if (row.status === "completed") {
+              if (row.status === "completed" || row.status === "uploaded") {
                 return ok({ alreadyComplete: true, status: "completed", files: [mapUploadFile(row)] });
               }
             }
-            pendingUploads[attempt] = {
-              activityId: ctx.activity.id,
-              clubId: ctx.club.id,
-              studentId: ctx.user.uid,
-              folderId: safeDest,
-              uploadKind: kind,
-              fileName: String((data && data.fileName) || "file"),
-              size: Number((data && data.size) || 0),
-              mimeType: String((data && data.mimeType) || "")
-            };
-            return ok({
-              status: "ready",
-              pbDirectUpload: true,
-              clientAttemptId: attempt,
-              fileName: pendingUploads[attempt].fileName,
-              destinationFolderId: safeDest,
-              uploadUrl: "pb://direct/" + attempt
+            return listUploadsByNameInFolder(ctx, safeDest, fileName).then(function (conflicts) {
+              var blockers = (conflicts || []).filter(function (hit) {
+                var st = String(hit.status || "").toLowerCase();
+                return st === "completed" || st === "uploaded";
+              });
+              if (blockers.length && !confirmReplace) {
+                return conflictConfirmPayload(blockers, "upload");
+              }
+              var clearConflicts =
+                blockers.length && confirmReplace
+                  ? deleteConflictUploads(blockers)
+                  : Promise.resolve();
+              return clearConflicts.then(function () {
+                pendingUploads[attempt] = {
+                  activityId: ctx.activity.id,
+                  clubId: ctx.club.id,
+                  studentId: ctx.user.uid,
+                  folderId: safeDest,
+                  uploadKind: kind,
+                  fileName: fileName,
+                  size: Number((data && data.size) || 0),
+                  mimeType: String((data && data.mimeType) || "")
+                };
+                return ok({
+                  status: "ready",
+                  pbDirectUpload: true,
+                  clientAttemptId: attempt,
+                  fileName: pendingUploads[attempt].fileName,
+                  destinationFolderId: safeDest,
+                  uploadUrl: "pb://direct/" + attempt
+                });
+              });
             });
           });
         });

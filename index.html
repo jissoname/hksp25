@@ -1289,7 +1289,7 @@ body.drive-ws-open .news-band{display:none}
           <label for="regBirth">西元生日（YYYYMMDD，作為初始密碼）</label>
           <input id="regBirth" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="例如 20010115">
           <button class="primary" id="btnRegister" type="button">完成註冊</button>
-          <button class="links" id="btnRetryCleanup" type="button" style="display:none;margin-top:10px;color:#2f6ea3;border:0;background:transparent;cursor:pointer;font:inherit">清理未完成註冊後重試</button>
+          <button class="links hidden" id="btnRetryCleanup" type="button" style="display:none;margin-top:10px;color:#2f6ea3;border:0;background:transparent;cursor:pointer;font:inherit" hidden>清理未完成註冊後重試（已停用）</button>
           <div class="links">
             <button type="button" id="linkToLogin">已有帳號？返回登入</button>
           </div>
@@ -1580,9 +1580,9 @@ body.drive-ws-open .news-band{display:none}
 
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
-<script src="./platform-pb-backend.js?v=hp4-8-1"></script>
-<script src="./platform-student-auth.js"></script>
-<script src="./platform-drive-upload.js?v=hp4-8-1"></script>
+<script src="./platform-pb-backend.js?v=m1-8-1"></script>
+<script src="./platform-student-auth.js?v=m1-8-1"></script>
+<script src="./platform-drive-upload.js?v=m1-8-1"></script>
 <script src="./platform-home.js"></script>
 
 <script>

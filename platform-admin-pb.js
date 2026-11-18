@@ -161,7 +161,7 @@
       throw new Error("ADMIN_UNAUTHORIZED");
     }
     var rec = client.authStore.model;
-    if (!rec || (rec.role !== "admin" && rec.role !== "service") || rec.active === false) {
+    if (!rec || rec.role !== "admin" || rec.active === false) {
       throw new Error("ADMIN_UNAUTHORIZED");
     }
     try {
@@ -366,8 +366,14 @@
     try {
       var auth = await pb().collection(C().staff).authWithPassword(email, password);
       var rec = auth.record;
-      if (!rec || (rec.role !== "admin" && rec.role !== "service")) {
+      if (!rec || rec.role !== "admin") {
         pb().authStore.clear();
+        if (rec && rec.role === "service") {
+          return fail(
+            "service 帳號不能登入完整管理後台。請使用 admin 帳號。",
+            "ADMIN_UNAUTHORIZED"
+          );
+        }
         return fail("此帳號沒有管理權限。", "ADMIN_UNAUTHORIZED");
       }
       if (rec.active === false) {
@@ -539,6 +545,11 @@
     return roots[0];
   }
 
+  function isCompletedUploadStatus_(status) {
+    var s = String(status || "").trim().toLowerCase();
+    return s === "completed" || s === "uploaded";
+  }
+
   async function adminListClubUploadSummary() {
     var activity = await getActivityRecord();
     var clubs = await pb().collection(C().clubs).getFullList({
@@ -550,6 +561,7 @@
       sort: "-created"
     });
     var byClub = {};
+    var completedTotal = 0;
     uploads.forEach(function (u) {
       var key = String(u.club || "");
       if (!key) return;
@@ -559,14 +571,20 @@
           evaluationCount: 0,
           featureCount: 0,
           completedCount: 0,
+          pendingCount: 0,
           latestUploadedAt: ""
         };
       }
       var row = byClub[key];
+      if (!isCompletedUploadStatus_(u.status)) {
+        row.pendingCount += 1;
+        return;
+      }
       row.fileCount += 1;
+      row.completedCount += 1;
+      completedTotal += 1;
       if (u.upload_kind === "feature") row.featureCount += 1;
       else row.evaluationCount += 1;
-      if (u.status === "completed" || u.status === "uploaded") row.completedCount += 1;
       var ts = String(u.completed_at || u.created || "");
       if (ts && (!row.latestUploadedAt || ts > row.latestUploadedAt)) {
         row.latestUploadedAt = ts;
@@ -579,6 +597,7 @@
         evaluationCount: 0,
         featureCount: 0,
         completedCount: 0,
+        pendingCount: 0,
         latestUploadedAt: ""
       };
       return Object.assign({}, mapped, stats);
@@ -586,7 +605,8 @@
     return ok({
       activityId: activity.activity_id || activityId(),
       clubs: summary,
-      totalFiles: uploads.length,
+      totalFiles: completedTotal,
+      pendingFiles: uploads.length - completedTotal,
       clubsWithFiles: summary.filter(function (c) {
         return c.fileCount > 0;
       }).length
@@ -603,7 +623,7 @@
       filter:
         'activity="' +
         activity.id +
-        '" && upload_kind="feature" && status!="trashed"',
+        '" && upload_kind="feature" && (status="completed" || status="uploaded")',
       sort: "-created"
     });
     var byClub = {};
@@ -677,7 +697,7 @@
           club.id +
           '" && folder="' +
           parentId +
-          '" && status!="trashed"',
+          '" && (status="completed" || status="uploaded")',
         sort: "-created"
       });
       if (root && parentId !== root.id) {
@@ -696,11 +716,13 @@
 
     // Root：改列社團全部檔案，避免資料夾樹對不齊時「有檔卻空白」。
     // 子資料夾：維持只看該層；若該層空白且篩選特色，再補上該社全部特色檔。
+    // 預設只列 completed／uploaded，避免 prepared／failed 進下載。
     var allClubFiles = null;
     async function loadAllClubFiles() {
       if (allClubFiles) return allClubFiles;
       allClubFiles = await pb().collection(C().uploads).getFullList({
-        filter: 'club="' + club.id + '" && status!="trashed"',
+        filter:
+          'club="' + club.id + '" && (status="completed" || status="uploaded")',
         sort: "-created"
       });
       return allClubFiles;
@@ -1591,6 +1613,19 @@
     if (cfg().normalizeStudentId(inv.student.student_id) !== studentId) {
       if (!/^(W|wrr)/i.test(String(inv.student.student_id || ""))) {
         return fail("帳號學號與輸入不符。", "STUDENT_ID_MISMATCH");
+      }
+    }
+
+    if (Number.isFinite(expectedSeatVersion)) {
+      var currentSeatVersion = (inv.primarySeats || []).reduce(function (max, s) {
+        var v = Number(s && s.seatVersion);
+        return Number.isFinite(v) && v > max ? v : max;
+      }, 0);
+      if (!currentSeatVersion || expectedSeatVersion !== currentSeatVersion) {
+        return fail(
+          "座位狀態已變更，請重新整理名單後再確認刪除。",
+          "SEAT_VERSION_CONFLICT"
+        );
       }
     }
 
@@ -2774,11 +2809,44 @@
           sectionScores[section.id] = bucket;
         }
         (section.groups || []).forEach(function (g) {
-          if (g && g.id === "routinePerformance") {
-            groupScores.routinePerformance = Object.assign({}, bucket, {
-              maxScore: Number(g.maxScore) || bucket.maxScore
+          if (!g || !g.id) return;
+          var criteria = Array.isArray(g.criteria) ? g.criteria.filter(Boolean) : [];
+          var groupBucket = scoreBucket(g.maxScore);
+          groupBucket.assignedCount = assigned.length;
+          var groupValues = [];
+          assigned.forEach(function (judge) {
+            var grow = ctx.byKey[judge.id + "::" + club.id + "::" + section.id];
+            var ganswers = (grow && grow.answers_json) || {};
+            var greopened = !!(ganswers && ganswers.reopened);
+            var gsubmitted = !!(grow && grow.status === "submitted" && !greopened);
+            if (greopened) groupBucket.reopenedCount += 1;
+            if (!gsubmitted) return;
+            groupBucket.submittedCount += 1;
+            if (!criteria.length) return;
+            var scoresMap = ganswers.scores || {};
+            var gsum = 0;
+            var gcomplete = true;
+            criteria.forEach(function (c) {
+              var gv = Number(scoresMap[c.id]);
+              if (!Number.isFinite(gv)) gcomplete = false;
+              else gsum += gv;
             });
+            if (gcomplete) groupValues.push(gsum);
+          });
+          if (groupValues.length) {
+            var gavg =
+              groupValues.reduce(function (a, b) {
+                return a + b;
+              }, 0) / groupValues.length;
+            groupBucket.averageScore = gavg;
+            groupBucket.currentScore = gavg;
           }
+          groupBucket.complete =
+            assigned.length > 0 &&
+            groupBucket.submittedCount === assigned.length &&
+            groupBucket.reopenedCount === 0;
+          if (groupBucket.complete) groupBucket.finalScore = groupBucket.averageScore;
+          groupScores[g.id] = groupBucket;
         });
         sectionDetails.push({
           sectionId: section.id,

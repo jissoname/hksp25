@@ -25,10 +25,29 @@
     return root.HKSP_PB_BACKEND || null;
   }
 
+  // Dedicated judge client + storage key. Sharing HKSP_PB_BACKEND.pb / "pocketbase_auth"
+  // races with student tabs: their authStore.clear() can wipe judge mid-catchup.
+  var JUDGE_AUTH_STORAGE_KEY = "hksp_pb_judge_auth";
+  var judgePb = null;
+
   function pb() {
+    if (judgePb) return judgePb;
+    var url = String((cfg().url || "")).replace(/\/$/, "");
+    if (typeof root.PocketBase === "function" && url) {
+      judgePb = new root.PocketBase(url);
+      judgePb.autoCancellation(false);
+      if (judgePb.authStore && typeof judgePb.authStore.storageKey === "string") {
+        judgePb.authStore.storageKey = JUDGE_AUTH_STORAGE_KEY;
+      }
+      return judgePb;
+    }
     var b = backend();
     if (!b || !b.pb) throw new Error("PocketBase 後端尚未載入，請重新整理。");
-    return b.pb;
+    if (b.pb.authStore && typeof b.pb.authStore.storageKey === "string") {
+      b.pb.authStore.storageKey = JUDGE_AUTH_STORAGE_KEY;
+    }
+    judgePb = b.pb;
+    return judgePb;
   }
 
   function C() {
@@ -1168,7 +1187,7 @@
           "JUDGE_SCORE_SECTION_FORBIDDEN"
         );
       }
-      // Race / list miss: record exists → update instead of create.
+      // Race / list miss: record exists → only update if still unlocked.
       if (!prev && isUniqueWriteError(detail)) {
         try {
           var again = await pb().collection(C().scores).getList(1, 1, {
@@ -1184,8 +1203,16 @@
               '"'
           });
           if (again.totalItems > 0) {
-            payload.revision = Number(again.items[0].revision || 1) + 1;
-            row = await pb().collection(C().scores).update(again.items[0].id, payload);
+            var raced = again.items[0];
+            var racedAnswers = answersMeta(raced);
+            if (raced.status === "submitted" && racedAnswers.reopened !== true) {
+              return fail(
+                "此筆已鎖定，無法再次送出。請請管理員解鎖。",
+                "JUDGE_SCORE_LOCKED"
+              );
+            }
+            payload.revision = Number(raced.revision || 1) + 1;
+            row = await pb().collection(C().scores).update(raced.id, payload);
           } else {
             throw writeErr;
           }
