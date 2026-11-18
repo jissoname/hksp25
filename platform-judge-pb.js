@@ -327,31 +327,21 @@
   }
 
   /**
-   * 評選資料唯讀窗口：評選截止（dataDeadline／upload_close_at）起開放；
-   * 補交期間不關閉閱讀。不使用特色截止時間。
+   * 評選資料唯讀窗口：指派屬性內即可閱覽，不再等評選截止。
+   * 仍回傳 deadlineAt 供前端顯示參考；不使用特色截止時間。
    */
   function evaluationMaterialsReadWindow(activity) {
     var conf = (activity && activity.config_json) || {};
     var deadlineRaw = conf.dataDeadline || (activity && activity.upload_close_at) || "";
     var deadlineMs = Date.parse(String(deadlineRaw));
     var now = Date.now();
-    if (!Number.isFinite(deadlineMs)) {
-      return {
-        open: false,
-        reason: "NO_DEADLINE",
-        message: "尚未設定評選截止時間，暫不開放評選資料閱覽。",
-        deadlineAt: null,
-        serverNow: new Date(now).toISOString()
-      };
-    }
-    var open = now >= deadlineMs;
     return {
-      open: open,
-      reason: open ? "OK" : "BEFORE_DEADLINE",
-      message: open
-        ? "評選截止後可閱覽社團評選資料（唯讀）。"
-        : "評選截止後才可閱覽社團評選資料。",
-      deadlineAt: new Date(deadlineMs).toISOString(),
+      open: true,
+      reason: "OK",
+      message: "可閱覽社團評選資料（唯讀）。",
+      deadlineAt: Number.isFinite(deadlineMs)
+        ? new Date(deadlineMs).toISOString()
+        : null,
       serverNow: new Date(now).toISOString()
     };
   }
