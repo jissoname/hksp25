@@ -821,6 +821,457 @@
     return Promise.reject(err("UNIMPLEMENTED", "PocketBase 主路徑不保留垃圾桶，無法還原。"));
   }
 
+  function escFilter(value) {
+    return String(value || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  }
+
+  function assertWriteWindowOpen(ctx, kind) {
+    var win = openWindowFromActivity(ctx.activity, kind === "feature" ? "feature" : "evaluation");
+    if (!win.open) {
+      throw err("UPLOAD_WINDOW_CLOSED", "繳交已截止，目前為唯讀，無法重新命名／移動／複製。");
+    }
+    return win;
+  }
+
+  function writeKindFromUpload(row) {
+    return String((row && row.upload_kind) || "evaluation") === "feature" ? "feature" : "evaluation";
+  }
+
+  function writeKindFromFolder(folder) {
+    return String((folder && folder.kind) || "evaluation") === "feature" ? "feature" : "evaluation";
+  }
+
+  function preservePdfExtension(oldName, nextName) {
+    var next = String(nextName || "").trim();
+    if (!next) return "";
+    var old = String(oldName || "");
+    if (/\.pdf$/i.test(old) && !/\.pdf$/i.test(next)) return next + ".pdf";
+    return next;
+  }
+
+  function conflictConfirmPayload(conflicts, action) {
+    var first = (conflicts && conflicts[0]) || {};
+    return ok({
+      status: "replace_confirm_required",
+      action: action,
+      message: "目的地已有同名項目，確認後將刪除舊檔再完成操作。",
+      existingFile: {
+        fileName: first.original_name || first.name || null,
+        fileId: first.id || null,
+        size: first.size_bytes != null ? Number(first.size_bytes) : null,
+        mimeType: first.mime_type || null
+      },
+      conflictFileIds: (conflicts || []).map(function (hit) {
+        return String(hit.id);
+      })
+    });
+  }
+
+  function listUploadsByNameInFolder(ctx, folderId, name, exceptId) {
+    var filter =
+      'club="' +
+      ctx.club.id +
+      '" && folder="' +
+      folderId +
+      '" && status!="trashed" && original_name="' +
+      escFilter(name) +
+      '"';
+    return pb.collection(C.uploads).getFullList({ filter: filter }).then(function (rows) {
+      return (rows || []).filter(function (row) {
+        return !exceptId || String(row.id) !== String(exceptId);
+      });
+    });
+  }
+
+  function listFoldersByNameInParent(ctx, parentId, name, exceptId) {
+    var filter =
+      'club="' +
+      ctx.club.id +
+      '" && trashed!=true && parent="' +
+      parentId +
+      '" && name="' +
+      escFilter(name) +
+      '"';
+    return pb.collection(C.folders).getFullList({ filter: filter }).then(function (rows) {
+      return (rows || []).filter(function (row) {
+        return !exceptId || String(row.id) !== String(exceptId);
+      });
+    });
+  }
+
+  function deleteConflictUploads(rows) {
+    var chain = Promise.resolve();
+    (rows || []).forEach(function (row) {
+      chain = chain.then(function () {
+        return pb.collection(C.uploads).delete(row.id);
+      });
+    });
+    return chain;
+  }
+
+  function clubFilesPayload(ctx) {
+    return pb.collection(C.uploads).getFullList({
+      filter: 'club="' + ctx.club.id + '" && status!="trashed"',
+      sort: "-created"
+    }).then(function (rows) {
+      return (rows || []).map(mapUploadFile);
+    });
+  }
+
+  function relationIdLocal(value) {
+    if (value == null || value === "") return "";
+    if (typeof value === "object") return String(value.id || "");
+    return String(value);
+  }
+
+  function folderParentChainContains(ctx, startFolderId, needleId) {
+    var guard = 0;
+    function step(folderId) {
+      if (!folderId) return Promise.resolve(false);
+      if (String(folderId) === String(needleId)) return Promise.resolve(true);
+      if (guard++ > 40) return Promise.resolve(true);
+      return pb.collection(C.folders).getOne(folderId).then(function (row) {
+        if (!row || String(row.club) !== String(ctx.club.id)) return false;
+        var parentId = relationIdLocal(row.parent);
+        if (!parentId) return false;
+        return step(parentId);
+      });
+    }
+    return step(startFolderId);
+  }
+
+  function assertDestinationFolder(ctx, destinationFolderId, rootId) {
+    var destId = String(destinationFolderId || "").trim() || rootId;
+    if (String(destId) === String(rootId)) {
+      return Promise.resolve({ id: rootId, name: ctx.club.name || "社團評選資料夾", kind: "evaluation" });
+    }
+    return pb.collection(C.folders).getOne(destId).then(function (row) {
+      if (!row || String(row.club) !== String(ctx.club.id) || row.trashed === true) {
+        throw err("NOT_FOUND", "找不到目的地資料夾，或它不屬於目前社團。");
+      }
+      return row;
+    });
+  }
+
+  function fetchUploadBlob(row) {
+    var fileName = "";
+    if (row.file) fileName = Array.isArray(row.file) ? row.file[0] : row.file;
+    if (!fileName) throw err("FILE_MISSING", "此筆上傳沒有可複製的檔案內容。");
+    var url = "";
+    try {
+      url = pb.files.getURL(row, fileName);
+    } catch (_e1) {
+      try {
+        url = pb.files.getUrl(row, fileName);
+      } catch (_e2) {
+        url = "";
+      }
+    }
+    if (!url) throw err("FILE_URL_FAILED", "無法取得檔案網址。");
+    var headers = {};
+    if (pb.authStore && pb.authStore.token) {
+      headers.Authorization = "Bearer " + pb.authStore.token;
+    }
+    return fetch(url, { headers: headers }).then(function (res) {
+      if (!res.ok) throw err("FILE_FETCH_FAILED", "讀取來源檔失敗，無法複製。");
+      return res.blob();
+    }).then(function (blob) {
+      var displayName = row.original_name || fileName || "file";
+      var mime = row.mime_type || blob.type || "application/octet-stream";
+      try {
+        return new File([blob], displayName, { type: mime });
+      } catch (_fileErr) {
+        blob.name = displayName;
+        return blob;
+      }
+    });
+  }
+
+  function renameClubEvaluationFile(data) {
+    var fileId = String((data && data.fileId) || "").trim();
+    var nextName = String((data && (data.name || data.fileName)) || "").trim();
+    var confirmReplace = !!(data && data.confirmReplace === true);
+    if (!fileId) return Promise.reject(err("INVALID_INPUT", "缺少檔案。"));
+    if (!nextName) return Promise.reject(err("INVALID_INPUT", "請輸入新名稱。"));
+    return contextFromAuth().then(function (ctx) {
+      return assertClubOwnedUpload(ctx, fileId).then(function (row) {
+        assertWriteWindowOpen(ctx, writeKindFromUpload(row));
+        var folderId = relationIdLocal(row.folder);
+        if (!folderId) throw err("INVALID_STATE", "檔案未掛在資料夾內，無法重新命名。");
+        nextName = preservePdfExtension(row.original_name || "", nextName);
+        if (String(row.original_name || "") === nextName) {
+          return clubFilesPayload(ctx).then(function (files) {
+            return ok({
+              action: "rename",
+              already: true,
+              fileId: fileId,
+              fileName: nextName,
+              files: files
+            });
+          });
+        }
+        return listUploadsByNameInFolder(ctx, folderId, nextName, fileId).then(function (conflicts) {
+          if (conflicts.length && !confirmReplace) {
+            return conflictConfirmPayload(conflicts, "rename");
+          }
+          var chain = conflicts.length && confirmReplace
+            ? deleteConflictUploads(conflicts)
+            : Promise.resolve();
+          return chain
+            .then(function () {
+              return pb.collection(C.uploads).update(fileId, { original_name: nextName });
+            })
+            .then(function () {
+              return clubFilesPayload(ctx);
+            })
+            .then(function (files) {
+              return ok({
+                action: "rename",
+                fileId: fileId,
+                fileName: nextName,
+                parentFolderId: folderId,
+                files: files
+              });
+            });
+        });
+      });
+    });
+  }
+
+  function renameClubEvaluationFolder(data) {
+    var folderId = String((data && data.folderId) || "").trim();
+    var nextName = String((data && (data.name || data.folderName)) || "").trim();
+    if (!folderId) return Promise.reject(err("INVALID_INPUT", "缺少資料夾。"));
+    if (!nextName) return Promise.reject(err("INVALID_INPUT", "請輸入新名稱。"));
+    return contextFromAuth().then(function (ctx) {
+      return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid).then(function (root) {
+        return assertClubOwnedFolder(ctx, folderId, root.id).then(function (folder) {
+          assertWriteWindowOpen(ctx, writeKindFromFolder(folder));
+          if (String(folder.name || "") === nextName) {
+            return ok({
+              action: "rename",
+              already: true,
+              folderId: folderId,
+              name: nextName
+            });
+          }
+          var parentId = relationIdLocal(folder.parent) || root.id;
+          return listFoldersByNameInParent(ctx, parentId, nextName, folderId).then(function (conflicts) {
+            if (conflicts.length) {
+              throw err("FOLDER_NAME_CONFLICT", "同層已有同名資料夾。");
+            }
+            return pb.collection(C.folders).update(folderId, { name: nextName }).then(function () {
+              return ok({
+                action: "rename",
+                folderId: folderId,
+                name: nextName,
+                parentFolderId: parentId
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+
+  function moveClubEvaluationFile(data) {
+    var fileId = String((data && data.fileId) || "").trim();
+    var destinationFolderId = String((data && data.destinationFolderId) || "").trim();
+    var confirmReplace = !!(data && data.confirmReplace === true);
+    if (!fileId) return Promise.reject(err("INVALID_INPUT", "缺少檔案。"));
+    if (!destinationFolderId) return Promise.reject(err("INVALID_INPUT", "缺少目的地資料夾。"));
+    return contextFromAuth().then(function (ctx) {
+      return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid).then(function (root) {
+        return assertClubOwnedUpload(ctx, fileId).then(function (row) {
+          assertWriteWindowOpen(ctx, writeKindFromUpload(row));
+          var fromFolderId = relationIdLocal(row.folder);
+          return assertDestinationFolder(ctx, destinationFolderId, root.id).then(function (dest) {
+            var toFolderId = dest.id;
+            if (String(fromFolderId) === String(toFolderId)) {
+              return clubFilesPayload(ctx).then(function (files) {
+                return ok({
+                  action: "move",
+                  already: true,
+                  fileId: fileId,
+                  fileName: row.original_name || null,
+                  fromFolderId: fromFolderId,
+                  toFolderId: toFolderId,
+                  files: files
+                });
+              });
+            }
+            var displayName = row.original_name || "file";
+            return listUploadsByNameInFolder(ctx, toFolderId, displayName, fileId).then(function (conflicts) {
+              if (conflicts.length && !confirmReplace) {
+                return conflictConfirmPayload(conflicts, "move");
+              }
+              var chain = conflicts.length && confirmReplace
+                ? deleteConflictUploads(conflicts)
+                : Promise.resolve();
+              return chain
+                .then(function () {
+                  return pb.collection(C.uploads).update(fileId, { folder: toFolderId });
+                })
+                .then(function () {
+                  return clubFilesPayload(ctx);
+                })
+                .then(function (files) {
+                  return ok({
+                    action: "move",
+                    fileId: fileId,
+                    fileName: displayName,
+                    fromFolderId: fromFolderId,
+                    toFolderId: toFolderId,
+                    files: files
+                  });
+                });
+            });
+          });
+        });
+      });
+    });
+  }
+
+  function moveClubEvaluationFolder(data) {
+    var folderId = String((data && data.folderId) || "").trim();
+    var destinationFolderId = String((data && data.destinationFolderId) || "").trim();
+    var confirmReplace = !!(data && data.confirmReplace === true);
+    if (!folderId) return Promise.reject(err("INVALID_INPUT", "缺少資料夾。"));
+    if (!destinationFolderId) return Promise.reject(err("INVALID_INPUT", "缺少目的地資料夾。"));
+    return contextFromAuth().then(function (ctx) {
+      return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid).then(function (root) {
+        return assertClubOwnedFolder(ctx, folderId, root.id).then(function (folder) {
+          assertWriteWindowOpen(ctx, writeKindFromFolder(folder));
+          if (String(folderId) === String(destinationFolderId)) {
+            throw err("INVALID_INPUT", "不能把資料夾移動到自己裡面。");
+          }
+          return folderParentChainContains(ctx, destinationFolderId, folderId).then(function (cyclic) {
+            if (cyclic) {
+              throw err("INVALID_INPUT", "不能把資料夾移動到自己的子資料夾內。");
+            }
+            return assertDestinationFolder(ctx, destinationFolderId, root.id).then(function (dest) {
+              var fromParent = relationIdLocal(folder.parent) || root.id;
+              var toParent = dest.id;
+              if (String(fromParent) === String(toParent)) {
+                return ok({
+                  action: "move",
+                  already: true,
+                  folderId: folderId,
+                  name: folder.name,
+                  fromFolderId: fromParent,
+                  toFolderId: toParent
+                });
+              }
+              return listFoldersByNameInParent(ctx, toParent, folder.name, folderId).then(function (conflicts) {
+                if (conflicts.length && !confirmReplace) {
+                  return ok({
+                    status: "replace_confirm_required",
+                    action: "move_folder",
+                    message: "目的地已有同名資料夾，確認後將刪除舊資料夾再完成移動。",
+                    existingFile: {
+                      fileName: conflicts[0].name || null,
+                      fileId: conflicts[0].id || null
+                    },
+                    conflictFileIds: conflicts.map(function (hit) {
+                      return String(hit.id);
+                    })
+                  });
+                }
+                var chain = Promise.resolve();
+                if (conflicts.length && confirmReplace) {
+                  conflicts.forEach(function (hit) {
+                    chain = chain.then(function () {
+                      return permanentlyDeleteFolderTree(ctx, hit.id, root.id);
+                    });
+                  });
+                }
+                return chain
+                  .then(function () {
+                    return pb.collection(C.folders).update(folderId, { parent: toParent });
+                  })
+                  .then(function () {
+                    return ok({
+                      action: "move",
+                      folderId: folderId,
+                      name: folder.name,
+                      fromFolderId: fromParent,
+                      toFolderId: toParent
+                    });
+                  });
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+
+  function copyClubEvaluationFile(data) {
+    var fileId = String((data && data.fileId) || "").trim();
+    var destinationFolderId = String((data && data.destinationFolderId) || "").trim();
+    var confirmReplace = !!(data && data.confirmReplace === true);
+    if (!fileId) return Promise.reject(err("INVALID_INPUT", "缺少檔案。"));
+    if (!destinationFolderId) return Promise.reject(err("INVALID_INPUT", "缺少目的地資料夾。"));
+    return contextFromAuth().then(function (ctx) {
+      return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid).then(function (root) {
+        return assertClubOwnedUpload(ctx, fileId).then(function (row) {
+          assertWriteWindowOpen(ctx, writeKindFromUpload(row));
+          return assertDestinationFolder(ctx, destinationFolderId, root.id).then(function (dest) {
+            var toFolderId = dest.id;
+            var displayName = row.original_name || "file";
+            return listUploadsByNameInFolder(ctx, toFolderId, displayName, null).then(function (conflicts) {
+              if (conflicts.length && !confirmReplace) {
+                return conflictConfirmPayload(conflicts, "copy");
+              }
+              var chain = conflicts.length && confirmReplace
+                ? deleteConflictUploads(conflicts)
+                : Promise.resolve();
+              return chain
+                .then(function () {
+                  return fetchUploadBlob(row);
+                })
+                .then(function (fileObj) {
+                  var attempt =
+                    "copy_" +
+                    String(fileId) +
+                    "_" +
+                    String(Date.now()) +
+                    "_" +
+                    Math.random().toString(36).slice(2, 10);
+                  var formPb = new FormData();
+                  formPb.append("activity", ctx.activity.id);
+                  formPb.append("club", ctx.club.id);
+                  formPb.append("folder", toFolderId);
+                  formPb.append("student", ctx.user.uid);
+                  formPb.append("client_attempt_id", attempt);
+                  formPb.append("upload_kind", row.upload_kind || "evaluation");
+                  formPb.append("original_name", displayName);
+                  formPb.append("mime_type", row.mime_type || fileObj.type || "application/octet-stream");
+                  formPb.append("size_bytes", String(fileObj.size || row.size_bytes || 0));
+                  formPb.append("status", "completed");
+                  formPb.append("completed_at", new Date().toISOString());
+                  formPb.append("file", fileObj, displayName);
+                  return pb.collection(C.uploads).create(formPb);
+                })
+                .then(function (created) {
+                  return clubFilesPayload(ctx).then(function (files) {
+                    return ok({
+                      action: "copy",
+                      fileId: created.id,
+                      sourceFileId: fileId,
+                      fileName: displayName,
+                      toFolderId: toFolderId,
+                      files: files
+                    });
+                  });
+                });
+            });
+          });
+        });
+      });
+    });
+  }
+
   function studentAuthHeader() {
     var token = pb.authStore && pb.authStore.token;
     if (!token) throw err("UNAUTHENTICATED", "請先登入。");
@@ -1299,6 +1750,11 @@
     createClubEvaluationFolder: createClubEvaluationFolder,
     trashClubEvaluationFile: trashClubEvaluationFile,
     trashClubEvaluationFolder: trashClubEvaluationFolder,
+    renameClubEvaluationFile: renameClubEvaluationFile,
+    renameClubEvaluationFolder: renameClubEvaluationFolder,
+    moveClubEvaluationFile: moveClubEvaluationFile,
+    moveClubEvaluationFolder: moveClubEvaluationFolder,
+    copyClubEvaluationFile: copyClubEvaluationFile,
     listClubEvaluationTrash: listClubEvaluationTrash,
     restoreClubEvaluationItem: restoreClubEvaluationItem,
     prepareClubDriveUpload: prepareClubDriveUpload,
