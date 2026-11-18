@@ -732,6 +732,10 @@ button{
 
   gap:8px;
 
+  align-items:center;
+
+  flex-wrap:wrap;
+
   padding:12px 18px;
 
   border-bottom:
@@ -739,11 +743,37 @@ button{
 }
 
 .search{
-  flex:1
+  flex:1;
+
+  min-width:160px
 }
 
 .filter{
   width:190px
+}
+
+.toolbar-submit-all{
+  white-space:nowrap
+}
+
+.confirm-club-list{
+  margin:8px 0 0;
+
+  padding:8px 10px;
+
+  max-height:160px;
+
+  overflow:auto;
+
+  border:1px solid var(--border);
+
+  border-radius:8px;
+
+  background:#f8fafc;
+
+  font-size:12px;
+
+  line-height:1.55
 }
 
 .club-list{
@@ -2275,6 +2305,15 @@ button{
       </option>
 
     </select>
+
+    <button
+      id="submitAllBtn"
+      class="btn btn-primary toolbar-submit-all"
+      type="button"
+      onclick="openSubmitAllConfirm()"
+    >
+      ✅ 全部送出
+    </button>
 
   </div>
 
@@ -12860,7 +12899,359 @@ async function saveDraft() {
 }
 
 
+function validateScoresMapForSubmitAll_(scores, criteria) {
+  if (!scores || typeof scores !== "object" || !Array.isArray(criteria) || !criteria.length) {
+    return { ok: false, total: 0 };
+  }
+  let total = 0;
+  for (let i = 0; i < criteria.length; i++) {
+    const c = criteria[i];
+    const v = Number(scores[c.id]);
+    if (!Number.isFinite(v) || v < 0 || v > Number(c.maxScore)) {
+      return { ok: false, total: 0 };
+    }
+    total += v;
+  }
+  return { ok: true, total: total };
+}
+
+
+function liveOpenScoresForSubmitAll_(sectionId, permanentClubId, clubName) {
+  const context = APP.scoreContext;
+  if (!context || contextSubmitBlocked_(context)) {
+    return null;
+  }
+  const sameSection =
+    String(context.sectionId || "").trim() === String(sectionId || "").trim();
+  if (!sameSection) {
+    return null;
+  }
+  const wantedPermanent = String(permanentClubId || "").trim().toUpperCase();
+  const contextPermanent = String(context.permanentClubId || "").trim().toUpperCase();
+  const sameClub =
+    (wantedPermanent && contextPermanent && wantedPermanent === contextPermanent) ||
+    (
+      String(clubName || "").trim() &&
+      String(context.clubName || "").trim() === String(clubName || "").trim()
+    );
+  if (!sameClub) {
+    return null;
+  }
+  const data = collectScores(true);
+  if (!data || !data.success) {
+    return null;
+  }
+  return data.scores || null;
+}
+
+
+function buildSubmitAllPlan_() {
+  const sectionId = String(APP.currentSectionId || "").trim();
+  const stage =
+    APP.dashboard &&
+    APP.dashboard.stages &&
+    APP.dashboard.stages[sectionId];
+  if (!sectionId || !stage) {
+    return { error: "請先選擇評分大項。" };
+  }
+  const criteria = Array.isArray(stage.criteria) ? stage.criteria : [];
+  if (!criteria.length) {
+    return { error: "此大項目前沒有可評分的小項。" };
+  }
+  const judgeId = currentJudgeId_();
+  if (!judgeId) {
+    return { error: "評審身分尚未確認，請重新登入。" };
+  }
+  const clubs = Array.isArray(stage.clubs) ? stage.clubs : [];
+  const ready = [];
+  const pending = [];
+  const skippedSubmitted = [];
+  for (let i = 0; i < clubs.length; i++) {
+    const club = clubs[i];
+    const clubName = String((club && (club.name || club.clubName)) || "").trim();
+    const permanentClubId = String((club && club.permanentClubId) || "")
+      .trim()
+      .toUpperCase();
+    const status = normalizedClubUiStatus(club);
+    if (status === "submitted") {
+      skippedSubmitted.push({ clubName: clubName, permanentClubId: permanentClubId });
+      continue;
+    }
+    if (status === "loading") {
+      pending.push({
+        clubName: clubName,
+        permanentClubId: permanentClubId,
+        reason: "狀態載入中"
+      });
+      continue;
+    }
+    if (!permanentClubId) {
+      pending.push({
+        clubName: clubName || "（未命名社團）",
+        permanentClubId: permanentClubId,
+        reason: "缺少永久社團編號"
+      });
+      continue;
+    }
+    const parts = localDraftPartsPinned_(
+      judgeId,
+      permanentClubId,
+      sectionId,
+      clubName
+    );
+    const draft = readLocalDraft_(parts);
+    const liveScores = liveOpenScoresForSubmitAll_(
+      sectionId,
+      permanentClubId,
+      clubName
+    );
+    const scores = liveScores || (draft && draft.scores) || null;
+    const check = validateScoresMapForSubmitAll_(scores, criteria);
+    if (check.ok) {
+      ready.push({
+        clubName: clubName,
+        permanentClubId: permanentClubId,
+        sectionId: sectionId,
+        scores: scores,
+        total: check.total,
+        reopened: status === "reopened",
+        draftParts: parts
+      });
+    } else {
+      let reason = "尚未評分";
+      if (status === "reopened") {
+        reason = "待重送但分數未齊";
+      } else if (status === "draft") {
+        reason = "草稿未填完";
+      }
+      pending.push({
+        clubName: clubName,
+        permanentClubId: permanentClubId,
+        reason: reason
+      });
+    }
+  }
+  return {
+    sectionId: sectionId,
+    stage: stage,
+    criteria: criteria,
+    ready: ready,
+    pending: pending,
+    skippedSubmitted: skippedSubmitted
+  };
+}
+
+
+function formatSubmitAllClubListHtml_(rows, withReason) {
+  if (!rows || !rows.length) {
+    return "";
+  }
+  const items = rows
+    .map(function (row) {
+      const name = escapeHtml(row.clubName || "（未命名社團）");
+      if (!withReason) {
+        return "<div>・" + name + "</div>";
+      }
+      const reason = escapeHtml(row.reason || "尚未完成");
+      return "<div>・" + name + "（" + reason + "）</div>";
+    })
+    .join("");
+  return '<div class="confirm-club-list">' + items + "</div>";
+}
+
+
+function openSubmitAllConfirm() {
+  if (APP.busy) {
+    return;
+  }
+  const plan = buildSubmitAllPlan_();
+  if (plan.error) {
+    toast(plan.error);
+    return;
+  }
+  APP.submitAllPlan = plan;
+  const stageName =
+    (plan.stage && (plan.stage.name || plan.stage.stageName)) || "";
+  const readyCount = plan.ready.length;
+  const pendingCount = plan.pending.length;
+  const submittedCount = plan.skippedSubmitted.length;
+  byId("confirmTitle").textContent =
+    readyCount > 0 ? "確認全部送出？" : "目前沒有可送出的社團";
+  let html =
+    "評分大項：<b>" +
+    escapeHtml(stageName) +
+    "</b><br>已送出：<b>" +
+    submittedCount +
+    "</b>　可送出：<b>" +
+    readyCount +
+    "</b>　還沒交：<b>" +
+    pendingCount +
+    "</b>";
+  if (readyCount > 0) {
+    html +=
+      "<br><br>將正式送出以下社團：" +
+      formatSubmitAllClubListHtml_(plan.ready, false);
+  }
+  if (pendingCount > 0) {
+    html +=
+      "<br><br>以下社團還沒交（尚未完成評分），不會一併送出：" +
+      formatSubmitAllClubListHtml_(plan.pending, true);
+  }
+  byId("confirmText").innerHTML = html;
+  byId("confirmWarning").textContent =
+    readyCount > 0
+      ? "⚠️ 正式送出後，這些評分會立即鎖定，評審本人不能再修改。若真的需要修改，必須由管理員解鎖。"
+      : "⚠️ 請先完成各社團評分並按「儲存草稿」，填完後再使用全部送出。";
+  const confirmButton = byId("confirmSubmitBtn");
+  confirmButton.disabled = readyCount === 0;
+  confirmButton.onclick = readyCount > 0 ? submitAllScores : closeSubmitConfirm;
+  confirmButton.textContent =
+    readyCount > 0 ? "確認全部送出並鎖定" : "知道了";
+  setConfirmStatus_("", false);
+  byId("confirmModal").style.display = "flex";
+}
+
+
+async function submitAllScores() {
+  if (APP.busy) {
+    return;
+  }
+  const plan = APP.submitAllPlan || buildSubmitAllPlan_();
+  const ready = (plan && plan.ready) || [];
+  if (!ready.length) {
+    toast("目前沒有可送出的社團");
+    return;
+  }
+  const button = byId("confirmSubmitBtn");
+  const opIdentity = captureJudgeOpIdentity_();
+  let successCount = 0;
+  let failCount = 0;
+  const failNames = [];
+  try {
+    APP.busy = true;
+    button.disabled = true;
+    for (let i = 0; i < ready.length; i++) {
+      if (!sameJudgeOpIdentity_(opIdentity)) {
+        return;
+      }
+      const item = ready[i];
+      button.textContent =
+        "送出中... " + (i + 1) + "/" + ready.length;
+      setConfirmStatus_(
+        "正在送出：" + (item.clubName || "") + "（" + (i + 1) + "/" + ready.length + "）",
+        false
+      );
+      try {
+        const result = await judgeApiWithToken(
+          currentSessionToken_(),
+          "judgeSubmitScore",
+          {
+            sectionId: item.sectionId,
+            stageKey: item.sectionId,
+            clubName: item.clubName,
+            permanentClubId: item.permanentClubId || undefined,
+            scores: item.scores
+          }
+        );
+        if (!sameJudgeOpIdentity_(opIdentity)) {
+          return;
+        }
+        const business =
+          JUDGE_GUARD && JUDGE_GUARD.classifySubmitBusinessResult
+            ? JUDGE_GUARD.classifySubmitBusinessResult(result)
+            : result && result.success
+              ? { kind: "success", apply: true }
+              : { kind: "rejected", message: (result && result.message) || "正式送出失敗" };
+        if (business.kind === "unauthorized") {
+          byId("confirmModal").style.display = "none";
+          handleUnauthorized(business.message);
+          return;
+        }
+        if (business.kind === "success" && business.apply) {
+          successCount += 1;
+          try {
+            if (item.draftParts) {
+              clearLocalDraft_(item.draftParts);
+            }
+          } catch (_clearErr) {}
+          rememberRecentSubmitGuard_(
+            item.sectionId,
+            item.clubName,
+            item.permanentClubId
+          );
+          markClubSubmittedLocally_(
+            item.sectionId,
+            item.clubName,
+            item.permanentClubId,
+            scoreExtrasFromResult_(result, new Date().toISOString())
+          );
+        } else {
+          failCount += 1;
+          failNames.push(item.clubName || "（未命名社團）");
+        }
+      } catch (itemError) {
+        if (!sameJudgeOpIdentity_(opIdentity)) {
+          return;
+        }
+        failCount += 1;
+        failNames.push(item.clubName || "（未命名社團）");
+      }
+    }
+    if (!sameJudgeOpIdentity_(opIdentity)) {
+      return;
+    }
+    byId("confirmModal").style.display = "none";
+    setConfirmStatus_("", false);
+    APP.submitAllPlan = null;
+    if (
+      APP.scoreContext &&
+      ready.some(function (item) {
+        const wanted = String(item.permanentClubId || "").trim().toUpperCase();
+        const openId = String(APP.scoreContext.permanentClubId || "")
+          .trim()
+          .toUpperCase();
+        return (
+          (wanted && openId && wanted === openId) ||
+          String(APP.scoreContext.clubName || "").trim() ===
+            String(item.clubName || "").trim()
+        );
+      })
+    ) {
+      closeScoreModal(true);
+    }
+    if (typeof filterAndRenderClubs === "function") {
+      filterAndRenderClubs();
+    }
+    invalidatePreSubmitDashboardStatus_();
+    scheduleJudgeDashboardStatusCatchup_(800);
+    if (failCount === 0) {
+      toast("✅ 已全部送出並鎖定（" + successCount + " 個社團）");
+    } else {
+      toast(
+        "✅ 成功 " +
+          successCount +
+          " 個；❌ 失敗 " +
+          failCount +
+          " 個" +
+          (failNames.length
+            ? "：" + failNames.slice(0, 5).join("、") + (failNames.length > 5 ? "…" : "")
+            : "")
+      );
+    }
+  } finally {
+    if (sameJudgeOpIdentity_(opIdentity)) {
+      APP.busy = false;
+      button.disabled = false;
+      button.textContent = "確認全部送出並鎖定";
+      button.onclick = submitAllScores;
+    }
+  }
+}
+
+
 function openSubmitConfirm() {
+
+  APP.submitAllPlan = null;
 
   if (
 
@@ -13050,6 +13441,9 @@ function closeSubmitConfirm() {
     return;
 
   }
+
+
+  APP.submitAllPlan = null;
 
 
   byId(
