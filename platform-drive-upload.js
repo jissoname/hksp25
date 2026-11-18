@@ -1700,6 +1700,18 @@
     addItem("刪除", "danger", function () {
       requestTrashItem(item);
     });
+    addItem("移動至…", "", function () {
+      openFolderPicker({
+        kind: "move",
+        itemKind: item.kind,
+        fileId: isFolder ? undefined : item.id,
+        folderId: isFolder ? item.id : undefined,
+        fileName: isFolder ? undefined : item.name,
+        folderName: isFolder ? item.name : undefined,
+        parentFolderId: item.parentFolderId,
+        fromPath: browsePathLabel
+      });
+    });
   }
 
   function buildItemActionMenu(item) {
