@@ -2734,6 +2734,239 @@
     return "\uFEFF" + lines.join("\r\n");
   }
 
+  function exportScoreNumber_(value) {
+    if (value === null || value === undefined || value === "") return "";
+    var n = Number(value);
+    if (!Number.isFinite(n)) return "";
+    return Math.round(n * 100) / 100;
+  }
+
+  function exportRankingResultText_(row) {
+    if (!row || row.complete !== true) return "未完成";
+    if (row.passed === true) return "及格";
+    if (row.passed === false) return "不及格";
+    return "未判定";
+  }
+
+  function exportScoreHeader_(name, maxScore) {
+    if (maxScore === null || maxScore === undefined || maxScore === "") {
+      return String(name || "");
+    }
+    return String(name || "") + " / " + exportScoreNumber_(maxScore);
+  }
+
+  function exportSafeSheetName_(raw, used) {
+    var base = String(raw || "工作表")
+      .replace(/[\\\/\*\?\:\[\]]+/g, "_")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!base) base = "工作表";
+    if (base.length > 31) base = base.slice(0, 31);
+    var name = base;
+    var i = 2;
+    while (used[name]) {
+      var suffix = "_" + i;
+      name = (base.slice(0, Math.max(1, 31 - suffix.length)) + suffix).slice(0, 31);
+      i += 1;
+    }
+    used[name] = true;
+    return name;
+  }
+
+  function findAggregationClubForExport_(aggregation, row) {
+    var clubs = (aggregation && aggregation.clubs) || [];
+    var permanent = String((row && row.permanentClubId) || "")
+      .trim()
+      .toUpperCase();
+    var name = String((row && row.clubName) || "").trim();
+    if (permanent) {
+      for (var i = 0; i < clubs.length; i++) {
+        if (String(clubs[i].permanentClubId || "").trim().toUpperCase() === permanent) {
+          return clubs[i];
+        }
+      }
+    }
+    if (name) {
+      for (var j = 0; j < clubs.length; j++) {
+        if (String(clubs[j].clubName || "").trim() === name) return clubs[j];
+      }
+    }
+    return null;
+  }
+
+  function exportSectionBucketByIdOrName_(clubAgg, preferredId, nameRe) {
+    if (!clubAgg) return null;
+    if (clubAgg.sectionScores && clubAgg.sectionScores[preferredId]) {
+      return clubAgg.sectionScores[preferredId];
+    }
+    var sections = Array.isArray(clubAgg.sections) ? clubAgg.sections : [];
+    for (var i = 0; i < sections.length; i++) {
+      var sec = sections[i];
+      if (!sec) continue;
+      if (String(sec.sectionId || "") === preferredId || nameRe.test(String(sec.sectionName || ""))) {
+        return {
+          finalScore: sec.finalScore,
+          currentScore: sec.currentScore,
+          averageScore: sec.averageScore,
+          maxScore: sec.maxScore,
+          complete: sec.complete === true
+        };
+      }
+    }
+    return null;
+  }
+
+  function exportGroupBucket_(clubAgg, preferredId, nameRe) {
+    if (!clubAgg) return null;
+    if (clubAgg.groupScores && clubAgg.groupScores[preferredId]) {
+      return clubAgg.groupScores[preferredId];
+    }
+    // 後備：若 groupScores 未填，仍嘗試從大項名稱推斷（與畫面對齊為主）。
+    return exportSectionBucketByIdOrName_(clubAgg, preferredId, nameRe);
+  }
+
+  function exportBucketScore_(bucket) {
+    if (!bucket) return null;
+    if (bucket.finalScore !== null && bucket.finalScore !== undefined) return bucket.finalScore;
+    if (bucket.currentScore !== null && bucket.currentScore !== undefined) return bucket.currentScore;
+    if (bucket.averageScore !== null && bucket.averageScore !== undefined) {
+      return bucket.averageScore;
+    }
+    return null;
+  }
+
+  function exportMetricMaxFromAggregation_(aggregation, picker, fallback) {
+    var clubs = (aggregation && aggregation.clubs) || [];
+    for (var i = 0; i < clubs.length; i++) {
+      var bucket = picker(clubs[i]);
+      if (bucket && bucket.maxScore !== null && bucket.maxScore !== undefined) {
+        var n = Number(bucket.maxScore);
+        if (Number.isFinite(n)) return n;
+      }
+    }
+    return fallback;
+  }
+
+  function buildCategoryRankingWorkbook(ranking, aggregation) {
+    var maxScores = {
+      routine: exportMetricMaxFromAggregation_(
+        aggregation,
+        function (club) {
+          return exportGroupBucket_(club, "routinePerformance", /平時表現|平時/);
+        },
+        30
+      ),
+      data: exportMetricMaxFromAggregation_(
+        aggregation,
+        function (club) {
+          return exportSectionBucketByIdOrName_(club, "dataReview", /資料審查|數位資料|資料/);
+        },
+        50
+      ),
+      field: exportMetricMaxFromAggregation_(
+        aggregation,
+        function (club) {
+          return exportSectionBucketByIdOrName_(club, "fieldReview", /實地審查|現場|詢答/);
+        },
+        20
+      ),
+      total:
+        Number((ranking && ranking.totalMaxScore) || (aggregation && aggregation.totalMaxScore)) ||
+        100
+    };
+
+    function enrichedRow(row, categoryName) {
+      var clubAgg = findAggregationClubForExport_(aggregation, row);
+      var routine = exportGroupBucket_(clubAgg, "routinePerformance", /平時表現|平時/);
+      var data = exportSectionBucketByIdOrName_(clubAgg, "dataReview", /資料審查|數位資料|資料/);
+      var field = exportSectionBucketByIdOrName_(clubAgg, "fieldReview", /實地審查|現場|詢答/);
+      return {
+        category: categoryName || (row && row.category) || "",
+        displayRank: row && row.displayRank ? String(row.displayRank) : "",
+        clubName: (row && row.clubName) || "",
+        permanentClubId: (row && row.permanentClubId) || "",
+        routineScore: exportScoreNumber_(exportBucketScore_(routine)),
+        dataScore: exportScoreNumber_(exportBucketScore_(data)),
+        fieldScore: exportScoreNumber_(exportBucketScore_(field)),
+        totalScore: exportScoreNumber_(row && row.finalTotalScore),
+        result: exportRankingResultText_(row)
+      };
+    }
+
+    var categoryHeaders = [
+      "名次",
+      "社團名稱",
+      exportScoreHeader_("平時表現", maxScores.routine),
+      exportScoreHeader_("數位資料", maxScores.data),
+      exportScoreHeader_("現場詢答", maxScores.field),
+      exportScoreHeader_("總分", maxScores.total),
+      "結果"
+    ];
+    var overviewHeaders = [
+      "名次",
+      "屬性",
+      "社團名稱",
+      exportScoreHeader_("平時表現", maxScores.routine),
+      exportScoreHeader_("數位資料", maxScores.data),
+      exportScoreHeader_("現場詢答", maxScores.field),
+      exportScoreHeader_("總分", maxScores.total),
+      "結果"
+    ];
+
+    var usedNames = {};
+    var overviewSheetName = exportSafeSheetName_("全校總覽", usedNames);
+    var sheets = [];
+    var overviewRows = [overviewHeaders];
+    var categories = (ranking && ranking.categories) || [];
+    categories.forEach(function (cat) {
+      var categoryName = String((cat && cat.category) || "未分類");
+      var catRows = [categoryHeaders];
+      ((cat && cat.rows) || []).forEach(function (row) {
+        var item = enrichedRow(row, categoryName);
+        overviewRows.push([
+          item.displayRank,
+          item.category,
+          item.clubName,
+          item.routineScore,
+          item.dataScore,
+          item.fieldScore,
+          item.totalScore,
+          item.result
+        ]);
+        catRows.push([
+          item.displayRank,
+          item.clubName,
+          item.routineScore,
+          item.dataScore,
+          item.fieldScore,
+          item.totalScore,
+          item.result
+        ]);
+      });
+      sheets.push({
+        name: exportSafeSheetName_(categoryName, usedNames),
+        category: categoryName,
+        rows: catRows
+      });
+    });
+
+    sheets.unshift({
+      name: overviewSheetName,
+      category: "全校總覽",
+      rows: overviewRows
+    });
+
+    return {
+      sheets: sheets,
+      maxScores: maxScores,
+      summary: {
+        categoryCount: categories.length,
+        sheetCount: sheets.length,
+        rowCount: Math.max(0, overviewRows.length - 1)
+      }
+    };
+  }
+
   function buildOrganizerAuditCsv(aggregation) {
     var lines = [
       "社團,屬性,永久社團編號,完成,缺少評審,待重送大項,目前總分,正式總分,滿分"
@@ -3255,16 +3488,20 @@
     var ctx = await loadAggregationContext();
     var aggregation = buildClubAggregation(ctx);
     var ranking = buildRankingPayload(ctx, aggregation);
-    var csv = buildCategoryRankingCsv(ranking);
+    var workbook = buildCategoryRankingWorkbook(ranking, aggregation);
     var stamp = new Date().toISOString().slice(0, 10);
     return ok({
-      base64: toBase64Utf8(csv),
-      mimeType: "text/csv;charset=utf-8",
-      fileName: "hksp-category-ranking-" + stamp + ".csv",
+      delivery: "client-xlsx",
+      workbook: workbook,
+      // 保留舊 CSV 後備，避免舊前端只認 base64 時完全不能下載。
+      base64: toBase64Utf8(buildCategoryRankingCsv(ranking)),
+      mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      fileName: "hksp-category-ranking-" + stamp + ".xlsx",
       generatedAt: ranking.generatedAt,
       summary: {
-        categoryCount: (ranking.categories || []).length,
-        rowCount: aggregation.clubs.length
+        categoryCount: workbook.summary.categoryCount,
+        sheetCount: workbook.summary.sheetCount,
+        rowCount: workbook.summary.rowCount
       }
     });
   }

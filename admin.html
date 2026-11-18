@@ -438,7 +438,7 @@ onchange="renderScoreAggregation()"
 <div class="panel-body">
 
 <div class="notice">
-Excel 會依社團屬性分成不同工作表，內容包含名次、社團名稱、平時表現、數位資料、現場詢答、總分及結果。所有名次與及格判定都直接使用目前排名系統結果，不會在前端重新計算。
+Excel 第一個工作表是「全校總覽」，後續再依社團屬性各一頁。內容包含名次、社團名稱、平時表現、數位資料、現場詢答、總分及結果。所有名次與及格判定都直接使用目前排名系統結果，不會在前端重新計算。
 </div>
 
 <div class="card" style="margin-top:12px">
@@ -1654,7 +1654,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=upload-browse-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=upload-browse-2"></script>
-<script src="./platform-admin-pb.js?v=seat-lock-1"></script>
+<script src="./platform-admin-pb.js?v=rank-xlsx-1"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -10821,6 +10821,85 @@ setTimeout(
 
 }
 
+let xlsxLoaderPromise_ =
+null;
+
+function ensureXlsxLoaded_(){
+if(xlsxLoaderPromise_){
+return xlsxLoaderPromise_;
+}
+xlsxLoaderPromise_ =
+(async function(){
+if(window.XLSX && window.XLSX.utils){
+return window.XLSX;
+}
+await loadScriptOnce_(
+"https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
+"xlsx"
+);
+if(!(window.XLSX && window.XLSX.utils)){
+throw new Error("Excel 元件載入後無法使用");
+}
+return window.XLSX;
+})().catch(function(error){
+xlsxLoaderPromise_ =
+null;
+throw error;
+});
+return xlsxLoaderPromise_;
+}
+
+async function downloadCategoryRankingWorkbook_(
+workbook,
+fileName
+){
+const XLSX =
+await ensureXlsxLoaded_();
+const sheets =
+workbook &&
+Array.isArray(workbook.sheets)
+?
+workbook.sheets
+:
+[];
+if(!sheets.length){
+throw new Error("沒有可匯出的工作表");
+}
+const wb =
+XLSX.utils.book_new();
+sheets.forEach(function(sheet){
+const rows =
+Array.isArray(sheet.rows)
+?
+sheet.rows
+:
+[];
+const ws =
+XLSX.utils.aoa_to_sheet(rows);
+const name =
+String(sheet.name || "工作表").slice(0, 31) || "工作表";
+XLSX.utils.book_append_sheet(wb, ws, name);
+});
+const out =
+XLSX.write(
+wb,
+{
+bookType:"xlsx",
+type:"array"
+}
+);
+downloadBlobArtifact_(
+new Blob(
+[out],
+{
+type:
+"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+}
+),
+fileName || "hksp-category-ranking.xlsx"
+);
+}
+
 async function exportCategoryRankingExcel(){
 
 const button =
@@ -10876,32 +10955,43 @@ response && response.message ||
 
 }
 
+const fileName =
+response.fileName ||
+"hksp-category-ranking.xlsx";
+
 if(
-!response.base64 ||
-!response.fileName
+response.workbook &&
+response.workbook.sheets
 ){
-
-throw new Error(
-"後端沒有回傳完整的 Excel 檔案"
+await downloadCategoryRankingWorkbook_(
+response.workbook,
+fileName
 );
-
 }
-
+else if(
+response.base64
+){
 downloadBase64Artifact(
 response.base64,
 response.mimeType,
-response.fileName
+fileName
 );
+}
+else{
+throw new Error(
+"後端沒有回傳完整的 Excel 檔案"
+);
+}
 
 const summary =
 response.summary ||
 {};
 
 meta.textContent =
-`${summary.categoryCount ?? 0} 個屬性｜${summary.rowCount ?? 0} 個社團｜${formatDate(response.generatedAt)}`;
+`${summary.categoryCount ?? 0} 個屬性｜${summary.sheetCount ?? ((summary.categoryCount ?? 0) + 1)} 個工作表｜${summary.rowCount ?? 0} 個社團｜${formatDate(response.generatedAt)}`;
 
 state.innerHTML =
-`✅ Excel 已產生並開始下載：${esc(response.fileName)}`;
+`✅ Excel 已產生並開始下載：${esc(fileName)}`;
 
 toast(
 "✅ 各屬性成績與排名 Excel 已匯出"
