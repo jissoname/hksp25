@@ -2706,6 +2706,123 @@
     };
   }
 
+  /** Map live scoreConfig ids/names onto legacy admin column keys. */
+  function aggregationColumnKind_(sectionLike) {
+    var id = String(
+      (sectionLike && (sectionLike.id || sectionLike.sectionId)) || ""
+    ).trim();
+    var name = String(
+      (sectionLike && (sectionLike.name || sectionLike.sectionName)) || ""
+    ).trim();
+    if (id === "dataReview" || /資料審查|數位資料/.test(name)) return "dataReview";
+    if (id === "fieldReview" || /實地審查|現場|詢答/.test(name)) return "fieldReview";
+    if (
+      id === "routinePerformance" ||
+      /平時表現|平時分數|平時|課指/.test(name)
+    ) {
+      return "routine";
+    }
+    return "other";
+  }
+
+  function mergeScoreBuckets_(buckets) {
+    var list = (buckets || []).filter(Boolean);
+    var out = scoreBucket(0);
+    if (!list.length) return out;
+    var hasCurrent = false;
+    var currentSum = 0;
+    var hasFinal = true;
+    var finalSum = 0;
+    var allComplete = true;
+    list.forEach(function (b) {
+      out.maxScore += Number(b.maxScore) || 0;
+      out.assignedCount += Number(b.assignedCount) || 0;
+      out.submittedCount += Number(b.submittedCount) || 0;
+      out.reopenedCount += Number(b.reopenedCount) || 0;
+      if (b.currentScore !== null && b.currentScore !== undefined) {
+        hasCurrent = true;
+        currentSum += Number(b.currentScore) || 0;
+      } else if (b.averageScore !== null && b.averageScore !== undefined) {
+        hasCurrent = true;
+        currentSum += Number(b.averageScore) || 0;
+      }
+      if (b.complete === true && b.finalScore !== null && b.finalScore !== undefined) {
+        finalSum += Number(b.finalScore) || 0;
+      } else {
+        hasFinal = false;
+        allComplete = false;
+      }
+    });
+    if (hasCurrent) {
+      out.averageScore = currentSum;
+      out.currentScore = currentSum;
+    }
+    out.complete = allComplete && list.length > 0;
+    if (out.complete && hasFinal) out.finalScore = finalSum;
+    return out;
+  }
+
+  function applyLegacyAggregationAliases_(sectionScores, groupScores, sectionDetails, sections) {
+    var dataBuckets = [];
+    var fieldBuckets = [];
+    var routineBuckets = [];
+    (sections || []).forEach(function (section) {
+      if (!section || !section.id) return;
+      var bucket = sectionScores[section.id];
+      if (!bucket) return;
+      var kind = aggregationColumnKind_(section);
+      if (kind === "dataReview") dataBuckets.push(bucket);
+      else if (kind === "fieldReview") fieldBuckets.push(bucket);
+      else routineBuckets.push(bucket);
+    });
+    // 名稱後備：當 sections 參數缺漏時，仍可由 sectionDetails 補對應
+    if (!dataBuckets.length || !fieldBuckets.length || !routineBuckets.length) {
+      (sectionDetails || []).forEach(function (detail) {
+        if (!detail) return;
+        var bucket =
+          (detail.sectionId && sectionScores[detail.sectionId]) ||
+          {
+            averageScore: detail.averageScore,
+            currentScore: detail.currentScore,
+            finalScore: detail.finalScore,
+            maxScore: detail.maxScore,
+            complete: detail.complete === true,
+            submittedCount: 0,
+            assignedCount: 0,
+            reopenedCount: 0
+          };
+        var kind = aggregationColumnKind_(detail);
+        if (kind === "dataReview" && !dataBuckets.length) dataBuckets.push(bucket);
+        else if (kind === "fieldReview" && !fieldBuckets.length) fieldBuckets.push(bucket);
+        else if (kind === "routine" && !routineBuckets.length) routineBuckets.push(bucket);
+      });
+    }
+    if (!sectionScores.dataReview && dataBuckets.length) {
+      sectionScores.dataReview = mergeScoreBuckets_(dataBuckets);
+    }
+    if (!sectionScores.fieldReview && fieldBuckets.length) {
+      sectionScores.fieldReview = mergeScoreBuckets_(fieldBuckets);
+    }
+    if (!groupScores.routinePerformance) {
+      var routine =
+        routineBuckets.length
+          ? mergeScoreBuckets_(routineBuckets)
+          : null;
+      // 再後備：把名稱像平時的 group 加總
+      if (!routine) {
+        var groupRoutine = [];
+        Object.keys(groupScores || {}).forEach(function (gid) {
+          if (gid === "routinePerformance") return;
+          if (/平時表現|平時分數|平時|課指/.test(String(gid))) {
+            groupRoutine.push(groupScores[gid]);
+          }
+        });
+        if (groupRoutine.length) routine = mergeScoreBuckets_(groupRoutine);
+      }
+      if (routine) groupScores.routinePerformance = routine;
+    }
+  }
+
   async function loadAggregationContext() {
     var activity = await getActivityRecord();
     var conf = activity.config_json || {};
@@ -2804,10 +2921,6 @@
         }
         if (bucket.reopenedCount > 0) reopenedSectionCount += 1;
         sectionScores[section.id] = bucket;
-        // 舊 UI 欄位相容：若大項／分類 id 剛好對上就一併填
-        if (section.id === "dataReview" || section.id === "fieldReview") {
-          sectionScores[section.id] = bucket;
-        }
         (section.groups || []).forEach(function (g) {
           if (!g || !g.id) return;
           var criteria = Array.isArray(g.criteria) ? g.criteria.filter(Boolean) : [];
@@ -2859,6 +2972,14 @@
           judges: judgeRows
         });
       });
+
+      // 舊 admin 欄位（平時／數位／現場）依 id 或名稱別名，避免自訂大項 id 對不到
+      applyLegacyAggregationAliases_(
+        sectionScores,
+        groupScores,
+        sectionDetails,
+        sections
+      );
 
       return {
         clubId: club.id,

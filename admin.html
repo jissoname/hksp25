@@ -1677,8 +1677,8 @@ onclick="closeModal('aggregationDetailModal')"
 
 <script src="./pb-config.js?v=l1-3-1"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
-<script src="./platform-pb-backend.js?v=m1-8-1"></script>
-<script src="./platform-admin-pb.js?v=m1-8-1"></script>
+<script src="./platform-pb-backend.js?v=m1-8-2"></script>
+<script src="./platform-admin-pb.js?v=m1-8-2"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -7170,32 +7170,80 @@ cls:"agg-status-incomplete"
 
 }
 
+function aggregationColumnKind_(sectionLike){
+const id=String(sectionLike&&(sectionLike.id||sectionLike.sectionId)||"").trim();
+const name=String(sectionLike&&(sectionLike.name||sectionLike.sectionName)||"").trim();
+if(id==="dataReview"||/資料審查|數位資料/.test(name))return"dataReview";
+if(id==="fieldReview"||/實地審查|現場|詢答/.test(name))return"fieldReview";
+if(id==="routinePerformance"||/平時表現|平時分數|平時|課指/.test(name))return"routine";
+return"other";
+}
+
+function aggregationMergeBuckets_(buckets){
+const list=(buckets||[]).filter(Boolean);
+if(!list.length)return null;
+const out={averageScore:null,currentScore:null,finalScore:null,maxScore:0,complete:true,submittedCount:0,assignedCount:0,reopenedCount:0};
+let hasCurrent=false,currentSum=0,hasFinal=true,finalSum=0;
+list.forEach(b=>{
+out.maxScore+=Number(b.maxScore)||0;
+out.assignedCount+=Number(b.assignedCount)||0;
+out.submittedCount+=Number(b.submittedCount)||0;
+out.reopenedCount+=Number(b.reopenedCount)||0;
+if(b.currentScore!==null&&b.currentScore!==undefined){hasCurrent=true;currentSum+=Number(b.currentScore)||0}
+else if(b.averageScore!==null&&b.averageScore!==undefined){hasCurrent=true;currentSum+=Number(b.averageScore)||0}
+if(b.complete===true&&b.finalScore!==null&&b.finalScore!==undefined)finalSum+=Number(b.finalScore)||0;
+else{hasFinal=false;out.complete=false}
+});
+if(hasCurrent){out.averageScore=currentSum;out.currentScore=currentSum}
+if(!(out.complete&&hasFinal&&list.length))out.complete=false;
+else out.finalScore=finalSum;
+return out;
+}
+
 function aggregationGroup(
 club,
 id
 ){
-
-return club.groupScores &&
-club.groupScores[id]
-?
-club.groupScores[id]
-:
-null;
-
+if(!club)return null;
+if(club.groupScores&&club.groupScores[id])return club.groupScores[id];
+if(id!=="routinePerformance")return null;
+const fromSections=[];
+(Array.isArray(club.sections)?club.sections:[]).forEach(sec=>{
+const kind=aggregationColumnKind_(sec);
+if(kind==="dataReview"||kind==="fieldReview")return;
+const bucket=club.sectionScores&&sec.sectionId?club.sectionScores[sec.sectionId]:null;
+fromSections.push(bucket||{
+averageScore:sec.averageScore,
+currentScore:sec.currentScore,
+finalScore:sec.finalScore,
+maxScore:sec.maxScore,
+complete:sec.complete===true
+});
+});
+return aggregationMergeBuckets_(fromSections);
 }
 
 function aggregationSection(
 club,
 id
 ){
-
-return club.sectionScores &&
-club.sectionScores[id]
-?
-club.sectionScores[id]
-:
-null;
-
+if(!club)return null;
+if(club.sectionScores&&club.sectionScores[id])return club.sectionScores[id];
+const want=id==="dataReview"?"dataReview":id==="fieldReview"?"fieldReview":"";
+if(!want)return null;
+const matched=[];
+(Array.isArray(club.sections)?club.sections:[]).forEach(sec=>{
+if(aggregationColumnKind_(sec)!==want)return;
+const bucket=club.sectionScores&&sec.sectionId?club.sectionScores[sec.sectionId]:null;
+matched.push(bucket||{
+averageScore:sec.averageScore,
+currentScore:sec.currentScore,
+finalScore:sec.finalScore,
+maxScore:sec.maxScore,
+complete:sec.complete===true
+});
+});
+return aggregationMergeBuckets_(matched);
 }
 
 function renderScoreAggregation(){
