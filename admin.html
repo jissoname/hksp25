@@ -673,10 +673,10 @@ onclick="openClubModal()"
 </button>
 <div class="panel-body">
 <div class="notice" style="margin-bottom:12px">
-從 PocketBase 讀取各社團已上傳檔案。可進資料夾瀏覽並單檔開啟／下載；此面板不依賴 Drive 連結，也不需進入 PB 管理後台。
+從 PocketBase 讀取各社團已上傳檔案。點「瀏覽」可看評選／特色檔並下載；特色資料不經評審，可在瀏覽裡切到「只看特色」一次下載。
 </div>
 <div class="toolbar">
-<input id="clubUploadSearch" class="field grow" placeholder="搜尋社團或屬性" oninput="renderClubUploadSummary()">
+<input id="clubUploadSearch" class="field grow" placeholder="搜尋社團或屬性" oninput="onClubUploadSearchInput_()">
 <button class="btn" type="button" onclick="loadClubUploadSummary()">重新整理</button>
 <button class="btn" type="button" id="clubUploadBackBtn" style="display:none" onclick="closeClubUploadBrowser()">返回社團列表</button>
 </div>
@@ -684,6 +684,11 @@ onclick="openClubModal()"
 <div id="clubUploadList" class="list"><div class="state">尚未讀取</div></div>
 <div id="clubUploadBrowser" class="hidden" style="margin-top:12px">
 <div id="clubUploadBrowserHead" class="list-title" style="margin-bottom:8px">—</div>
+<div id="clubUploadKindFilter" class="toolbar" style="margin:0 0 10px;padding:0;border:0">
+<button type="button" class="btn" data-upload-kind="all" onclick="setClubUploadKindFilter_('all')">全部</button>
+<button type="button" class="btn" data-upload-kind="feature" onclick="setClubUploadKindFilter_('feature')">只看特色</button>
+<button type="button" class="btn" data-upload-kind="evaluation" onclick="setClubUploadKindFilter_('evaluation')">只看評選</button>
+</div>
 <nav id="clubUploadBreadcrumb" class="list-sub" style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"></nav>
 <div id="clubUploadBrowserBody" class="list"><div class="state">載入中…</div></div>
 </div>
@@ -1658,7 +1663,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=upload-browse-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=upload-browse-2"></script>
-<script src="./platform-admin-pb.js?v=judge-email-unique-1"></script>
+<script src="./platform-admin-pb.js?v=club-upload-browse-2"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -11361,15 +11366,72 @@ return false;
 }
 }
 
+function onClubUploadSearchInput_(){
+if(S.clubUploadBrowseClub) return;
+renderClubUploadSummary();
+}
+
+function clubUploadKindFilter_(){
+return String((S.clubUploadBrowseClub&&S.clubUploadBrowseClub.uploadKind)||"all");
+}
+
+function paintClubUploadKindFilter_(){
+const box=$("clubUploadKindFilter");
+if(!box) return;
+const current=clubUploadKindFilter_();
+box.querySelectorAll("[data-upload-kind]").forEach(function(btn){
+const on=String(btn.getAttribute("data-upload-kind")||"")===current;
+btn.classList.toggle("btn-primary", on);
+});
+}
+
+function setClubUploadKindFilter_(kind){
+if(!S.clubUploadBrowseClub) return;
+const next=String(kind||"all");
+S.clubUploadBrowseClub.uploadKind=
+next==="feature"||next==="evaluation"?next:"all";
+paintClubUploadKindFilter_();
+const parent=
+S.clubUploadBrowse && S.clubUploadBrowse.parentFolderId
+? S.clubUploadBrowse.parentFolderId
+: "";
+browseClubUploadsFolder(parent);
+}
+
+function bindClubUploadListClicks_(){
+const list=$("clubUploadList");
+if(!list || list.dataset.boundBrowse==="1") return;
+list.dataset.boundBrowse="1";
+list.addEventListener("click", function(ev){
+const btn=ev.target && ev.target.closest
+? ev.target.closest("[data-club-upload-browse]")
+: null;
+if(!btn) return;
+ev.preventDefault();
+openClubUploadBrowser(
+btn.getAttribute("data-club-id")||"",
+btn.getAttribute("data-permanent-club-id")||"",
+btn.getAttribute("data-club-name")||"",
+"",
+btn.getAttribute("data-open-feature")==="1"
+);
+});
+}
+
 function renderClubUploadSummary(){
 const list=$("clubUploadList");
 const browser=$("clubUploadBrowser");
 const back=$("clubUploadBackBtn");
+// 瀏覽中不要被搜尋／重繪清掉，否則會變成「瀏覽沒反應」。
+if(S.clubUploadBrowseClub){
+if(browser) browser.classList.remove("hidden");
+if(back) back.style.display="";
+return;
+}
 if(browser) browser.classList.add("hidden");
 if(back) back.style.display="none";
-S.clubUploadBrowseClub=null;
-S.clubUploadBrowse=null;
 if(!list) return;
+bindClubUploadListClicks_();
 if(!isPocketBaseAdminMode()){
 list.innerHTML='<div class="state">此功能僅 PocketBase 可用</div>';
 return;
@@ -11391,30 +11453,42 @@ return;
 }
 list.innerHTML=rows.map(function(c){
 const count=Number(c.fileCount)||0;
+const featureCount=Number(c.featureCount)||0;
 const badge=count
 ?('<span class="badge b-pub">'+count+' 檔</span>')
 :('<span class="badge b-notstarted">0 檔</span>');
+const featureBadge=featureCount
+?(' <span class="badge b-draft">特色 '+featureCount+'</span>')
+:"";
 const sub=
 esc(c.category||"—")+" · "+esc(c.permanentClubId||"—")+
 " · 評選 "+(Number(c.evaluationCount)||0)+
-"／特色 "+(Number(c.featureCount)||0)+
+"／特色 "+featureCount+
 (c.latestUploadedAt?(" · 最近 "+formatTaipeiShort_(c.latestUploadedAt)):"");
 return (
 '<div class="list-row">'+
-'<div><div class="list-title">'+esc(c.name||"—")+' '+badge+'</div>'+
+'<div><div class="list-title">'+esc(c.name||"—")+' '+badge+featureBadge+'</div>'+
 '<div class="list-sub">'+sub+'</div></div>'+
 '<div class="row-actions">'+
-'<button type="button" class="btn btn-primary" onclick="openClubUploadBrowser('+
-JSON.stringify(String(c.id||""))+','+
-JSON.stringify(String(c.permanentClubId||""))+','+
-JSON.stringify(String(c.name||""))+
-')">瀏覽</button>'+
+'<button type="button" class="btn btn-primary" data-club-upload-browse="1"'+
+' data-club-id="'+attr(c.id||"")+'"'+
+' data-permanent-club-id="'+attr(c.permanentClubId||"")+'"'+
+' data-club-name="'+attr(c.name||"")+'"'+
+'>瀏覽</button>'+
+(featureCount
+?('<button type="button" class="btn" data-club-upload-browse="1"'+
+' data-club-id="'+attr(c.id||"")+'"'+
+' data-permanent-club-id="'+attr(c.permanentClubId||"")+'"'+
+' data-club-name="'+attr(c.name||"")+'"'+
+' data-open-feature="1"'+
+'>特色下載</button>')
+:"")+
 '</div></div>'
 );
 }).join("");
 }
 
-async function openClubUploadBrowser(clubId,permanentClubId,clubName,parentFolderId){
+async function openClubUploadBrowser(clubId,permanentClubId,clubName,parentFolderId,openFeature){
 if(!isPocketBaseAdminMode()){
 toast("此功能僅 PocketBase 可用");
 return;
@@ -11422,25 +11496,57 @@ return;
 S.clubUploadBrowseClub={
 clubId:String(clubId||""),
 permanentClubId:String(permanentClubId||""),
-clubName:String(clubName||"")
+clubName:String(clubName||""),
+uploadKind:openFeature?"feature":"all"
 };
 const list=$("clubUploadList");
 const browser=$("clubUploadBrowser");
 const back=$("clubUploadBackBtn");
 const body=$("clubUploadBrowserBody");
 const head=$("clubUploadBrowserHead");
-if(list) list.innerHTML="";
+if(list) list.style.display="none";
 if(browser) browser.classList.remove("hidden");
 if(back) back.style.display="";
 if(head) head.textContent=(clubName||"社團")+"｜上傳資料";
+paintClubUploadKindFilter_();
 if(body) body.innerHTML='<div class="state"><div class="spinner"></div>載入資料夾…</div>';
+try{
+if(browser && browser.scrollIntoView){
+browser.scrollIntoView({behavior:"smooth",block:"start"});
+}
 await browseClubUploadsFolder(parentFolderId||"");
+}catch(e){
+toast("❌ "+((e&&e.message)||"無法開啟瀏覽"));
+}
 }
 
 function closeClubUploadBrowser(){
 S.clubUploadBrowseClub=null;
 S.clubUploadBrowse=null;
+const list=$("clubUploadList");
+if(list) list.style.display="";
 renderClubUploadSummary();
+}
+
+async function downloadClubUploadFile_(file){
+const url=String((file&&(file.fileUrl||file.webViewLink))||"").trim();
+const name=String((file&&(file.fileName||file.name))||"file");
+if(!url){
+toast("此檔沒有下載連結");
+return;
+}
+try{
+const res=await fetch(url,{
+headers:S.token?{Authorization:S.token}:{}
+});
+if(!res.ok) throw new Error("下載失敗（"+res.status+"）");
+const blob=await res.blob();
+downloadBlobArtifact_(blob, name);
+}catch(e){
+// 後備：直接開新分頁（URL 已帶 token）
+window.open(url, "_blank", "noopener,noreferrer");
+toast((e&&e.message)||"改以新分頁開啟檔案");
+}
 }
 
 async function browseClubUploadsFolder(parentFolderId){
@@ -11448,14 +11554,23 @@ const club=S.clubUploadBrowseClub;
 if(!club) return;
 const body=$("clubUploadBrowserBody");
 const crumb=$("clubUploadBreadcrumb");
+const head=$("clubUploadBrowserHead");
 try{
 const r=await api("adminBrowseClubUploads",{
 clubId:club.clubId,
 permanentClubId:club.permanentClubId,
-parentFolderId:String(parentFolderId||"")
+parentFolderId:String(parentFolderId||""),
+uploadKind:clubUploadKindFilter_()
 });
 if(!r||r.success===false) throw new Error((r&&r.message)||"讀取失敗");
 S.clubUploadBrowse=r;
+if(head){
+head.textContent=
+(club.clubName||r.clubName||"社團")+
+"｜上傳資料（評選 "+(Number(r.evaluationCount)||0)+
+"／特色 "+(Number(r.featureCount)||0)+"）";
+}
+paintClubUploadKindFilter_();
 if(crumb){
 const path=Array.isArray(r.path)?r.path:[];
 crumb.innerHTML=path.map(function(p,idx){
@@ -11472,14 +11587,19 @@ JSON.stringify(String(p.folderId||""))+
 const folders=Array.isArray(r.folders)?r.folders:[];
 const files=Array.isArray(r.files)?r.files:[];
 if(!folders.length && !files.length){
-if(body) body.innerHTML='<div class="state">此層尚無上傳資料</div>';
+if(body){
+body.innerHTML=
+'<div class="state">此層尚無上傳資料'+
+(clubUploadKindFilter_()==="feature"?"（尚無特色檔）":"")+
+'</div>';
+}
 return;
 }
 const folderHtml=folders.map(function(f){
 return (
 '<div class="list-row">'+
 '<div><div class="list-title">📁 '+esc(f.name||"資料夾")+'</div>'+
-'<div class="list-sub">'+esc(f.kind||"evaluation")+'</div></div>'+
+'<div class="list-sub">'+esc(uploadKindLabel_(f.kind))+'</div></div>'+
 '<div class="row-actions">'+
 '<button type="button" class="btn btn-primary" onclick="browseClubUploadsFolder('+
 JSON.stringify(String(f.folderId||f.id||""))+
@@ -11487,21 +11607,25 @@ JSON.stringify(String(f.folderId||f.id||""))+
 '</div></div>'
 );
 }).join("");
-const fileHtml=files.map(function(f){
-const url=String(f.fileUrl||f.webViewLink||"");
+const fileHtml=files.map(function(f, idx){
 const status=String(f.status||"");
 const statusBadge=status==="completed"||status==="uploaded"
 ?('<span class="badge b-pub">'+esc(status)+'</span>')
 :('<span class="badge b-draft">'+esc(status||"—")+'</span>');
-const actions=url
-?(
-'<a class="btn btn-primary" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">開啟</a>'+
-'<a class="btn" href="'+esc(url)+'" download="'+esc(f.fileName||f.name||"file")+'" target="_blank" rel="noopener noreferrer">下載</a>'
-)
-:'<span class="list-sub">無檔案連結</span>';
+const kindBadge=f.uploadKind==="feature"
+?'<span class="badge b-draft">特色</span>'
+:'<span class="badge b-pub">評選</span>';
+const safeIdx=Number(idx)||0;
+const actions=
+'<button type="button" class="btn btn-primary" onclick="downloadClubUploadFileByIndex_('+
+safeIdx+
+')">下載</button>'+
+(f.fileUrl||f.webViewLink
+?('<a class="btn" href="'+esc(f.fileUrl||f.webViewLink)+'" target="_blank" rel="noopener noreferrer">開啟</a>')
+:"");
 return (
 '<div class="list-row">'+
-'<div><div class="list-title">'+esc(f.fileName||f.name||"file")+' '+statusBadge+'</div>'+
+'<div><div class="list-title">'+esc(f.fileName||f.name||"file")+' '+kindBadge+' '+statusBadge+'</div>'+
 '<div class="list-sub">'+
 esc(uploadKindLabel_(f.uploadKind))+
 ' · '+formatBytesShort_(f.sizeBytes||f.size)+
@@ -11513,7 +11637,21 @@ esc(uploadKindLabel_(f.uploadKind))+
 if(body) body.innerHTML=folderHtml+fileHtml;
 }catch(e){
 if(body) body.innerHTML='<div class="state">⚠️ '+esc((e&&e.message)||"讀取失敗")+'</div>';
+toast("❌ "+((e&&e.message)||"讀取上傳資料失敗"));
 }
+}
+
+function downloadClubUploadFileByIndex_(idx){
+const files=
+S.clubUploadBrowse && Array.isArray(S.clubUploadBrowse.files)
+? S.clubUploadBrowse.files
+: [];
+const file=files[Number(idx)];
+if(!file){
+toast("找不到檔案");
+return;
+}
+return downloadClubUploadFile_(file);
 }
 
 const CLUB_STUDENT_UNCAT="未分類";

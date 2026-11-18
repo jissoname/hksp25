@@ -382,6 +382,20 @@
     });
   }
 
+  function withAuthFileToken_(url) {
+    var href = String(url || "").trim();
+    if (!href) return "";
+    var token = "";
+    try {
+      token = String((pb().authStore && pb().authStore.token) || "").trim();
+    } catch (_e) {
+      token = "";
+    }
+    if (!token) return href;
+    if (/[?&]token=/.test(href)) return href;
+    return href + (href.indexOf("?") >= 0 ? "&" : "?") + "token=" + encodeURIComponent(token);
+  }
+
   function mapAdminUploadFile(rec) {
     var fileName = "";
     if (rec.file) {
@@ -397,6 +411,7 @@
         fileUrl = "";
       }
     }
+    fileUrl = withAuthFileToken_(fileUrl);
     return {
       id: rec.id,
       fileId: rec.id,
@@ -412,7 +427,7 @@
       updatedAt: rec.updated || "",
       uploadedAt: rec.completed_at || rec.created || "",
       fileUrl: fileUrl,
-      webViewLink: rec.drive_web_view_link || fileUrl || ""
+      webViewLink: withAuthFileToken_(rec.drive_web_view_link || "") || fileUrl || ""
     };
   }
 
@@ -544,6 +559,8 @@
     var root = await findClubRootFolder(activity, club);
     var parentId = String((data && data.parentFolderId) || "").trim();
     if (!parentId) parentId = root ? root.id : "";
+    var kindFilter = String((data && data.uploadKind) || "all").trim().toLowerCase();
+    if (kindFilter !== "feature" && kindFilter !== "evaluation") kindFilter = "all";
 
     var folders = [];
     var files = [];
@@ -554,6 +571,7 @@
         depth: 0
       }
     ];
+    var atRoot = !parentId || (root && parentId === root.id);
 
     if (parentId) {
       folders = await pb().collection(C().folders).getFullList({
@@ -586,13 +604,46 @@
           /* keep root-only path */
         }
       }
-    } else {
-      // No folder tree yet: still show club-level uploads (folder empty / unset).
-      files = await pb().collection(C().uploads).getFullList({
+    }
+
+    // Root：改列社團全部檔案，避免資料夾樹對不齊時「有檔卻空白」。
+    // 子資料夾：維持只看該層；若該層空白且篩選特色，再補上該社全部特色檔。
+    var allClubFiles = null;
+    async function loadAllClubFiles() {
+      if (allClubFiles) return allClubFiles;
+      allClubFiles = await pb().collection(C().uploads).getFullList({
         filter: 'club="' + club.id + '" && status!="trashed"',
         sort: "-created"
       });
+      return allClubFiles;
     }
+
+    if (atRoot) {
+      files = await loadAllClubFiles();
+    } else if (!files.length && kindFilter === "feature") {
+      files = (await loadAllClubFiles()).filter(function (u) {
+        return String(u.upload_kind || "") === "feature";
+      });
+    }
+
+    if (kindFilter === "feature" || kindFilter === "evaluation") {
+      files = files.filter(function (u) {
+        var kind = String(u.upload_kind || "evaluation");
+        return kind === kindFilter;
+      });
+      if (kindFilter === "feature") {
+        // 特色通常不靠資料夾樹管理；篩選特色時隱藏空資料夾噪音。
+        folders = folders.filter(function (f) {
+          return String(f.kind || "") === "feature";
+        });
+      }
+    }
+
+    var mappedFiles = files.map(mapAdminUploadFile);
+    var featureCount = mappedFiles.filter(function (f) {
+      return f.uploadKind === "feature";
+    }).length;
+    var evaluationCount = mappedFiles.length - featureCount;
 
     return ok({
       activityId: activity.activity_id || activityId(),
@@ -602,6 +653,8 @@
       category: club.category || "",
       clubFolderId: root ? root.id : "",
       parentFolderId: parentId,
+      atRoot: !!atRoot,
+      uploadKind: kindFilter,
       path: path,
       folders: folders.map(function (f) {
         return {
@@ -611,7 +664,9 @@
           kind: f.kind || "evaluation"
         };
       }),
-      files: files.map(mapAdminUploadFile),
+      files: mappedFiles,
+      featureCount: featureCount,
+      evaluationCount: evaluationCount,
       storage: "pocketbase"
     });
   }
