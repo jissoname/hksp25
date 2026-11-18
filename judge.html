@@ -2588,7 +2588,7 @@ button{
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
-<script src="./platform-judge-pb.js?v=materials-view-2"></script>
+<script src="./platform-judge-pb.js?v=materials-view-3"></script>
 
 <script>
 /**
@@ -9651,14 +9651,6 @@ function renderScoreMaterialsPane_() {
         >
           放大預覽
         </button>
-        <a
-          class="btn"
-          href="${safeUrl}"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          開新分頁
-        </a>
       </div>
     </div>`;
 
@@ -9679,7 +9671,7 @@ function renderScoreMaterialsPane_() {
 
     preview.innerHTML =
       previewBar +
-      `<div class="materials-empty">此檔案非 PDF，請用「開新分頁」檢視（仍為唯讀）。</div>`;
+      `<div class="materials-empty">此檔案非 PDF，目前僅支援 PDF 預覽與放大檢視。</div>`;
 
   }
 
@@ -9757,21 +9749,13 @@ function openMaterialsLightbox_() {
     );
 
 
-  const openTab =
-    byId(
-      "materialsLightboxOpenTab"
-    );
-
-
   if (
     !box ||
     !frame
   ) {
 
-    window.open(
-      selected.fileUrl,
-      "_blank",
-      "noopener,noreferrer"
+    toast(
+      "無法開啟放大預覽"
     );
 
 
@@ -9794,52 +9778,28 @@ function openMaterialsLightbox_() {
 
 
   if (
-    openTab
-  ) {
-
-    openTab.href =
-      selected.fileUrl;
-
-  }
-
-
-  if (
-    isPdfMaterialsFile_(
+    !isPdfMaterialsFile_(
       selected
     )
   ) {
 
-    frame.src =
-      selected.fileUrl +
-      "#toolbar=1";
-
-
-    frame.style.display =
-      "";
-
-  }
-
-  else {
-
-    frame.removeAttribute(
-      "src"
-    );
-
-
-    frame.style.display =
-      "none";
-
-
-    window.open(
-      selected.fileUrl,
-      "_blank",
-      "noopener,noreferrer"
+    toast(
+      "此檔案非 PDF，無法放大預覽"
     );
 
 
     return;
 
   }
+
+
+  frame.src =
+    selected.fileUrl +
+    "#toolbar=1";
+
+
+  frame.style.display =
+    "";
 
 
   box.classList.add(
@@ -13500,15 +13460,6 @@ function toast(
         PDF 放大預覽
       </div>
       <div class="materials-preview-actions">
-        <a
-          id="materialsLightboxOpenTab"
-          class="btn"
-          href="#"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          開新分頁
-        </a>
         <button
           type="button"
           class="btn"
