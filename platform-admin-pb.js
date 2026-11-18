@@ -553,6 +553,54 @@
     });
   }
 
+  async function adminListFeatureUploads() {
+    var activity = await getActivityRecord();
+    var clubs = await pb().collection(C().clubs).getFullList({
+      filter: 'activity="' + activity.id + '" && active=true',
+      sort: "category,name"
+    });
+    var uploads = await pb().collection(C().uploads).getFullList({
+      filter:
+        'activity="' +
+        activity.id +
+        '" && upload_kind="feature" && status!="trashed"',
+      sort: "-created"
+    });
+    var byClub = {};
+    uploads.forEach(function (u) {
+      var key = String(u.club || "");
+      if (!key) return;
+      if (!byClub[key]) byClub[key] = [];
+      byClub[key].push(mapAdminUploadFile(u));
+    });
+    var rows = clubs
+      .map(function (c) {
+        var files = byClub[c.id] || [];
+        if (!files.length) return null;
+        var mapped = mapClub(c);
+        return {
+          id: mapped.id,
+          permanentClubId: mapped.permanentClubId,
+          name: mapped.name,
+          category: mapped.category,
+          fileCount: files.length,
+          latestUploadedAt: files[0] && (files[0].uploadedAt || files[0].createdAt) || "",
+          files: files
+        };
+      })
+      .filter(Boolean);
+    var totalFiles = rows.reduce(function (n, row) {
+      return n + (Number(row.fileCount) || 0);
+    }, 0);
+    return ok({
+      activityId: activity.activity_id || activityId(),
+      clubs: rows,
+      clubCount: rows.length,
+      totalFiles: totalFiles,
+      generatedAt: new Date().toISOString()
+    });
+  }
+
   async function adminBrowseClubUploads(data) {
     var activity = await getActivityRecord();
     var club = await resolveAdminClub(activity, data || {});
@@ -3611,6 +3659,7 @@
     adminExecuteActivityHandover: adminExecuteActivityHandover,
     adminListClubs: adminListClubs,
     adminListClubUploadSummary: adminListClubUploadSummary,
+    adminListFeatureUploads: adminListFeatureUploads,
     adminBrowseClubUploads: adminBrowseClubUploads,
     adminAddClub: adminAddClub,
     adminUpdateClub: adminUpdateClub,
@@ -3686,7 +3735,7 @@
     document.querySelectorAll(".panel").forEach(function (panel) {
       if (
         !panel.querySelector(
-          "#clubList,#clubStudentList,#clubUploadList,#clubUploadBrowser,#eventMeta,#cloudUploadMeta,#uploadGateStatus,#judgeList,#sectionsEditor,#progressMeta,#judgeProgressList,#aggregationMeta,#rankingMeta,#categoryRankingExcelMeta,#organizerAuditExcelMeta,#judgeExportMeta,#judgeExportJudge,#judgeBatchJudgeList"
+          "#clubList,#clubStudentList,#clubUploadList,#clubUploadBrowser,#featureUploadMeta,#featureUploadList,#eventMeta,#cloudUploadMeta,#uploadGateStatus,#judgeList,#sectionsEditor,#progressMeta,#judgeProgressList,#aggregationMeta,#rankingMeta,#categoryRankingExcelMeta,#organizerAuditExcelMeta,#judgeExportMeta,#judgeExportJudge,#judgeBatchJudgeList"
         )
       ) {
         panel.hidden = true;

@@ -673,7 +673,7 @@ onclick="openClubModal()"
 </button>
 <div class="panel-body">
 <div class="notice" style="margin-bottom:12px">
-從 PocketBase 讀取各社團已上傳檔案。點「瀏覽」可看評選／特色檔並下載；特色資料不經評審，可在瀏覽裡切到「只看特色」一次下載。
+從 PocketBase 讀取各社團已上傳檔案（評選為主）。特色資料請用下方「特色資料下載」專區。
 </div>
 <div class="toolbar">
 <input id="clubUploadSearch" class="field grow" placeholder="搜尋社團或屬性" oninput="onClubUploadSearchInput_()">
@@ -692,6 +692,27 @@ onclick="openClubModal()"
 <nav id="clubUploadBreadcrumb" class="list-sub" style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"></nav>
 <div id="clubUploadBrowserBody" class="list"><div class="state">載入中…</div></div>
 </div>
+</div>
+</section>
+
+<section class="panel closed" data-panel="feature-uploads">
+<button class="panel-head" onclick="togglePanel(this); if(this.parentElement && !this.parentElement.classList.contains('closed')) loadFeatureUploadPanel()">
+<div>
+<div class="panel-title">特色資料下載</div>
+<div id="featureUploadMeta" class="panel-meta">管理員專用｜不經評審</div>
+</div>
+<span class="chev">▼</span>
+</button>
+<div class="panel-body">
+<div class="notice" style="margin-bottom:12px">
+此區只列各社團「特色」上傳檔，方便管理員直接下載。評選資料請到上方「社團上傳資料」。
+</div>
+<div class="toolbar">
+<input id="featureUploadSearch" class="field grow" placeholder="搜尋社團、屬性或檔名" oninput="renderFeatureUploadPanel()">
+<button class="btn" type="button" onclick="loadFeatureUploadPanel()">重新整理</button>
+</div>
+<div id="featureUploadStats" class="list-sub" style="margin:8px 0 10px">尚未讀取</div>
+<div id="featureUploadList" class="list"><div class="state">尚未讀取</div></div>
 </div>
 </section>
 
@@ -1663,7 +1684,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=upload-browse-2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=upload-browse-2"></script>
-<script src="./platform-admin-pb.js?v=club-upload-browse-2"></script>
+<script src="./platform-admin-pb.js?v=feature-download-panel-1"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -1773,7 +1794,10 @@ judgeListSeq:0,
 clubUploadSummary:[],
 clubUploadSummaryMeta:{totalFiles:0,clubsWithFiles:0},
 clubUploadBrowse:null,
-clubUploadBrowseClub:null
+clubUploadBrowseClub:null,
+featureUploadClubs:[],
+featureUploadMeta:{clubCount:0,totalFiles:0},
+featureUploadExpanded:{}
 };
 // 與頁面內 lexical S 同一物件，供預覽腳本／除錯寫入 clubs 等狀態
 window.S = S;
@@ -2567,7 +2591,8 @@ loadUploadGate(),
 loadJudges(),
 loadScoreConfig(),
 loadServerStudentActivity(opts||{}),
-loadClubUploadSummary({quiet:true})
+loadClubUploadSummary({quiet:true}),
+loadFeatureUploadPanel({quiet:true})
 ]);
 if(token!==String(S.token||"")) return;
 $("lastRefresh").textContent="最後同步："+new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(new Date());
@@ -11652,6 +11677,144 @@ toast("找不到檔案");
 return;
 }
 return downloadClubUploadFile_(file);
+}
+
+async function loadFeatureUploadPanel(opts){
+opts=opts||{};
+const meta=$("featureUploadMeta");
+const stats=$("featureUploadStats");
+const list=$("featureUploadList");
+if(!isPocketBaseAdminMode()){
+if(meta) meta.textContent="僅 PocketBase 模式可用";
+if(stats) stats.textContent="此功能僅 PocketBase 管理頁可用";
+if(list) list.innerHTML='<div class="state">此功能僅 PocketBase 可用</div>';
+return false;
+}
+if(!opts.quiet){
+if(meta) meta.textContent="讀取中…";
+if(list) list.innerHTML='<div class="state"><div class="spinner"></div>讀取特色上傳…</div>';
+}
+try{
+const r=await api("adminListFeatureUploads",{});
+if(!r||r.success===false) throw new Error((r&&r.message)||"讀取失敗");
+S.featureUploadClubs=Array.isArray(r.clubs)?r.clubs:[];
+S.featureUploadMeta={
+clubCount:Number(r.clubCount)||S.featureUploadClubs.length,
+totalFiles:Number(r.totalFiles)||0
+};
+if(meta){
+meta.textContent=
+"共 "+S.featureUploadMeta.clubCount+" 社｜"+
+S.featureUploadMeta.totalFiles+" 個特色檔"+
+(r.generatedAt?("｜"+formatDate(r.generatedAt)):"");
+}
+if(stats){
+stats.textContent=
+"活動 "+String(r.activityId||"—")+"｜有特色社團 "+
+S.featureUploadMeta.clubCount+"｜檔案 "+S.featureUploadMeta.totalFiles;
+}
+renderFeatureUploadPanel();
+return true;
+}catch(e){
+if(meta) meta.textContent="讀取失敗";
+if(stats) stats.textContent=String((e&&e.message)||"讀取失敗");
+if(list) list.innerHTML='<div class="state">⚠️ '+esc((e&&e.message)||"讀取失敗")+'</div>';
+return false;
+}
+}
+
+function toggleFeatureUploadClub_(clubId){
+const id=String(clubId||"");
+if(!id) return;
+if(!S.featureUploadExpanded || typeof S.featureUploadExpanded!=="object"){
+S.featureUploadExpanded={};
+}
+S.featureUploadExpanded[id]=!S.featureUploadExpanded[id];
+renderFeatureUploadPanel();
+}
+
+function downloadFeatureUploadFile_(clubId, fileIndex){
+const club=(S.featureUploadClubs||[]).find(function(c){
+return String(c.id||"")===String(clubId||"");
+});
+const files=club && Array.isArray(club.files)?club.files:[];
+const file=files[Number(fileIndex)];
+if(!file){
+toast("找不到特色檔");
+return;
+}
+return downloadClubUploadFile_(file);
+}
+
+function renderFeatureUploadPanel(){
+const list=$("featureUploadList");
+if(!list) return;
+if(!isPocketBaseAdminMode()){
+list.innerHTML='<div class="state">此功能僅 PocketBase 可用</div>';
+return;
+}
+const q=String(($("featureUploadSearch")&&$("featureUploadSearch").value)||"").trim().toLowerCase();
+const expanded=S.featureUploadExpanded&&typeof S.featureUploadExpanded==="object"
+? S.featureUploadExpanded
+: {};
+const rows=(S.featureUploadClubs||[]).filter(function(c){
+if(!q) return true;
+const fileHay=(Array.isArray(c.files)?c.files:[]).map(function(f){
+return String(f.fileName||f.name||"");
+}).join(" ");
+const hay=((c.name||"")+" "+(c.category||"")+" "+(c.permanentClubId||"")+" "+fileHay).toLowerCase();
+return hay.indexOf(q)>=0;
+}).sort(function(a,b){
+const af=Number(a.fileCount)||0;
+const bf=Number(b.fileCount)||0;
+if(bf!==af) return bf-af;
+return String(a.name||"").localeCompare(String(b.name||""),"zh-Hant");
+});
+if(!rows.length){
+list.innerHTML='<div class="state">目前沒有特色上傳，或沒有符合搜尋的結果</div>';
+return;
+}
+list.innerHTML=rows.map(function(c){
+const id=String(c.id||"");
+const open=!!expanded[id];
+const files=Array.isArray(c.files)?c.files:[];
+const fileHtml=open
+? files.map(function(f, idx){
+return (
+'<div class="list-row" style="margin-top:8px;background:#f8fafc">'+
+'<div><div class="list-title">'+esc(f.fileName||f.name||"file")+'</div>'+
+'<div class="list-sub">'+
+formatBytesShort_(f.sizeBytes||f.size)+
+' · '+formatTaipeiShort_(f.uploadedAt||f.createdAt)+
+'</div></div>'+
+'<div class="row-actions">'+
+'<button type="button" class="btn btn-primary" onclick="downloadFeatureUploadFile_('+
+JSON.stringify(id)+','+Number(idx)+
+')">下載</button>'+
+(f.fileUrl||f.webViewLink
+?('<a class="btn" href="'+esc(f.fileUrl||f.webViewLink)+'" target="_blank" rel="noopener noreferrer">開啟</a>')
+:"")+
+'</div></div>'
+);
+}).join("")
+: "";
+return (
+'<div class="list-row" style="display:block">'+
+'<div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">'+
+'<div><div class="list-title">'+esc(c.name||"—")+' <span class="badge b-draft">特色 '+(Number(c.fileCount)||files.length)+'</span></div>'+
+'<div class="list-sub">'+
+esc(c.category||"—")+' · '+esc(c.permanentClubId||"—")+
+(c.latestUploadedAt?(" · 最近 "+formatTaipeiShort_(c.latestUploadedAt)):"")+
+'</div></div>'+
+'<div class="row-actions">'+
+'<button type="button" class="btn btn-primary" onclick="toggleFeatureUploadClub_('+
+JSON.stringify(id)+
+')">'+(open?"收合":"展開下載")+'</button>'+
+'</div></div>'+
+fileHtml+
+'</div>'
+);
+}).join("");
 }
 
 const CLUB_STUDENT_UNCAT="未分類";
