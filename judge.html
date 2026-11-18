@@ -2588,7 +2588,7 @@ button{
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
-<script src="./platform-judge-pb.js?v=materials-view-3"></script>
+<script src="./platform-judge-pb.js?v=score-fix-1"></script>
 
 <script>
 /**
@@ -4784,9 +4784,94 @@ function countDashboardProgressClubs_(
 }
 
 
+function stampDashboardStatusPending_(
+  dashboard
+) {
+
+  if (
+    !dashboard ||
+    !dashboard.stages
+  ) {
+
+    return dashboard;
+
+  }
+
+
+  dashboard.statusPending =
+    true;
+
+
+  Object.keys(
+    dashboard.stages
+  )
+  .forEach(
+    function (
+      sectionId
+    ) {
+
+      const stage =
+        dashboard.stages[
+          sectionId
+        ];
+
+
+      if (
+        !stage ||
+        !Array.isArray(
+          stage.clubs
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      stage.statusPending =
+        true;
+
+
+      stage.clubs.forEach(
+        function (
+          club
+        ) {
+
+          if (
+            !club
+          ) {
+
+            return;
+
+          }
+
+
+          if (
+            !club.status ||
+            club.status ===
+              "notStarted"
+          ) {
+
+            club.statusPending =
+              true;
+
+          }
+
+        }
+      );
+
+    }
+  );
+
+
+  return dashboard;
+
+}
+
+
 /*
  * catchup／login 若因 auth 空窗拿到「全部未開始」，不可蓋掉本機已有進度。
- * 後端 scoresPossiblyIncomplete 亦同。
+ * 後端 scoresPossiblyIncomplete 亦同；冷登入空表也要擋。
  */
 function isSuspiciousEmptyScoresDashboard_(
   incoming
@@ -4803,6 +4888,24 @@ function isSuspiciousEmptyScoresDashboard_(
   }
 
 
+  const nextCounts =
+    countDashboardProgressClubs_(
+      incoming
+    );
+
+
+  const allNotStarted =
+    nextCounts.total >
+      0 &&
+    nextCounts.progressed ===
+      0;
+
+
+  const incompleteFlag =
+    incoming.scoresPossiblyIncomplete ===
+    true;
+
+
   const prev =
     APP.dashboard;
 
@@ -4812,7 +4915,8 @@ function isSuspiciousEmptyScoresDashboard_(
     !prev.stages
   ) {
 
-    return false;
+    return incompleteFlag &&
+      allNotStarted;
 
   }
 
@@ -4824,26 +4928,9 @@ function isSuspiciousEmptyScoresDashboard_(
 
 
   if (
-    prevCounts.progressed <=
-      0
-  ) {
-
-    return false;
-
-  }
-
-
-  const nextCounts =
-    countDashboardProgressClubs_(
-      incoming
-    );
-
-
-  if (
-    nextCounts.total >
+    prevCounts.progressed >
       0 &&
-    nextCounts.progressed ===
-      0
+    allNotStarted
   ) {
 
     return true;
@@ -4851,9 +4938,9 @@ function isSuspiciousEmptyScoresDashboard_(
   }
 
 
-  // 後端標示 scores 可能不完整，且本機已有進度：勿套用本次結果。
-  return incoming.scoresPossiblyIncomplete ===
-    true;
+  return prevCounts.progressed >
+      0 &&
+    incompleteFlag;
 
 }
 
@@ -4875,6 +4962,65 @@ function applyDashboardPayload_(
       dashboard
     )
   ) {
+
+    // 冷登入：仍先畫社團殼，但標成載入中，避免整表「未開始」。
+    if (
+      !APP.dashboard ||
+      !APP.dashboard.stages
+    ) {
+
+      const pendingShell =
+        stampDashboardStatusPending_(
+          mergeDashboardPreserveRecentSubmitted_(
+            dashboard
+          )
+        );
+
+
+      APP.dashboard =
+        pendingShell;
+
+
+      if (
+        pendingShell &&
+        pendingShell.judge
+      ) {
+
+        APP.judge =
+          pendingShell.judge;
+
+      }
+
+
+      ensureCurrentSection();
+
+      renderProfile();
+
+      renderDashboard();
+
+
+      markJudgeDashboardStatusCatchup_();
+
+
+      if (
+        opts.scheduleRetry !==
+          false
+      ) {
+
+        scheduleJudgeDashboardStatusCatchup_(
+          1200
+        );
+
+
+        showDashboardStatusRetry_();
+
+      }
+
+
+      return true;
+
+    }
+
 
     markJudgeDashboardStatusCatchup_();
 
@@ -7683,6 +7829,63 @@ function permanentClubIdHintForOpenScore_(
 }
 
 
+function scoreExtrasFromResult_(
+  result,
+  fallbackSubmittedAt
+) {
+
+  const record =
+    result &&
+    result.record
+      ? result.record
+      : null;
+
+
+  const totalRaw =
+    record
+      ? (
+          record.totalScore !=
+            null
+            ? record.totalScore
+            : (
+                record.total_score !=
+                  null
+                  ? record.total_score
+                  : record.score
+              )
+        )
+      : (
+          result &&
+          result.totalScore
+        );
+
+
+  const submittedAt =
+    (
+      record &&
+      (
+        record.submittedAt ||
+        record.submitted_at
+      )
+    ) ||
+    (
+      result &&
+      result.submittedAt
+    ) ||
+    fallbackSubmittedAt ||
+    "";
+
+
+  return {
+    totalScore:
+      totalRaw,
+    submittedAt:
+      submittedAt
+  };
+
+}
+
+
 function markClubSubmittedLocally_(
   sectionId,
   clubName,
@@ -7711,7 +7914,8 @@ function markClubSubmittedLocally_(
       permanentClubId ||
       ""
     )
-    .trim();
+    .trim()
+    .toUpperCase();
 
 
   const patchExtras =
@@ -7746,7 +7950,8 @@ function markClubSubmittedLocally_(
         club.permanentClubId ||
         ""
       )
-      .trim();
+      .trim()
+      .toUpperCase();
 
 
     const hit =
@@ -7980,6 +8185,253 @@ function markClubSubmittedLocally_(
 
   catch (
     patchError
+  ) {
+
+  }
+
+}
+
+
+function markClubDraftLocally_(
+  sectionId,
+  clubName,
+  permanentClubId
+) {
+
+  const wantedSection =
+    String(
+      sectionId ||
+      ""
+    )
+    .trim();
+
+
+  const wantedName =
+    String(
+      clubName ||
+      ""
+    )
+    .trim();
+
+
+  const wantedPermanent =
+    String(
+      permanentClubId ||
+      ""
+    )
+    .trim()
+    .toUpperCase();
+
+
+  function patchClub(
+    club
+  ) {
+
+    if (
+      !club
+    ) {
+
+      return false;
+
+    }
+
+
+    const name =
+      String(
+        club.name ||
+        club.clubName ||
+        ""
+      )
+      .trim();
+
+
+    const permanent =
+      String(
+        club.permanentClubId ||
+        ""
+      )
+      .trim()
+      .toUpperCase();
+
+
+    const hit =
+
+      (
+        wantedPermanent &&
+        permanent &&
+        permanent ===
+        wantedPermanent
+      )
+
+      ||
+
+      (
+        wantedName &&
+        name ===
+        wantedName
+      );
+
+
+    if (
+      !hit
+    ) {
+
+      return false;
+
+    }
+
+
+    // 已送出／待重送不要被本機暫存蓋掉。
+    if (
+      club.status ===
+        "submitted" ||
+      club.status ===
+        "reopened"
+    ) {
+
+      return false;
+
+    }
+
+
+    club.status =
+      "draft";
+
+
+    club.statusPending =
+      false;
+
+
+    club.locked =
+      false;
+
+
+    return true;
+
+  }
+
+
+  try {
+
+    const stage =
+      APP.dashboard &&
+      APP.dashboard.stages &&
+      APP.dashboard.stages[
+        wantedSection
+      ];
+
+
+    if (
+      stage &&
+      Array.isArray(
+        stage.clubs
+      )
+    ) {
+
+      stage.clubs.forEach(
+        patchClub
+      );
+
+
+      let submittedCount =
+        0;
+
+
+      let draftCount =
+        0;
+
+
+      let reopenedCount =
+        0;
+
+
+      let notStartedCount =
+        0;
+
+
+      stage.clubs.forEach(
+        function (
+          club
+        ) {
+
+          if (
+            club.status ===
+            "submitted"
+          ) {
+
+            submittedCount +=
+              1;
+
+          }
+
+          else if (
+            club.status ===
+            "reopened"
+          ) {
+
+            reopenedCount +=
+              1;
+
+          }
+
+          else if (
+            club.status ===
+            "draft"
+          ) {
+
+            draftCount +=
+              1;
+
+          }
+
+          else {
+
+            notStartedCount +=
+              1;
+
+          }
+
+        }
+      );
+
+
+      stage.submittedCount =
+        submittedCount;
+
+
+      stage.draftCount =
+        draftCount;
+
+
+      stage.reopenedCount =
+        reopenedCount;
+
+
+      stage.notStartedCount =
+        notStartedCount;
+
+    }
+
+
+    (APP.filteredClubs || [])
+      .forEach(
+        patchClub
+      );
+
+
+    if (
+      typeof renderDashboard ===
+      "function"
+    ) {
+
+      renderDashboard();
+
+    }
+
+  }
+
+  catch (
+    draftPatchError
   ) {
 
   }
@@ -8995,22 +9447,9 @@ async function openScore(
         sectionId,
         clubName,
         permanentClubId,
-        {
-          totalScore:
-            displayResult.record
-              ? (
-                  displayResult.record.total_score !=
-                    null
-                    ? displayResult.record.total_score
-                    : displayResult.record.score
-                )
-              : displayResult.totalScore,
-          submittedAt:
-            displayResult.record &&
-            displayResult.record.submitted_at
-              ? displayResult.record.submitted_at
-              : displayResult.submittedAt
-        }
+        scoreExtrasFromResult_(
+          displayResult
+        )
       );
 
     }
@@ -11414,6 +11853,13 @@ async function saveDraft() {
     }
 
 
+    markClubDraftLocally_(
+      context.sectionId,
+      context.clubName,
+      context.permanentClubId
+    );
+
+
     toast(
       "已暫存於此瀏覽器"
     );
@@ -12499,28 +12945,11 @@ function finishSubmitSuccess_(
     context.sectionId,
     context.clubName,
     context.permanentClubId,
-    {
-      totalScore:
-        result &&
-        result.record
-          ? (
-              result.record.total_score !=
-                null
-                ? result.record.total_score
-                : result.record.score
-            )
-          : (
-              result &&
-              result.totalScore
-            ),
-      submittedAt:
-        result &&
-        result.record &&
-        result.record.submitted_at
-          ? result.record.submitted_at
-          : new Date()
-              .toISOString()
-    }
+    scoreExtrasFromResult_(
+      result,
+      new Date()
+        .toISOString()
+    )
   );
 
 
