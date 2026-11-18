@@ -2588,7 +2588,7 @@ button{
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
-<script src="./platform-judge-pb.js?v=score-fix-1"></script>
+<script src="./platform-judge-pb.js?v=score-fix-2"></script>
 
 <script>
 /**
@@ -4345,6 +4345,362 @@ function hasRecentSubmitGuard_(
 }
 
 
+const JUDGE_DASH_PROGRESS_CACHE_KEY_ =
+  "hksp.judge.dashProgress.v1";
+
+
+function judgeDashProgressCacheKey_(
+  dashboard
+) {
+
+  const judgeId =
+    String(
+      (
+        dashboard &&
+        dashboard.judge &&
+        (
+          dashboard.judge.id ||
+          dashboard.judge.judgeId
+        )
+      )
+
+      ||
+
+      (
+        APP.judge &&
+        (
+          APP.judge.id ||
+          APP.judge.judgeId
+        )
+      )
+
+      ||
+
+      ""
+    )
+    .trim();
+
+
+  const activityId =
+    String(
+      (
+        dashboard &&
+        dashboard.activityId
+      )
+
+      ||
+
+      (
+        APP.dashboard &&
+        APP.dashboard.activityId
+      )
+
+      ||
+
+      ""
+    )
+    .trim();
+
+
+  if (
+    !judgeId
+  ) {
+
+    return "";
+
+  }
+
+
+  return judgeId +
+    "::" +
+    activityId;
+
+}
+
+
+function readJudgeDashProgressCache_(
+  dashboard
+) {
+
+  try {
+
+    const raw =
+      sessionStorage.getItem(
+        JUDGE_DASH_PROGRESS_CACHE_KEY_
+      );
+
+
+    if (
+      !raw
+    ) {
+
+      return null;
+
+    }
+
+
+    const parsed =
+      JSON.parse(
+        raw
+      );
+
+
+    const want =
+      judgeDashProgressCacheKey_(
+        dashboard
+      );
+
+
+    if (
+      !parsed ||
+      !want ||
+      String(
+        parsed.key ||
+        ""
+      ) !==
+        want ||
+      !parsed.clubs ||
+      typeof parsed.clubs !==
+        "object"
+    ) {
+
+      return null;
+
+    }
+
+
+    return parsed;
+
+  }
+
+  catch (
+    _cacheReadErr
+  ) {
+
+    return null;
+
+  }
+
+}
+
+
+function writeJudgeDashProgressCache_(
+  dashboard
+) {
+
+  try {
+
+    const key =
+      judgeDashProgressCacheKey_(
+        dashboard
+      );
+
+
+    if (
+      !key ||
+      !dashboard ||
+      !dashboard.stages
+    ) {
+
+      return;
+
+    }
+
+
+    const clubs =
+      {};
+
+
+    Object.keys(
+      dashboard.stages
+    )
+    .forEach(
+      function (
+        sectionId
+      ) {
+
+        const stage =
+          dashboard.stages[
+            sectionId
+          ];
+
+
+        if (
+          !stage ||
+          !Array.isArray(
+            stage.clubs
+          )
+        ) {
+
+          return;
+
+        }
+
+
+        stage.clubs.forEach(
+          function (
+            club
+          ) {
+
+            if (
+              !club
+            ) {
+
+              return;
+
+            }
+
+
+            const status =
+              String(
+                club.status ||
+                ""
+              )
+              .trim();
+
+
+            if (
+              status !==
+                "submitted" &&
+              status !==
+                "draft" &&
+              status !==
+                "reopened"
+            ) {
+
+              return;
+
+            }
+
+
+            const permanent =
+              String(
+                club.permanentClubId ||
+                ""
+              )
+              .trim()
+              .toUpperCase();
+
+
+            const name =
+              String(
+                club.clubName ||
+                club.name ||
+                ""
+              )
+              .trim();
+
+
+            const clubKey =
+              permanent
+
+              ||
+
+              name;
+
+
+            if (
+              !clubKey
+            ) {
+
+              return;
+
+            }
+
+
+            clubs[
+              String(
+                sectionId
+              ) +
+                "::" +
+                clubKey
+            ] =
+              {
+                status: status,
+                locked: status ===
+                  "submitted",
+                reopened: status ===
+                  "reopened",
+                totalScore: club.totalScore,
+                submittedAt: club.submittedAt ||
+                  null,
+                updatedAt: club.updatedAt ||
+                  null,
+                clubName: name,
+                permanentClubId: permanent,
+                category: club.category ||
+                  ""
+              };
+
+          }
+        );
+
+      }
+    );
+
+
+    if (
+      !Object.keys(
+        clubs
+      )
+      .length
+    ) {
+
+      return;
+
+    }
+
+
+    sessionStorage.setItem(
+      JUDGE_DASH_PROGRESS_CACHE_KEY_,
+      JSON.stringify(
+        {
+          key: key,
+          savedAt: Date.now(),
+          clubs: clubs
+        }
+      )
+    );
+
+  }
+
+  catch (
+    _cacheWriteErr
+  ) {
+
+  }
+
+}
+
+
+function cachedDashProgressCount_(
+  dashboard
+) {
+
+  const cache =
+    readJudgeDashProgressCache_(
+      dashboard
+    );
+
+
+  if (
+    !cache ||
+    !cache.clubs
+  ) {
+
+    return 0;
+
+  }
+
+
+  return Object.keys(
+    cache.clubs
+  )
+  .length;
+
+}
+
+
 function mergeDashboardPreserveRecentSubmitted_(
   incoming
 ) {
@@ -4355,7 +4711,261 @@ function mergeDashboardPreserveRecentSubmitted_(
 
   if (
     !incoming ||
-    !incoming.stages ||
+    !incoming.stages
+  ) {
+
+    return incoming;
+
+  }
+
+
+  const cache =
+    (
+      !prev ||
+      !prev.stages
+    )
+
+      ? readJudgeDashProgressCache_(
+          incoming
+        )
+
+      : null;
+
+
+  if (
+    (
+      !prev ||
+      !prev.stages
+    )
+
+    &&
+
+    cache &&
+    cache.clubs
+  ) {
+
+    Object.keys(
+      incoming.stages
+    )
+    .forEach(
+      function (
+        sectionId
+      ) {
+
+        const nextStage =
+          incoming.stages[
+            sectionId
+          ];
+
+
+        if (
+          !nextStage ||
+          !Array.isArray(
+            nextStage.clubs
+          )
+        ) {
+
+          return;
+
+        }
+
+
+        let submittedCount =
+          0;
+
+
+        let draftCount =
+          0;
+
+
+        let reopenedCount =
+          0;
+
+
+        let notStartedCount =
+          0;
+
+
+        nextStage.clubs.forEach(
+          function (
+            club
+          ) {
+
+            if (
+              !club
+            ) {
+
+              return;
+
+            }
+
+
+            const permanent =
+              String(
+                club.permanentClubId ||
+                ""
+              )
+              .trim()
+              .toUpperCase();
+
+
+            const name =
+              String(
+                club.clubName ||
+                club.name ||
+                ""
+              )
+              .trim();
+
+
+            const hit =
+
+              cache.clubs[
+                String(
+                  sectionId
+                ) +
+                  "::" +
+                  permanent
+              ]
+
+              ||
+
+              cache.clubs[
+                String(
+                  sectionId
+                ) +
+                  "::" +
+                  name
+              ]
+
+              ||
+
+              null;
+
+
+            if (
+              hit &&
+              club.status ===
+                "notStarted"
+            ) {
+
+              club.status =
+                hit.status;
+
+
+              club.locked =
+                hit.status ===
+                "submitted";
+
+
+              club.reopened =
+                hit.status ===
+                "reopened";
+
+
+              if (
+                club.totalScore ==
+                  null &&
+                hit.totalScore !=
+                  null
+              ) {
+
+                club.totalScore =
+                  hit.totalScore;
+
+              }
+
+
+              if (
+                !club.submittedAt &&
+                hit.submittedAt
+              ) {
+
+                club.submittedAt =
+                  hit.submittedAt;
+
+              }
+
+
+              if (
+                !club.updatedAt &&
+                hit.updatedAt
+              ) {
+
+                club.updatedAt =
+                  hit.updatedAt;
+
+              }
+
+            }
+
+
+            if (
+              club.status ===
+                "submitted"
+            ) {
+
+              submittedCount +=
+                1;
+
+            }
+
+            else if (
+              club.status ===
+                "draft"
+            ) {
+
+              draftCount +=
+                1;
+
+            }
+
+            else if (
+              club.status ===
+                "reopened"
+            ) {
+
+              reopenedCount +=
+                1;
+
+            }
+
+            else {
+
+              notStartedCount +=
+                1;
+
+            }
+
+          }
+        );
+
+
+        nextStage.submittedCount =
+          submittedCount;
+
+
+        nextStage.draftCount =
+          draftCount;
+
+
+        nextStage.reopenedCount =
+          reopenedCount;
+
+
+        nextStage.notStartedCount =
+          notStartedCount;
+
+      }
+    );
+
+
+    return incoming;
+
+  }
+
+
+  if (
     !prev ||
     !prev.stages
   ) {
@@ -4871,7 +5481,7 @@ function stampDashboardStatusPending_(
 
 /*
  * catchup／login 若因 auth 空窗拿到「全部未開始」，不可蓋掉本機已有進度。
- * 後端 scoresPossiblyIncomplete 亦同；冷登入空表也要擋。
+ * 後端 scoresPossiblyIncomplete 亦同；冷登入空表／session 快取也要擋。
  */
 function isSuspiciousEmptyScoresDashboard_(
   incoming
@@ -4906,8 +5516,56 @@ function isSuspiciousEmptyScoresDashboard_(
     true;
 
 
+  const cachedProgress =
+    cachedDashProgressCount_(
+      incoming
+    );
+
+
   const prev =
     APP.dashboard;
+
+
+  const maxIncompleteRejects =
+    4;
+
+
+  if (
+    incompleteFlag &&
+    allNotStarted
+  ) {
+
+    const rejects =
+      Number(
+        APP.dashboardIncompleteRejectCount_ ||
+        0
+      );
+
+
+    if (
+      rejects <
+      maxIncompleteRejects
+    ) {
+
+      APP.dashboardIncompleteRejectCount_ =
+        rejects +
+        1;
+
+
+      return true;
+
+    }
+
+
+    APP.dashboardIncompleteRejectCount_ =
+      0;
+
+
+    // 多次仍空：可能是真的尚未評分；若快取有進度仍擋一次給 catchup。
+    return cachedProgress >
+      0;
+
+  }
 
 
   if (
@@ -4915,8 +5573,9 @@ function isSuspiciousEmptyScoresDashboard_(
     !prev.stages
   ) {
 
-    return incompleteFlag &&
-      allNotStarted;
+    return allNotStarted &&
+      cachedProgress >
+        0;
 
   }
 
@@ -4930,6 +5589,17 @@ function isSuspiciousEmptyScoresDashboard_(
   if (
     prevCounts.progressed >
       0 &&
+    allNotStarted
+  ) {
+
+    return true;
+
+  }
+
+
+  if (
+    prev.statusPending ===
+      true &&
     allNotStarted
   ) {
 
@@ -5055,6 +5725,10 @@ function applyDashboardPayload_(
     merged;
 
 
+  APP.dashboardIncompleteRejectCount_ =
+    0;
+
+
   try {
 
     const stages =
@@ -5117,6 +5791,19 @@ function applyDashboardPayload_(
 
     APP.judge =
       merged.judge;
+
+  }
+
+
+  if (
+    merged &&
+    merged.statusPending !==
+      true
+  ) {
+
+    writeJudgeDashProgressCache_(
+      merged
+    );
 
   }
 
@@ -5655,6 +6342,17 @@ function fillJudgeDashboardStatusInBackground_() {
         }
 
 
+        if (
+          APP.dashboard &&
+          APP.dashboard.statusPending ===
+            true
+        ) {
+
+          return;
+
+        }
+
+
         APP.dashboardStatusFillPending_ =
           false;
 
@@ -5980,13 +6678,29 @@ async function refreshDashboard() {
     );
 
 
-    APP.dashboardStatusFillPending_ =
-      false;
+    if (
+      APP.dashboard &&
+      APP.dashboard.statusPending ===
+        true
+    ) {
+
+      toast(
+        "⏳ 進度同步中，請稍候再重整"
+      );
+
+    }
+
+    else {
+
+      APP.dashboardStatusFillPending_ =
+        false;
 
 
-    toast(
-      "✅ 已重新整理"
-    );
+      toast(
+        "✅ 已重新整理"
+      );
+
+    }
 
   }
 
@@ -6585,17 +7299,30 @@ function renderSectionTabs() {
     );
 
 
+  // 單一評分大項時，上方已有權限 chip／階段標題，隱藏重複薄 tabs。
   if (
-    !sections.length
+    !sections.length ||
+    sections.length <=
+      1
   ) {
 
     box.innerHTML =
       "";
 
 
+    box.classList.add(
+      "hidden"
+    );
+
+
     return;
 
   }
+
+
+  box.classList.remove(
+    "hidden"
+  );
 
 
   box.innerHTML =
@@ -13499,8 +14226,18 @@ async function refreshDashboardSilently() {
   );
 
 
-  APP.dashboardStatusFillPending_ =
-    false;
+  if (
+    !(
+      APP.dashboard &&
+      APP.dashboard.statusPending ===
+        true
+    )
+  ) {
+
+    APP.dashboardStatusFillPending_ =
+      false;
+
+  }
 
 
   return true;

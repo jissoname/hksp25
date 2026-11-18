@@ -706,21 +706,32 @@
       return rows;
     }
 
+    function sleepScores_(ms) {
+      return new Promise(function (resolve) {
+        setTimeout(resolve, ms);
+      });
+    }
+
     var myScores = await listMyScores_();
     // 與 materials 相同：並行請求偶發 auth 空窗會讓 listRule 回 200 空陣列，
-    // dashboard 就會把已送出顯示成未開始；重試一次把真實分數撈回。
+    // dashboard 就會把已送出顯示成未開始；多試幾次把真實分數撈回。
     var scoresPossiblyIncomplete = false;
-    if (!myScores.length) {
-      try {
-        await ensureJudgeFromToken(
-          (pb().authStore && pb().authStore.token) || ""
-        );
-      } catch (_reauthScores) {
-        /* ignore */
+    if (!myScores.length && clubs.length) {
+      var scoreAttempt = 0;
+      while (!myScores.length && scoreAttempt < 3) {
+        scoreAttempt += 1;
+        try {
+          await ensureJudgeFromToken(
+            (pb().authStore && pb().authStore.token) || ""
+          );
+        } catch (_reauthScores) {
+          /* ignore */
+        }
+        await sleepScores_(120 * scoreAttempt);
+        myScores = await listMyScores_();
       }
-      myScores = await listMyScores_();
       // 有指派社團卻仍空 scores：可能是 auth 空窗，前端勿當最終「全未開始」。
-      if (!myScores.length && clubs.length) {
+      if (!myScores.length) {
         scoresPossiblyIncomplete = true;
       }
     }
