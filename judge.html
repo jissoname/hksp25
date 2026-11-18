@@ -6231,14 +6231,146 @@ function invalidatePreSubmitDashboardStatus_() {
 }
 
 
+function dashboardHasUsableProgress_() {
+
+  const dash =
+    APP.dashboard;
+
+
+  if (
+    !dash ||
+    !dash.stages ||
+    typeof dash.stages !==
+      "object"
+  ) {
+
+    return false;
+
+  }
+
+
+  const keys =
+    Object.keys(
+      dash.stages
+    );
+
+
+  for (
+    let i =
+      0;
+    i <
+    keys.length;
+    i +=
+      1
+  ) {
+
+    const stage =
+      dash.stages[
+        keys[
+          i
+        ]
+      ];
+
+
+    if (
+      stage &&
+      stage.submittedCount !=
+        null
+    ) {
+
+      return true;
+
+    }
+
+  }
+
+
+  return false;
+
+}
+
+
+function clearDashboardStatusPendingIfUsable_() {
+
+  if (
+    !APP.dashboard ||
+    !dashboardHasUsableProgress_()
+  ) {
+
+    return false;
+
+  }
+
+
+  APP.dashboard.statusPending =
+    false;
+
+
+  try {
+
+    const stages =
+      APP.dashboard.stages;
+
+
+    Object.keys(
+      stages ||
+      {}
+    )
+    .forEach(
+      function (
+        sectionId
+      ) {
+
+        const stage =
+          stages[
+            sectionId
+          ];
+
+
+        if (
+          !stage ||
+          stage.submittedCount ==
+            null
+        ) {
+
+          return;
+
+        }
+
+
+        stage.statusPending =
+          false;
+
+      }
+    );
+
+  }
+
+  catch (
+    clearError
+  ) {
+
+  }
+
+
+  return true;
+
+}
+
+
 function markJudgeDashboardStatusCatchup_() {
 
   APP.dashboardStatusFillPending_ =
     true;
 
 
+  /*
+   * 本機已有可用進度（含樂觀送出後）時，不要把整頁打成「進度載入中」。
+   * 解鎖重送後 catchup 失敗時，否則會永遠卡在載入中＋重試橫幅。
+   */
   if (
-    APP.dashboard
+    APP.dashboard &&
+    !dashboardHasUsableProgress_()
   ) {
 
     APP.dashboard.statusPending =
@@ -6363,6 +6495,14 @@ function fillJudgeDashboardStatusInBackground_() {
         }
 
 
+        /*
+         * 先清重試旗標，讓後續 renderDashboard 能收起「進度尚未更新」橫幅。
+         * 若 apply 判定可疑空表，showDashboardStatusRetry_ 會再打開。
+         */
+        APP.dashboardStatusRetryVisible_ =
+          false;
+
+
         const applied =
           applyDashboardPayload_(
             dashboard,
@@ -6398,6 +6538,32 @@ function fillJudgeDashboardStatusInBackground_() {
 
         APP.dashboardStatusRetryVisible_ =
           false;
+
+
+        try {
+
+          const state =
+            byId(
+              "dashboardState"
+            );
+
+
+          if (
+            state
+          ) {
+
+            state.style.display =
+              "none";
+
+          }
+
+        }
+
+        catch (
+          hideError
+        ) {
+
+        }
 
       }
     )
@@ -6440,6 +6606,10 @@ function showDashboardStatusRetry_() {
     true;
 
 
+  const recovered =
+    clearDashboardStatusPendingIfUsable_();
+
+
   try {
 
     const state =
@@ -6458,6 +6628,17 @@ function showDashboardStatusRetry_() {
 
       state.innerHTML =
         "⚠️ 進度尚未更新。<button type=\"button\" class=\"btn\" onclick=\"flushJudgeDashboardStatusCatchup_(true)\">重試載入進度</button>";
+
+    }
+
+
+    if (
+      recovered &&
+      typeof renderCurrentStage ===
+        "function"
+    ) {
+
+      renderCurrentStage();
 
     }
 
@@ -7264,12 +7445,18 @@ function renderProfile() {
 
 function renderDashboard() {
 
-  byId(
-    "dashboardState"
-  )
-  .style
-  .display =
-    "none";
+  if (
+    !APP.dashboardStatusRetryVisible_
+  ) {
+
+    byId(
+      "dashboardState"
+    )
+    .style
+    .display =
+      "none";
+
+  }
 
 
   renderSectionTabs();
@@ -7471,14 +7658,6 @@ function stageTabText(
   if (
     stage.statusPending ===
       true
-
-    ||
-
-    (
-      APP.dashboard &&
-      APP.dashboard.statusPending ===
-        true
-    )
 
     ||
 
@@ -7710,17 +7889,13 @@ function renderCurrentStage() {
     "block";
 
 
+  /*
+   * 僅在大項本身尚未有計數、或明確 stamp pending 時顯示載入中。
+   * 不要只因 dashboard.statusPending（背景 catchup）就把已有數字蓋成載入中。
+   */
   if (
     stage.statusPending ===
       true
-
-    ||
-
-    (
-      APP.dashboard &&
-      APP.dashboard.statusPending ===
-        true
-    )
 
     ||
 
@@ -8909,6 +9084,16 @@ function markClubSubmittedLocally_(
 
 
       stage.statusPending =
+        false;
+
+    }
+
+
+    if (
+      APP.dashboard
+    ) {
+
+      APP.dashboard.statusPending =
         false;
 
     }
