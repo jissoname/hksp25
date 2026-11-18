@@ -2391,7 +2391,7 @@ button{
 <script src="./pb-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js"></script>
-<script src="./platform-judge-pb.js?v=login-fix-1"></script>
+<script src="./platform-judge-pb.js?v=status-materials-2"></script>
 
 <script>
 /**
@@ -4453,9 +4453,230 @@ function mergeDashboardPreserveRecentSubmitted_(
 }
 
 
-function applyDashboardPayload_(
+function countDashboardProgressClubs_(
   dashboard
 ) {
+
+  let progressed =
+    0;
+
+
+  let total =
+    0;
+
+
+  const stages =
+    dashboard &&
+    dashboard.stages;
+
+
+  if (
+    !stages ||
+    typeof stages !==
+      "object"
+  ) {
+
+    return {
+      progressed: 0,
+      total: 0
+    };
+
+  }
+
+
+  Object.keys(
+    stages
+  )
+  .forEach(
+    function (
+      sectionId
+    ) {
+
+      const clubs =
+        stages[sectionId] &&
+        stages[sectionId].clubs;
+
+
+      if (
+        !Array.isArray(
+          clubs
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      clubs.forEach(
+        function (
+          club
+        ) {
+
+          if (
+            !club
+          ) {
+
+            return;
+
+          }
+
+
+          total +=
+            1;
+
+
+          const status =
+            String(
+              club.status ||
+              ""
+            )
+            .trim();
+
+
+          if (
+            status ===
+              "submitted" ||
+            status ===
+              "draft" ||
+            status ===
+              "reopened"
+          ) {
+
+            progressed +=
+              1;
+
+          }
+
+        }
+      );
+
+    }
+  );
+
+
+  return {
+    progressed: progressed,
+    total: total
+  };
+
+}
+
+
+/*
+ * catchup／login 若因 auth 空窗拿到「全部未開始」，不可蓋掉本機已有進度。
+ * 後端 scoresPossiblyIncomplete 亦同。
+ */
+function isSuspiciousEmptyScoresDashboard_(
+  incoming
+) {
+
+  if (
+    !incoming ||
+    incoming.success ===
+      false
+  ) {
+
+    return false;
+
+  }
+
+
+  const prev =
+    APP.dashboard;
+
+
+  if (
+    !prev ||
+    !prev.stages
+  ) {
+
+    return false;
+
+  }
+
+
+  const prevCounts =
+    countDashboardProgressClubs_(
+      prev
+    );
+
+
+  if (
+    prevCounts.progressed <=
+      0
+  ) {
+
+    return false;
+
+  }
+
+
+  const nextCounts =
+    countDashboardProgressClubs_(
+      incoming
+    );
+
+
+  if (
+    nextCounts.total >
+      0 &&
+    nextCounts.progressed ===
+      0
+  ) {
+
+    return true;
+
+  }
+
+
+  // 後端標示 scores 可能不完整，且本機已有進度：勿套用本次結果。
+  return incoming.scoresPossiblyIncomplete ===
+    true;
+
+}
+
+
+function applyDashboardPayload_(
+  dashboard,
+  options
+) {
+
+  const opts =
+    options ||
+    {};
+
+
+  if (
+    opts.rejectSuspiciousEmpty !==
+      false &&
+    isSuspiciousEmptyScoresDashboard_(
+      dashboard
+    )
+  ) {
+
+    markJudgeDashboardStatusCatchup_();
+
+
+    if (
+      opts.scheduleRetry !==
+        false
+    ) {
+
+      scheduleJudgeDashboardStatusCatchup_(
+        1200
+      );
+
+
+      showDashboardStatusRetry_();
+
+    }
+
+
+    return false;
+
+  }
+
 
   const merged =
     mergeDashboardPreserveRecentSubmitted_(
@@ -4538,6 +4759,9 @@ function applyDashboardPayload_(
   renderProfile();
 
   renderDashboard();
+
+
+  return true;
 
 }
 
@@ -5046,9 +5270,22 @@ function fillJudgeDashboardStatusInBackground_() {
         }
 
 
-        applyDashboardPayload_(
-          dashboard
-        );
+        const applied =
+          applyDashboardPayload_(
+            dashboard,
+            {
+              scheduleRetry: true
+            }
+          );
+
+
+        if (
+          !applied
+        ) {
+
+          return;
+
+        }
 
 
         APP.dashboardStatusFillPending_ =
@@ -7216,7 +7453,8 @@ function permanentClubIdHintForOpenScore_(
 function markClubSubmittedLocally_(
   sectionId,
   clubName,
-  permanentClubId
+  permanentClubId,
+  extras
 ) {
 
   const wantedSection =
@@ -7241,6 +7479,11 @@ function markClubSubmittedLocally_(
       ""
     )
     .trim();
+
+
+  const patchExtras =
+    extras ||
+    {};
 
 
   function patchClub(
@@ -7314,6 +7557,41 @@ function markClubSubmittedLocally_(
 
     club.locked =
       true;
+
+
+    if (
+      patchExtras.totalScore !=
+        null &&
+      patchExtras.totalScore !==
+        ""
+    ) {
+
+      club.totalScore =
+        Number(
+          patchExtras.totalScore
+        );
+
+    }
+
+
+    if (
+      patchExtras.submittedAt
+    ) {
+
+      club.submittedAt =
+        patchExtras.submittedAt;
+
+    }
+
+    else if (
+      !club.submittedAt
+    ) {
+
+      club.submittedAt =
+        new Date()
+          .toISOString();
+
+    }
 
 
     return true;
@@ -8306,7 +8584,23 @@ async function openScore(
       markClubSubmittedLocally_(
         sectionId,
         clubName,
-        permanentClubId
+        permanentClubId,
+        {
+          totalScore:
+            displayResult.record
+              ? (
+                  displayResult.record.total_score !=
+                    null
+                    ? displayResult.record.total_score
+                    : displayResult.record.score
+                )
+              : displayResult.totalScore,
+          submittedAt:
+            displayResult.record &&
+            displayResult.record.submitted_at
+              ? displayResult.record.submitted_at
+              : displayResult.submittedAt
+        }
       );
 
     }
@@ -8903,17 +9197,44 @@ async function loadScoreMaterials_(
     loadSeq;
 
 
+  const previousMaterials =
+    APP.materialsState &&
+    typeof APP.materialsState ===
+      "object"
+      ? APP.materialsState
+      : null;
+
+
+  const previousFiles =
+    previousMaterials &&
+    Array.isArray(
+      previousMaterials.files
+    )
+      ? previousMaterials.files
+      : [];
+
+
+  // 載入中保留上次成功結果，避免空白成功短暫蓋掉 PDF 列表。
   APP.materialsState =
-  {
-    loading: true,
-    error: "",
-    closed: false,
-    hint: "",
-    tree: [],
-    orphanFiles: [],
-    files: [],
-    selectedFileId: ""
-  };
+    Object.assign(
+      {},
+      previousMaterials ||
+      {
+        tree: [],
+        orphanFiles: [],
+        files: [],
+        selectedFileId: ""
+      },
+      {
+        loading: true,
+        error: "",
+        closed: false,
+        hint:
+          previousFiles.length
+            ? "正在重新核對評選資料…"
+            : "正在載入評選資料…"
+      }
+    );
 
 
   if (
@@ -8932,6 +9253,23 @@ async function loadScoreMaterials_(
   renderScoreMaterialsPane_();
 
 
+  async function browseMaterialsOnce_() {
+
+    return judgeApi(
+      "judgeBrowseClubMaterials",
+      {
+        permanentClubId:
+          permanentClubId ||
+          undefined,
+        clubName:
+          clubName ||
+          undefined
+      }
+    );
+
+  }
+
+
   /*
    * 一律打後端核對截止／屬性／最新檔案。
    * 不可只信 openScore 當下的 materialsAccess 快取，否則改截止或學生換檔後
@@ -8939,18 +9277,8 @@ async function loadScoreMaterials_(
    */
   try {
 
-    const result =
-      await judgeApi(
-        "judgeBrowseClubMaterials",
-        {
-          permanentClubId:
-            permanentClubId ||
-            undefined,
-          clubName:
-            clubName ||
-            undefined
-        }
-      );
+    let result =
+      await browseMaterialsOnce_();
 
 
     if (
@@ -9025,6 +9353,26 @@ async function loadScoreMaterials_(
 
       }
 
+      else if (
+        previousFiles.length
+      ) {
+
+        APP.materialsState.error =
+          "";
+
+
+        APP.materialsState.hint =
+          (
+            (
+              result &&
+              result.message
+            ) ||
+            "載入異常"
+          ) +
+          "；已保留上次結果，請再按重新載入。";
+
+      }
+
       else {
 
         APP.materialsState.error =
@@ -9045,12 +9393,88 @@ async function loadScoreMaterials_(
     }
 
 
-    const files =
+    let files =
       Array.isArray(
         result.files
       )
         ? result.files
         : [];
+
+
+    const foldersHint =
+      Array.isArray(
+        result.tree
+      )
+        ? result.tree.length
+        : 0;
+
+
+    // 當次回成功卻空檔：再打一次；仍空且本機曾有檔則保留上次。
+    if (
+      !files.length
+    ) {
+
+      result =
+        await browseMaterialsOnce_();
+
+
+      if (
+        loadSeq !==
+        APP.materialsLoadSeq
+      ) {
+
+        return;
+
+      }
+
+
+      if (
+        result &&
+        result.success ===
+          true
+      ) {
+
+        files =
+          Array.isArray(
+            result.files
+          )
+            ? result.files
+            : [];
+
+      }
+
+    }
+
+
+    if (
+      !files.length &&
+      previousFiles.length
+    ) {
+
+      APP.materialsState.loading =
+        false;
+
+
+      APP.materialsState.error =
+        "";
+
+
+      APP.materialsState.closed =
+        false;
+
+
+      APP.materialsState.hint =
+        "載入結果異常為空；已保留上次 " +
+        previousFiles.length +
+        " 個檔案，請再按重新載入。";
+
+
+      renderScoreMaterialsPane_();
+
+
+      return;
+
+    }
 
 
     const firstPdf =
@@ -9102,7 +9526,9 @@ async function loadScoreMaterials_(
             ? "（已載入 " +
               files.length +
               " 個檔案）"
-            : "（此社目前沒有已完成 PDF，可按重新載入再試）"
+            : foldersHint
+              ? "（此社目前沒有已完成 PDF，可按重新載入再試）"
+              : "（尚無可閱覽資料，可按重新載入再試）"
         ),
       tree:
         Array.isArray(
@@ -9146,11 +9572,34 @@ async function loadScoreMaterials_(
       false;
 
 
-    APP.materialsState.error =
-      errorObject &&
-      errorObject.message
-        ? errorObject.message
-        : "無法載入評選資料。";
+    if (
+      previousFiles.length
+    ) {
+
+      APP.materialsState.error =
+        "";
+
+
+      APP.materialsState.hint =
+        (
+          errorObject &&
+          errorObject.message
+            ? errorObject.message
+            : "無法載入評選資料"
+        ) +
+        "；已保留上次結果，請再按重新載入。";
+
+    }
+
+    else {
+
+      APP.materialsState.error =
+        errorObject &&
+        errorObject.message
+          ? errorObject.message
+          : "無法載入評選資料。";
+
+    }
 
 
     renderScoreMaterialsPane_();
@@ -11324,7 +11773,29 @@ function finishSubmitSuccess_(
   markClubSubmittedLocally_(
     context.sectionId,
     context.clubName,
-    context.permanentClubId
+    context.permanentClubId,
+    {
+      totalScore:
+        result &&
+        result.record
+          ? (
+              result.record.total_score !=
+                null
+                ? result.record.total_score
+                : result.record.score
+            )
+          : (
+              result &&
+              result.totalScore
+            ),
+      submittedAt:
+        result &&
+        result.record &&
+        result.record.submitted_at
+          ? result.record.submitted_at
+          : new Date()
+              .toISOString()
+    }
   );
 
 

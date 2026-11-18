@@ -502,14 +502,22 @@
 
     // 與 openScore 背景 dashboard 並行時，偶發 auth 空窗會讓 uploads listRule
     // 回 200 + 空陣列（資料夾規則較寬仍看得到夾），造成「有夾無檔」。
+    // 夾也空時同樣可能是 auth 空窗，一併 reauth 後重撈。
     var uploadRows = await listCompletedUploads_();
-    if (!uploadRows.length && folderRows.length) {
+    if (!uploadRows.length) {
       try {
         await ensureJudgeFromToken(
           (data && data.sessionToken) || (pb().authStore && pb().authStore.token) || ""
         );
       } catch (_reauthErr) {
         /* ignore; retry below may still fail clearly */
+      }
+      if (!folderRows.length) {
+        folderRows = await pb().collection(C().folders).getFullList({
+          filter: 'activity="' + activity.id + '" && club="' + club.id + '" && trashed!=true',
+          sort: "name"
+        });
+        folderRows = folderRows.filter(isEvaluationFolderRow);
       }
       uploadRows = await listCompletedUploads_();
     }
@@ -711,6 +719,7 @@
     var myScores = await listMyScores_();
     // 與 materials 相同：並行請求偶發 auth 空窗會讓 listRule 回 200 空陣列，
     // dashboard 就會把已送出顯示成未開始；重試一次把真實分數撈回。
+    var scoresPossiblyIncomplete = false;
     if (!myScores.length) {
       try {
         await ensureJudgeFromToken(
@@ -720,6 +729,10 @@
         /* ignore */
       }
       myScores = await listMyScores_();
+      // 有指派社團卻仍空 scores：可能是 auth 空窗，前端勿當最終「全未開始」。
+      if (!myScores.length && clubs.length) {
+        scoresPossiblyIncomplete = true;
+      }
     }
     var scoreMap = {};
     function putScoreKeys(row, sectionKey) {
@@ -873,7 +886,8 @@
       }),
       assignedCategories: judge.categories || [],
       assignedClubCount: clubs.length,
-      stages: stages
+      stages: stages,
+      scoresPossiblyIncomplete: scoresPossiblyIncomplete
     });
   }
 
