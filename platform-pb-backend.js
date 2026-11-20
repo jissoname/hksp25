@@ -871,16 +871,53 @@
         var name = String((data && data.name) || "").trim();
         if (!name) throw err("INVALID_INPUT", "請輸入資料夾名稱。");
         var parentId = String((data && data.parentFolderId) || "").trim() || root.id;
-        return pb.collection(C.folders).create({
-          activity: ctx.activity.id,
-          club: ctx.club.id,
-          parent: parentId,
-          name: name,
-          kind: "evaluation",
-          trashed: false,
-          created_by_student: ctx.user.uid
-        }).then(function (folder) {
-          return ok({ folderId: folder.id, name: folder.name });
+        return assertDestinationFolder(ctx, parentId, root.id, "evaluation").then(function () {
+          function reuseHit(hits) {
+            var rows = (hits || []).slice().sort(function (a, b) {
+              return String(a.created || "").localeCompare(String(b.created || ""));
+            });
+            if (!rows.length) return null;
+            return ok({
+              folderId: rows[0].id,
+              name: rows[0].name || name,
+              reused: true
+            });
+          }
+          return listFoldersByNameInParent(ctx, parentId, name).then(function (hits) {
+            var reused = reuseHit(hits);
+            if (reused) return reused;
+            return pb
+              .collection(C.folders)
+              .create({
+                activity: ctx.activity.id,
+                club: ctx.club.id,
+                parent: parentId,
+                name: name,
+                kind: "evaluation",
+                trashed: false,
+                created_by_student: ctx.user.uid
+              })
+              .then(function (folder) {
+                return ok({ folderId: folder.id, name: folder.name, reused: false });
+              })
+              .catch(function (e) {
+                // 整夾上傳重試／並發時：同名已存在就沿用，避免預檢整段失敗。
+                if (!isUniqueConflict(e)) {
+                  throw err(
+                    "FOLDER_CREATE_FAILED",
+                    (e && e.message) || "建立資料夾「" + name + "」失敗。"
+                  );
+                }
+                return listFoldersByNameInParent(ctx, parentId, name).then(function (again) {
+                  var hit = reuseHit(again);
+                  if (hit) return hit;
+                  throw err(
+                    "FOLDER_CREATE_FAILED",
+                    (e && e.message) || "建立資料夾「" + name + "」失敗。"
+                  );
+                });
+              });
+          });
         });
       });
     });

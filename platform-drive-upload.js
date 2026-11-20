@@ -2289,9 +2289,12 @@
     });
     var folderIdByPath = Object.create(null);
     folderIdByPath[""] = destRootId;
-    setEvalFolderStatus("正在預檢並建立資料夾結構（" + dirKeys.length + " 條路徑）…", "warn");
+    setEvalFolderStatus(
+      "正在預檢並建立資料夾結構（" + dirKeys.length + " 條路徑，" + byRel.length + " 個 PDF）…",
+      "warn"
+    );
     var chain = Promise.resolve();
-    dirKeys.forEach(function (pathKey) {
+    dirKeys.forEach(function (pathKey, index) {
       chain = chain.then(function () {
         if (frozenGen !== generation || frozenUid !== boundUid) {
           throw new Error("登入或工作階段已變更，已中止整夾上傳預檢。");
@@ -2306,6 +2309,11 @@
           throw new Error("上層資料夾識別不明，已中止以免默默放到根目錄。");
         }
         var name = parts[parts.length - 1];
+        var labelPath = pathKey.replace(/\//g, " / ");
+        setEvalFolderStatus(
+          "建立資料夾（" + (index + 1) + "/" + dirKeys.length + "）：" + labelPath,
+          "warn"
+        );
         return call("createClubEvaluationFolder", {
           name: name,
           parentFolderId: parentId
@@ -2313,10 +2321,14 @@
           var data = (result && result.data) || {};
           var createdId = String(data.folderId || "");
           if (!createdId) {
-            throw new Error("建立「" + name + "」後未取得資料夾識別。");
+            throw new Error("建立「" + labelPath + "」後未取得資料夾識別。");
           }
           folderIdByPath[pathKey] = createdId;
           return data;
+        }).catch(function (error) {
+          var info = errorInfo(error);
+          var detail = friendlyGateMessage(info) || (error && error.message) || "建立失敗";
+          throw new Error("無法建立「" + labelPath + "」：" + detail);
         });
       });
     });
