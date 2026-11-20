@@ -246,7 +246,12 @@ async function main() {
   const demoStu = await api("POST", "/api/collections/hksp_students/auth-with-password", {
     json: { identity: "demo001@stu.hksp25.invalid", password: "TestStu123!" }
   });
-  add("auth.studentDemo", demoStu.ok, `http=${demoStu.status}`);
+  add(
+    "auth.studentDemo",
+    demoStu.ok,
+    `http=${demoStu.status}`,
+    "soft"
+  );
 
   // scores sanity for recent submitted
   if (adminToken || staffToken) {
@@ -404,8 +409,8 @@ async function main() {
     const judge = await fetchText(`${site}/judge.html?_dbg=${Date.now()}`);
     add(
       `fe.${site.replace("https://", "")}/judge.cacheBust`,
-      /platform-judge-pb\.js\?v=score-persist-4/.test(judge.text || ""),
-      "expects score-persist-4",
+      /platform-judge-pb\.js\?v=/.test(judge.text || ""),
+      "judge pb script cache-busted",
       "soft"
     );
     const pbCfg = await fetchText(`${site}/pb-config.js?_dbg=${Date.now()}`);

@@ -2680,10 +2680,11 @@
 
   function judgeCoversClub(judge, club, sectionId) {
     if (!judge || judge.active === false) return false;
+    // 與評審端／進度面板一致：空 scoreSectionIds／categories＝不能評（不再退回全部）。
     var sections = Array.isArray(judge.scoreSectionIds) ? judge.scoreSectionIds : [];
-    if (sections.length && sections.indexOf(sectionId) < 0) return false;
+    if (!sections.length || sections.indexOf(sectionId) < 0) return false;
     var cats = Array.isArray(judge.categories) ? judge.categories : [];
-    if (!cats.length) return true;
+    if (!cats.length) return false;
     var cat = normalizeCategoryLabel(club.category);
     var set = {};
     cats.forEach(function (c) {
