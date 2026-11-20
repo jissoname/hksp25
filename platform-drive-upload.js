@@ -2232,7 +2232,12 @@
       return;
     }
     var MAX_BYTES = 10 * 1024 * 1024 * 1024;
-    var destRootId = String(selectedEvalFolderId || "");
+    // 社團根目錄時 selectedEvalFolderId 刻意為 ""，必須改用 browseClubFolderId。
+    var destRootId = String(currentBrowseParentId() || "");
+    if (!destRootId) {
+      setEvalFolderStatus("尚未確認社團根資料夾，請先按重新整理後再整夾上傳。", "warn");
+      return;
+    }
     var destRootLabel = browsePathLabel || "社團評選資料夾";
     var frozenUid = boundUid;
     var frozenGen = generation;
@@ -2631,7 +2636,7 @@
       setEvalFolderStatus("請輸入資料夾名稱。", "warn");
       return;
     }
-    var parentFolderId = String(selectedEvalFolderId || "");
+    var parentFolderId = String(currentBrowseParentId() || "");
     var destLabel = browsePathLabel || "社團評選資料夾";
     evalFolderBusy = true;
     syncEvalFolderPanel();
@@ -2984,7 +2989,7 @@
   function attemptKey(file, kind, destinationFolderId) {
     var dest = destinationFolderId != null
       ? String(destinationFolderId || "root")
-      : (kind === "evaluation" ? (selectedEvalFolderId || "root") : "feature");
+      : (kind === "evaluation" ? (currentBrowseParentId() || "root") : "feature");
     return [
       "hkspDriveAttempt",
       kind || activeKind,
@@ -3181,7 +3186,7 @@
     }
     var raw = Array.prototype.slice.call(fileList || []);
     if (!raw.length) return;
-    var destId = activeKind === "evaluation" ? String(selectedEvalFolderId || "") : "";
+    var destId = activeKind === "evaluation" ? String(currentBrowseParentId() || "") : "";
     var destLabel = activeKind === "evaluation"
       ? (browsePathLabel || "社團評選資料夾")
       : "特色共用資料夾";
@@ -3574,7 +3579,7 @@
     var payload = preparePayload(file, attempt, confirmReplace);
     var destId = queueItem && queueItem.destinationFolderId != null
       ? String(queueItem.destinationFolderId || "")
-      : (kind === "evaluation" ? String(selectedEvalFolderId || "") : "");
+      : (kind === "evaluation" ? String(currentBrowseParentId() || "") : "");
     if (kind === "evaluation" && destId) {
       payload.destinationFolderId = destId;
     }
@@ -3677,7 +3682,7 @@
     if (!queueItem) {
       queueItem = {
         file: file,
-        destinationFolderId: activeKind === "evaluation" ? String(selectedEvalFolderId || "") : "",
+        destinationFolderId: activeKind === "evaluation" ? String(currentBrowseParentId() || "") : "",
         destinationLabel: activeKind === "evaluation"
           ? (browsePathLabel || "社團評選資料夾")
           : "特色共用資料夾"
