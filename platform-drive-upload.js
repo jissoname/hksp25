@@ -3053,6 +3053,9 @@
 
   function friendlyGateMessage(info) {
     var code = info.code || "";
+    if (code === "UPLOAD_TOO_LARGE" || /Cloudflare|上傳通道上限|約 95MB|約 100MB/.test(info.message || "")) {
+      return info.message || "檔案超過目前上傳通道上限（約 95MB），請壓縮／分割後再傳。";
+    }
     if (code === "DRIVE_AUTH_LEASE_EXPIRED" || /授權使用期限已到期/.test(info.message || "")) {
       return "校方授權使用期限已到期，目前無法代傳。";
     }
