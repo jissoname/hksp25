@@ -2231,7 +2231,7 @@
       setEvalFolderStatus("尚未取得伺服器確認的活動與社團，無法整夾上傳。", "warn");
       return;
     }
-    var MAX_BYTES = 10 * 1024 * 1024 * 1024;
+    var MAX_BYTES = 100 * 1024 * 1024 * 1024;
     // 社團根目錄時 selectedEvalFolderId 刻意為 ""，必須改用 browseClubFolderId。
     var destRootId = String(currentBrowseParentId() || "");
     if (!destRootId) {
@@ -3202,7 +3202,7 @@
     var destLabel = activeKind === "evaluation"
       ? (browsePathLabel || "社團評選資料夾")
       : "特色共用資料夾";
-    var MAX_BYTES = 10 * 1024 * 1024 * 1024;
+    var MAX_BYTES = 100 * 1024 * 1024 * 1024;
     var rejected = [];
     var files = [];
     raw.forEach(function (file) {
