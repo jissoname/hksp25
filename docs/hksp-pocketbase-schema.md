@@ -30,7 +30,8 @@
 ## 檔案策略
 
 - **現行主路徑**：`hksp_uploads.file`（PocketBase，支援整夾／大檔；無需 GCP 計費）
-- **後端單檔上限**：`file.maxSize = 100GiB`（前端不顯示此數字；過大僅提示「檔案過大」）
+- **後端單檔上限**：`file.maxSize = 100GiB`
+- **實際上傳通道**：`db.keson.pro` 目前經 Cloudflare；Free/Pro 單次請求約 **100MB**。前端因此以約 **95MB** 預檢擋大檔（否則進度會卡死／413）。若要吃滿更大單檔，需 PB 直連或升 Cloudflare 方案。
 - **可選鏡射**：Apps Script／Drive proxy 回寫 `drive_file_id`／`drive_folder_id`（`useDriveProxy=false` 預設關閉）
 - 布局說明：見 [hksp-backend-layout.md](./hksp-backend-layout.md)
 - 評審說明：見 [hksp-judge-pb.md](./hksp-judge-pb.md)

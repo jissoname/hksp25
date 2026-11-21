@@ -1653,7 +1653,11 @@
       formPb.append("meta_json", JSON.stringify(convertMeta));
       formPb.append("file", file, file.name || "upload.bin");
 
-      return pb.collection(C.uploads).create(formPb).then(function (rec) {
+      return createUploadRecordWithProgress_(
+        formPb,
+        opts && opts.onProgress,
+        opts && opts.signal
+      ).then(function (rec) {
         delete pendingUploads[attempt];
         return listClubDriveUploads().then(function (listed) {
           return {
@@ -1663,6 +1667,78 @@
           };
         });
       });
+    });
+  }
+
+  /**
+   * XHR create so large PB uploads can report progress and surface 413 clearly.
+   * (PocketBase SDK create() has no upload progress; UI used to freeze at 10%.)
+   */
+  function createUploadRecordWithProgress_(formPb, onProgress, signal) {
+    return new Promise(function (resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      var base = String(pb.baseUrl || cfg.url || "").replace(/\/$/, "");
+      xhr.open("POST", base + "/api/collections/" + C.uploads + "/records");
+      if (pb.authStore && pb.authStore.token) {
+        xhr.setRequestHeader("Authorization", pb.authStore.token);
+      }
+      if (typeof onProgress === "function") {
+        xhr.upload.onprogress = function (ev) {
+          if (!ev.lengthComputable || !ev.total) return;
+          try {
+            onProgress(ev.loaded, ev.total);
+          } catch (_e) {
+            /* ignore UI progress errors */
+          }
+        };
+      }
+      xhr.onload = function () {
+        var status = xhr.status;
+        var text = xhr.responseText || "";
+        var body = null;
+        try {
+          body = text ? JSON.parse(text) : null;
+        } catch (_eParse) {
+          body = null;
+        }
+        if (status >= 200 && status < 300 && body) {
+          resolve(body);
+          return;
+        }
+        var msg =
+          (body && body.message) ||
+          (body && body.data && body.data.message) ||
+          text ||
+          ("上傳失敗（HTTP " + status + "）");
+        if (status === 413) {
+          reject(
+            err(
+              "UPLOAD_TOO_LARGE",
+              "檔案超過上傳通道上限（目前經 Cloudflare，約 100MB）。請壓縮／分割後再傳。"
+            )
+          );
+          return;
+        }
+        reject(err("UPLOAD_FAILED", msg));
+      };
+      xhr.onerror = function () {
+        reject(err("UPLOAD_FAILED", "網路錯誤，上傳中斷。"));
+      };
+      xhr.onabort = function () {
+        var aborted = err("UPLOAD_ABORTED", "上傳已取消。");
+        aborted.name = "AbortError";
+        reject(aborted);
+      };
+      if (signal) {
+        if (signal.aborted) {
+          xhr.abort();
+          return;
+        }
+        signal.addEventListener("abort", function () {
+          xhr.abort();
+        });
+      }
+      xhr.send(formPb);
     });
   }
 

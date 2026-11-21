@@ -2231,7 +2231,9 @@
       setEvalFolderStatus("尚未取得伺服器確認的活動與社團，無法整夾上傳。", "warn");
       return;
     }
+    // PocketBase 欄位可到 100GiB；但 db.keson.pro 經 Cloudflare 代理時，單次請求約 100MB。
     var MAX_BYTES = 100 * 1024 * 1024 * 1024;
+    var MAX_EDGE_BYTES = 95 * 1024 * 1024;
     // 社團根目錄時 selectedEvalFolderId 刻意為 ""，必須改用 browseClubFolderId。
     var destRootId = String(currentBrowseParentId() || "");
     if (!destRootId) {
@@ -2252,7 +2254,16 @@
         return;
       }
       if (file.size > MAX_BYTES) {
-        rejected.push(name + "（檔案過大）");
+        rejected.push(name + "（超過系統單檔上限 100GB）");
+        return;
+      }
+      if (file.size > MAX_EDGE_BYTES) {
+        rejected.push(
+          name +
+            "（約 " +
+            Math.ceil(file.size / (1024 * 1024)) +
+            "MB，超過目前上傳通道約 95MB；請壓縮／分割）"
+        );
         return;
       }
       if (!isPdfUploadFile_(file)) {
@@ -3202,7 +3213,9 @@
     var destLabel = activeKind === "evaluation"
       ? (browsePathLabel || "社團評選資料夾")
       : "特色共用資料夾";
+    // PocketBase 欄位可到 100GiB；但 db.keson.pro 經 Cloudflare 代理時，單次請求約 100MB。
     var MAX_BYTES = 100 * 1024 * 1024 * 1024;
+    var MAX_EDGE_BYTES = 95 * 1024 * 1024;
     var rejected = [];
     var files = [];
     raw.forEach(function (file) {
@@ -3210,7 +3223,16 @@
       var name = String(file.name || "");
       if (!name || name === ".DS_Store" || name === "Thumbs.db") return;
       if (file.size > MAX_BYTES) {
-        rejected.push((name || "（未命名）") + "（檔案過大）");
+        rejected.push((name || "（未命名）") + "（超過系統單檔上限 100GB）");
+        return;
+      }
+      if (file.size > MAX_EDGE_BYTES) {
+        rejected.push(
+          (name || "（未命名）") +
+            "（約 " +
+            Math.ceil(file.size / (1024 * 1024)) +
+            "MB，超過目前上傳通道約 95MB；請壓縮／分割）"
+        );
         return;
       }
       if (activeKind === "evaluation" && !isPdfUploadFile_(file)) {
@@ -3618,12 +3640,29 @@
             (data.fileName ? "（檔名：" + data.fileName + "）" : ""),
           "warn"
         );
-        setTransferProgress(10);
+        setTransferProgress(5);
         return window.HKSP_PB_BACKEND.uploadFile({
           attemptId: attempt,
           file: file,
           prepared: data,
-          signal: signal
+          signal: signal,
+          onProgress: function (loaded, total) {
+            if (!total) return;
+            // Reserve 5–95% for bytes; leave headroom for list refresh after create.
+            var pct = 5 + Math.round((loaded / total) * 90);
+            setTransferProgress(pct);
+            setStatus(
+              "傳輸中：" +
+                Math.min(100, Math.round((loaded / total) * 100)) +
+                "%（" +
+                formatBytes(loaded) +
+                " / " +
+                formatBytes(total) +
+                "）" +
+                (data.fileName ? " · " + data.fileName : ""),
+              "warn"
+            );
+          }
         }).then(function (done) {
           if (!sameOp(token)) return null;
           setTransferProgress(100);
