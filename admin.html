@@ -420,7 +420,7 @@ onchange="renderScoreAggregation()"
 
 </section>
 
-<section class="panel closed" data-panel="ranking"><button class="panel-head" onclick="togglePanel(this)"><div><div class="panel-title">🥇 排名規則與各屬性排名</div><div id="rankingMeta" class="panel-meta">-</div></div><span class="chev">▼</span></button><div class="panel-body"><div class="notice">排名依社團屬性分開計算。每個評分大項先使用目前被指派評審的正式平均分，再加總成最終總分；總分達及格門檻後依目前設定產生名次。同分規則不寫死，可由管理員自行調整。</div><div class="rank-config-grid"><div class="rank-config-card"><label class="label">及格門檻</label><input id="rankPassThreshold" class="field" type="number" min="0" step="0.01"><label class="label">及格判定</label><select id="rankPassComparator" class="field"><option value="gte">大於等於（≥）</option><option value="gt">大於（>）</option></select></div><div class="rank-config-card"><label class="label">排名資格</label><select id="rankEligibility" class="field"><option value="all_completed">所有已完成評分社團</option><option value="passed_only">只有及格社團</option></select><label class="label">未完成社團</label><select id="rankIncompletePolicy" class="field"><option value="show_unranked">顯示但不給名次</option><option value="exclude">不顯示於排名表</option></select></div><div class="rank-config-card"><label class="label">同分處理</label><select id="rankTieMode" class="field" onchange="renderTieBreakers()"><option value="shared">直接並列</option><option value="rules">啟用同分比較規則</option></select><label class="label">名次格式</label><select id="rankStyle" class="field"><option value="competition">競賽式：1、2、2、4</option><option value="dense">密集式：1、2、2、3</option></select></div></div><div id="tieBreakerBox" class="rank-config-card" style="margin-top:10px"><div class="toolbar" style="margin-bottom:0"><div style="flex:1"><div class="list-title">同分比較優先順序</div><div class="rank-rule-help">只有選擇「啟用同分比較規則」時才會套用。第一順位永遠是最終總分，這裡設定的是總分相同後的比較方式。</div></div><button class="btn" onclick="addTieBreaker()">＋ 增加條件</button></div><div id="tieBreakerList" class="tie-list"></div><label class="label">所有比較條件仍完全相同時</label><select id="rankUnresolvedTie" class="field" style="max-width:260px"><option value="shared">並列</option><option value="manual">標示待人工決定</option></select></div><div class="rank-settings-actions"><button class="btn" onclick="loadRanking()">重新讀取</button><button id="saveRankingBtn" class="btn btn-primary" onclick="saveRankingConfig()">💾 儲存排名規則</button></div><div class="rank-summary"><div class="rank-stat"><div class="rank-stat-label">✅ 已完成</div><div id="rankCompleted" class="rank-stat-value">-</div></div><div class="rank-stat"><div class="rank-stat-label">🟢 及格</div><div id="rankPassed" class="rank-stat-value">-</div></div><div class="rank-stat"><div class="rank-stat-label">🔴 不及格</div><div id="rankFailed" class="rank-stat-value">-</div></div><div class="rank-stat"><div class="rank-stat-label">⏳ 未完成</div><div id="rankIncomplete" class="rank-stat-value">-</div></div></div><div class="toolbar"><input id="rankingSearch" class="field grow" placeholder="搜尋社團" oninput="renderRankingTable()"><select id="rankingCategory" class="field" onchange="renderRankingTable()"></select></div><div id="rankingState" class="state">尚未讀取</div><div id="rankingTableWrap" class="table-wrap hidden"><table class="rank-table"><thead><tr><th>名次</th><th>社團</th><th id="rankRoutineHeader">平時表現</th><th id="rankDataHeader">數位資料</th><th id="rankFieldHeader">現場詢答</th><th id="rankTotalHeader">總分</th><th>結果</th><th>排名狀態</th></tr></thead><tbody id="rankingTableBody"></tbody></table></div></div></section>
+<section class="panel closed" data-panel="ranking"><button class="panel-head" onclick="togglePanel(this)"><div><div class="panel-title">🥇 排名規則與各屬性排名</div><div id="rankingMeta" class="panel-meta">-</div></div><span class="chev">▼</span></button><div class="panel-body"><div class="notice">排名依社團屬性分開計算（學生會屬全校自治性，只與同屬性排名）。正式名次僅給「已完成且達及格門檻」；未達及格仍匯出但不排名。若僅缺「未指派評審」的大項且已有完成大項，可產生暫排名。已指派但未送分則不排名。解鎖重評期間舊分不計入目前累計。同分可先用規則，仍無法分出時可人工決定名次（直接覆寫，不留紀錄）。</div><div class="rank-config-grid"><div class="rank-config-card"><label class="label">及格門檻</label><input id="rankPassThreshold" class="field" type="number" min="0" step="0.01"><label class="label">及格判定</label><select id="rankPassComparator" class="field"><option value="gte">大於等於（≥）</option><option value="gt">大於（>）</option></select></div><div class="rank-config-card"><label class="label">排名資格</label><select id="rankEligibility" class="field"><option value="all_completed">所有已完成評分社團</option><option value="passed_only">只有及格社團</option></select><label class="label">未完成社團</label><select id="rankIncompletePolicy" class="field"><option value="show_unranked">顯示但不給名次</option><option value="exclude">不顯示於排名表</option></select></div><div class="rank-config-card"><label class="label">同分處理</label><select id="rankTieMode" class="field" onchange="renderTieBreakers()"><option value="shared">直接並列</option><option value="rules">啟用同分比較規則</option></select><label class="label">名次格式</label><select id="rankStyle" class="field"><option value="competition">競賽式：1、1、3</option><option value="dense">密集式：1、2、2、3</option></select></div></div><div id="tieBreakerBox" class="rank-config-card" style="margin-top:10px"><div class="toolbar" style="margin-bottom:0"><div style="flex:1"><div class="list-title">同分比較優先順序</div><div class="rank-rule-help">只有選擇「啟用同分比較規則」時才會套用。第一順位永遠是最終總分，這裡設定的是總分相同後的比較方式。</div></div><button class="btn" onclick="addTieBreaker()">＋ 增加條件</button></div><div id="tieBreakerList" class="tie-list"></div><label class="label">所有比較條件仍完全相同時</label><select id="rankUnresolvedTie" class="field" style="max-width:260px"><option value="shared">並列</option><option value="manual">標示待人工決定</option></select></div><div class="rank-settings-actions"><button class="btn" onclick="loadRanking()">重新讀取</button><button id="saveRankingBtn" class="btn btn-primary" onclick="saveRankingConfig()">💾 儲存排名規則</button><button id="saveManualRanksBtn" class="btn" onclick="saveManualRanksFromTable()">套用人工名次</button></div><div class="rank-summary"><div class="rank-stat"><div class="rank-stat-label">✅ 已完成</div><div id="rankCompleted" class="rank-stat-value">-</div></div><div class="rank-stat"><div class="rank-stat-label">🟢 及格</div><div id="rankPassed" class="rank-stat-value">-</div></div><div class="rank-stat"><div class="rank-stat-label">🔴 不及格</div><div id="rankFailed" class="rank-stat-value">-</div></div><div class="rank-stat"><div class="rank-stat-label">⏳ 未完成</div><div id="rankIncomplete" class="rank-stat-value">-</div></div></div><div class="toolbar"><input id="rankingSearch" class="field grow" placeholder="搜尋社團" oninput="renderRankingTable()"><select id="rankingCategory" class="field" onchange="renderRankingTable()"></select></div><div id="rankingState" class="state">尚未讀取</div><div id="rankingTableWrap" class="table-wrap hidden"><table class="rank-table"><thead><tr><th>名次</th><th>社團</th><th id="rankRoutineHeader">平時表現</th><th id="rankDataHeader">數位資料</th><th id="rankFieldHeader">現場詢答</th><th id="rankTotalHeader">總分</th><th>結果</th><th>排名狀態</th></tr></thead><tbody id="rankingTableBody"></tbody></table></div></div></section>
 
 <section class="panel closed" data-panel="category-ranking-excel-export">
 
@@ -438,7 +438,7 @@ onchange="renderScoreAggregation()"
 <div class="panel-body">
 
 <div class="notice">
-Excel 第一個工作表是「全校總覽」，後續再依社團屬性各一頁。內容包含名次、社團名稱、平時表現、數位資料、現場詢答、總分及結果。所有名次與及格判定都直接使用目前排名系統結果，不會在前端重新計算。
+匯出單一活頁簿：每個屬性各一張工作表（含空白屬性頁，「未分類」在最後），無全校總覽。欄位僅含社團名稱、屬性、名次、總分、及格狀態。正式名次在前，暫排名次之，未完成依社團編號，未參加評選最後。總分顯示至小數第 1 位；每次下載即時套用最新分數與排名規則。
 </div>
 
 <div class="card" style="margin-top:12px">
@@ -1678,7 +1678,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=l1-3-1"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=m1-8-3"></script>
-<script src="./platform-admin-pb.js?v=m1-8-3"></script>
+<script src="./platform-admin-pb.js?v=m1-8-8"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -7876,23 +7876,27 @@ ${excluded}
 function rankingMetricKey(x){return`${x.sourceType}__${x.sourceId}`}
 function rankingMetricOptions(selected=""){const list=(S.rankingMetrics||[]).filter(x=>!(x.sourceType==="total"&&x.sourceId==="finalTotalScore"));return list.map(x=>`<option value="${attr(rankingMetricKey(x))}" ${rankingMetricKey(x)===selected?"selected":""}>${esc(x.name||x.sourceId)}${x.maxScore!==null&&x.maxScore!==undefined?` / ${fmt(x.maxScore)}`:""}</option>`).join("")}
 function syncRankingFormIntoState(){if(!S.rankingConfig)return;const c=S.rankingConfig;c.pass=c.pass||{};c.ranking=c.ranking||{};const rawThreshold=$("rankPassThreshold")?String($("rankPassThreshold").value||"").trim():"";if(rawThreshold!==""){c.pass.threshold=num(rawThreshold)}else if(c.pass.threshold===undefined||c.pass.threshold===null||c.pass.threshold===""){c.pass.threshold=70}c.pass.comparator=$("rankPassComparator").value;c.ranking.eligibility=$("rankEligibility").value;c.ranking.incompletePolicy=$("rankIncompletePolicy").value;c.ranking.tieMode=$("rankTieMode").value;c.ranking.rankStyle=$("rankStyle").value;c.ranking.unresolvedTie=$("rankUnresolvedTie").value}
-function renderRankingSettings(){const c=ensureRankingConfigSeed_();if(!c)return;$("rankPassThreshold").value=fmt(c.pass?.threshold??70);$("rankPassComparator").value=c.pass?.comparator||"gte";$("rankEligibility").value=c.ranking?.eligibility||"all_completed";$("rankIncompletePolicy").value=c.ranking?.incompletePolicy||"show_unranked";$("rankTieMode").value=c.ranking?.tieMode||"shared";$("rankStyle").value=c.ranking?.rankStyle||"competition";$("rankUnresolvedTie").value=c.ranking?.unresolvedTie||"shared";renderTieBreakers()}
+function renderRankingSettings(){const c=ensureRankingConfigSeed_();if(!c)return;$("rankPassThreshold").value=fmt(c.pass?.threshold??70);$("rankPassComparator").value=c.pass?.comparator||"gte";$("rankEligibility").value=c.ranking?.eligibility||"passed_only";$("rankIncompletePolicy").value=c.ranking?.incompletePolicy||"show_unranked";$("rankTieMode").value=c.ranking?.tieMode||"shared";$("rankStyle").value=c.ranking?.rankStyle||"competition";$("rankUnresolvedTie").value=c.ranking?.unresolvedTie||"manual";renderTieBreakers()}
 function renderTieBreakers(){ensureRankingConfigSeed_();if(!S.rankingConfig)return;syncRankingFormIntoState();const enabled=S.rankingConfig.ranking.tieMode==="rules",box=$("tieBreakerBox");box.classList.toggle("rank-rules-disabled",!enabled);const rows=Array.isArray(S.rankingConfig.ranking.tieBreakers)?S.rankingConfig.ranking.tieBreakers:[];$("tieBreakerList").innerHTML=rows.length?rows.map((x,i)=>{const key=rankingMetricKey(x);return`<div class="tie-row"><div class="tie-order">${i+1}</div><select class="field" ${enabled?"":"disabled"} onchange="setTieBreakerMetric(${i},this.value)">${rankingMetricOptions(key)}</select><select class="field tie-direction" ${enabled?"":"disabled"} onchange="setTieBreakerDirection(${i},this.value)"><option value="desc" ${x.direction!=="asc"?"selected":""}>高分優先</option><option value="asc" ${x.direction==="asc"?"selected":""}>低分優先</option></select><div class="row-actions"><button class="icon-btn" ${!enabled||i===0?"disabled":""} onclick="moveTieBreaker(${i},-1)">↑</button><button class="icon-btn" ${!enabled||i===rows.length-1?"disabled":""} onclick="moveTieBreaker(${i},1)">↓</button><button class="icon-btn danger-icon" ${enabled?"":"disabled"} onclick="deleteTieBreaker(${i})">✕</button></div></div>`}).join(""):'<div class="state" style="padding:14px">目前沒有設定同分比較條件；若啟用規則但沒有條件，總分相同時仍會依最後同分處理方式決定。</div>';$("rankUnresolvedTie").disabled=!enabled;box.querySelector("button.btn").disabled=!enabled}
 function addTieBreaker(){if(!S.rankingConfig)return;syncRankingFormIntoState();if(S.rankingConfig.ranking.tieMode!=="rules")return;const used=new Set((S.rankingConfig.ranking.tieBreakers||[]).map(rankingMetricKey)),metric=(S.rankingMetrics||[]).find(x=>x.sourceType!=="total"&&!used.has(rankingMetricKey(x)));if(!metric){toast("沒有其他可加入的比較欄位");return}S.rankingConfig.ranking.tieBreakers.push({sourceType:metric.sourceType,sourceId:metric.sourceId,direction:"desc"});renderTieBreakers()}
 function setTieBreakerMetric(i,key){const [sourceType,...rest]=String(key||"").split("__"),sourceId=rest.join("__");if(!sourceType||!sourceId)return;const rows=S.rankingConfig.ranking.tieBreakers||[];if(!rows[i])return;rows[i].sourceType=sourceType;rows[i].sourceId=sourceId;renderTieBreakers()}
 function setTieBreakerDirection(i,v){const rows=S.rankingConfig.ranking.tieBreakers||[];if(rows[i])rows[i].direction=v==="asc"?"asc":"desc"}
 function moveTieBreaker(i,d){const a=S.rankingConfig.ranking.tieBreakers||[],j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];renderTieBreakers()}
 function deleteTieBreaker(i){S.rankingConfig.ranking.tieBreakers.splice(i,1);renderTieBreakers()}
-function ensureRankingConfigSeed_(){if(S.rankingConfig&&typeof S.rankingConfig==="object")return S.rankingConfig;S.rankingConfig={pass:{threshold:70,comparator:"gte"},ranking:{eligibility:"all_completed",incompletePolicy:"show_unranked",tieMode:"shared",rankStyle:"competition",unresolvedTie:"shared",tieBreakers:[]}};return S.rankingConfig}
+function ensureRankingConfigSeed_(){if(S.rankingConfig&&typeof S.rankingConfig==="object"){S.rankingConfig.ranking=S.rankingConfig.ranking||{};if(!S.rankingConfig.ranking.manualRanks||typeof S.rankingConfig.ranking.manualRanks!=="object")S.rankingConfig.ranking.manualRanks={};return S.rankingConfig}S.rankingConfig={pass:{threshold:70,comparator:"gte"},ranking:{eligibility:"passed_only",incompletePolicy:"show_unranked",tieMode:"shared",rankStyle:"competition",unresolvedTie:"manual",tieBreakers:[],manualRanks:{}}};return S.rankingConfig}
 async function saveRankingConfig(){const b=$("saveRankingBtn");try{b.disabled=true;if(!S.rankingConfig){toast("排名設定尚未載入，正在重新讀取…");await loadRanking();if(!S.rankingConfig)throw new Error("排名設定仍未載入，請稍後再按「重新讀取」後儲存。")}syncRankingFormIntoState();const threshold=Number(S.rankingConfig.pass&&S.rankingConfig.pass.threshold);if(!Number.isFinite(threshold)){S.rankingConfig.pass=S.rankingConfig.pass||{};S.rankingConfig.pass.threshold=70}$("rankPassThreshold").value=fmt(S.rankingConfig.pass.threshold);const r=await api("adminSaveRankingConfig",{config:S.rankingConfig,...settingsVersionPayload(S.rankingScreenVersion)});if(unauthorized(r))return;if(settingsConflict(r)){toast("排名設定已有其他修改，畫面內容已保留。請重新讀取後再儲存。");return}if(!r.success)throw new Error(r.message||"排名規則儲存失敗");rememberScreenVersion("rankingScreenVersion",r);S.rankingConfig=deep(r.config);S.rankingMetrics=Array.isArray(r.availableMetrics)?r.availableMetrics:S.rankingMetrics;renderRankingSettings();toast("✅ 排名規則已儲存");await loadRanking()}catch(e){toast("❌ "+e.message)}finally{b.disabled=false}}
 async function loadRanking(){try{$("rankingState").classList.remove("hidden");$("rankingTableWrap").classList.add("hidden");$("rankingState").innerHTML='<div class="spinner"></div>正在計算各屬性排名...';const r=await api("adminRanking");if(unauthorized(r))return;if(!r.success)throw new Error(r.message||"無法取得排名");S.ranking=r;rememberScreenVersion("rankingScreenVersion",r);S.rankingConfig=deep(r.config||ensureRankingConfigSeed_());if(!S.rankingConfig.pass||S.rankingConfig.pass.threshold===undefined||S.rankingConfig.pass.threshold===null||S.rankingConfig.pass.threshold===""){S.rankingConfig.pass=S.rankingConfig.pass||{};S.rankingConfig.pass.threshold=70}S.rankingMetrics=Array.isArray(r.availableMetrics)?r.availableMetrics:[];const m=r.summary||{};$("rankCompleted").textContent=m.completedCount??0;$("rankPassed").textContent=m.passedCount??0;$("rankFailed").textContent=m.failedCount??0;$("rankIncomplete").textContent=m.incompleteCount??0;$("rankingMeta").textContent=`及格 ${S.rankingConfig.pass?.comparator==="gt"?">":"≥"} ${fmt(S.rankingConfig.pass?.threshold??70)}｜完成 ${m.completedCount??0}/${m.clubCount??0}｜${formatDate(r.generatedAt)}`;renderRankingSettings();renderRankingCategoryOptions();updateRankingHeaders();renderRankingTable()}catch(e){$("rankingState").classList.remove("hidden");$("rankingTableWrap").classList.add("hidden");$("rankingState").innerHTML=`⚠️ ${esc(e.message)}`;ensureRankingConfigSeed_();renderRankingSettings()}}
 function renderRankingCategoryOptions(){const el=$("rankingCategory");if(!el||!S.ranking)return;const current=el.value,cats=Array.isArray(S.ranking.categories)?S.ranking.categories:[];el.innerHTML=cats.map(x=>`<option value="${attr(x.category)}">${esc(x.category)}（${x.totalClubCount??0}）</option>`).join("");const preferred=cats.find(x=>x.category===current)||cats.find(x=>(x.totalClubCount??0)>0)||cats[0];if(preferred)el.value=preferred.category}
 function updateRankingHeaders(){const clubs=S.scoreAggregation?.clubs||[],sample=clubs.find(Boolean),routine=sample?aggregationGroup(sample,"routinePerformance"):null,data=sample?aggregationSection(sample,"dataReview"):null,field=sample?aggregationSection(sample,"fieldReview"):null;$("rankRoutineHeader").textContent=`平時表現 / ${fmt(routine?.maxScore??30)}`;$("rankDataHeader").textContent=`數位資料 / ${fmt(data?.maxScore??50)}`;$("rankFieldHeader").textContent=`現場詢答 / ${fmt(field?.maxScore??20)}`;$("rankTotalHeader").textContent=`總分 / ${fmt(S.ranking?.totalMaxScore??100)}`}
 function findAggregationClubForRanking(name){return(S.scoreAggregation?.clubs||[]).find(x=>x.clubName===name)||null}
 function rankingScoreFromAggregation(club,type,id,fallbackMax){if(!club)return'<span class="agg-muted">—</span>';const x=type==="group"?aggregationGroup(club,id):aggregationSection(club,id),score=x?(x.finalScore??x.currentScore??x.averageScore):null,max=x?.maxScore??fallbackMax;return score===null||score===undefined?`<span class="agg-muted">— / ${fmt(max)}</span>`:`<b>${fmt(score)}</b> / ${fmt(max)}`}
-function rankingResultBadge(row){if(!row.complete)return'<span class="badge rank-incomplete">⏳ 未完成</span>';if(row.passed===true)return'<span class="badge rank-passed">✅ 及格</span>';if(row.passed===false)return'<span class="badge rank-failed">❌ 不及格</span>';return'<span class="badge rank-incomplete">-</span>'}
-function rankingStateBadge(row){if(row.rankStatus==="tie_pending")return'<span class="badge rank-tie">⚠️ 待人工決定</span>';if(row.rankStatus==="tied")return'<span class="badge rank-tie">同分並列</span>';if(row.rankStatus==="incomplete")return'<span class="badge rank-incomplete">未完成</span>';if(row.rankStatus==="not_eligible")return'<span class="badge rank-failed">不列入排名</span>';return'<span class="badge b-pub">已排名</span>'}
-function renderRankingTable(){const data=S.ranking;if(!data||!Array.isArray(data.categories))return;const category=$("rankingCategory")?.value||"",q=($("rankingSearch")?.value||"").trim().toLowerCase(),group=data.categories.find(x=>x.category===category);const rows=(group?.rows||[]).filter(x=>!q||String(x.clubName||"").toLowerCase().includes(q));$("rankingState").classList.toggle("hidden",rows.length>0);$("rankingTableWrap").classList.toggle("hidden",rows.length===0);if(!rows.length){$("rankingState").innerHTML="此屬性目前沒有符合條件的社團。";return}$("rankingTableBody").innerHTML=rows.map(row=>{const agg=findAggregationClubForRanking(row.clubName);return`<tr><td class="rank-no">${esc(row.displayRank??"-")}</td><td><div class="rank-club">${esc(row.clubName)}</div><div class="mini-label">${esc(row.category)}</div></td><td>${rankingScoreFromAggregation(agg,"group","routinePerformance",30)}</td><td>${rankingScoreFromAggregation(agg,"section","dataReview",50)}</td><td>${rankingScoreFromAggregation(agg,"section","fieldReview",20)}</td><td><b>${row.finalTotalScore===null||row.finalTotalScore===undefined?"—":fmt(row.finalTotalScore)}</b> / ${fmt(row.totalMaxScore)}</td><td>${rankingResultBadge(row)}</td><td>${rankingStateBadge(row)}</td></tr>`}).join("")}
+function rankingResultBadge(row){if(row.rankStatus==="not_participating")return'<span class="badge rank-incomplete">未參加評選</span>';if(row.rankStatus==="provisional")return'<span class="badge rank-tie">暫排名</span>';if(row.rankStatus==="failed_unranked"||row.passed===false)return'<span class="badge rank-failed">未達及格</span>';if(row.passed===true)return'<span class="badge rank-passed">及格</span>';if(!row.complete)return'<span class="badge rank-incomplete">未完成</span>';return'<span class="badge rank-incomplete">-</span>'}
+function rankingStateBadge(row){if(row.rankStatus==="tie_pending")return'<span class="badge rank-tie">⚠️ 待人工決定</span>';if(row.rankStatus==="tied")return'<span class="badge rank-tie">同分並列</span>';if(row.rankStatus==="provisional"){const miss=(row.unassignedSectionNames||[]).join("、");return`<span class="badge rank-tie">暫排名${miss?`｜未指派：${esc(miss)}`:""}</span>`}if(row.rankStatus==="failed_unranked")return'<span class="badge rank-failed">不排名</span>';if(row.rankStatus==="not_participating")return'<span class="badge rank-incomplete">未參加評選</span>';if(row.rankStatus==="incomplete")return'<span class="badge rank-incomplete">未完成</span>';if(row.rankStatus==="not_eligible")return'<span class="badge rank-failed">不列入排名</span>';if(row.rankStatus==="ranked")return'<span class="badge b-pub">已排名</span>';return'<span class="badge rank-incomplete">-</span>'}
+function rankingManualKey_(category,permanentClubId){return String(category||"未分類")+"::"+String(permanentClubId||"").toUpperCase()}
+function setManualRankDraft(category,permanentClubId,value){ensureRankingConfigSeed_();const key=rankingManualKey_(category,permanentClubId);const n=Number(value);if(!Number.isFinite(n)||n<=0){delete S.rankingConfig.ranking.manualRanks[key];return}S.rankingConfig.ranking.manualRanks[key]=Math.floor(n)}
+async function saveManualRanksFromTable(){const b=$("saveManualRanksBtn");try{if(b)b.disabled=true;ensureRankingConfigSeed_();syncRankingFormIntoState();const r=await api("adminSaveRankingConfig",{config:S.rankingConfig,...settingsVersionPayload(S.rankingScreenVersion)});if(unauthorized(r))return;if(settingsConflict(r)){toast("排名設定已有其他修改，請重新讀取後再儲存人工名次。");return}if(!r.success)throw new Error(r.message||"人工名次儲存失敗");rememberScreenVersion("rankingScreenVersion",r);S.rankingConfig=deep(r.config);toast("✅ 人工名次已儲存");await loadRanking()}catch(e){toast("❌ "+(e.message||"人工名次儲存失敗"))}finally{if(b)b.disabled=false}}
+function rankingDisplayScore_(row){if(row.rankStatus==="not_participating")return "—";const score=row.displayScore??row.finalTotalScore??row.currentTotalScore;if(score===null||score===undefined)return "—";return fmt(Math.round(Number(score)*10)/10)}
+function renderRankingTable(){const data=S.ranking;if(!data||!Array.isArray(data.categories))return;const category=$("rankingCategory")?.value||"",q=($("rankingSearch")?.value||"").trim().toLowerCase(),group=data.categories.find(x=>x.category===category);const rows=(group?.rows||[]).filter(x=>!q||String(x.clubName||"").toLowerCase().includes(q));$("rankingState").classList.toggle("hidden",rows.length>0);$("rankingTableWrap").classList.toggle("hidden",rows.length===0);if(!rows.length){$("rankingState").innerHTML="此屬性目前沒有社團（空白屬性仍會出現在 Excel）。";return}$("rankingTableBody").innerHTML=rows.map(row=>{const agg=findAggregationClubForRanking(row.clubName);const canManual=row.rankStatus==="tie_pending"||row.rankStatus==="tied"||row.rankStatus==="ranked"||row.passed===true;const manualVal=row.manualRank??"";return`<tr><td class="rank-no">${esc(row.displayRank??"-")}${canManual?`<div style="margin-top:4px"><input class="field" type="number" min="1" step="1" style="width:72px;padding:4px 6px" value="${attr(manualVal)}" onchange="setManualRankDraft('${attr(row.category)}','${attr(row.permanentClubId)}',this.value)" title="人工名次"></div>`:""}</td><td><div class="rank-club">${esc(row.clubName)}</div><div class="mini-label">${esc(row.category)}｜${esc(row.permanentClubId||"")}</div></td><td>${rankingScoreFromAggregation(agg,"group","routinePerformance",30)}</td><td>${rankingScoreFromAggregation(agg,"section","dataReview",50)}</td><td>${rankingScoreFromAggregation(agg,"section","fieldReview",20)}</td><td><b>${rankingDisplayScore_(row)}</b>${row.complete?` / ${fmt(row.totalMaxScore)}`:""}</td><td>${rankingResultBadge(row)}</td><td>${rankingStateBadge(row)}</td></tr>`}).join("")}
 
 /* ============================================================
    JUDGE CONFIRMATION EXPORT
@@ -10974,6 +10978,35 @@ sheet.rows
 [];
 const ws =
 XLSX.utils.aoa_to_sheet(rows);
+const headerRow =
+Number(sheet.headerRowIndex) > 0
+?
+Number(sheet.headerRowIndex)
+:
+1;
+const freezeRows =
+Number(sheet.freezeRows) > 0
+?
+Number(sheet.freezeRows)
+:
+headerRow;
+if(rows.length >= headerRow){
+const lastCol =
+"E";
+const lastRow =
+Math.max(headerRow, rows.length);
+ws["!autofilter"] = {
+ref:
+String(sheet.filterRef || ( "A" + headerRow + ":" + lastCol + lastRow ))
+};
+ws["!freeze"] = {
+xSplit:0,
+ySplit:freezeRows,
+topLeftCell:"A" + (freezeRows + 1),
+activePane:"bottomLeft",
+state:"frozen"
+};
+}
 const name =
 String(sheet.name || "工作表").slice(0, 31) || "工作表";
 XLSX.utils.book_append_sheet(wb, ws, name);
@@ -14387,6 +14420,20 @@ return {ok:false, stale:false, error:e};
 }
 }
 
+function clubHasSubmittedScoresForCategoryWarn_(clubName, permanentClubId){
+const clubs=(S.scoreAggregation&&Array.isArray(S.scoreAggregation.clubs))?S.scoreAggregation.clubs:[];
+const hit=clubs.find(c=>{
+const pid=String((c&&c.permanentClubId)||"").toUpperCase();
+const want=String(permanentClubId||"").toUpperCase();
+if(want&&pid&&pid===want) return true;
+return String((c&&c.clubName)||"")===String(clubName||"");
+});
+if(!hit) return false;
+if(hit.finalTotalScore!=null||hit.currentTotalScore!=null) return true;
+return Array.isArray(hit.sections)&&hit.sections.some(sec=>
+Array.isArray(sec.judges)&&sec.judges.some(j=>String(j.status||"")==="submitted")
+);
+}
 async function saveClub(){
 if(isFirebaseCloudMode()) return HKSP_ADMIN_CLOUD.saveClub();
 if(S.clubSaveBusy) return;
@@ -14396,6 +14443,23 @@ const oldName=$("clubOldName").value;
 const clubName=$("clubName").value.trim();
 const category=$("clubCategory").value;
 const participation=$("clubParticipation").value;
+const existingClub=(S.clubs||[]).find(x=>String(x.name||"")===String(oldName||""));
+const oldCategory=existingClub?String(existingClub.category||""):"";
+if(
+oldName &&
+oldCategory &&
+category &&
+oldCategory!==category &&
+clubHasSubmittedScoresForCategoryWarn_(
+oldName,
+existingClub&&(existingClub.permanentClubId||existingClub.clubId)
+)
+){
+const okChange=confirm(
+"此社團已有已送出的評分紀錄。變更屬性後：分數會保留，但排名會改到新屬性組別；原屬性評審尚未送出的本機草稿會在評審端載入時失效清除。確定變更屬性？"
+);
+if(!okChange) return;
+}
 const saveBtn=$("clubSaveBtn");
 const prevLabel=saveBtn?String(saveBtn.textContent||"儲存"):"儲存";
 const listEl=$("clubList");

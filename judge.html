@@ -5763,6 +5763,11 @@ function applyDashboardPayload_(
   APP.dashboard =
     merged;
 
+  try {
+    purgeStaleLocalDrafts_(merged);
+  } catch (_purgeErr) {
+  }
+
 
   APP.dashboardIncompleteRejectCount_ =
     0;
@@ -9494,6 +9499,66 @@ function clearLocalDraft_(parts) {
   }
   if (APP.localDraftMem && Object.prototype.hasOwnProperty.call(APP.localDraftMem, key)) {
     delete APP.localDraftMem[key];
+  }
+}
+
+
+/**
+ * 依最新儀表板指派／屬性清除過期本機草稿。
+ * 社團屬性變更後，原屬性評審不再涵蓋該社時，未送出草稿應失效。
+ */
+function purgeStaleLocalDrafts_(dashboard) {
+  try {
+    const judgeId = currentJudgeId_();
+    const activityId = judgeActivityId_();
+    if (!judgeId || !dashboard) return 0;
+    const allowedSections = new Set(
+      (Array.isArray(dashboard.scoreSectionIds) ? dashboard.scoreSectionIds : [])
+        .map((x) => String(x || "").trim())
+        .filter(Boolean)
+    );
+    const allowedClubs = new Set();
+    const stages =
+      dashboard.stages && typeof dashboard.stages === "object"
+        ? dashboard.stages
+        : {};
+    Object.keys(stages).forEach((sectionId) => {
+      const stage = stages[sectionId] || {};
+      (Array.isArray(stage.clubs) ? stage.clubs : []).forEach((club) => {
+        const permanent = String(
+          (club && club.permanentClubId) || ""
+        )
+          .trim()
+          .toUpperCase();
+        if (permanent) allowedClubs.add(permanent);
+      });
+    });
+    const store = readLocalDraftStore_();
+    let removed = 0;
+    Object.keys(store).forEach((key) => {
+      const parts = String(key || "").split("::");
+      if (parts[0] !== "v1") return;
+      if (String(parts[1] || "") !== activityId) return;
+      if (String(parts[2] || "") !== judgeId) return;
+      const permanent = String(parts[3] || "").trim().toUpperCase();
+      const sectionId = String(parts[4] || "").trim();
+      const sectionOk =
+        !allowedSections.size || allowedSections.has(sectionId);
+      const clubOk = allowedClubs.has(permanent);
+      if (sectionOk && clubOk) return;
+      delete store[key];
+      removed += 1;
+      if (
+        APP.localDraftMem &&
+        Object.prototype.hasOwnProperty.call(APP.localDraftMem, key)
+      ) {
+        delete APP.localDraftMem[key];
+      }
+    });
+    if (removed) writeLocalDraftStore_(store);
+    return removed;
+  } catch (_error) {
+    return 0;
   }
 }
 

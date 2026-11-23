@@ -2632,12 +2632,15 @@
     return {
       pass: { threshold: 70, comparator: "gte" },
       ranking: {
-        eligibility: "all_completed",
+        // Formal ranks require pass; eligibility kept for UI compatibility.
+        eligibility: "passed_only",
         incompletePolicy: "show_unranked",
         tieMode: "shared",
         rankStyle: "competition",
-        unresolvedTie: "shared",
-        tieBreakers: []
+        unresolvedTie: "manual",
+        tieBreakers: [],
+        // Manual order overrides after auto ranking: { "屬性::PERMANENT_ID": rankNumber }
+        manualRanks: {}
       }
     };
   }
@@ -2646,14 +2649,75 @@
     var conf = (activity && activity.config_json) || {};
     var base = defaultRankingConfig();
     var saved = conf.rankingConfig && typeof conf.rankingConfig === "object" ? conf.rankingConfig : {};
+    var savedRanking = saved.ranking && typeof saved.ranking === "object" ? saved.ranking : {};
     return {
       pass: Object.assign({}, base.pass, saved.pass || {}),
-      ranking: Object.assign({}, base.ranking, saved.ranking || {}, {
-        tieBreakers: Array.isArray((saved.ranking || {}).tieBreakers)
-          ? saved.ranking.tieBreakers
-          : []
+      ranking: Object.assign({}, base.ranking, savedRanking, {
+        tieBreakers: Array.isArray(savedRanking.tieBreakers)
+          ? savedRanking.tieBreakers
+          : [],
+        manualRanks:
+          savedRanking.manualRanks && typeof savedRanking.manualRanks === "object"
+            ? savedRanking.manualRanks
+            : {}
       })
     };
+  }
+
+  function canonicalRankingCategories_() {
+    return [
+      "全校自治性",
+      "自治綜合性",
+      "學藝性",
+      "體能性",
+      "服務性",
+      "康樂性",
+      "未分類"
+    ];
+  }
+
+  function clubParticipatesEvaluation_(club) {
+    var meta =
+      club && club.meta_json && typeof club.meta_json === "object" ? club.meta_json : {};
+    var participation = String(
+      (club && club.participation) || meta.participation || ""
+    )
+      .trim()
+      .toLowerCase();
+    if (!participation) return true; // 未設定＝相容舊資料，視為參加評選
+    if (participation === "none" || participation === "off") return false;
+    if (participation === "feature") return false;
+    return (
+      participation === "evaluation" ||
+      participation === "eval" ||
+      participation === "both" ||
+      participation === "all"
+    );
+  }
+
+  function normalizeRankingCategory_(raw) {
+    var key = normalizeCategoryLabel(raw);
+    if (!key) return "未分類";
+    var known = canonicalRankingCategories_();
+    return known.indexOf(key) >= 0 ? key : key || "未分類";
+  }
+
+  function manualRankKey_(category, permanentClubId) {
+    return String(category || "未分類") + "::" + String(permanentClubId || "").toUpperCase();
+  }
+
+  function exportScoreOneDecimal_(value) {
+    if (value === null || value === undefined || value === "") return "";
+    var n = Number(value);
+    if (!Number.isFinite(n)) return "";
+    return Math.round(n * 10) / 10;
+  }
+
+  function rankingActivityTitle_(activity) {
+    return String(
+      (activity && (activity.title || activity.name || activity.activity_id)) ||
+        "115學年度第一學期全校學生社團評選暨觀摩活動"
+    ).trim();
   }
 
   function publishedSectionsOf(scoreConfig) {
@@ -2875,11 +2939,23 @@
       var hasAnyCurrent = false;
       var sectionDetails = [];
 
+      var unassignedSectionIds = [];
+      var unassignedSectionNames = [];
+      var pendingAssignedSectionIds = [];
+      var pendingAssignedSectionNames = [];
+      var provisionalTotal = 0;
+      var hasCompletedSection = false;
+      var participatesEvaluation = clubParticipatesEvaluation_(club);
+
       sections.forEach(function (section) {
         var assigned = ctx.judges.filter(function (j) {
           return judgeCoversClub(j, club, section.id);
         });
-        if (!assigned.length) missing += 1;
+        if (!assigned.length) {
+          missing += 1;
+          unassignedSectionIds.push(section.id);
+          unassignedSectionNames.push(section.name || section.id);
+        }
         var bucket = scoreBucket(section.maxScore);
         bucket.assignedCount = assigned.length;
         var values = [];
@@ -2887,6 +2963,7 @@
           var row = ctx.byKey[judge.id + "::" + club.id + "::" + section.id];
           var answers = (row && row.answers_json) || {};
           var reopened = !!(answers && answers.reopened);
+          // 解鎖重評期間舊分不計入目前累計（既有規則，維持）。
           var submitted = !!(row && row.status === "submitted" && !reopened);
           if (reopened) bucket.reopenedCount += 1;
           if (submitted) {
@@ -2917,8 +2994,14 @@
         if (bucket.complete) {
           bucket.finalScore = bucket.averageScore;
           finalTotal += bucket.finalScore;
+          provisionalTotal += bucket.finalScore;
+          hasCompletedSection = true;
         } else {
           allComplete = false;
+          if (assigned.length > 0) {
+            pendingAssignedSectionIds.push(section.id);
+            pendingAssignedSectionNames.push(section.name || section.id);
+          }
         }
         if (bucket.reopenedCount > 0) reopenedSectionCount += 1;
         sectionScores[section.id] = bucket;
@@ -2982,15 +3065,34 @@
         sections
       );
 
+      var complete = allComplete && missing === 0 && participatesEvaluation;
+      var hasPendingAssigned = pendingAssignedSectionIds.length > 0;
+      var provisionalEligible =
+        participatesEvaluation &&
+        !complete &&
+        unassignedSectionIds.length > 0 &&
+        !hasPendingAssigned &&
+        hasCompletedSection;
       return {
         clubId: club.id,
         permanentClubId: String(club.permanent_club_id || "").toUpperCase(),
         clubName: club.name,
         category: club.category || "",
-        complete: allComplete && missing === 0,
+        participation: String(
+          (club.meta_json && club.meta_json.participation) || ""
+        ).trim(),
+        participatesEvaluation: participatesEvaluation,
+        complete: complete,
         missingJudgeAssignments: missing,
         reopenedSectionCount: reopenedSectionCount,
-        finalTotalScore: allComplete && missing === 0 ? finalTotal : null,
+        unassignedSectionIds: unassignedSectionIds,
+        unassignedSectionNames: unassignedSectionNames,
+        pendingAssignedSectionIds: pendingAssignedSectionIds,
+        pendingAssignedSectionNames: pendingAssignedSectionNames,
+        hasPendingAssignedJudge: hasPendingAssigned,
+        provisionalEligible: provisionalEligible,
+        provisionalTotalScore: provisionalEligible ? provisionalTotal : null,
+        finalTotalScore: complete ? finalTotal : null,
         currentTotalScore: hasAnyCurrent ? currentTotal : null,
         totalMaxScore: totalMax || Number(ctx.scoreConfig.totalMaxScore) || 0,
         sectionScores: sectionScores,
@@ -3080,21 +3182,243 @@
   }
 
   function compareRankRows(a, b, rankingConfig, clubMap) {
-    var totalDiff = (Number(b.finalTotalScore) || 0) - (Number(a.finalTotalScore) || 0);
+    var aScore = Number(a.rankScore);
+    var bScore = Number(b.rankScore);
+    if (!Number.isFinite(aScore)) aScore = Number(a.finalTotalScore) || 0;
+    if (!Number.isFinite(bScore)) bScore = Number(b.finalTotalScore) || 0;
+    var totalDiff = bScore - aScore;
     if (totalDiff) return totalDiff;
     var mode = (rankingConfig.ranking && rankingConfig.ranking.tieMode) || "shared";
-    if (mode !== "rules") return 0;
-    var breakers = (rankingConfig.ranking && rankingConfig.ranking.tieBreakers) || [];
-    for (var i = 0; i < breakers.length; i++) {
-      var rule = breakers[i] || {};
-      var av = metricValue(clubMap[a.clubName] || {}, rule.sourceType, rule.sourceId);
-      var bv = metricValue(clubMap[b.clubName] || {}, rule.sourceType, rule.sourceId);
-      var an = av === null || av === undefined ? -Infinity : Number(av);
-      var bn = bv === null || bv === undefined ? -Infinity : Number(bv);
-      var diff = rule.direction === "asc" ? an - bn : bn - an;
-      if (diff) return diff;
+    if (mode === "rules") {
+      var breakers = (rankingConfig.ranking && rankingConfig.ranking.tieBreakers) || [];
+      for (var i = 0; i < breakers.length; i++) {
+        var rule = breakers[i] || {};
+        var clubA =
+          clubMap[a.permanentClubId] ||
+          clubMap[a.clubName] ||
+          {};
+        var clubB =
+          clubMap[b.permanentClubId] ||
+          clubMap[b.clubName] ||
+          {};
+        var av = metricValue(clubA, rule.sourceType, rule.sourceId);
+        var bv = metricValue(clubB, rule.sourceType, rule.sourceId);
+        var an = av === null || av === undefined ? -Infinity : Number(av);
+        var bn = bv === null || bv === undefined ? -Infinity : Number(bv);
+        var diff = rule.direction === "asc" ? an - bn : bn - an;
+        if (diff) return diff;
+      }
     }
-    return 0;
+    var manual = (rankingConfig.ranking && rankingConfig.ranking.manualRanks) || {};
+    var mkA = manualRankKey_(a.category, a.permanentClubId);
+    var mkB = manualRankKey_(b.category, b.permanentClubId);
+    var manA = Number(manual[mkA]);
+    var manB = Number(manual[mkB]);
+    if (Number.isFinite(manA) && Number.isFinite(manB) && manA !== manB) {
+      return manA - manB;
+    }
+    if (Number.isFinite(manA) && !Number.isFinite(manB)) return -1;
+    if (!Number.isFinite(manA) && Number.isFinite(manB)) return 1;
+    return String(a.permanentClubId || "").localeCompare(
+      String(b.permanentClubId || ""),
+      "en"
+    );
+  }
+
+  function buildRankingRowFromClub_(club, rankingConfig) {
+    var category = normalizeRankingCategory_(club.category);
+    var participates = club.participatesEvaluation !== false;
+    var complete = !!club.complete && participates;
+    var passed = complete ? passesThreshold(club.finalTotalScore, rankingConfig.pass) : null;
+    var provisionalEligible = !!club.provisionalEligible && participates;
+    var hasPending = !!club.hasPendingAssignedJudge;
+    var displayScore = null;
+    var passStatus = "";
+    var rankStatus = "incomplete";
+    var statusLabel = "未完成";
+    var unassignedNames = Array.isArray(club.unassignedSectionNames)
+      ? club.unassignedSectionNames.slice()
+      : [];
+
+    if (!participates) {
+      rankStatus = "not_participating";
+      statusLabel = "未參加評選";
+      passStatus = "";
+      displayScore = null;
+    } else if (complete && passed === true) {
+      rankStatus = "rankable";
+      statusLabel = "及格";
+      passStatus = "及格";
+      displayScore = club.finalTotalScore;
+    } else if (complete && passed === false) {
+      rankStatus = "failed_unranked";
+      statusLabel = "未達及格";
+      passStatus = "未達及格";
+      displayScore = club.finalTotalScore;
+    } else if (provisionalEligible) {
+      rankStatus = "provisional";
+      statusLabel = "暫排名";
+      passStatus = "暫排名";
+      displayScore = club.provisionalTotalScore;
+    } else if (hasPending || !complete) {
+      rankStatus = "incomplete";
+      statusLabel = "未完成";
+      passStatus = "未完成";
+      displayScore =
+        club.currentTotalScore === null || club.currentTotalScore === undefined
+          ? null
+          : club.currentTotalScore;
+    }
+
+    var manual = (rankingConfig.ranking && rankingConfig.ranking.manualRanks) || {};
+    var manualKey = manualRankKey_(category, club.permanentClubId);
+    var manualRank = Number(manual[manualKey]);
+    return {
+      clubName: club.clubName,
+      permanentClubId: club.permanentClubId,
+      category: category,
+      complete: complete,
+      participatesEvaluation: participates,
+      eligible: complete && passed === true,
+      passed: passed,
+      finalTotalScore: complete ? club.finalTotalScore : null,
+      currentTotalScore:
+        club.currentTotalScore === null || club.currentTotalScore === undefined
+          ? null
+          : club.currentTotalScore,
+      provisionalTotalScore: provisionalEligible ? club.provisionalTotalScore : null,
+      displayScore: displayScore,
+      rankScore: displayScore,
+      totalMaxScore: club.totalMaxScore,
+      displayRank: null,
+      manualRank: Number.isFinite(manualRank) ? manualRank : null,
+      rankStatus: rankStatus,
+      statusLabel: statusLabel,
+      passStatus: passStatus,
+      unassignedSectionNames: unassignedNames,
+      missingJudgeAssignments: club.missingJudgeAssignments || 0,
+      hasPendingAssignedJudge: hasPending,
+      provisionalEligible: provisionalEligible
+    };
+  }
+
+  function assignFormalRanks_(rankable, rankingConfig, clubMap) {
+    rankable.sort(function (a, b) {
+      return compareRankRows(a, b, rankingConfig, clubMap);
+    });
+    var style = (rankingConfig.ranking && rankingConfig.ranking.rankStyle) || "competition";
+    var unresolvedTie =
+      (rankingConfig.ranking && rankingConfig.ranking.unresolvedTie) || "shared";
+    var tieMode = (rankingConfig.ranking && rankingConfig.ranking.tieMode) || "shared";
+    var i = 0;
+    var denseRank = 0;
+    while (i < rankable.length) {
+      var j = i + 1;
+      while (
+        j < rankable.length &&
+        compareRankRows(rankable[i], rankable[j], rankingConfig, clubMap) === 0
+      ) {
+        j += 1;
+      }
+      denseRank += 1;
+      var rank = style === "dense" ? denseRank : i + 1;
+      var tied = j - i > 1;
+      var allHaveManual = true;
+      for (var m = i; m < j; m++) {
+        if (!Number.isFinite(Number(rankable[m].manualRank))) allHaveManual = false;
+      }
+      if (tied && allHaveManual) {
+        var slice = rankable.slice(i, j).sort(function (a, b) {
+          return Number(a.manualRank) - Number(b.manualRank);
+        });
+        for (var s = 0; s < slice.length; s++) {
+          var item = slice[s];
+          var idx = rankable.indexOf(item);
+          var manualDisplay =
+            style === "dense" ? denseRank + s : Number(item.manualRank) || rank + s;
+          rankable[idx].displayRank = String(manualDisplay);
+          rankable[idx].rankStatus = "ranked";
+          rankable[idx].statusLabel = "及格";
+        }
+      } else {
+        for (var k = i; k < j; k++) {
+          if (Number.isFinite(Number(rankable[k].manualRank))) {
+            rankable[k].displayRank = String(rankable[k].manualRank);
+            rankable[k].rankStatus = "ranked";
+            rankable[k].statusLabel = "及格";
+            continue;
+          }
+          rankable[k].displayRank = String(rank);
+          if (tied) {
+            var pending =
+              unresolvedTie === "manual" || tieMode === "manual";
+            rankable[k].rankStatus = pending ? "tie_pending" : "tied";
+            rankable[k].statusLabel = pending ? "待人工決定" : "同分並列";
+          } else {
+            rankable[k].rankStatus = "ranked";
+            rankable[k].statusLabel = "及格";
+          }
+        }
+      }
+      i = j;
+    }
+  }
+
+  function assignProvisionalRanks_(rows, rankingConfig, clubMap) {
+    var list = rows.filter(function (r) {
+      return r.rankStatus === "provisional";
+    });
+    list.sort(function (a, b) {
+      return compareRankRows(a, b, rankingConfig, clubMap);
+    });
+    var style = (rankingConfig.ranking && rankingConfig.ranking.rankStyle) || "competition";
+    var i = 0;
+    var denseRank = 0;
+    while (i < list.length) {
+      var j = i + 1;
+      while (
+        j < list.length &&
+        compareRankRows(list[i], list[j], rankingConfig, clubMap) === 0
+      ) {
+        j += 1;
+      }
+      denseRank += 1;
+      var rank = style === "dense" ? denseRank : i + 1;
+      for (var k = i; k < j; k++) {
+        list[k].displayRank = "暫" + String(rank);
+        list[k].rankStatus = "provisional";
+        list[k].statusLabel = "暫排名";
+        list[k].passStatus = "暫排名";
+      }
+      i = j;
+    }
+  }
+
+  function sortRankingRowsForDisplay_(rows) {
+    var copy = rows.slice();
+    copy.sort(function (a, b) {
+      function bucket(row) {
+        if (row.rankStatus === "ranked" || row.rankStatus === "tied" || row.rankStatus === "tie_pending") {
+          return 0;
+        }
+        if (row.rankStatus === "provisional") return 1;
+        if (row.rankStatus === "not_participating") return 3;
+        return 2;
+      }
+      var ba = bucket(a);
+      var bb = bucket(b);
+      if (ba !== bb) return ba - bb;
+      if (ba === 0 || ba === 1) {
+        var ra = parseInt(String(a.displayRank || "").replace(/[^\d]/g, ""), 10);
+        var rb = parseInt(String(b.displayRank || "").replace(/[^\d]/g, ""), 10);
+        if (Number.isFinite(ra) && Number.isFinite(rb) && ra !== rb) return ra - rb;
+      }
+      return String(a.permanentClubId || "").localeCompare(
+        String(b.permanentClubId || ""),
+        "en"
+      );
+    });
+    return copy;
   }
 
   function buildRankingPayload(ctx, aggregation) {
@@ -3102,97 +3426,70 @@
     var clubMap = {};
     aggregation.clubs.forEach(function (c) {
       clubMap[c.clubName] = c;
+      if (c.permanentClubId) clubMap[c.permanentClubId] = c;
     });
     var byCategory = {};
+    canonicalRankingCategories_().forEach(function (cat) {
+      byCategory[cat] = [];
+    });
     aggregation.clubs.forEach(function (club) {
-      var cat = club.category || "未分類";
+      var cat = normalizeRankingCategory_(club.category);
       if (!byCategory[cat]) byCategory[cat] = [];
       byCategory[cat].push(club);
     });
-    var categories = Object.keys(byCategory)
-      .sort(function (a, b) {
-        return a.localeCompare(b, "zh-Hant");
-      })
-      .map(function (category) {
-        var rows = byCategory[category].map(function (club) {
-          var complete = !!club.complete;
-          var eligible =
-            (rankingConfig.ranking && rankingConfig.ranking.eligibility) === "all_completed"
-              ? complete
-              : true;
-          var passed = complete ? passesThreshold(club.finalTotalScore, rankingConfig.pass) : null;
-          return {
-            clubName: club.clubName,
-            permanentClubId: club.permanentClubId,
-            category: category,
-            complete: complete,
-            eligible: eligible,
-            passed: passed,
-            finalTotalScore: complete ? club.finalTotalScore : null,
-            totalMaxScore: club.totalMaxScore,
-            displayRank: null,
-            rankStatus: !complete
-              ? "incomplete"
-              : !eligible
-                ? "not_eligible"
-                : "ranked"
-          };
-        });
 
-        var rankable = rows.filter(function (r) {
-          return r.complete && r.eligible;
-        });
-        rankable.sort(function (a, b) {
-          return compareRankRows(a, b, rankingConfig, clubMap);
-        });
+    var categoryOrder = canonicalRankingCategories_().slice();
+    Object.keys(byCategory).forEach(function (cat) {
+      if (categoryOrder.indexOf(cat) < 0) {
+        categoryOrder.splice(categoryOrder.length - 1, 0, cat);
+      }
+    });
 
-        var style = (rankingConfig.ranking && rankingConfig.ranking.rankStyle) || "competition";
-        var tieMode = (rankingConfig.ranking && rankingConfig.ranking.tieMode) || "shared";
-        var i = 0;
-        var denseRank = 0;
-        while (i < rankable.length) {
-          var j = i + 1;
-          while (
-            j < rankable.length &&
-            compareRankRows(rankable[i], rankable[j], rankingConfig, clubMap) === 0
-          ) {
-            j += 1;
-          }
-          denseRank += 1;
-          var rank = style === "dense" ? denseRank : i + 1;
-          var tied = j - i > 1;
-          for (var k = i; k < j; k++) {
-            rankable[k].displayRank = String(rank);
-            if (tied) {
-              rankable[k].rankStatus = tieMode === "manual" ? "tie_pending" : "tied";
-            } else {
-              rankable[k].rankStatus = "ranked";
-            }
-          }
-          i = j;
-        }
-
-        if ((rankingConfig.ranking && rankingConfig.ranking.incompletePolicy) === "hide") {
-          rows = rows.filter(function (r) {
-            return r.complete;
-          });
-        }
-
-        return {
-          category: category,
-          totalClubCount: byCategory[category].length,
-          rows: rows
-        };
+    var categories = categoryOrder.map(function (category) {
+      var clubList = byCategory[category] || [];
+      var rows = clubList.map(function (club) {
+        return buildRankingRowFromClub_(club, rankingConfig);
       });
+
+      var rankable = rows.filter(function (r) {
+        return r.rankStatus === "rankable" || (r.complete && r.passed === true);
+      });
+      assignFormalRanks_(rankable, rankingConfig, clubMap);
+      assignProvisionalRanks_(rows, rankingConfig, clubMap);
+
+      if ((rankingConfig.ranking && rankingConfig.ranking.incompletePolicy) === "hide") {
+        rows = rows.filter(function (r) {
+          return (
+            r.complete ||
+            r.rankStatus === "provisional" ||
+            r.rankStatus === "not_participating"
+          );
+        });
+      }
+
+      rows = sortRankingRowsForDisplay_(rows);
+      return {
+        category: category,
+        totalClubCount: clubList.length,
+        rows: rows
+      };
+    });
 
     var summary = {
       clubCount: aggregation.clubs.length,
       completedCount: 0,
       passedCount: 0,
       failedCount: 0,
-      incompleteCount: 0
+      incompleteCount: 0,
+      provisionalCount: 0,
+      notParticipatingCount: 0
     };
     aggregation.clubs.forEach(function (c) {
+      if (c.participatesEvaluation === false) {
+        summary.notParticipatingCount += 1;
+        return;
+      }
+      if (c.provisionalEligible) summary.provisionalCount += 1;
       if (!c.complete) {
         summary.incompleteCount += 1;
         return;
@@ -3209,6 +3506,7 @@
       config: rankingConfig,
       availableMetrics: availableMetricsOf(ctx.scoreConfig),
       totalMaxScore: aggregation.totalMaxScore,
+      activityTitle: rankingActivityTitle_(ctx.activity),
       generatedAt: new Date().toISOString(),
       source: "pocketbase",
       updateTime: String(ctx.activity.updated || new Date().toISOString())
@@ -3237,12 +3535,15 @@
     var conf = Object.assign({}, activity.config_json || {});
     var next = data.config || data.rankingConfig || null;
     if (!next || typeof next !== "object") return fail("缺少排名規則。");
+    var nextRanking = next.ranking && typeof next.ranking === "object" ? next.ranking : {};
     conf.rankingConfig = {
       pass: Object.assign({}, defaultRankingConfig().pass, next.pass || {}),
-      ranking: Object.assign({}, defaultRankingConfig().ranking, next.ranking || {}, {
-        tieBreakers: Array.isArray((next.ranking || {}).tieBreakers)
-          ? next.ranking.tieBreakers
-          : []
+      ranking: Object.assign({}, defaultRankingConfig().ranking, nextRanking, {
+        tieBreakers: Array.isArray(nextRanking.tieBreakers) ? nextRanking.tieBreakers : [],
+        manualRanks:
+          nextRanking.manualRanks && typeof nextRanking.manualRanks === "object"
+            ? nextRanking.manualRanks
+            : {}
       })
     };
     var updated = await pb().collection(C().activities).update(activity.id, {
@@ -3268,21 +3569,21 @@
   }
 
   function buildCategoryRankingCsv(ranking) {
-    var lines = ["屬性,名次,社團,永久社團編號,總分,滿分,完成,及格,狀態"];
+    var lines = ["社團名稱,屬性,名次,總分,及格狀態,永久社團編號,狀態"];
     (ranking.categories || []).forEach(function (cat) {
-      (cat.rows || []).forEach(function (row) {
+      sortRankingRowsForDisplay_((cat && cat.rows) || []).forEach(function (row) {
+        var score =
+          row.displayScore !== null && row.displayScore !== undefined
+            ? row.displayScore
+            : row.finalTotalScore;
         lines.push(
           [
-            cat.category,
-            row.displayRank || "",
             row.clubName,
+            cat.category,
+            exportDisplayRankText_(row),
+            row.rankStatus === "not_participating" ? "" : exportScoreOneDecimal_(score),
+            exportPassStatusText_(row),
             row.permanentClubId || "",
-            row.finalTotalScore === null || row.finalTotalScore === undefined
-              ? ""
-              : row.finalTotalScore,
-            row.totalMaxScore,
-            row.complete ? "Y" : "N",
-            row.passed === true ? "及格" : row.passed === false ? "不及格" : "",
             row.rankStatus || ""
           ]
             .map(csvEscape)
@@ -3406,122 +3707,97 @@
     return fallback;
   }
 
-  function buildCategoryRankingWorkbook(ranking, aggregation) {
-    var maxScores = {
-      routine: exportMetricMaxFromAggregation_(
-        aggregation,
-        function (club) {
-          return exportGroupBucket_(club, "routinePerformance", /平時表現|平時/);
-        },
-        30
-      ),
-      data: exportMetricMaxFromAggregation_(
-        aggregation,
-        function (club) {
-          return exportSectionBucketByIdOrName_(club, "dataReview", /資料審查|數位資料|資料/);
-        },
-        50
-      ),
-      field: exportMetricMaxFromAggregation_(
-        aggregation,
-        function (club) {
-          return exportSectionBucketByIdOrName_(club, "fieldReview", /實地審查|現場|詢答/);
-        },
-        20
-      ),
-      total:
-        Number((ranking && ranking.totalMaxScore) || (aggregation && aggregation.totalMaxScore)) ||
-        100
-    };
+  function exportPassStatusText_(row) {
+    if (!row) return "";
+    if (row.rankStatus === "not_participating") return "";
+    if (row.passStatus) return String(row.passStatus);
+    if (row.rankStatus === "provisional") return "暫排名";
+    if (row.passed === true) return "及格";
+    if (row.passed === false) return "未達及格";
+    if (row.complete !== true) return "未完成";
+    return "";
+  }
 
-    function enrichedRow(row, categoryName) {
-      var clubAgg = findAggregationClubForExport_(aggregation, row);
-      var routine = exportGroupBucket_(clubAgg, "routinePerformance", /平時表現|平時/);
-      var data = exportSectionBucketByIdOrName_(clubAgg, "dataReview", /資料審查|數位資料|資料/);
-      var field = exportSectionBucketByIdOrName_(clubAgg, "fieldReview", /實地審查|現場|詢答/);
-      return {
-        category: categoryName || (row && row.category) || "",
-        displayRank: row && row.displayRank ? String(row.displayRank) : "",
-        clubName: (row && row.clubName) || "",
-        permanentClubId: (row && row.permanentClubId) || "",
-        routineScore: exportScoreNumber_(exportBucketScore_(routine)),
-        dataScore: exportScoreNumber_(exportBucketScore_(data)),
-        fieldScore: exportScoreNumber_(exportBucketScore_(field)),
-        totalScore: exportScoreNumber_(row && row.finalTotalScore),
-        result: exportRankingResultText_(row)
-      };
+  function exportDisplayRankText_(row) {
+    if (!row) return "";
+    if (row.rankStatus === "provisional") {
+      var base = String(row.displayRank || "暫");
+      var names = Array.isArray(row.unassignedSectionNames)
+        ? row.unassignedSectionNames.filter(Boolean)
+        : [];
+      if (names.length) return base + "（未指派：" + names.join("、") + "）";
+      return base;
     }
+    if (
+      row.rankStatus === "ranked" ||
+      row.rankStatus === "tied" ||
+      row.rankStatus === "tie_pending"
+    ) {
+      return row.displayRank ? String(row.displayRank) : "";
+    }
+    return "";
+  }
 
-    var categoryHeaders = [
-      "名次",
-      "社團名稱",
-      exportScoreHeader_("平時表現", maxScores.routine),
-      exportScoreHeader_("數位資料", maxScores.data),
-      exportScoreHeader_("現場詢答", maxScores.field),
-      exportScoreHeader_("總分", maxScores.total),
-      "結果"
-    ];
-    var overviewHeaders = [
-      "名次",
-      "屬性",
-      "社團名稱",
-      exportScoreHeader_("平時表現", maxScores.routine),
-      exportScoreHeader_("數位資料", maxScores.data),
-      exportScoreHeader_("現場詢答", maxScores.field),
-      exportScoreHeader_("總分", maxScores.total),
-      "結果"
-    ];
-
+  function buildCategoryRankingWorkbook(ranking, aggregation) {
+    void aggregation;
+    var activityTitle = String(
+      (ranking && ranking.activityTitle) ||
+        "115學年度第一學期全校學生社團評選暨觀摩活動"
+    ).trim();
+    var generatedAt = (ranking && ranking.generatedAt) || new Date().toISOString();
+    var downloadDate = String(generatedAt).slice(0, 10);
+    var headers = ["社團名稱", "屬性", "名次", "總分", "及格狀態"];
     var usedNames = {};
-    var overviewSheetName = exportSafeSheetName_("全校總覽", usedNames);
     var sheets = [];
-    var overviewRows = [overviewHeaders];
+    var rowCount = 0;
     var categories = (ranking && ranking.categories) || [];
+    var byName = {};
     categories.forEach(function (cat) {
-      var categoryName = String((cat && cat.category) || "未分類");
-      var catRows = [categoryHeaders];
-      ((cat && cat.rows) || []).forEach(function (row) {
-        var item = enrichedRow(row, categoryName);
-        overviewRows.push([
-          item.displayRank,
-          item.category,
-          item.clubName,
-          item.routineScore,
-          item.dataScore,
-          item.fieldScore,
-          item.totalScore,
-          item.result
+      byName[String((cat && cat.category) || "未分類")] = cat;
+    });
+    canonicalRankingCategories_().forEach(function (categoryName) {
+      var cat = byName[categoryName] || { category: categoryName, rows: [] };
+      var dataRows = sortRankingRowsForDisplay_((cat && cat.rows) || []);
+      var sheetRows = [
+        [activityTitle],
+        ["屬性：" + categoryName],
+        ["下載日期：" + downloadDate],
+        headers
+      ];
+      dataRows.forEach(function (row) {
+        var score =
+          row.displayScore !== null && row.displayScore !== undefined
+            ? row.displayScore
+            : row.finalTotalScore !== null && row.finalTotalScore !== undefined
+              ? row.finalTotalScore
+              : row.currentTotalScore;
+        sheetRows.push([
+          (row && row.clubName) || "",
+          categoryName,
+          exportDisplayRankText_(row),
+          row && row.rankStatus === "not_participating"
+            ? ""
+            : exportScoreOneDecimal_(score),
+          exportPassStatusText_(row)
         ]);
-        catRows.push([
-          item.displayRank,
-          item.clubName,
-          item.routineScore,
-          item.dataScore,
-          item.fieldScore,
-          item.totalScore,
-          item.result
-        ]);
+        rowCount += 1;
       });
       sheets.push({
         name: exportSafeSheetName_(categoryName, usedNames),
         category: categoryName,
-        rows: catRows
+        headerRowIndex: 4,
+        freezeRows: 4,
+        filterRef: "A4:E" + String(Math.max(4, sheetRows.length)),
+        rows: sheetRows
       });
-    });
-
-    sheets.unshift({
-      name: overviewSheetName,
-      category: "全校總覽",
-      rows: overviewRows
     });
 
     return {
       sheets: sheets,
-      maxScores: maxScores,
       summary: {
-        categoryCount: categories.length,
+        categoryCount: sheets.length,
         sheetCount: sheets.length,
-        rowCount: Math.max(0, overviewRows.length - 1)
+        rowCount: rowCount
       }
     };
   }
@@ -4049,14 +4325,16 @@
     var ranking = buildRankingPayload(ctx, aggregation);
     var workbook = buildCategoryRankingWorkbook(ranking, aggregation);
     var stamp = new Date().toISOString().slice(0, 10);
+    var title = rankingActivityTitle_(ctx.activity).replace(/[\\\/:*?"<>|]+/g, "_");
     return ok({
       delivery: "client-xlsx",
       workbook: workbook,
       // 保留舊 CSV 後備，避免舊前端只認 base64 時完全不能下載。
       base64: toBase64Utf8(buildCategoryRankingCsv(ranking)),
       mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      fileName: "hksp-category-ranking-" + stamp + ".xlsx",
+      fileName: title + "社團排名" + stamp + ".xlsx",
       generatedAt: ranking.generatedAt,
+      activityTitle: title,
       summary: {
         categoryCount: workbook.summary.categoryCount,
         sheetCount: workbook.summary.sheetCount,
