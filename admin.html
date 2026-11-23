@@ -9388,10 +9388,14 @@ return judgeConfirmPdfMatchSection_(record,sectionId,sectionTitle);
 });
 const criteria =
 judgeConfirmPdfCollectCriteria_(records);
-const chunkSize =
+/*
+ * Cap columns per page for landscape layout, but never invent
+ * placeholder headers like「項目3」when fewer criteria exist.
+ */
+const maxColsPerPage =
 4;
 const chunks =
-judgeConfirmPdfChunk_(criteria,chunkSize);
+judgeConfirmPdfChunk_(criteria,maxColsPerPage);
 const judgeName =
 judgeExportDisplayName(model && model.judge);
 const generatedAt =
@@ -9405,9 +9409,9 @@ const pagePlans =
 chunks.forEach(function(chunk,chunkIndex){
 const headers =
 ["序","社團名稱"];
-for(let c=0;c<chunkSize;c+=1){
-headers.push(chunk[c] ? chunk[c].name : ("項目" + (chunkIndex * chunkSize + c + 1)));
-}
+chunk.forEach(function(criterion){
+headers.push(String((criterion && criterion.name) || (criterion && criterion.id) || "項目"));
+});
 headers.push("小計","狀態");
 const dataRows =
 [];
@@ -9423,15 +9427,11 @@ const line =
 judgeConfirmPdfSeq_(index + 1),
 String(record.clubName || "")
 ];
-for(let c=0;c<chunkSize;c+=1){
+chunk.forEach(function(criterion){
 line.push(
-chunk[c]
-?
-judgeConfirmPdfCriterionScore_(record,chunk[c].id)
-:
-"—"
+judgeConfirmPdfCriterionScore_(record,criterion.id)
 );
-}
+});
 line.push(judgeConfirmPdfSectionSubtotal_(record));
 line.push(
 judgeConfirmPdfStatusText_(record.status,record.reopened)
