@@ -544,7 +544,7 @@ onclick="exportOrganizerAuditExcel()"
 <select
 id="judgeExportJudge"
 class="field grow"
-onchange="resetJudgeConfirmationPreview()"
+onchange="onJudgeConfirmationSingleJudgeChange_()"
 >
 <option value="">請先選擇評審</option>
 </select>
@@ -570,7 +570,7 @@ disabled
 </div>
 
 <div class="export-print-hint">
-選擇評審與類別後直接下載 PDF（不必預覽）。版型依 B／橫式明細示意（固定橫式 A4 一頁一張）。下拉選項會依評分機制大項自動更新；「全部大項」為一份 PDF（各大項明細→總成績）。
+選擇評審後，類別會依「評審帳號管理」已分配的評分大項自動帶出（不含未負責項目）。版型固定橫式 A4；「全部負責大項」為一份 PDF（負責大項明細→總成績）。
 </div>
 
 <div id="judgeExportState" class="state">
@@ -580,7 +580,7 @@ disabled
 <div id="judgeExportPreview" class="export-preview hidden" hidden></div>
 
 <div class="notice" style="margin-top:18px">
-<strong>多位評審一次下載</strong>（保留上方單位老師匯出）。選 1 位直接下 PDF；選多位才打包 ZIP。每位老師各一份 PDF（依所選大項／全部大項）。
+<strong>多位評審一次下載</strong>（保留上方單位老師匯出）。選 1 位直接下 PDF；選多位才打包 ZIP。勾選後類別會取「共同負責大項」，避免出現某位老師沒負責的選項。
 </div>
 
 <div class="toolbar export-toolbar" style="flex-wrap:wrap;align-items:flex-start;gap:10px">
@@ -1672,7 +1672,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=l1-3-1"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=m1-8-3"></script>
-<script src="./platform-admin-pb.js?v=m1-8-9"></script>
+<script src="./platform-admin-pb.js?v=m1-8-10"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -2246,9 +2246,15 @@ $("judgeExportJudge");
 const kindSelect =
 $("judgeExportSheetKind");
 
+const hasKind =
+!!(
+kindSelect &&
+kindSelect.value
+);
+
 if(pdfBtn){
 pdfBtn.disabled =
-!!busy || !selected;
+!!busy || !selected || !hasKind;
 }
 
 const singleBusy =
@@ -8020,50 +8026,185 @@ return list
 .map(
 section=>({
 id:String((section && section.id) || "").trim(),
-name:String((section && section.name) || (section && section.id) || "").trim()
+name:String(
+(section && section.name) ||
+scoreSectionName(section && section.id) ||
+(section && section.id) ||
+""
+).trim()
 })
 )
 .filter(section=>!!section.id);
 }
 
-function renderJudgeExportSheetKindOptions(){
-const sections =
+function judgeConfirmFindJudgeById_(judgeId){
+const id =
+String(judgeId || "").trim();
+if(!id) return null;
+return (
+(S.judges || []).find(
+judge=>judgeIdOf(judge) === id
+) || null
+);
+}
+
+function judgeAssignedScoreSectionIds_(judge){
+if(!judge) return [];
+return (
+Array.isArray(judge.scoreSectionIds)
+?
+judge.scoreSectionIds
+:
+[]
+)
+.map(id=>String(id || "").trim())
+.filter(Boolean);
+}
+
+function judgeConfirmExportSectionsForJudges_(judges){
+const base =
 judgeConfirmExportSections_();
-const selects =
-[
-$("judgeExportSheetKind"),
-$("judgeBatchSheetKind")
-].filter(Boolean);
-if(!selects.length) return;
-selects.forEach(el=>{
+const list =
+Array.isArray(judges)
+?
+judges.filter(Boolean)
+:
+[];
+if(!list.length) return [];
+let allowed =
+null;
+list.forEach(judge=>{
+const ids =
+new Set(
+judgeAssignedScoreSectionIds_(judge)
+);
+if(allowed === null){
+allowed = ids;
+return;
+}
+allowed = new Set(
+Array.from(allowed).filter(
+id=>ids.has(id)
+)
+);
+});
+if(!allowed || !allowed.size) return [];
+return base.filter(
+section=>allowed.has(section.id)
+);
+}
+
+function fillJudgeExportSheetKindSelect_(el,sections,emptyLabel){
+if(!el) return;
 const current =
-el.value || "all";
+el.value || "";
 const opts =
 [];
+if(!sections.length){
+opts.push(
+`<option value="">${esc(emptyLabel || "無可下載大項")}</option>`
+);
+}
+else{
 sections.forEach(section=>{
 opts.push(
 `<option value="${attr(section.id)}">${esc(section.name || section.id)}</option>`
 );
 });
-if(!sections.length){
+opts.push('<option value="total">總成績</option>');
 opts.push(
-'<option value="dataReview">資料審查（或同名大項）</option>'
-);
-opts.push(
-'<option value="fieldReview">實地審查（或同名大項）</option>'
+sections.length > 1
+?
+'<option value="all">全部負責大項</option>'
+:
+'<option value="all">負責大項＋總成績</option>'
 );
 }
-opts.push('<option value="total">總成績</option>');
-opts.push('<option value="all">全部大項</option>');
 el.innerHTML =
 opts.join("");
 const valid =
+current &&
 Array.from(el.options).some(
 option=>option.value === current
 );
+if(valid){
 el.value =
-valid ? current : "all";
-});
+current;
+}
+else if(sections.length){
+el.value =
+sections.length === 1
+?
+sections[0].id
+:
+"all";
+}
+else{
+el.value =
+"";
+}
+}
+
+function renderJudgeExportSheetKindOptions(){
+const singleId =
+$("judgeExportJudge") &&
+$("judgeExportJudge").value;
+const singleJudge =
+judgeConfirmFindJudgeById_(singleId);
+const singleSections =
+singleJudge
+?
+judgeConfirmExportSectionsForJudges_([singleJudge])
+:
+[];
+fillJudgeExportSheetKindSelect_(
+$("judgeExportSheetKind"),
+singleSections,
+singleId
+?
+"此評審未分配評分大項"
+:
+"請先選擇評審"
+);
+
+const batchIds =
+selectedJudgeConfirmationBatchIds_();
+const batchJudges =
+batchIds
+.map(judgeConfirmFindJudgeById_)
+.filter(Boolean);
+const batchSections =
+batchJudges.length
+?
+judgeConfirmExportSectionsForJudges_(batchJudges)
+:
+[];
+let batchEmpty =
+"請先勾選評審";
+if(batchJudges.length === 1){
+batchEmpty =
+"此評審未分配評分大項";
+}
+else if(batchJudges.length > 1){
+batchEmpty =
+"所選評審沒有共同負責大項";
+}
+fillJudgeExportSheetKindSelect_(
+$("judgeBatchSheetKind"),
+batchSections,
+batchEmpty
+);
+
+syncJudgeConfirmationExportBusyUi_();
+}
+
+function onJudgeConfirmationSingleJudgeChange_(){
+renderJudgeExportSheetKindOptions();
+resetJudgeConfirmationPreview();
+}
+
+function onJudgeConfirmationBatchSelectionChange_(){
+renderJudgeExportSheetKindOptions();
 }
 
 function renderJudgeConfirmationBatchList(){
@@ -8133,7 +8274,7 @@ prev[id]
 
 return `
 <label style="display:block;margin:4px 0;cursor:pointer">
-<input type="checkbox" data-judge-id="${attr(id)}"${checked}${active?"":" disabled"}>
+<input type="checkbox" data-judge-id="${attr(id)}" onchange="onJudgeConfirmationBatchSelectionChange_()"${checked}${active?"":" disabled"}>
 ${esc(judgeExportDisplayName(judge))}${account}${active?"":"－已停用"}
 </label>
 `;
@@ -8141,6 +8282,8 @@ ${esc(judgeExportDisplayName(judge))}${account}${active?"":"－已停用"}
 }
 )
 .join("");
+
+renderJudgeExportSheetKindOptions();
 
 if(
 isJudgeConfirmationExportBusy_()
@@ -8168,6 +8311,8 @@ input.checked =
 !!selected;
 }
 );
+
+onJudgeConfirmationBatchSelectionChange_();
 
 }
 
@@ -8202,6 +8347,18 @@ null;
  */
 const selected =
 $("judgeExportJudge").value;
+const judge =
+judgeConfirmFindJudgeById_(selected);
+const sections =
+judge
+?
+judgeConfirmExportSectionsForJudges_([judge])
+:
+[];
+const sectionNames =
+sections
+.map(section=>section.name || section.id)
+.filter(Boolean);
 
 $("judgeExportPreview").classList.add(
 "hidden"
@@ -8214,19 +8371,24 @@ $("judgeExportState").classList.remove(
 "hidden"
 );
 
+if(!selected){
 $("judgeExportState").textContent =
-selected
-?
-"已選擇評審，可直接下載 PDF。"
-:
-"選擇評審與類別後，可直接下載 PDF。";
-
+"選擇評審後，會依其負責大項顯示可下載類別。";
 $("judgeExportMeta").textContent =
-selected
-?
-"可下載 PDF"
-:
 "請先選擇評審";
+}
+else if(!sections.length){
+$("judgeExportState").textContent =
+"此評審尚未在「評審帳號管理」分配評分大項，無法下載確認表。";
+$("judgeExportMeta").textContent =
+"未分配評分大項";
+}
+else{
+$("judgeExportState").textContent =
+`已選擇評審，可下載：${sectionNames.join("、")}（另含總成績／全部負責大項）。`;
+$("judgeExportMeta").textContent =
+`可下載 ${sections.length} 個大項`;
+}
 
 syncJudgeConfirmationExportBusyUi_();
 
@@ -8236,7 +8398,7 @@ function judgeExportSheetKindLabel(kind){
 if(kind==="dataReview") return "資料審查";
 if(kind==="fieldReview") return "實地審查";
 if(kind==="total") return "總成績";
-if(kind==="all") return "全部大項";
+if(kind==="all") return "全部負責大項";
 const sections =
 judgeConfirmExportSections_();
 const hit =
@@ -8244,6 +8406,9 @@ sections.find(
 section=>section.id === String(kind || "")
 );
 if(hit) return hit.name || hit.id;
+const named =
+scoreSectionName(kind);
+if(named && named !== kind) return named;
 return String(kind || "確認表");
 }
 
@@ -9783,10 +9948,15 @@ const judgeId =
 $("judgeExportJudge").value;
 
 const sheetKind =
-($("judgeExportSheetKind") && $("judgeExportSheetKind").value) || "all";
+($("judgeExportSheetKind") && $("judgeExportSheetKind").value) || "";
 
 if(!judgeId){
 toast("請先選擇評審");
+return;
+}
+
+if(!sheetKind){
+toast("此評審未分配評分大項，無法下載");
 return;
 }
 
@@ -10423,7 +10593,15 @@ $("judgeBatchSelectAllBtn");
 const selectNoneBtn =
 $("judgeBatchSelectNoneBtn");
 
-if(zipBtn) zipBtn.disabled = !!busy;
+const batchHasKind =
+!!(kind && kind.value);
+const batchHasJudges =
+selectedJudgeConfirmationBatchIds_().length > 0;
+
+if(zipBtn){
+zipBtn.disabled =
+!!busy || !batchHasJudges || !batchHasKind;
+}
 
 if(kind) kind.disabled = !!busy;
 
@@ -10566,10 +10744,21 @@ judgeIds =
 selectedJudgeConfirmationBatchIds_();
 
 sheetKind =
-($("judgeBatchSheetKind") && $("judgeBatchSheetKind").value) || "all";
+($("judgeBatchSheetKind") && $("judgeBatchSheetKind").value) || "";
 
 if(!judgeIds.length){
 toast("請先勾選至少一位評審");
+return;
+}
+
+if(!sheetKind){
+toast(
+judgeIds.length > 1
+?
+"所選評審沒有共同負責大項，無法一次下載"
+:
+"此評審未分配評分大項，無法下載"
+);
 return;
 }
 
