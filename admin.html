@@ -438,7 +438,7 @@ onchange="renderScoreAggregation()"
 <div class="panel-body">
 
 <div class="notice">
-匯出單一活頁簿：每個屬性各一張工作表（含空白屬性頁，「未分類」在最後），無全校總覽。欄位僅含社團名稱、屬性、名次、總分、及格狀態。正式名次在前，暫排名次之，未完成依社團編號，未參加評選最後。總分顯示至小數第 1 位；每次下載即時套用最新分數與排名規則。
+匯出單一活頁簿：每個屬性各一張工作表（含空白屬性頁，「未分類」在最後），無全校總覽。欄位僅含社團名稱、屬性、名次、總分、及格狀態。依名次排序（正式→暫排→未完成→未參加）；中文標楷體、數字 Times New Roman，欄寬預設好看不必再拉。總分顯示至小數第 1 位；每次下載即時套用最新分數與排名規則。
 </div>
 
 <div class="card" style="margin-top:12px">
@@ -1672,7 +1672,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=l1-3-1"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=m1-8-3"></script>
-<script src="./platform-admin-pb.js?v=m1-8-10"></script>
+<script src="./platform-admin-pb.js?v=m1-8-11"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -11348,6 +11348,9 @@ setTimeout(
 let xlsxLoaderPromise_ =
 null;
 
+let excelJsLoaderPromise_ =
+null;
+
 function ensureXlsxLoaded_(){
 if(xlsxLoaderPromise_){
 return xlsxLoaderPromise_;
@@ -11373,12 +11376,49 @@ throw error;
 return xlsxLoaderPromise_;
 }
 
+function ensureExcelJsLoaded_(){
+if(excelJsLoaderPromise_){
+return excelJsLoaderPromise_;
+}
+excelJsLoaderPromise_ =
+(async function(){
+if(window.ExcelJS){
+return window.ExcelJS;
+}
+await loadScriptOnce_(
+"https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js",
+"exceljs"
+);
+if(!window.ExcelJS){
+throw new Error("Excel 樣式元件載入後無法使用");
+}
+return window.ExcelJS;
+})().catch(function(error){
+excelJsLoaderPromise_ =
+null;
+throw error;
+});
+return excelJsLoaderPromise_;
+}
+
+function rankingExcelIsNumericCell_(value){
+if(typeof value === "number"){
+return Number.isFinite(value);
+}
+if(typeof value === "string"){
+const trimmed =
+value.trim();
+return trimmed !== "" && /^-?\d+(\.\d+)?$/.test(trimmed);
+}
+return false;
+}
+
 async function downloadCategoryRankingWorkbook_(
 workbook,
 fileName
 ){
-const XLSX =
-await ensureXlsxLoaded_();
+const ExcelJS =
+await ensureExcelJsLoaded_();
 const sheets =
 workbook &&
 Array.isArray(workbook.sheets)
@@ -11390,7 +11430,21 @@ if(!sheets.length){
 throw new Error("沒有可匯出的工作表");
 }
 const wb =
-XLSX.utils.book_new();
+new ExcelJS.Workbook();
+wb.creator =
+"HKSP";
+wb.created =
+new Date();
+const textFont =
+{
+name:"標楷體",
+size:12
+};
+const numberFont =
+{
+name:"Times New Roman",
+size:12
+};
 sheets.forEach(function(sheet){
 const rows =
 Array.isArray(sheet.rows)
@@ -11399,48 +11453,125 @@ sheet.rows
 :
 [];
 const ws =
-XLSX.utils.aoa_to_sheet(rows);
+wb.addWorksheet(
+String(sheet.name || "工作表").slice(0, 31) || "工作表",
+{
+views:[
+{
+state:"frozen",
+ySplit:
+Number(sheet.freezeRows) > 0
+?
+Number(sheet.freezeRows)
+:
+4,
+activeCell:"A5"
+}
+]
+}
+);
+const widths =
+Array.isArray(sheet.columnWidths) && sheet.columnWidths.length
+?
+sheet.columnWidths
+:
+[20, 14, 10, 10, 12];
+widths.forEach(function(width, index){
+ws.getColumn(index + 1).width =
+Number(width) || 12;
+});
+rows.forEach(function(rowValues, rowIndex){
+const values =
+Array.isArray(rowValues)
+?
+rowValues
+:
+[];
+const excelRow =
+ws.addRow(values);
+excelRow.height =
+18;
+excelRow.eachCell(
+{
+includeEmpty:true
+},
+function(cell, colNumber){
+const isHeaderMeta =
+rowIndex < 3;
+const isHeaderRow =
+rowIndex === 3;
+const isRankOrScore =
+colNumber === 3 || colNumber === 4;
+const raw =
+cell.value;
+const numeric =
+isRankOrScore && rankingExcelIsNumericCell_(raw);
+if(numeric && typeof raw === "string"){
+cell.value =
+Number(raw);
+}
+cell.font =
+numeric
+?
+Object.assign({}, numberFont)
+:
+Object.assign(
+{},
+textFont,
+isHeaderRow
+?
+{
+bold:true
+}
+:
+null
+);
+cell.alignment =
+{
+vertical:"middle",
+horizontal:"left",
+wrapText:false
+};
+if(colNumber === 4 && numeric){
+cell.numFmt =
+"0.0";
+}
+if(isHeaderMeta && colNumber === 1){
+cell.font =
+Object.assign(
+{},
+textFont,
+{
+size:rowIndex === 0 ? 14 : 12,
+bold:rowIndex === 0
+}
+);
+}
+}
+);
+});
 const headerRow =
 Number(sheet.headerRowIndex) > 0
 ?
 Number(sheet.headerRowIndex)
 :
-1;
-const freezeRows =
-Number(sheet.freezeRows) > 0
-?
-Number(sheet.freezeRows)
-:
-headerRow;
-if(rows.length >= headerRow){
-const lastCol =
-"E";
+4;
 const lastRow =
 Math.max(headerRow, rows.length);
-ws["!autofilter"] = {
-ref:
-String(sheet.filterRef || ( "A" + headerRow + ":" + lastCol + lastRow ))
-};
-ws["!freeze"] = {
-xSplit:0,
-ySplit:freezeRows,
-topLeftCell:"A" + (freezeRows + 1),
-activePane:"bottomLeft",
-state:"frozen"
-};
+ws.autoFilter =
+{
+from:{
+row:headerRow,
+column:1
+},
+to:{
+row:lastRow,
+column:5
 }
-const name =
-String(sheet.name || "工作表").slice(0, 31) || "工作表";
-XLSX.utils.book_append_sheet(wb, ws, name);
+};
 });
 const out =
-XLSX.write(
-wb,
-{
-bookType:"xlsx",
-type:"array"
-}
-);
+await wb.xlsx.writeBuffer();
 downloadBlobArtifact_(
 new Blob(
 [out],

@@ -3394,6 +3394,23 @@
     }
   }
 
+  function rankingDisplayRankNumber_(row) {
+    var n = parseInt(String((row && row.displayRank) || "").replace(/[^\d]/g, ""), 10);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function rankingDisplayScoreNumber_(row) {
+    if (!row) return null;
+    var raw =
+      row.displayScore !== null && row.displayScore !== undefined
+        ? row.displayScore
+        : row.finalTotalScore !== null && row.finalTotalScore !== undefined
+          ? row.finalTotalScore
+          : row.currentTotalScore;
+    var n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+
   function sortRankingRowsForDisplay_(rows) {
     var copy = rows.slice();
     copy.sort(function (a, b) {
@@ -3409,14 +3426,19 @@
       var bb = bucket(b);
       if (ba !== bb) return ba - bb;
       if (ba === 0 || ba === 1) {
-        var ra = parseInt(String(a.displayRank || "").replace(/[^\d]/g, ""), 10);
-        var rb = parseInt(String(b.displayRank || "").replace(/[^\d]/g, ""), 10);
-        if (Number.isFinite(ra) && Number.isFinite(rb) && ra !== rb) return ra - rb;
+        var ra = rankingDisplayRankNumber_(a);
+        var rb = rankingDisplayRankNumber_(b);
+        if (ra !== null && rb !== null && ra !== rb) return ra - rb;
+        if (ra !== null && rb === null) return -1;
+        if (ra === null && rb !== null) return 1;
       }
-      return String(a.permanentClubId || "").localeCompare(
-        String(b.permanentClubId || ""),
-        "en"
-      );
+      // Prefer score order over club id/name so Excel opens already “by 名次/成績”.
+      var sa = rankingDisplayScoreNumber_(a);
+      var sb = rankingDisplayScoreNumber_(b);
+      if (sa !== null && sb !== null && sa !== sb) return sb - sa;
+      if (sa !== null && sb === null) return -1;
+      if (sa === null && sb !== null) return 1;
+      return String(a.clubName || "").localeCompare(String(b.clubName || ""), "zh-Hant");
     });
     return copy;
   }
@@ -3738,12 +3760,24 @@
     return "";
   }
 
+  function exportDisplayRankCell_(row) {
+    var text = exportDisplayRankText_(row);
+    if (text === "") return "";
+    if (/^\d+$/.test(text)) return Number(text);
+    return text;
+  }
+
+  function rankingExcelCoverTitle_(ranking) {
+    var raw = String((ranking && ranking.activityTitle) || "").trim();
+    if (/^115-1/.test(raw) || /115\s*學年/.test(raw) || !raw) {
+      return "115-1 社團評鑑繳交";
+    }
+    return raw;
+  }
+
   function buildCategoryRankingWorkbook(ranking, aggregation) {
     void aggregation;
-    var activityTitle = String(
-      (ranking && ranking.activityTitle) ||
-        "115學年度第一學期全校學生社團評選暨觀摩活動"
-    ).trim();
+    var coverTitle = rankingExcelCoverTitle_(ranking);
     var generatedAt = (ranking && ranking.generatedAt) || new Date().toISOString();
     var downloadDate = String(generatedAt).slice(0, 10);
     var headers = ["社團名稱", "屬性", "名次", "總分", "及格狀態"];
@@ -3759,7 +3793,7 @@
       var cat = byName[categoryName] || { category: categoryName, rows: [] };
       var dataRows = sortRankingRowsForDisplay_((cat && cat.rows) || []);
       var sheetRows = [
-        [activityTitle],
+        [coverTitle],
         ["屬性：" + categoryName],
         ["下載日期：" + downloadDate],
         headers
@@ -3771,13 +3805,15 @@
             : row.finalTotalScore !== null && row.finalTotalScore !== undefined
               ? row.finalTotalScore
               : row.currentTotalScore;
+        var scoreCell =
+          row && row.rankStatus === "not_participating"
+            ? ""
+            : exportScoreOneDecimal_(score);
         sheetRows.push([
           (row && row.clubName) || "",
           categoryName,
-          exportDisplayRankText_(row),
-          row && row.rankStatus === "not_participating"
-            ? ""
-            : exportScoreOneDecimal_(score),
+          exportDisplayRankCell_(row),
+          scoreCell,
           exportPassStatusText_(row)
         ]);
         rowCount += 1;
@@ -3788,6 +3824,7 @@
         headerRowIndex: 4,
         freezeRows: 4,
         filterRef: "A4:E" + String(Math.max(4, sheetRows.length)),
+        columnWidths: [20, 14, 10, 10, 12],
         rows: sheetRows
       });
     });
