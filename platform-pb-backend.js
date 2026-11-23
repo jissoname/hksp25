@@ -820,14 +820,13 @@
 
   function listClubEvaluationFolders(data) {
     return contextFromAuth().then(function (ctx) {
-      return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid).then(function (root) {
-        var parentId = String((data && data.parentFolderId) || "").trim() || root.id;
-        var filter =
-          'club="' + ctx.club.id + '" && trashed!=true && parent="' + parentId + '"';
-        if (parentId === root.id) {
-          // also include children of root; parent field empty treated as root children via ensure
-          filter = 'club="' + ctx.club.id + '" && trashed!=true && (parent="' + parentId + '" || (parent="" && id!="' + root.id + '"))';
-        }
+      var kind = (data && data.uploadKind) === "feature" ? "feature" : "evaluation";
+      return ensureRootFolder(ctx.activity, ctx.club, ctx.user.uid, kind).then(function (root) {
+        // Feature is a flat shared folder; always browse from its root.
+        var parentId =
+          kind === "feature"
+            ? root.id
+            : String((data && data.parentFolderId) || "").trim() || root.id;
         return pb.collection(C.folders).getFullList({
           filter: 'club="' + ctx.club.id + '" && trashed!=true && parent="' + parentId + '"',
           sort: "name"
@@ -837,21 +836,37 @@
             sort: "-created"
           }).then(function (files) {
             var access = buildUploadAccessFields(ctx.activity, ctx.club);
-            return ok({
-              clubFolderId: root.id,
-              parentFolderId: parentId,
-              path: [
-                { folderId: root.id, name: ctx.club.name || "社團評選資料夾", depth: 0 }
-              ],
-              folders: folders.map(function (f) {
+            var rootName =
+              kind === "feature"
+                ? (ctx.club.name || "社團") + " 特色成果"
+                : ctx.club.name || "社團評選資料夾";
+            var foldersOut = (folders || [])
+              .filter(function (f) {
+                return String((f && f.kind) || "evaluation") === kind;
+              })
+              .map(function (f) {
                 return {
                   folderId: f.id,
                   id: f.id,
                   name: f.name,
                   kind: f.kind || "evaluation"
                 };
-              }),
-              files: files.map(mapUploadFile),
+              });
+            // Feature has no subfolder UI — only show files at the feature root.
+            if (kind === "feature") foldersOut = [];
+            var filesOut = (files || [])
+              .filter(function (row) {
+                return String((row && row.upload_kind) || "evaluation") === kind;
+              })
+              .map(mapUploadFile);
+            return ok({
+              clubFolderId: root.id,
+              parentFolderId: parentId,
+              uploadKind: kind,
+              canCreateSubfolder: kind === "evaluation",
+              path: [{ folderId: root.id, name: rootName, depth: 0 }],
+              folders: foldersOut,
+              files: filesOut,
               driveWriteEnabled: access.driveWriteEnabled,
               uploadGate: access.uploadGate,
               participation: access.participation,

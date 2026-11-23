@@ -219,42 +219,12 @@
 
   function renderList(files) {
     var list = $("driveUploadList");
-    var head = $("driveRecordsHead");
     var section = $("driveRecordsSection");
     if (!list) return;
-    var kind = activeKind === "feature" ? "feature" : "evaluation";
-    // Evaluation records are shown via the folder browser; hide the duplicate list.
-    if (kind === "evaluation") {
-      if (section) section.classList.add("hidden");
-      list.replaceChildren();
-      return;
-    }
-    if (section) section.classList.remove("hidden");
-    var filtered = filesForActiveKind(files);
-    if (head) head.textContent = "已繳交紀錄（特色）";
+    // Both kinds list files in the folder browser (with 操作→刪除); hide the duplicate list.
+    if (section) section.classList.add("hidden");
     list.replaceChildren();
-    if (!filtered.length) {
-      var empty = document.createElement("li");
-      empty.textContent = "此項目目前沒有已確認的繳交紀錄。";
-      list.appendChild(empty);
-      return;
-    }
-    filtered.forEach(function (file) {
-      var item = document.createElement("li");
-      var name = document.createElement("span");
-      name.className = "rec-name";
-      name.textContent = file.fileName || "（未命名）";
-      var meta = document.createElement("span");
-      meta.className = "rec-meta";
-      meta.textContent =
-        formatTaipeiDateTime(file.uploadedAt) +
-        " · " +
-        formatBytes(file.size) +
-        " · 已確認";
-      item.appendChild(name);
-      item.appendChild(meta);
-      list.appendChild(item);
-    });
+    void files;
   }
 
   function getAuthBridge() {
@@ -456,9 +426,7 @@
   function syncEvalFolderPanel() {
     var layout = syncWorkspaceLayout();
     var panel = $("driveEvalFolderPanel");
-    if (!panel) return;
-    var show = !!(layout && layout.showAside && layout.evalEligible && !layout.layoutLoading && !layout.layoutError);
-    if (!show) return;
+    var featureMode = activeKind === "feature";
     var createBtn = $("btnDriveEvalFolderCreate");
     var showCreateBtn = $("btnDriveShowCreateFolder");
     var pickUploadBtn = $("btnDrivePickUpload");
@@ -468,24 +436,55 @@
     var upBtn = $("btnDriveBrowserUp");
     var viewBrowse = $("btnDriveViewBrowse");
     var viewTrash = $("btnDriveViewTrash");
+    var batchMoveBtn = $("btnDriveBatchMove");
     var inTrash = browserViewMode === "trash";
     var canWrite = uploadWriteAllowed && !evalFolderBusy && !inTrash;
-    var canCreate = canWrite && !(lastListData && lastListData._browseCanCreate === false);
-    var atRoot = !selectedEvalFolderId ||
+    var canCreate =
+      !featureMode &&
+      canWrite &&
+      !(lastListData && lastListData._browseCanCreate === false);
+    var atRoot = featureMode || !selectedEvalFolderId ||
       (browseClubFolderId && selectedEvalFolderId === browseClubFolderId);
-    if (createBtn) createBtn.disabled = !canCreate;
-    if (showCreateBtn) showCreateBtn.disabled = !canCreate || inTrash;
-    if (pickUploadBtn) pickUploadBtn.disabled = !canWrite;
-    if (pickFolderUploadBtn) pickFolderUploadBtn.disabled = !canWrite;
-    if (nameInput) nameInput.disabled = !canWrite;
-    if (refreshBtn) refreshBtn.disabled = evalFolderBusy;
-    if (upBtn) upBtn.disabled = evalFolderBusy || !!atRoot || inTrash;
-    if (viewBrowse) viewBrowse.setAttribute("aria-pressed", inTrash ? "false" : "true");
+    // Feature: hide folder-tree / folder-create chrome; keep upload + file delete.
+    if (showCreateBtn) {
+      showCreateBtn.classList.toggle("hidden", featureMode);
+      showCreateBtn.disabled = !canCreate || inTrash;
+    }
+    if (pickFolderUploadBtn) {
+      pickFolderUploadBtn.classList.toggle("hidden", featureMode);
+      pickFolderUploadBtn.disabled = !canWrite || featureMode;
+    }
+    if (upBtn) {
+      upBtn.classList.toggle("hidden", featureMode);
+      upBtn.disabled = evalFolderBusy || !!atRoot || inTrash || featureMode;
+    }
+    if (viewBrowse) {
+      viewBrowse.classList.toggle("hidden", featureMode);
+      viewBrowse.setAttribute("aria-pressed", inTrash ? "false" : "true");
+    }
     if (viewTrash) {
       viewTrash.setAttribute("aria-pressed", inTrash ? "true" : "false");
-      // PB primary: no trash retention — hide trash view entirely.
-      if (isPbPrimary()) viewTrash.classList.add("hidden");
+      // PB primary / feature: no trash retention UI.
+      if (isPbPrimary() || featureMode) viewTrash.classList.add("hidden");
       else viewTrash.classList.remove("hidden");
+    }
+    if (batchMoveBtn) batchMoveBtn.classList.toggle("hidden", featureMode);
+    if (pickUploadBtn) pickUploadBtn.disabled = !canWrite;
+    if (createBtn) createBtn.disabled = !canCreate;
+    if (nameInput) nameInput.disabled = !canWrite || featureMode;
+    if (refreshBtn) refreshBtn.disabled = evalFolderBusy;
+    if (!panel) {
+      syncUploadDestBanner();
+      syncBatchBar();
+      syncSortControls();
+      return;
+    }
+    var show = !!(layout && layout.showAside && layout.evalEligible && !layout.layoutLoading && !layout.layoutError);
+    if (!show) {
+      syncUploadDestBanner();
+      syncBatchBar();
+      syncSortControls();
+      return;
     }
     var toggle = $("btnDriveTreeToggle");
     if (toggle) {
@@ -509,6 +508,7 @@
       String(generation),
       String(serverCtx.activityId || ""),
       String(serverCtx.permanentClubId || ""),
+      activeKind === "feature" ? "feature" : "evaluation",
       String(parentId || "")
     ].join("|");
   }
@@ -1094,7 +1094,9 @@
       return Promise.resolve(evalFoldersByParent[key]);
     }
     if (treeLoadInflight[key] && !forceNetwork) return treeLoadInflight[key];
-    var body = {};
+    var body = {
+      uploadKind: activeKind === "feature" ? "feature" : "evaluation"
+    };
     if (key) body.parentFolderId = key;
     var pending = call("listClubEvaluationFolders", body).then(function (result) {
       var data = (result && result.data) || {};
@@ -1305,7 +1307,8 @@
   }
 
   function openBrowseFolder(folderId, forceNetwork) {
-    selectedEvalFolderId = String(folderId || "");
+    // Feature workspace is flat — ignore nested navigation.
+    selectedEvalFolderId = activeKind === "feature" ? "" : String(folderId || "");
     syncUploadDestBanner();
     return refreshEvalFolders(
       { gen: generation, op: operationSeq, uid: boundUid },
@@ -1327,8 +1330,13 @@
   }
 
   function refreshEvalFolders(token, force) {
-    if (activeKind !== "evaluation") return Promise.resolve(null);
-    var parentId = String(selectedEvalFolderId || "");
+    if (workspaceView !== "tools") return Promise.resolve(null);
+    if (activeKind !== "evaluation" && activeKind !== "feature") {
+      return Promise.resolve(null);
+    }
+    // Feature is flat: always browse the feature root (ignore leftover eval selection).
+    var parentId = activeKind === "feature" ? "" : String(selectedEvalFolderId || "");
+    if (activeKind === "feature") selectedEvalFolderId = "";
     var cacheCandidate = evalFoldersByParent[parentId] || null;
     if (!force && evalFoldersCacheValid(cacheCandidate, parentId)) {
       applyEvalFoldersData(cacheCandidate, parentId, browseRequestSeq);
@@ -1347,7 +1355,9 @@
     syncEvalFolderPanel();
     setBrowserState("loading", "正在載入目前位置…");
     setEvalFolderStatus("正在載入目前位置…", "warn");
-    var body = {};
+    var body = {
+      uploadKind: activeKind === "feature" ? "feature" : "evaluation"
+    };
     if (parentId) body.parentFolderId = parentId;
     var pending = call("listClubEvaluationFolders", body).then(function (result) {
       if (token && Number(token.gen) !== Number(generation)) return null;
@@ -1707,18 +1717,21 @@
     addItem("刪除", "danger", function () {
       requestTrashItem(item);
     });
-    addItem("移動至…", "", function () {
-      openFolderPicker({
-        kind: "move",
-        itemKind: item.kind,
-        fileId: isFolder ? undefined : item.id,
-        folderId: isFolder ? item.id : undefined,
-        fileName: isFolder ? undefined : item.name,
-        folderName: isFolder ? item.name : undefined,
-        parentFolderId: item.parentFolderId,
-        fromPath: browsePathLabel
+    // Feature is a single shared folder — no move between folders.
+    if (activeKind !== "feature") {
+      addItem("移動至…", "", function () {
+        openFolderPicker({
+          kind: "move",
+          itemKind: item.kind,
+          fileId: isFolder ? undefined : item.id,
+          folderId: isFolder ? item.id : undefined,
+          fileName: isFolder ? undefined : item.name,
+          folderName: isFolder ? item.name : undefined,
+          parentFolderId: item.parentFolderId,
+          fromPath: browsePathLabel
+        });
       });
-    });
+    }
   }
 
   function buildItemActionMenu(item) {
@@ -2825,20 +2838,24 @@
     if (evalBtn) evalBtn.classList.toggle("active", activeKind === "evaluation");
     if (featureBtn) featureBtn.classList.toggle("active", activeKind === "feature");
     hideReplaceConfirm();
-    if (activeKind !== "evaluation") {
-      selectedEvalFolderId = "";
-      browsePathLabel = "";
-      browseSearchQuery = "";
-      lastBrowseSnapshot = null;
-      setEvalFolderStatus("", "");
-      setBrowserState("", "");
-      showCreateFolderBox(false);
-      syncUploadDestBanner();
-    } else {
-      browseSearchQuery = "";
-      var search = $("driveBrowserSearch");
-      if (search) search.value = "";
-    }
+    // Kind switch must not keep the other kind's browser rows (students saw
+    // 「刪除」on stale evaluation files while on 特色, and feature files never listed).
+    clearEvalFoldersCache();
+    selectedEvalFolderId = "";
+    browsePathLabel = "";
+    browseSearchQuery = "";
+    lastBrowseSnapshot = null;
+    browseClubFolderId = "";
+    clearBrowseSelection();
+    if (browserViewMode === "trash") browserViewMode = "browse";
+    var tableBody = $("driveEvalFolderList");
+    if (tableBody) tableBody.replaceChildren();
+    setEvalFolderStatus("", "");
+    setBrowserState("", "");
+    showCreateFolderBox(false);
+    syncUploadDestBanner();
+    var search = $("driveBrowserSearch");
+    if (search) search.value = "";
     // Re-render records for this kind immediately from last snapshot (no network).
     if (lastListData) renderList(lastListData.files || []);
     else renderList([]);
@@ -2852,8 +2869,12 @@
       // List still in-flight or failed earlier — re-pull so gate is not stuck closed.
       refresh({ gen: generation, op: operationSeq, uid: boundUid });
     }
-    if (activeKind === "evaluation" && lastListData && boundUid && workspaceView === "tools") {
-      refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, false);
+    if (
+      (activeKind === "evaluation" || activeKind === "feature") &&
+      boundUid &&
+      workspaceView === "tools"
+    ) {
+      refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, true);
     }
   }
 
@@ -3498,7 +3519,10 @@
       renderList(data.files || []);
       applyWindowReadOnly(data.uploadWindows, data.participation);
       syncEvalFolderPanel();
-      if (activeKind === "evaluation" && workspaceView === "tools") {
+      if (
+        (activeKind === "evaluation" || activeKind === "feature") &&
+        workspaceView === "tools"
+      ) {
         refreshEvalFolders({ gen: generation, op: operationSeq, uid: boundUid }, false);
       }
       return data;
@@ -3593,7 +3617,7 @@
         ? queueItem.destinationFolderId
         : undefined
     );
-    if (kind === "evaluation") {
+    if (kind === "evaluation" || kind === "feature") {
       clearEvalFoldersCache();
       refreshEvalFolders(token, true);
     }
