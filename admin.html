@@ -555,9 +555,6 @@ class="field"
 onchange="resetJudgeConfirmationPreview()"
 disabled
 >
-<option value="dataReview">資料審查（或同名大項）</option>
-<option value="fieldReview">實地審查（或同名大項）</option>
-<option value="total">總成績</option>
 <option value="all" selected>全部大項</option>
 </select>
 
@@ -573,7 +570,7 @@ disabled
 </div>
 
 <div class="export-print-hint">
-選擇評審與類別後直接下載 PDF（不必預覽）。版型依 B／橫式明細示意（固定橫式 A4 一頁一張）。全部三表為一份 PDF（資料審查→實地審查→總成績）。
+選擇評審與類別後直接下載 PDF（不必預覽）。版型依 B／橫式明細示意（固定橫式 A4 一頁一張）。下拉選項會依評分機制大項自動更新；「全部大項」為一份 PDF（各大項明細→總成績）。
 </div>
 
 <div id="judgeExportState" class="state">
@@ -583,7 +580,7 @@ disabled
 <div id="judgeExportPreview" class="export-preview hidden" hidden></div>
 
 <div class="notice" style="margin-top:18px">
-<strong>多位評審一次下載</strong>（保留上方單位老師匯出）。選 1 位直接下 PDF；選多位才打包 ZIP。每位老師各一份 PDF（資料審查→實地審查→總成績）。
+<strong>多位評審一次下載</strong>（保留上方單位老師匯出）。選 1 位直接下 PDF；選多位才打包 ZIP。每位老師各一份 PDF（依所選大項／全部大項）。
 </div>
 
 <div class="toolbar export-toolbar" style="flex-wrap:wrap;align-items:flex-start;gap:10px">
@@ -597,10 +594,7 @@ disabled
 </div>
 
 <select id="judgeBatchSheetKind" class="field">
-<option value="dataReview">資料審查</option>
-<option value="fieldReview">實地審查</option>
-<option value="total">總成績</option>
-<option value="all" selected>全部三表</option>
+<option value="all" selected>全部大項</option>
 </select>
 
 <button id="judgeBatchZipBtn" class="btn btn-primary" type="button" onclick="downloadJudgeConfirmationPdfZip()">
@@ -1678,7 +1672,7 @@ onclick="closeModal('aggregationDetailModal')"
 <script src="./pb-config.js?v=l1-3-1"></script>
 <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.25.2/dist/pocketbase.umd.js"></script>
 <script src="./platform-pb-backend.js?v=m1-8-3"></script>
-<script src="./platform-admin-pb.js?v=m1-8-8"></script>
+<script src="./platform-admin-pb.js?v=m1-8-9"></script>
 <script>
 
 /** Firebase cloud 半套路徑已退役；保留函式避免舊呼叫炸裂。 */
@@ -2763,6 +2757,8 @@ $("scoreEditor")
 );
 
 renderScoreEditor();
+
+renderJudgeExportSheetKindOptions();
 
 }
 catch(e){
@@ -4052,6 +4048,8 @@ r.config
 );
 
 renderScoreEditor();
+
+renderJudgeExportSheetKindOptions();
 
 $("statScoreRev").textContent =
 S.scoreConfig.revision ?? "-";
@@ -7982,8 +7980,90 @@ current;
 
 resetJudgeConfirmationPreview();
 
+renderJudgeExportSheetKindOptions();
+
 renderJudgeConfirmationBatchList();
 
+}
+
+function judgeConfirmExportSections_(){
+const fromConfig =
+(
+S.scoreConfig &&
+Array.isArray(S.scoreConfig.sections)
+)
+?
+S.scoreConfig.sections
+:
+[];
+let list =
+fromConfig.filter(
+section=>
+section &&
+section.enabled !== false &&
+String(section.scoringMode || "") !== "manual"
+);
+const published =
+list.filter(
+section=>section.published === true
+);
+if(published.length){
+list = published;
+}
+if(
+!list.length &&
+Array.isArray(S.availableScoreSections)
+){
+list = S.availableScoreSections.slice();
+}
+return list
+.map(
+section=>({
+id:String((section && section.id) || "").trim(),
+name:String((section && section.name) || (section && section.id) || "").trim()
+})
+)
+.filter(section=>!!section.id);
+}
+
+function renderJudgeExportSheetKindOptions(){
+const sections =
+judgeConfirmExportSections_();
+const selects =
+[
+$("judgeExportSheetKind"),
+$("judgeBatchSheetKind")
+].filter(Boolean);
+if(!selects.length) return;
+selects.forEach(el=>{
+const current =
+el.value || "all";
+const opts =
+[];
+sections.forEach(section=>{
+opts.push(
+`<option value="${attr(section.id)}">${esc(section.name || section.id)}</option>`
+);
+});
+if(!sections.length){
+opts.push(
+'<option value="dataReview">資料審查（或同名大項）</option>'
+);
+opts.push(
+'<option value="fieldReview">實地審查（或同名大項）</option>'
+);
+}
+opts.push('<option value="total">總成績</option>');
+opts.push('<option value="all">全部大項</option>');
+el.innerHTML =
+opts.join("");
+const valid =
+Array.from(el.options).some(
+option=>option.value === current
+);
+el.value =
+valid ? current : "all";
+});
 }
 
 function renderJudgeConfirmationBatchList(){
@@ -8156,7 +8236,15 @@ function judgeExportSheetKindLabel(kind){
 if(kind==="dataReview") return "資料審查";
 if(kind==="fieldReview") return "實地審查";
 if(kind==="total") return "總成績";
-return "全部三表";
+if(kind==="all") return "全部大項";
+const sections =
+judgeConfirmExportSections_();
+const hit =
+sections.find(
+section=>section.id === String(kind || "")
+);
+if(hit) return hit.name || hit.id;
+return String(kind || "確認表");
 }
 
 function judgeExportScore(value){
@@ -8434,28 +8522,87 @@ data.clubTotals
 if(!totals.length){
 return '<div class="export-empty">沒有可顯示的個人合計資料。</div>';
 }
+const sectionMeta =
+(
+Array.isArray(data && data.sectionMeta) &&
+data.sectionMeta.length
+)
+?
+data.sectionMeta
+:
+(
+totals[0] &&
+Array.isArray(totals[0].sectionMeta)
+)
+?
+totals[0].sectionMeta
+:
+[];
+const headCells =
+[
+"<th>社團</th>",
+"<th>屬性</th>"
+]
+.concat(
+sectionMeta.map(
+meta=>`<th>${esc((meta && meta.name) || (meta && meta.id) || "大項")}狀態</th>`
+)
+)
+.concat(
+sectionMeta.map(
+meta=>`<th>${esc((meta && meta.name) || (meta && meta.id) || "大項")}得分</th>`
+)
+)
+.concat(["<th>個人合計</th>"])
+.join("");
 const rows =
-totals.map(
-row=>`
+totals.map(row=>{
+const statuses =
+sectionMeta.map(meta=>{
+const sid =
+String((meta && meta.id) || "");
+const text =
+(
+row.sectionStatuses &&
+row.sectionStatuses[sid]
+) ||
+"—";
+return `<td>${esc(text)}</td>`;
+}).join("");
+const scores =
+sectionMeta.map(meta=>{
+const sid =
+String((meta && meta.id) || "");
+const score =
+row.sectionScores
+?
+row.sectionScores[sid]
+:
+null;
+return `<td>${
+score === null || score === undefined
+?
+"—"
+:
+esc(judgeExportScore(score))
+}</td>`;
+}).join("");
+return `
 <tr>
 <td>${esc(row.clubName||"—")}</td>
 <td>${esc(row.category||"—")}</td>
-<td>${esc(row.dataReviewStatus||"—")}</td>
-<td>${esc(row.fieldReviewStatus||"—")}</td>
-<td>${row.dataReviewScore===null||row.dataReviewScore===undefined?"—":esc(judgeExportScore(row.dataReviewScore))}</td>
-<td>${row.fieldReviewScore===null||row.fieldReviewScore===undefined?"—":esc(judgeExportScore(row.fieldReviewScore))}</td>
+${statuses}
+${scores}
 <td>${esc(row.personalTotalText||"尚未完成")}</td>
 </tr>
-`
-).join("");
+`;
+}).join("");
 return `
 <div class="export-section">
-<div class="export-section-title">個人合計（資料審查＋實地審查皆正式送出後才顯示分數）</div>
+<div class="export-section-title">個人合計（各大項皆正式送出後才顯示分數）</div>
 <table class="export-score-table">
 <thead>
-<tr>
-<th>社團</th><th>屬性</th><th>資料審查</th><th>實地審查</th><th>資料審查得分</th><th>實地審查得分</th><th>個人合計</th>
-</tr>
+<tr>${headCells}</tr>
 </thead>
 <tbody>${rows}</tbody>
 </table>
@@ -9168,33 +9315,86 @@ judgeExportDisplayName(model && model.judge);
 const generatedAt =
 judgeConfirmPdfFormatAt_(model && model.generatedAt);
 const kindLabel =
+(
+model && model.sheetKindLabel
+) ||
 judgeExportSheetKindLabel(model && model.sheetKind);
+const sectionMeta =
+(
+Array.isArray(model && model.sectionMeta) &&
+model.sectionMeta.length
+)
+?
+model.sectionMeta
+:
+(
+totals[0] &&
+Array.isArray(totals[0].sectionMeta)
+)
+?
+totals[0].sectionMeta
+:
+[];
 const headers =
-["序","社團名稱","資料審查小計","實地審查小計","個人合計","狀態"];
+["序","社團名稱"];
+if(sectionMeta.length){
+sectionMeta.forEach(function(meta){
+headers.push(String((meta && meta.name) || (meta && meta.id) || "大項") + "小計");
+});
+}
+else{
+headers.push("資料審查小計","實地審查小計");
+}
+headers.push("個人合計","狀態");
 const dataRows =
 totals.length
 ?
 totals.map(function(row,index){
-return [
+const line =
+[
 judgeConfirmPdfSeq_(index + 1),
-String(row.clubName || ""),
-(
+String(row.clubName || "")
+];
+if(sectionMeta.length){
+sectionMeta.forEach(function(meta){
+const sid =
+String((meta && meta.id) || "");
+const score =
+row.sectionScores
+?
+row.sectionScores[sid]
+:
+null;
+line.push(
+score === null || score === undefined
+?
+"—"
+:
+score
+);
+});
+}
+else{
+line.push(
 row.dataReviewScore === null || row.dataReviewScore === undefined
 ?
 "—"
 :
 row.dataReviewScore
-),
-(
+);
+line.push(
 row.fieldReviewScore === null || row.fieldReviewScore === undefined
 ?
 "—"
 :
 row.fieldReviewScore
-),
-String(row.personalTotalText || "尚未完成"),
+);
+}
+line.push(String(row.personalTotalText || "尚未完成"));
+line.push(
 String(row.statusText || "—").replace(/[✅🔓📝⚠️]/g,"").trim() || "—"
-];
+);
+return line;
 })
 :
 [judgeConfirmPdfPadRow_(["—","（沒有可顯示的社團）"],headers.length)];
@@ -9210,7 +9410,7 @@ judgeName:judgeName,
 generatedAt:generatedAt,
 headers:headers,
 rows:dataRows.slice(start,start + rowsPerPage),
-hint:"僅資料審查與實地審查皆正式完成才顯示個人合計；解鎖待重送／草稿不計入完成合計。",
+hint:"各大項皆正式完成才顯示個人合計；解鎖待重送／草稿不計入完成合計。",
 tableNote:"本表為個人確認合計，非正式全體排名或及格判定。"
 });
 }
@@ -9229,23 +9429,38 @@ data.allRecords
 :
 (data && data.records) || [];
 /*
- * 若大項 id 不是 dataReview／fieldReview，改依實際紀錄的大項展開，
- * 避免確認表空白。
+ * Prefer scoreConfig-ordered sectionMeta from API; fall back to records
+ * so newly added 大項 still appear even if ids are not dataReview/fieldReview.
  */
 const sectionMeta =
 [];
 const seenSection =
 {};
-allRecords.forEach(function(record){
-const id =
-String((record && record.sectionId) || "");
-if(!id || seenSection[id]) return;
-seenSection[id] =
+function pushSectionMeta(id,name){
+const sid =
+String(id || "");
+if(!sid || seenSection[sid]) return;
+seenSection[sid] =
 true;
 sectionMeta.push({
-id:id,
-name:String((record && record.sectionName) || id)
+id:sid,
+name:String(name || sid)
 });
+}
+(
+Array.isArray(data && data.sectionMeta)
+?
+data.sectionMeta
+:
+[]
+).forEach(function(meta){
+pushSectionMeta(meta && meta.id, meta && meta.name);
+});
+allRecords.forEach(function(record){
+pushSectionMeta(
+record && record.sectionId,
+record && record.sectionName
+);
 });
 function pushSectionPages(preferredTitle,preferredId){
 const hit =
@@ -9290,6 +9505,24 @@ buildJudgeConfirmSectionPages_(data,s.name,s.id)
 else{
 pushSectionPages("資料審查","dataReview");
 pushSectionPages("實地審查","fieldReview");
+}
+}
+else if(sheetKind !== "total"){
+const hit =
+sectionMeta.find(function(s){
+return String(s.id) === sheetKind;
+});
+if(hit){
+plans.push.apply(
+plans,
+buildJudgeConfirmSectionPages_(data,hit.name,hit.id)
+);
+}
+else{
+pushSectionPages(
+judgeExportSheetKindLabel(sheetKind),
+sheetKind
+);
 }
 }
 if(sheetKind === "total" || sheetKind === "all"){

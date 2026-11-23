@@ -146,19 +146,19 @@
     var client = pb();
     var token = String(sessionToken || "").trim();
     if (!token) throw new Error("ADMIN_UNAUTHORIZED");
-    var raw = sessionStorage.getItem(SESSION_RECORD_KEY);
-    var model = null;
-    try {
-      model = raw ? JSON.parse(raw) : null;
-    } catch (_e) {
-      model = null;
-    }
+      var raw = sessionStorage.getItem(SESSION_RECORD_KEY);
+      var model = null;
+      try {
+        model = raw ? JSON.parse(raw) : null;
+      } catch (_e) {
+        model = null;
+      }
     // Always re-bind token: shared PocketBase client may be cleared by other adapters.
-    client.authStore.save(token, model);
-    try {
-      await client.collection(C().staff).authRefresh();
-    } catch (_e2) {
-      throw new Error("ADMIN_UNAUTHORIZED");
+      client.authStore.save(token, model);
+      try {
+        await client.collection(C().staff).authRefresh();
+      } catch (_e2) {
+        throw new Error("ADMIN_UNAUTHORIZED");
     }
     var rec = client.authStore.model;
     if (!rec || rec.role !== "admin" || rec.active === false) {
@@ -1065,21 +1065,21 @@
         'activity="' + activity.id + '" && club="' + club.id + '" && student="' + student.id + '"'
     });
     try {
-      if (existing.totalItems === 0) {
-        await pb().collection(C().memberships).create({
-          activity: activity.id,
-          club: club.id,
-          student: student.id,
-          role: "member",
-          status: "active",
-          can_upload: true,
-          bound_at: new Date().toISOString()
-        });
-      } else {
-        await pb().collection(C().memberships).update(existing.items[0].id, {
-          status: "active",
-          can_upload: true
-        });
+    if (existing.totalItems === 0) {
+      await pb().collection(C().memberships).create({
+        activity: activity.id,
+        club: club.id,
+        student: student.id,
+        role: "member",
+        status: "active",
+        can_upload: true,
+        bound_at: new Date().toISOString()
+      });
+    } else {
+      await pb().collection(C().memberships).update(existing.items[0].id, {
+        status: "active",
+        can_upload: true
+      });
       }
     } catch (seatCreateErr) {
       var seatMsg = String((seatCreateErr && seatCreateErr.message) || "");
@@ -1284,10 +1284,10 @@
         okRelease = true;
       } catch (_mDel) {
         try {
-          await pb().collection(C().memberships).update(mem.id, {
-            status: "revoked",
-            can_upload: false
-          });
+      await pb().collection(C().memberships).update(mem.id, {
+        status: "revoked",
+        can_upload: false
+      });
           okRelease = true;
         } catch (_mUp) {
           failed.push(mem.id);
@@ -2255,9 +2255,9 @@
             return !!(set[cat] || set[String(club.category || "").trim()]);
           })
           .map(function (club) {
-            var row = byKey[judge.id + "::" + club.id + "::" + section.id];
-            var answers = (row && row.answers_json) || {};
-            var reopened = !!(answers && answers.reopened);
+          var row = byKey[judge.id + "::" + club.id + "::" + section.id];
+          var answers = (row && row.answers_json) || {};
+          var reopened = !!(answers && answers.reopened);
             var status = !row
               ? "not_started"
               : reopened
@@ -2291,8 +2291,8 @@
               submissionRevision: row ? Number(row.revision) || 1 : null,
               updatedAt: row && row.updated ? row.updated : null,
               submittedAt: row && row.submitted_at ? row.submitted_at : null
-            };
-          });
+          };
+        });
         return {
           sectionId: section.id,
           id: section.id,
@@ -3190,9 +3190,9 @@
     if (totalDiff) return totalDiff;
     var mode = (rankingConfig.ranking && rankingConfig.ranking.tieMode) || "shared";
     if (mode === "rules") {
-      var breakers = (rankingConfig.ranking && rankingConfig.ranking.tieBreakers) || [];
-      for (var i = 0; i < breakers.length; i++) {
-        var rule = breakers[i] || {};
+    var breakers = (rankingConfig.ranking && rankingConfig.ranking.tieBreakers) || [];
+    for (var i = 0; i < breakers.length; i++) {
+      var rule = breakers[i] || {};
         var clubA =
           clubMap[a.permanentClubId] ||
           clubMap[a.clubName] ||
@@ -3203,11 +3203,11 @@
           {};
         var av = metricValue(clubA, rule.sourceType, rule.sourceId);
         var bv = metricValue(clubB, rule.sourceType, rule.sourceId);
-        var an = av === null || av === undefined ? -Infinity : Number(av);
-        var bn = bv === null || bv === undefined ? -Infinity : Number(bv);
-        var diff = rule.direction === "asc" ? an - bn : bn - an;
-        if (diff) return diff;
-      }
+      var an = av === null || av === undefined ? -Infinity : Number(av);
+      var bn = bv === null || bv === undefined ? -Infinity : Number(bv);
+      var diff = rule.direction === "asc" ? an - bn : bn - an;
+      if (diff) return diff;
+    }
     }
     var manual = (rankingConfig.ranking && rankingConfig.ranking.manualRanks) || {};
     var mkA = manualRankKey_(a.category, a.permanentClubId);
@@ -3229,7 +3229,7 @@
     var category = normalizeRankingCategory_(club.category);
     var participates = club.participatesEvaluation !== false;
     var complete = !!club.complete && participates;
-    var passed = complete ? passesThreshold(club.finalTotalScore, rankingConfig.pass) : null;
+          var passed = complete ? passesThreshold(club.finalTotalScore, rankingConfig.pass) : null;
     var provisionalEligible = !!club.provisionalEligible && participates;
     var hasPending = !!club.hasPendingAssignedJudge;
     var displayScore = null;
@@ -3273,15 +3273,15 @@
     var manual = (rankingConfig.ranking && rankingConfig.ranking.manualRanks) || {};
     var manualKey = manualRankKey_(category, club.permanentClubId);
     var manualRank = Number(manual[manualKey]);
-    return {
-      clubName: club.clubName,
-      permanentClubId: club.permanentClubId,
-      category: category,
-      complete: complete,
+          return {
+            clubName: club.clubName,
+            permanentClubId: club.permanentClubId,
+            category: category,
+            complete: complete,
       participatesEvaluation: participates,
       eligible: complete && passed === true,
-      passed: passed,
-      finalTotalScore: complete ? club.finalTotalScore : null,
+            passed: passed,
+            finalTotalScore: complete ? club.finalTotalScore : null,
       currentTotalScore:
         club.currentTotalScore === null || club.currentTotalScore === undefined
           ? null
@@ -3289,8 +3289,8 @@
       provisionalTotalScore: provisionalEligible ? club.provisionalTotalScore : null,
       displayScore: displayScore,
       rankScore: displayScore,
-      totalMaxScore: club.totalMaxScore,
-      displayRank: null,
+            totalMaxScore: club.totalMaxScore,
+            displayRank: null,
       manualRank: Number.isFinite(manualRank) ? manualRank : null,
       rankStatus: rankStatus,
       statusLabel: statusLabel,
@@ -3303,26 +3303,26 @@
   }
 
   function assignFormalRanks_(rankable, rankingConfig, clubMap) {
-    rankable.sort(function (a, b) {
-      return compareRankRows(a, b, rankingConfig, clubMap);
-    });
-    var style = (rankingConfig.ranking && rankingConfig.ranking.rankStyle) || "competition";
+        rankable.sort(function (a, b) {
+          return compareRankRows(a, b, rankingConfig, clubMap);
+        });
+        var style = (rankingConfig.ranking && rankingConfig.ranking.rankStyle) || "competition";
     var unresolvedTie =
       (rankingConfig.ranking && rankingConfig.ranking.unresolvedTie) || "shared";
-    var tieMode = (rankingConfig.ranking && rankingConfig.ranking.tieMode) || "shared";
-    var i = 0;
-    var denseRank = 0;
-    while (i < rankable.length) {
-      var j = i + 1;
-      while (
-        j < rankable.length &&
-        compareRankRows(rankable[i], rankable[j], rankingConfig, clubMap) === 0
-      ) {
-        j += 1;
-      }
-      denseRank += 1;
-      var rank = style === "dense" ? denseRank : i + 1;
-      var tied = j - i > 1;
+        var tieMode = (rankingConfig.ranking && rankingConfig.ranking.tieMode) || "shared";
+        var i = 0;
+        var denseRank = 0;
+        while (i < rankable.length) {
+          var j = i + 1;
+          while (
+            j < rankable.length &&
+            compareRankRows(rankable[i], rankable[j], rankingConfig, clubMap) === 0
+          ) {
+            j += 1;
+          }
+          denseRank += 1;
+          var rank = style === "dense" ? denseRank : i + 1;
+          var tied = j - i > 1;
       var allHaveManual = true;
       for (var m = i; m < j; m++) {
         if (!Number.isFinite(Number(rankable[m].manualRank))) allHaveManual = false;
@@ -3341,26 +3341,26 @@
           rankable[idx].statusLabel = "及格";
         }
       } else {
-        for (var k = i; k < j; k++) {
+          for (var k = i; k < j; k++) {
           if (Number.isFinite(Number(rankable[k].manualRank))) {
             rankable[k].displayRank = String(rankable[k].manualRank);
             rankable[k].rankStatus = "ranked";
             rankable[k].statusLabel = "及格";
             continue;
           }
-          rankable[k].displayRank = String(rank);
-          if (tied) {
+            rankable[k].displayRank = String(rank);
+            if (tied) {
             var pending =
               unresolvedTie === "manual" || tieMode === "manual";
             rankable[k].rankStatus = pending ? "tie_pending" : "tied";
             rankable[k].statusLabel = pending ? "待人工決定" : "同分並列";
-          } else {
-            rankable[k].rankStatus = "ranked";
+            } else {
+              rankable[k].rankStatus = "ranked";
             rankable[k].statusLabel = "及格";
           }
-        }
-      }
-      i = j;
+            }
+          }
+          i = j;
     }
   }
 
@@ -3457,8 +3457,8 @@
       assignFormalRanks_(rankable, rankingConfig, clubMap);
       assignProvisionalRanks_(rows, rankingConfig, clubMap);
 
-      if ((rankingConfig.ranking && rankingConfig.ranking.incompletePolicy) === "hide") {
-        rows = rows.filter(function (r) {
+        if ((rankingConfig.ranking && rankingConfig.ranking.incompletePolicy) === "hide") {
+          rows = rows.filter(function (r) {
           return (
             r.complete ||
             r.rankStatus === "provisional" ||
@@ -3468,12 +3468,12 @@
       }
 
       rows = sortRankingRowsForDisplay_(rows);
-      return {
-        category: category,
+        return {
+          category: category,
         totalClubCount: clubList.length,
-        rows: rows
-      };
-    });
+          rows: rows
+        };
+      });
 
     var summary = {
       clubCount: aggregation.clubs.length,
@@ -3860,15 +3860,48 @@
 
   function normalizeJudgeConfirmSheetKind(raw) {
     var kind = String(raw || "all").trim();
+    if (!kind) return "";
     if (["dataReview", "fieldReview", "total", "all"].indexOf(kind) >= 0) return kind;
+    // Accept live scoreConfig section ids after admin adds/renames 大項.
+    if (/^[A-Za-z0-9_\-]{1,80}$/.test(kind)) return kind;
     return "";
   }
 
-  function judgeConfirmSheetKindLabel(kind) {
+  function judgeConfirmSheetKindLabel(kind, sections) {
     if (kind === "dataReview") return "資料審查";
     if (kind === "fieldReview") return "實地審查";
     if (kind === "total") return "總成績";
-    return "全部三表";
+    if (kind === "all") return "全部大項";
+    var list = Array.isArray(sections) ? sections : [];
+    var hit = list.find(function (s) {
+      return String((s && s.id) || "") === String(kind || "");
+    });
+    if (hit) return String(hit.name || hit.id || kind);
+    return String(kind || "確認表");
+  }
+
+  function buildJudgeConfirmSectionMetaList_(records, sections) {
+    var ordered = [];
+    var seen = {};
+    function pushMeta(id, name) {
+      var sid = String(id || "").trim();
+      if (!sid || seen[sid]) return;
+      seen[sid] = true;
+      ordered.push({
+        id: sid,
+        name: String(name || sid)
+      });
+    }
+    (Array.isArray(sections) ? sections : []).forEach(function (section) {
+      if (!section || section.enabled === false) return;
+      if (String(section.scoringMode || "") === "manual") return;
+      pushMeta(section.id, section.name);
+    });
+    (Array.isArray(records) ? records : []).forEach(function (record) {
+      if (!record) return;
+      pushMeta(record.sectionId, record.sectionName);
+    });
+    return ordered;
   }
 
   function safeExportFileName(raw) {
@@ -3898,37 +3931,13 @@
     return criterionCount > 0;
   }
 
-  function buildJudgeConfirmClubTotals(records) {
+  function buildJudgeConfirmClubTotals(records, sections) {
+    var sectionMeta = buildJudgeConfirmSectionMetaList_(records, sections);
     var byClub = {};
-    var orderedSectionIds = [];
     (records || []).forEach(function (record) {
       if (!record) return;
       var sectionId = String(record.sectionId || "");
       if (!sectionId) return;
-      if (orderedSectionIds.indexOf(sectionId) < 0) orderedSectionIds.push(sectionId);
-    });
-    var dataId =
-      orderedSectionIds.indexOf("dataReview") >= 0
-        ? "dataReview"
-        : orderedSectionIds[0] || "dataReview";
-    var fieldId =
-      orderedSectionIds.indexOf("fieldReview") >= 0
-        ? "fieldReview"
-        : orderedSectionIds[1] || orderedSectionIds[0] || "fieldReview";
-    (records || []).forEach(function (record) {
-      if (!record) return;
-      var sectionId = String(record.sectionId || "");
-      var slot =
-        sectionId === dataId || /資料審查|數位資料|資料/.test(String(record.sectionName || ""))
-          ? "dataReview"
-          : sectionId === fieldId || /實地審查|現場|詢答|實地/.test(String(record.sectionName || ""))
-            ? "fieldReview"
-            : "";
-      if (!slot) {
-        if (sectionId === orderedSectionIds[0]) slot = "dataReview";
-        else if (sectionId === orderedSectionIds[1]) slot = "fieldReview";
-      }
-      if (!slot) return;
       var key =
         String(record.permanentClubId || "").trim() ||
         "name:" + String(record.clubName || "");
@@ -3937,39 +3946,72 @@
           clubName: String(record.clubName || ""),
           permanentClubId: String(record.permanentClubId || ""),
           category: String(record.category || ""),
-          dataReview: null,
-          fieldReview: null
+          bySection: {}
         };
       }
-      byClub[key][slot] = record;
+      byClub[key].bySection[sectionId] = record;
+      if (!byClub[key].clubName && record.clubName) {
+        byClub[key].clubName = String(record.clubName);
+      }
     });
     return Object.keys(byClub).map(function (key) {
       var row = byClub[key];
-      var dataOk = judgeConfirmSectionFullyComplete(row.dataReview);
-      var fieldOk = judgeConfirmSectionFullyComplete(row.fieldReview);
-      var dataScore = dataOk ? Number(row.dataReview.detail.totalScore) : null;
-      var fieldScore = fieldOk ? Number(row.fieldReview.detail.totalScore) : null;
-      var complete = dataOk && fieldOk;
+      var sectionScores = {};
+      var sectionStatuses = {};
+      var complete = sectionMeta.length > 0;
+      var sum = 0;
       var statusParts = [];
-      if (!row.dataReview) statusParts.push("資料審查未評");
-      else statusParts.push(judgeConfirmStatusText(row.dataReview.status, row.dataReview.reopened));
-      if (!row.fieldReview) statusParts.push("實地審查未評");
-      else statusParts.push(judgeConfirmStatusText(row.fieldReview.status, row.fieldReview.reopened));
+      sectionMeta.forEach(function (meta) {
+        var rec = row.bySection[meta.id] || null;
+        var ok = judgeConfirmSectionFullyComplete(rec);
+        var score = ok ? Number(rec.detail.totalScore) : null;
+        sectionScores[meta.id] = score;
+        sectionStatuses[meta.id] = rec
+          ? judgeConfirmStatusText(rec.status, rec.reopened)
+          : "⚠️ 未評";
+        if (!ok) complete = false;
+        if (score !== null && Number.isFinite(score)) sum += score;
+        if (!rec) statusParts.push(String(meta.name || meta.id) + "未評");
+        else statusParts.push(judgeConfirmStatusText(rec.status, rec.reopened));
+      });
+      var legacyDataId =
+        sectionMeta.find(function (meta) {
+          return (
+            meta.id === "dataReview" ||
+            /資料審查|數位資料/.test(String(meta.name || ""))
+          );
+        }) ||
+        sectionMeta[0] ||
+        null;
+      var legacyFieldId =
+        sectionMeta.find(function (meta) {
+          return (
+            meta.id === "fieldReview" ||
+            /實地審查|現場|詢答/.test(String(meta.name || ""))
+          );
+        }) ||
+        sectionMeta[1] ||
+        null;
+      var dataScore = legacyDataId ? sectionScores[legacyDataId.id] : null;
+      var fieldScore = legacyFieldId ? sectionScores[legacyFieldId.id] : null;
       return {
         clubName: row.clubName,
         permanentClubId: row.permanentClubId,
         category: row.category,
-        dataReviewStatus: row.dataReview
-          ? judgeConfirmStatusText(row.dataReview.status, row.dataReview.reopened)
+        sectionMeta: sectionMeta,
+        sectionScores: sectionScores,
+        sectionStatuses: sectionStatuses,
+        dataReviewStatus: legacyDataId
+          ? sectionStatuses[legacyDataId.id]
           : "⚠️ 未評",
-        fieldReviewStatus: row.fieldReview
-          ? judgeConfirmStatusText(row.fieldReview.status, row.fieldReview.reopened)
+        fieldReviewStatus: legacyFieldId
+          ? sectionStatuses[legacyFieldId.id]
           : "⚠️ 未評",
         dataReviewScore: dataScore,
         fieldReviewScore: fieldScore,
-        personalTotal: complete ? dataScore + fieldScore : null,
-        personalTotalText: complete ? String(dataScore + fieldScore) : "尚未完成",
-        statusText: complete ? "✅ 兩階段已完成" : statusParts.join("／"),
+        personalTotal: complete ? sum : null,
+        personalTotalText: complete ? String(sum) : "尚未完成",
+        statusText: complete ? "✅ 各大項已完成" : statusParts.join("／"),
         complete: complete
       };
     });
@@ -4069,50 +4111,46 @@
 
   function resolveConfirmSectionId(sections, kind) {
     var list = Array.isArray(sections) ? sections : [];
-    if (kind === "dataReview") {
-      var byId = list.find(function (s) {
-        return String(s.id) === "dataReview";
-      });
-      if (byId) return byId.id;
+    var kindId = String(kind || "").trim();
+    if (!kindId || kindId === "total" || kindId === "all") return "";
+    var exact = list.find(function (s) {
+      return String(s.id) === kindId;
+    });
+    if (exact) return exact.id;
+    if (kindId === "dataReview") {
       var byName = list.find(function (s) {
         return /資料審查|數位資料|資料/.test(String(s.name || ""));
       });
       if (byName) return byName.id;
       return list[0] ? list[0].id : "";
     }
-    if (kind === "fieldReview") {
-      var byId2 = list.find(function (s) {
-        return String(s.id) === "fieldReview";
-      });
-      if (byId2) return byId2.id;
+    if (kindId === "fieldReview") {
       var byName2 = list.find(function (s) {
         return /實地審查|現場|詢答|實地/.test(String(s.name || ""));
       });
       if (byName2) return byName2.id;
       return list[1] ? list[1].id : list[0] ? list[0].id : "";
     }
-    return "";
+    return kindId;
   }
 
   function filterJudgeConfirmRecordsBySheetKind(records, sheetKind, sections) {
     var list = Array.isArray(records) ? records : [];
-    if (sheetKind === "dataReview" || sheetKind === "fieldReview") {
-      var sectionId = resolveConfirmSectionId(sections, sheetKind);
-      return list.filter(function (record) {
-        var id = String((record && record.sectionId) || "");
-        if (sectionId && id === sectionId) return true;
-        if (id === sheetKind) return true;
-        if (sheetKind === "dataReview" && /資料審查|數位資料|資料/.test(String(record.sectionName || ""))) {
-          return true;
-        }
-        if (sheetKind === "fieldReview" && /實地審查|現場|詢答|實地/.test(String(record.sectionName || ""))) {
-          return true;
-        }
-        return false;
-      });
-    }
     if (sheetKind === "total") return [];
-    return list;
+    if (sheetKind === "all") return list;
+    var sectionId = resolveConfirmSectionId(sections, sheetKind);
+    return list.filter(function (record) {
+      var id = String((record && record.sectionId) || "");
+      if (sectionId && id === sectionId) return true;
+      if (id === sheetKind) return true;
+      if (sheetKind === "dataReview" && /資料審查|數位資料|資料/.test(String(record.sectionName || ""))) {
+        return true;
+      }
+      if (sheetKind === "fieldReview" && /實地審查|現場|詢答|實地/.test(String(record.sectionName || ""))) {
+        return true;
+      }
+      return false;
+    });
   }
 
   async function buildJudgeConfirmationModel(data) {
@@ -4121,7 +4159,7 @@
     var sheetKind = normalizeJudgeConfirmSheetKind((data && data.sheetKind) || "all");
     if (!sheetKind) {
       return fail(
-        "匯出類別無效。請選擇資料審查、實地審查、總成績或全部三表。",
+        "匯出類別無效。請選擇評分機制中的大項、總成績或全部大項。",
         "JUDGE_CONFIRM_SHEET_KIND_INVALID"
       );
     }
@@ -4153,6 +4191,23 @@
       if (filtered.length) sections = filtered;
     }
 
+    if (
+      sheetKind !== "total" &&
+      sheetKind !== "all" &&
+      sheetKind !== "dataReview" &&
+      sheetKind !== "fieldReview"
+    ) {
+      var knownSection = sections.some(function (s) {
+        return String(s.id) === sheetKind;
+      });
+      if (!knownSection) {
+        return fail(
+          "找不到對應的評分大項。請重新整理後再選，或先確認評分機制已儲存／發布。",
+          "JUDGE_CONFIRM_SHEET_KIND_INVALID"
+        );
+      }
+    }
+
     var records = [];
     sections.forEach(function (section) {
       ctx.clubs.forEach(function (club) {
@@ -4171,7 +4226,8 @@
       return String(a.sectionName || "").localeCompare(String(b.sectionName || ""), "zh-TW");
     });
 
-    var clubTotals = buildJudgeConfirmClubTotals(records);
+    var sectionMeta = buildJudgeConfirmSectionMetaList_(records, sections);
+    var clubTotals = buildJudgeConfirmClubTotals(records, sections);
     var filteredRecords = filterJudgeConfirmRecordsBySheetKind(records, sheetKind, sections);
     var submittedCount = records.filter(function (r) {
       return r.status === "submitted";
@@ -4185,6 +4241,7 @@
       version: "pb-1.0.0",
       generatedAt: generatedAt,
       sheetKind: sheetKind,
+      sheetKindLabel: judgeConfirmSheetKindLabel(sheetKind, sections),
       layoutStatus: "html-confirmation",
       delivery: "html",
       judge: {
@@ -4210,6 +4267,7 @@
       },
       records: filteredRecords,
       allRecords: records,
+      sectionMeta: sectionMeta,
       clubTotals: clubTotals,
       errors: []
     });
@@ -4226,7 +4284,10 @@
       judge.displayName || judge.name || judge.username || "評審"
     );
     var judgeKey = safeExportFileName(judge.id || judge.username || "judge");
-    var kindLabel = safeExportFileName(judgeConfirmSheetKindLabel(model.sheetKind));
+    var kindLabel = safeExportFileName(
+      model.sheetKindLabel ||
+        judgeConfirmSheetKindLabel(model.sheetKind, model.sectionMeta)
+    );
     return (
       safeExportFileName("115學年度第一學期全校學生社團評選暨觀摩活動") +
       "_評審個人評分確認表_" +
@@ -4265,7 +4326,7 @@
     var sheetKind = normalizeJudgeConfirmSheetKind((data && data.sheetKind) || "all");
     if (!sheetKind) {
       return fail(
-        "匯出類別無效。請選擇資料審查、實地審查、總成績或全部三表。",
+        "匯出類別無效。請選擇評分機制中的大項、總成績或全部大項。",
         "JUDGE_CONFIRM_SHEET_KIND_INVALID"
       );
     }
